@@ -685,3 +685,16 @@ class EnemyStrafeCombatContracts(unittest.TestCase):
         self.assertIn('var tangent := Vector3(-chase_direction.z, 0.0, chase_direction.x) * strafe_direction', self.enemy)
         self.assertIn('preferred_distance := 4.8 if enemy_kind == 2 else 5.8', self.enemy)
         self.assertIn('desired_direction = (chase_direction * radial_weight + tangent * orbit_weight).normalized()', self.enemy)
+
+
+class ComboFinisherContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_third_combo_hit_knocks_back_regular_enemies_and_respects_boss_resistance(self):
+        attack = self.player[self.player.index('func do_attack'):self.player.index('func _create_shadow_pulse_visual')]
+        self.assertIn('if combo_step == 3 and not enemy.get("dead"):', attack)
+        self.assertIn('knockback_strength := 5.2 if int(enemy.get("enemy_kind")) < 3 else 2.0', attack)
+        self.assertIn('enemy.velocity.x += knockback_direction.x * knockback_strength', attack)
+        self.assertIn('enemy.hit_recoil = maxf(float(enemy.get("hit_recoil")), 0.28)', attack)
