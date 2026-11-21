@@ -466,6 +466,24 @@ func _physics_process(delta: float) -> void:
 		head_pivot.rotation.x = -0.18
 	visual.scale = visual.scale.lerp(base_visual_scale * (Vector3(1.12, 0.88, 1.12) if hit_recoil > 0.0 else Vector3.ONE), minf(1.0, delta * 12.0))
 
+func _spawn_damage_number(amount: int) -> void:
+	if not is_instance_valid(visual):
+		return
+	var number_label := Label3D.new()
+	number_label.name = "DamageNumber"
+	number_label.text = str(amount)
+	number_label.font_size = 42 if enemy_kind >= 3 else 34
+	number_label.outline_size = 8
+	number_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number_label.no_depth_test = true
+	number_label.position = Vector3(randf_range(-0.22, 0.22), 1.75, 0.12)
+	number_label.modulate = Color("ffb36b") if enemy_kind >= 3 else Color("fff0d0")
+	visual.add_child(number_label)
+	var rise_tween := create_tween().set_parallel(true)
+	rise_tween.tween_property(number_label, "position:y", number_label.position.y + 0.72, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	rise_tween.tween_property(number_label, "modulate:a", 0.0, 0.58).set_delay(0.12)
+	rise_tween.tween_callback(number_label.queue_free).set_delay(0.72)
+
 func take_damage(amount: int) -> void:
 	if dead: return
 	if enemy_kind == 3 and int(get_parent().get("quest_stage")) < 3: return
@@ -475,6 +493,7 @@ func take_damage(amount: int) -> void:
 	if enemy_kind == 7 and int(get_parent().get("quest_stage")) < 9: return
 	if enemy_kind == 8 and int(get_parent().get("quest_stage")) < 9: return
 	hp -= amount
+	_spawn_damage_number(amount)
 	if enemy_kind == 6:
 		if hp <= 340:
 			_enter_boss_enrage()
