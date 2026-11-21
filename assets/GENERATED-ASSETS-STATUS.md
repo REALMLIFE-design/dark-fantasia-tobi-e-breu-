@@ -41,3 +41,14 @@ Este documento separa ativos gerados de ativos realmente incorporados ao projeto
 - O link assinado de download é temporário e não deve ser embutido em arquivos permanentes do jogo.
 - Thrixel confirmou que a árvore possui 14.132 triângulos em uma única malha. O saldo atual da conta é zero; operações gratuitas de redução de triângulos/transformação continuam disponíveis, mas não há créditos para gerar novas texturas ou modelos.
 - Nenhum desses dois arquivos externos foi incorporado ao projeto Godot nesta rodada; o ambiente SPZ exige runtime compatível e a árvore ainda depende de transferência do GLB para o repositório.
+
+
+## Integração de arquivos auxiliares dos plugins — 21/11/2026
+
+- Criado `scripts/plugin_asset_loader.gd`: carregador opcional para o GLB do Meshy e aplicação segura do material Aqueduct. Ele verifica a existência dos arquivos antes de usá-los.
+- Criado `scripts/aqueduct_stone.gdshader`: shader PBR leve com base color, normal OpenGL, roughness e AO; não usa deslocamento por height no renderer Compatibility móvel.
+- Criado `assets/plugin_imports/README.md`: mapa de destino e instruções para os arquivos originais dos plugins.
+- O portão procedural agora tenta aplicar o material Aqueduct nos detalhes de pedra quando os quatro mapas forem colocados no caminho esperado.
+- O GLB Meshy permanece opcional e não é instanciado automaticamente porque escala, pivô e colisões ainda precisam de conferência.
+- Os nove clipes PINOC continuam como fontes para retarget; não foram ligados ao Tobi porque o rig X Bot é diferente do rig procedural atual.
+- Limitação de transferência nesta sessão: os links dos binários foram renovados, mas o ambiente de execução não conseguiu baixar os arquivos dos hosts externos (falha de rede/DNS). Portanto, os binários GLB, SPZ e PNG ainda não estão fisicamente no repositório nem no APK. Não declarar essa etapa como concluída.
