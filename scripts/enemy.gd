@@ -16,6 +16,9 @@ var enemy_kind := 0
 var move_speed := 2.25
 var attack_damage := 9
 var attack_range := 1.65
+var hit_flash := 0.0
+var hit_flash_materials: Array[StandardMaterial3D] = []
+var hit_flash_base_colors: Array[Color] = []
 var hit_recoil := 0.0
 var attack_pose := 0.0
 var death_time := 0.42
@@ -447,6 +450,8 @@ func take_damage(amount: int) -> void:
 	if enemy_kind == 7 and int(get_parent().get("quest_stage")) < 9: return
 	if enemy_kind == 8 and int(get_parent().get("quest_stage")) < 9: return
 	hp -= amount
+	_spawn_damage_number(amount)
+	hit_flash = 0.14
 	if enemy_kind == 6:
 		if hp <= 340:
 			_enter_boss_enrage()
@@ -456,6 +461,7 @@ func take_damage(amount: int) -> void:
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
 		dead = true
+		_spawn_death_burst()
 		attack_pose = 0.0
 		attack_windup_timer = 0.0
 		attack_telegraph.visible = false
@@ -463,3 +469,69 @@ func take_damage(amount: int) -> void:
 		if collision: collision.set_deferred("disabled", true)
 		var world := get_parent()
 		if world.has_method("enemy_defeated"): world.enemy_defeated(enemy_kind)
+
+func _cache_hit_flash_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var source_material := mesh_instance.material_override as StandardMaterial3D
+		if source_material:
+			var flash_material := source_material.duplicate() as StandardMaterial3D
+			mesh_instance.material_override = flash_material
+			hit_flash_materials.append(flash_material)
+			hit_flash_base_colors.append(flash_material.albedo_color)
+	for child in node.get_children():
+		_cache_hit_flash_materials(child)
+
+func _update_hit_flash_materials() -> void:
+	var strength := clampf(hit_flash / 0.14, 0.0, 1.0)
+	for i in range(hit_flash_materials.size()):
+		var material := hit_flash_materials[i]
+		if is_instance_valid(material):
+			material.albedo_color = hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)
+
+func _spawn_damage_number(amount: int) -> void:
+	if not is_instance_valid(visual): return
+	var number_label := Label3D.new()
+	number_label.name = "DamageNumber"
+	number_label.text = str(amount)
+	number_label.font_size = 42 if enemy_kind >= 3 else 34
+	number_label.outline_size = 8
+	number_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number_label.no_depth_test = true
+	number_label.position = Vector3(randf_range(-0.22, 0.22), 1.75, 0.12)
+	number_label.modulate = Color("ffb36b") if enemy_kind >= 3 else Color("fff0d0")
+	visual.add_child(number_label)
+	var rise_tween := create_tween().set_parallel(true)
+	rise_tween.tween_property(number_label, "position:y", number_label.position.y + 0.72, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	rise_tween.tween_property(number_label, "modulate:a", 0.0, 0.58).set_delay(0.12)
+	rise_tween.tween_callback(number_label.queue_free).set_delay(0.72)
+
+func _spawn_death_burst() -> void:
+	if not is_instance_valid(get_parent()): return
+	var burst := Node3D.new()
+	get_parent().add_child(burst)
+	burst.global_position = global_position
+	var burst_color := Color("d7c7a0")
+	if enemy_kind == 6: burst_color = Color("d85a4d")
+	elif enemy_kind == 7: burst_color = Color("79c9f2")
+	elif enemy_kind == 8: burst_color = Color("62d8c8")
+	elif enemy_kind >= 3: burst_color = Color("e7c477")
+	for shard_index in range(6):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.12, 0.18, 0.12)
+		shard.mesh = shard_mesh
+		var shard_material := StandardMaterial3D.new()
+		shard_material.albedo_color = burst_color
+		shard_material.emission_enabled = true
+		shard_material.emission = burst_color
+		shard_material.emission_energy_multiplier = 0.65
+		shard.material_override = shard_material
+		burst.add_child(shard)
+		var angle := TAU * float(shard_index) / 6.0
+		shard.position = Vector3(cos(angle) * 0.16, 0.48 + float(shard_index % 2) * 0.12, sin(angle) * 0.16)
+		var destination := shard.position + Vector3(cos(angle) * 0.72, 0.42 + float(shard_index % 3) * 0.08, sin(angle) * 0.72)
+		var tween := burst.create_tween()
+		tween.tween_property(shard, "position", destination, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(shard, "scale", Vector3.ZERO, 0.38)
+		if shard_index == 5: tween.tween_callback(burst.queue_free)

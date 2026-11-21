@@ -23,6 +23,11 @@ var dodge_direction := Vector3.ZERO
 var camera_yaw_offset := 0.0
 var camera_sensitivity := 0.006
 var hit_reaction := 0.0
+var damage_flash := 0.0
+var perfect_dodge_flash := 0.0
+var dodge_perfect_used := false
+var damage_flash_materials: Array[StandardMaterial3D] = []
+var damage_flash_base_colors: Array[Color] = []
 var death_pose := false
 var landing_time := 0.0
 var combo_step := 0
@@ -49,6 +54,7 @@ func _ready() -> void:
 	visual.add_child(attack_visual)
 	_create_shadow_pulse_visual()
 	_make_character()
+	_cache_damage_flash_materials(visual)
 	camera_pivot = Node3D.new()
 	camera_pivot.position.y = 1.45
 	add_child(camera_pivot)
@@ -190,6 +196,9 @@ func _physics_process(delta: float) -> void:
 	stamina = minf(100.0, stamina + 16.0 * delta)
 	attack_flash = maxf(0.0,attack_flash-delta)
 	hit_reaction = maxf(0.0, hit_reaction - delta)
+	damage_flash = maxf(0.0, damage_flash - delta)
+	perfect_dodge_flash = maxf(0.0, perfect_dodge_flash - delta)
+	_update_damage_flash()
 	landing_time = maxf(0.0, landing_time - delta)
 	invulnerable = maxf(0.0,invulnerable-delta)
 	anim_time += delta
@@ -400,3 +409,31 @@ func take_damage(amount: int) -> void:
 		hit_reaction = 0.0
 		if world and world.has_method("player_defeated"):
 			world.player_defeated()
+
+func _cache_damage_flash_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var source_material := mesh_instance.material_override as StandardMaterial3D
+		if source_material:
+			var flash_material := source_material.duplicate() as StandardMaterial3D
+			mesh_instance.material_override = flash_material
+			damage_flash_materials.append(flash_material)
+			damage_flash_base_colors.append(flash_material.albedo_color)
+	for child in node.get_children():
+		_cache_damage_flash_materials(child)
+
+func _update_damage_flash() -> void:
+	var damage_strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	var perfect_strength := clampf(perfect_dodge_flash / 0.22, 0.0, 1.0)
+	for i in range(damage_flash_materials.size()):
+		var material := damage_flash_materials[i]
+		if is_instance_valid(material):
+			if perfect_strength > 0.0:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)
+				material.emission_enabled = true
+				material.emission = Color("35cdbb")
+				material.emission_energy_multiplier = perfect_strength * 1.35
+			else:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)
+				material.emission_enabled = false
+				material.emission_energy_multiplier = 0.0
