@@ -659,3 +659,16 @@ class DodgeCooldownHudContracts(unittest.TestCase):
         self.assertIn('dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown', self.world)
         self.assertIn('dodge_label.text = "ESQUIVA  •  pronta"', self.world)
         self.assertIn('dodge_label.add_theme_color_override("font_color", Color("e6bd72"))', self.world)
+
+
+class PlayerDamageFlashContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_player_damage_flash_duplicates_materials_and_restores_original_colors(self):
+        self.assertIn('func _cache_damage_flash_materials(node: Node) -> void:', self.player)
+        self.assertIn('source_material.duplicate() as StandardMaterial3D', self.player)
+        self.assertIn('damage_flash_base_colors[i].lerp(Color("ff5555"), strength * 0.72)', self.player)
+        self.assertIn('damage_flash = 0.16', self.player)
+        self.assertIn('_update_damage_flash()', self.player)
