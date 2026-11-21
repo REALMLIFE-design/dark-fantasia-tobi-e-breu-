@@ -714,3 +714,23 @@ class EnemyAttackTelegraphContracts(unittest.TestCase):
         self.assertIn('windup_progress * 1.2', self.enemy)
         self.assertIn('attack_telegraph_material.emission_energy_multiplier', self.enemy)
 
+
+class PerfectDodgeContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_timed_dodge_rewards_stamina_only_once_and_shows_feedback(self):
+        damage = self.player[self.player.index('func take_damage'):self.player.index('func get_stamina')]
+        self.assertIn('dodge_time > 0.0 and not dodge_perfect_used', damage)
+        self.assertIn('dodge_perfect_used = true', damage)
+        self.assertIn('stamina = minf(100.0, stamina + 10.0)', damage)
+        self.assertIn('world.player_perfect_dodge()', damage)
+        self.assertIn('ESQUIVA PERFEITA! +10 FÔLEGO', self.world)
+        self.assertIn('ESQUIVA  •  PERFEITA!', self.world)
+
+    def test_each_new_dodge_resets_perfect_dodge_reward(self):
+        dodge = self.player[self.player.index('func do_dodge'):self.player.index('func get_stamina')]
+        self.assertIn('dodge_perfect_used = false', dodge)
+
