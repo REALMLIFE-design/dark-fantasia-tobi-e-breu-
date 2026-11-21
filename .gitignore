@@ -1,0 +1,23 @@
+# Godot generated files
+.godot/
+.import/
+
+# Android / export output
+build/
+*.apk
+*.aab
+
+# Local export credentials and signing material
+.export_credentials.cfg
+export_credentials.cfg
+*.keystore
+*.jks
+
+# Python test artifacts
+__pycache__/
+*.py[cod]
+
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
