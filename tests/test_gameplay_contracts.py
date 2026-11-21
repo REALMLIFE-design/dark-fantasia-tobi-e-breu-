@@ -173,7 +173,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('KEY_K', self.player)
         self.assertIn('{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}', self.world)
         self.assertIn('elif data.a == "shadow":', self.world)
-        self.assertIn('action_btn.button_down.connect(Input.action_press.bind(data.a))', self.world)
+        self.assertIn('action_btn.pressed.connect(_touch_action.bind(data.a))', self.world)
+        self.assertIn('elif action == "shadow": player.do_shadow_pulse()', self.world)
         self.assertIn('Pulso Sombrio pronto', self.world)
 
 
