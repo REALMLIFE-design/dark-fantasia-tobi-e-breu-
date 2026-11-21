@@ -27,6 +27,7 @@ var pinch_start_distance := 0.0
 var pinch_start_camera_distance := 6.5
 var hit_reaction := 0.0
 var damage_flash := 0.0
+var perfect_dodge_flash := 0.0
 var damage_flash_materials: Array[StandardMaterial3D] = []
 var damage_flash_base_colors: Array[Color] = []
 var death_pose := false
@@ -79,11 +80,18 @@ func _cache_damage_flash_materials(node: Node) -> void:
 		_cache_damage_flash_materials(child)
 
 func _update_damage_flash() -> void:
-	var strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	var damage_strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	var perfect_strength := clampf(perfect_dodge_flash / 0.22, 0.0, 1.0)
 	for i in range(damage_flash_materials.size()):
 		var material := damage_flash_materials[i]
 		if is_instance_valid(material):
-			material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), strength * 0.72)
+			if perfect_strength > 0.0:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)
+				material.emission = Color("35cdbb")
+				material.emission_energy_multiplier = perfect_strength * 1.35
+			else:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)
+				material.emission_energy_multiplier = 0.0
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -217,6 +225,7 @@ func _physics_process(delta: float) -> void:
 	attack_flash = maxf(0.0,attack_flash-delta)
 	hit_reaction = maxf(0.0, hit_reaction - delta)
 	damage_flash = maxf(0.0, damage_flash - delta)
+	perfect_dodge_flash = maxf(0.0, perfect_dodge_flash - delta)
 	_update_damage_flash()
 	landing_time = maxf(0.0, landing_time - delta)
 	invulnerable = maxf(0.0,invulnerable-delta)
@@ -447,6 +456,7 @@ func take_damage(amount: int) -> void:
 	if invulnerable > 0.0:
 		if dodge_time > 0.0 and not dodge_perfect_used:
 			dodge_perfect_used = true
+			perfect_dodge_flash = 0.22
 			stamina = minf(100.0, stamina + 10.0)
 			if world and world.has_method("player_perfect_dodge"):
 				world.player_perfect_dodge()
