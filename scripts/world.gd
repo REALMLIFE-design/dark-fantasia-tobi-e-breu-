@@ -978,34 +978,66 @@ func _build_whisper_grove() -> void:
 	_box(arch, "GroveArchRight", Vector3(3.0, 2.2, 0.0), Vector3(0.8, 4.4, 0.9), Color("686f68"))
 	_box(arch, "GroveArchTop", Vector3(0.0, 4.25, 0.0), Vector3(6.8, 0.8, 1.0), Color("77796d"))
 
-	_spawn_thrixel_stag_guardian()
+	_spawn_whisper_stag_guardian()
 
 
-func _spawn_thrixel_stag_guardian() -> void:
-	# This GLB is generated in the existing Thrixel project and downloaded by CI.
-	# Keep a graceful fallback for editor sessions where the optional model is absent.
-	var model_path := "res://assets/models/ancient_stag_guardian.glb"
-	if not ResourceLoader.exists(model_path):
-		push_warning("Thrixel stag guardian asset is missing; keeping the grove's procedural landmark.")
-		return
-	var model_scene := load(model_path) as PackedScene
-	if model_scene == null:
-		push_warning("Thrixel stag guardian GLB could not be imported as a PackedScene.")
-		return
-
+func _spawn_whisper_stag_guardian() -> void:
+	# A low-cost procedural stone spirit keeps the side quest playable while
+	# the separately generated Thrixel GLB awaits canonical asset vendoring.
 	var guardian := Node3D.new()
-	guardian.name = "ThrixelAncientStagGuardian"
+	guardian.name = "WhisperStagGuardian"
 	guardian.position = Vector3(96.0, 0.0, -145.0)
 	add_child(guardian)
-	var model := model_scene.instantiate()
-	model.name = "AncientStagModel"
-	model.scale = Vector3.ONE * 0.78
-	model.rotation.y = PI
-	guardian.add_child(model)
+
+	_box(guardian, "StagPedestal", Vector3(0.0, 0.24, 0.0), Vector3(2.5, 0.48, 2.0), Color("4a554d"))
+	_box(guardian, "StagPedestalTrim", Vector3(0.0, 0.51, 0.0), Vector3(2.18, 0.08, 1.72), Color("857453"))
+	var torso := _sphere(guardian, "StagStoneTorso", Vector3(0.0, 1.58, 0.0), 0.62, Color("58645a"), 1.12)
+	torso.scale = Vector3(1.48, 0.88, 0.92)
+	var chest := _sphere(guardian, "StagStoneChest", Vector3(0.0, 1.73, 0.42), 0.42, Color("667267"), 0.86)
+	chest.scale = Vector3(0.95, 1.12, 0.82)
+	var neck := _sphere(guardian, "StagStoneNeck", Vector3(0.0, 2.05, 0.48), 0.34, Color("59675e"), 0.95)
+	neck.scale = Vector3(0.88, 1.45, 0.86)
+	var head := _sphere(guardian, "StagStoneHead", Vector3(0.0, 2.73, 0.72), 0.34, Color("6a7468"), 0.58)
+	head.scale = Vector3(1.0, 1.1, 0.9)
+	var muzzle := _sphere(guardian, "StagStoneMuzzle", Vector3(0.0, 2.59, 1.0), 0.17, Color("8a8977"), 0.3)
+	muzzle.scale = Vector3(1.0, 0.8, 1.25)
+
+	for leg_data in [
+		[Vector3(-0.43, 0.94, -0.32), "FrontLeft"],
+		[Vector3(0.43, 0.94, -0.32), "FrontRight"],
+		[Vector3(-0.43, 0.94, 0.36), "BackLeft"],
+		[Vector3(0.43, 0.94, 0.36), "BackRight"]
+	]:
+		var leg_position: Vector3 = leg_data[0]
+		var leg_name: String = leg_data[1]
+		var leg := _box(guardian, "StagLeg" + leg_name, leg_position, Vector3(0.17, 0.9, 0.18), Color("46534b"))
+		leg.rotation.x = -0.035 if "Front" in leg_name else 0.035
+		_box(guardian, "StagHoof" + leg_name, Vector3(leg_position.x, 0.43, leg_position.z + 0.025), Vector3(0.22, 0.16, 0.24), Color("343d39"))
+
+	_add_stag_antler_segment(guardian, "StagAntlerLeftMain", Vector3(-0.17, 2.9, 0.72), Vector3(-0.43, 3.28, 0.72), 0.065, Color("b39a68"))
+	_add_stag_antler_segment(guardian, "StagAntlerLeftOuter", Vector3(-0.43, 3.28, 0.72), Vector3(-0.72, 3.48, 0.72), 0.05, Color("b39a68"))
+	_add_stag_antler_segment(guardian, "StagAntlerLeftTip", Vector3(-0.43, 3.28, 0.72), Vector3(-0.46, 3.68, 0.72), 0.045, Color("c4aa74"))
+	_add_stag_antler_segment(guardian, "StagAntlerLeftInner", Vector3(-0.35, 3.16, 0.72), Vector3(-0.12, 3.43, 0.72), 0.045, Color("b39a68"))
+	_add_stag_antler_segment(guardian, "StagAntlerRightMain", Vector3(0.17, 2.9, 0.72), Vector3(0.43, 3.28, 0.72), 0.065, Color("b39a68"))
+	_add_stag_antler_segment(guardian, "StagAntlerRightOuter", Vector3(0.43, 3.28, 0.72), Vector3(0.72, 3.48, 0.72), 0.05, Color("b39a68"))
+	_add_stag_antler_segment(guardian, "StagAntlerRightTip", Vector3(0.43, 3.28, 0.72), Vector3(0.46, 3.68, 0.72), 0.045, Color("c4aa74"))
+	_add_stag_antler_segment(guardian, "StagAntlerRightInner", Vector3(0.35, 3.16, 0.72), Vector3(0.12, 3.43, 0.72), 0.045, Color("b39a68"))
+
+	var eye_material := StandardMaterial3D.new()
+	eye_material.albedo_color = Color("9debd7")
+	eye_material.emission_enabled = true
+	eye_material.emission = Color("58d9c0")
+	eye_material.emission_energy_multiplier = 2.0
+	eye_material.roughness = 0.22
+	for side in [-1.0, 1.0]:
+		var eye := _sphere(guardian, "StagSpiritEye", Vector3(side * 0.16, 2.74, 1.005), 0.075, Color("9debd7"))
+		eye.material_override = eye_material
+	var rune := _sphere(guardian, "StagPedestalRune", Vector3(0.0, 0.67, 1.02), 0.12, Color("72cfc0"))
+	rune.material_override = eye_material
 
 	var eye_glow := OmniLight3D.new()
 	eye_glow.name = "StagSpiritGlow"
-	eye_glow.position = Vector3(0.0, 2.25, 0.0)
+	eye_glow.position = Vector3(0.0, 2.72, 1.12)
 	eye_glow.light_color = Color("72cfc0")
 	eye_glow.light_energy = 0.55
 	eye_glow.omni_range = 6.5
@@ -1014,6 +1046,23 @@ func _spawn_thrixel_stag_guardian() -> void:
 	var idle := create_tween().set_loops()
 	idle.tween_property(guardian, "rotation:y", 0.045, 2.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	idle.tween_property(guardian, "rotation:y", -0.045, 5.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _add_stag_antler_segment(parent: Node3D, segment_name: String, start: Vector3, finish: Vector3, radius: float, color: Color) -> MeshInstance3D:
+	var direction := finish - start
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius * 0.52
+	mesh.bottom_radius = radius
+	mesh.height = direction.length()
+	mesh.radial_segments = 8
+	var segment := MeshInstance3D.new()
+	segment.name = segment_name
+	segment.mesh = mesh
+	segment.position = (start + finish) * 0.5
+	segment.rotation.z = atan2(-direction.x, direction.y)
+	segment.material_override = _material_for_surface("StagAntler", color)
+	parent.add_child(segment)
+	return segment
 
 func _build_river_treasure_chests() -> void:
 	# Three optional caches reward exploration on both banks and near the old gate.
@@ -2126,7 +2175,7 @@ func _process(delta: float) -> void:
 		whisper_grove_label.visible = grove_distance < 24.0
 		whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  %d/3 LANTERNAS" % whisper_lantern_ids.size()
 	var lantern_distance := player.global_position.distance_to(get_node_or_null("WhisperLantern_%d" % nearest_lantern_id).global_position) if nearest_lantern_id >= 0 and get_node_or_null("WhisperLantern_%d" % nearest_lantern_id) else 999.0
-	var stag_guardian := get_node_or_null("ThrixelAncientStagGuardian")
+	var stag_guardian := get_node_or_null("WhisperStagGuardian")
 	var stag_guardian_distance := player.global_position.distance_to(stag_guardian.global_position) if stag_guardian else 999.0
 	var chest_distance := player.global_position.distance_to(get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id).global_position) if nearest_chest_id >= 0 and get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id) else 999.0
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
@@ -2293,7 +2342,7 @@ func _interact() -> void:
 	if lantern_id >= 0:
 		_activate_whisper_lantern(lantern_id)
 		return
-	var stag_guardian := get_node_or_null("ThrixelAncientStagGuardian")
+	var stag_guardian := get_node_or_null("WhisperStagGuardian")
 	if stag_guardian and player.global_position.distance_to(stag_guardian.global_position) < 4.5:
 		if whisper_lantern_ids.size() < 3:
 			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
