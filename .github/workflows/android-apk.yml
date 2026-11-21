@@ -39,7 +39,7 @@ jobs:
           yes | "$SDKMANAGER" --licenses || true
           "$SDKMANAGER" --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Localizar projeto Godot
+      - name: Locate Godot project (repository root or subfolder)
         run: |
           set -euo pipefail
           if [ -f "$GITHUB_WORKSPACE/project.godot" ]; then
