@@ -91,6 +91,7 @@ func _ready() -> void:
 	_build_open_world_expansion()
 	_build_ruins_and_props()
 	_build_region_landmarks()
+	_build_plugin_world_expansion()
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	await get_tree().process_frame
 	_build_swamp_region()
@@ -940,6 +941,100 @@ func _build_region_landmarks() -> void:
 	shrine_light.light_energy = 0.8
 	shrine_light.omni_range = 5.0
 	shrine.add_child(shrine_light)
+
+func _build_plugin_world_expansion() -> void:
+	# Conteudo extra inspirado nos assets Meshy/Aqueduct: observatorio lunar,
+	# trilha de monolitos e ruinas de vigia. Tudo e procedural e leve para mobile.
+	var expansion := Node3D.new()
+	expansion.name = "PluginInspiredWorldExpansion"
+	add_child(expansion)
+
+	# Moonwell: um pequeno ponto de descanso e orientacao no caminho norte.
+	var moonwell := Node3D.new()
+	moonwell.name = "MoonwellSanctuary"
+	moonwell.position = Vector3(27.0, 0.0, -55.0)
+	expansion.add_child(moonwell)
+	var foundation := _box(moonwell, "MoonwellFoundation", Vector3.ZERO, Vector3(9.0, 0.42, 8.0), Color("555950"))
+	foundation.material_override = _material_for_surface("cut stone", Color("555950"))
+	var inner_ring := _box(moonwell, "MoonwellInnerStone", Vector3(0.0, 0.26, 0.0), Vector3(5.5, 0.22, 5.5), Color("74766a"))
+	inner_ring.material_override = _material_for_surface("cut stone", Color("74766a"))
+	var pool := _sphere(moonwell, "MoonwellWater", Vector3(0.0, 0.44, 0.0), 2.1, Color("527f83"), 0.18)
+	pool.scale = Vector3(1.0, 0.12, 1.0)
+	var water_material := _mat(Color("527f83"), 0.18)
+	water_material.metallic = 0.28
+	water_material.emission_enabled = true
+	water_material.emission = Color("2c6970")
+	water_material.emission_energy_multiplier = 0.45
+	pool.material_override = water_material
+	for i in range(4):
+		var angle := TAU * float(i) / 4.0
+		var offset := Vector3(cos(angle) * 3.05, 0.0, sin(angle) * 3.05)
+		var pillar := _box(moonwell, "MoonwellPillar_%d" % i, offset + Vector3(0.0, 1.45, 0.0), Vector3(0.62, 2.9, 0.62), Color("686b62"))
+		pillar.material_override = _material_for_surface("ruined stone", Color("686b62"))
+		_box(moonwell, "MoonwellPillarCap_%d" % i, offset + Vector3(0.0, 2.95, 0.0), Vector3(0.92, 0.24, 0.92), Color("8b8978"))
+	var moon_crystal := _sphere(moonwell, "MoonwellCrystal", Vector3(0.0, 1.05, 0.0), 0.52, Color("72b6b2"), 1.5)
+	moon_crystal.scale = Vector3(0.58, 1.65, 0.58)
+	moon_crystal.material_override = _painter_mat(Color("72b6b2"), 7.0, 0.12, 8, Color("326e70"))
+	var moon_light := OmniLight3D.new()
+	moon_light.name = "MoonwellGlow"
+	moon_light.position = Vector3(0.0, 2.4, 0.0)
+	moon_light.light_color = Color("75c6c1")
+	moon_light.light_energy = 0.8
+	moon_light.omni_range = 10.0
+	moonwell.add_child(moon_light)
+
+	# Ruinas da vigia: pedras tombadas, brasas e um marco de pedra com runas.
+	var outpost := Node3D.new()
+	outpost.name = "FallenWatchOutpost"
+	outpost.position = Vector3(-35.0, 0.0, -63.0)
+	expansion.add_child(outpost)
+	_box(outpost, "OutpostFoundation", Vector3(0.0, 0.12, 0.0), Vector3(11.0, 0.24, 8.0), Color("4e5049"))
+	for i in range(5):
+		var x := -4.0 + float(i) * 2.0
+		var wall := _box(outpost, "BrokenWallSegment_%d" % i, Vector3(x, 1.05 + float(i % 2) * 0.18, -3.1), Vector3(1.7, 2.1, 0.55), Color("65645a"))
+		wall.rotation.z = float(i % 2) * 0.08 - 0.04
+	var fallen_column := _box(outpost, "FallenColumn", Vector3(2.2, 0.48, 1.2), Vector3(4.6, 0.52, 0.62), Color("777469"))
+	fallen_column.rotation.z = -0.16
+	var rune_stone := _box(outpost, "OutpostRuneStone", Vector3(-3.8, 1.6, 2.0), Vector3(1.0, 3.2, 0.72), Color("77776c"))
+	var rune := _sphere(outpost, "OutpostRune", Vector3(-3.8, 1.85, 2.42), 0.24, Color("c18b5c"), 0.42)
+	rune.scale = Vector3(0.65, 1.0, 0.28)
+	rune.material_override = _painter_mat(Color("c18b5c"), 8.0, 0.12, 8, Color("704b3a"))
+	var campfire := _sphere(outpost, "OutpostEmberBed", Vector3(2.7, 0.32, 2.8), 0.9, Color("392f2a"), 0.3)
+	campfire.scale = Vector3(1.2, 0.28, 1.0)
+	for i in range(4):
+		var ember := _sphere(outpost, "OutpostEmber_%d" % i, Vector3(2.4 + randf_range(-0.38, 0.38), 0.55 + randf_range(0.0, 0.45), 2.8 + randf_range(-0.32, 0.32)), 0.12, Color("ff9b55"), 0.2)
+		ember.material_override = _painter_mat(Color("ff9b55"), 8.0, 0.05)
+	var firelight := OmniLight3D.new()
+	firelight.position = Vector3(2.7, 1.5, 2.8)
+	firelight.light_color = Color("ff9452")
+	firelight.light_energy = 1.1
+	firelight.omni_range = 7.0
+	outpost.add_child(firelight)
+
+	# Pedras de orientacao levam o jogador do caminho antigo ate o pântano.
+	for i in range(7):
+		var z := -61.0 - float(i) * 5.0
+		var x := 7.5 + sin(float(i) * 0.72) * 2.2
+		var marker := _box(expansion, "AncientTrailMarker_%d" % i, Vector3(x, 0.85, z), Vector3(0.72, 1.7, 0.62), Color("5f6259"))
+		marker.rotation.z = randf_range(-0.1, 0.1)
+		var marker_rune := _sphere(expansion, "AncientTrailRune_%d" % i, Vector3(x, 1.0, z + 0.34), 0.13, Color("9bb7a0"), 0.24)
+		marker_rune.material_override = _painter_mat(Color("9bb7a0"), 8.0, 0.08, 8, Color("47685b"))
+
+	# Pequenas luzes guiam sem poluir a tela nem criar muitos draw calls.
+	for i in range(3):
+		var torch_root := Node3D.new()
+		torch_root.name = "AncientTrailTorch_%d" % i
+		torch_root.position = Vector3(-8.0, 0.0, -49.0 - float(i) * 14.0)
+		expansion.add_child(torch_root)
+		_box(torch_root, "TorchPost", Vector3(0.0, 1.0, 0.0), Vector3(0.18, 2.0, 0.18), Color("49372d"))
+		var flame := _sphere(torch_root, "TorchFlame", Vector3(0.0, 2.15, 0.0), 0.22, Color("e8a45c"), 0.42)
+		flame.material_override = _painter_mat(Color("e8a45c"), 8.0, 0.05)
+		var torch_light := OmniLight3D.new()
+		torch_light.position = Vector3(0.0, 2.2, 0.0)
+		torch_light.light_color = Color("e6a15e")
+		torch_light.light_energy = 0.72
+		torch_light.omni_range = 6.0
+		torch_root.add_child(torch_light)
 
 func _build_swamp_region() -> void:
 	# A connected second biome: shallow poisonous pools, dead trees and three cleanseable totems.
