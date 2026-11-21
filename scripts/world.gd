@@ -407,13 +407,51 @@ func _build_landscape() -> void:
 		var z := -34.0 + float(i) * 3.1
 		var rock := _sphere(self, "TrailStone", Vector3(side * randf_range(7.0, 13.0), 0.28, z), randf_range(0.35, 0.8), Color("625f55"), 0.75)
 		rock.scale = Vector3(1.35,0.7,0.9)
-	# grass clumps as merged visual rhythm, not thousands of instances
-	for i in range(36):
-		var x := randf_range(-34, 34)
-		var z := randf_range(-38, 38)
-		if abs(x) < 6.0: continue
-		var tuft := _sphere(self, "BrushGrass", Vector3(x, 0.18, z), randf_range(0.35, 0.8), Color("526b46"), 0.55)
-		tuft.scale = Vector3(1.8, 0.55, 1.0)
+	# Vegetação de primeiro plano em MultiMesh: muito mais cheia sem criar
+	# centenas de nós individuais nem sacrificar o desempenho no Android.
+	var grass_mesh := SphereMesh.new()
+	grass_mesh.radius = 0.34
+	grass_mesh.height = 0.62
+	grass_mesh.radial_segments = 7
+	grass_mesh.rings = 4
+	var grass_batch := MultiMesh.new()
+	grass_batch.transform_format = MultiMesh.TRANSFORM_3D
+	grass_batch.mesh = grass_mesh
+	grass_batch.instance_count = 132
+	for i in range(grass_batch.instance_count):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var x := side * randf_range(6.5, 34.0)
+		var z := randf_range(-54.0, 58.0)
+		var scale := Vector3(randf_range(0.75, 1.8), randf_range(0.7, 1.5), randf_range(0.75, 1.45))
+		var transform := Transform3D(Basis().scaled(scale), Vector3(x, 0.18, z))
+		grass_batch.set_instance_transform(i, transform)
+	var grass_field := MultiMeshInstance3D.new()
+	grass_field.name = "PainterlyGrassField"
+	grass_field.multimesh = grass_batch
+	grass_field.material_override = _painter_mat(Color("526b46"), 3.2, 0.12, 1, Color("304b37"))
+	add_child(grass_field)
+
+	# Pequenas flores pálidas pontuam a borda da trilha e guiam o olhar do jogador.
+	var flower_mesh := SphereMesh.new()
+	flower_mesh.radius = 0.12
+	flower_mesh.height = 0.16
+	flower_mesh.radial_segments = 6
+	flower_mesh.rings = 3
+	var flower_batch := MultiMesh.new()
+	flower_batch.transform_format = MultiMesh.TRANSFORM_3D
+	flower_batch.mesh = flower_mesh
+	flower_batch.instance_count = 38
+	for i in range(flower_batch.instance_count):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var x := side * randf_range(7.0, 25.0)
+		var z := randf_range(-48.0, 52.0)
+		var flower_scale := randf_range(0.7, 1.35)
+		flower_batch.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * flower_scale), Vector3(x, 0.24, z)))
+	var flowers := MultiMeshInstance3D.new()
+	flowers.name = "MoonlitWildflowers"
+	flowers.multimesh = flower_batch
+	flowers.material_override = _mat(Color("b5aa83"))
+	add_child(flowers)
 
 func _build_open_world_expansion() -> void:
 	# Expanded wilderness ring: gives the connected regions breathing room without
