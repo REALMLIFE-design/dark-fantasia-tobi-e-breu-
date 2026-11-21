@@ -1113,155 +1113,288 @@ func _build_hud() -> void:
 	var current_level_xp: int = xp - ((level - 1) * 100)
 	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
+	hud.name = "GameHUD"
+	hud.layer = 10
 	add_child(hud)
-	var panel := PanelContainer.new()
-	panel.position = Vector2(22,20)
-	panel.custom_minimum_size = Vector2(350,94)
-	hud.add_child(panel)
-	var v := VBoxContainer.new()
-	panel.add_child(v)
+
+	# A consistent dark-fantasy UI skin: warm parchment text, muted stone panels
+	# and restrained amber/teal accents. All controls remain native Godot UI.
+	var ui_theme := Theme.new()
+	ui_theme.set_color("font_color", "Label", Color("e8e0cf"))
+	ui_theme.set_color("font_shadow_color", "Label", Color(0.02, 0.025, 0.025, 0.9))
+	ui_theme.set_constant("shadow_offset_x", "Label", 1)
+	ui_theme.set_constant("shadow_offset_y", "Label", 1)
+	ui_theme.set_color("font_color", "Button", Color("f0e7d4"))
+	ui_theme.set_color("font_hover_color", "Button", Color("fff2cf"))
+	ui_theme.set_color("font_pressed_color", "Button", Color("d8bd8b"))
+	ui_theme.set_font_size("font_size", "Button", 12)
+	hud.theme = ui_theme
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.035, 0.045, 0.043, 0.91)
+	panel_style.border_color = Color("75634a")
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(9)
+	panel_style.content_margin_left = 13.0
+	panel_style.content_margin_right = 13.0
+	panel_style.content_margin_top = 9.0
+	panel_style.content_margin_bottom = 9.0
+	var button_normal := StyleBoxFlat.new()
+	button_normal.bg_color = Color(0.055, 0.075, 0.071, 0.88)
+	button_normal.border_color = Color(0.57, 0.48, 0.34, 0.95)
+	button_normal.set_border_width_all(1)
+	button_normal.set_corner_radius_all(12)
+	button_normal.content_margin_left = 7.0
+	button_normal.content_margin_right = 7.0
+	button_normal.content_margin_top = 5.0
+	button_normal.content_margin_bottom = 5.0
+	var button_hover := button_normal.duplicate() as StyleBoxFlat
+	button_hover.bg_color = Color(0.15, 0.17, 0.13, 0.96)
+	button_hover.border_color = Color("d2ad70")
+	var button_pressed := button_normal.duplicate() as StyleBoxFlat
+	button_pressed.bg_color = Color(0.25, 0.19, 0.12, 0.98)
+	ui_theme.set_stylebox("normal", "Button", button_normal)
+	ui_theme.set_stylebox("hover", "Button", button_hover)
+	ui_theme.set_stylebox("pressed", "Button", button_pressed)
+	ui_theme.set_stylebox("disabled", "Button", button_normal)
+
+	# Quest card — compact hierarchy instead of a large block of plain text.
+	var quest_panel := PanelContainer.new()
+	quest_panel.name = "QuestCard"
+	quest_panel.position = Vector2(18, 16)
+	quest_panel.custom_minimum_size = Vector2(330, 112)
+	quest_panel.add_theme_stylebox_override("panel", panel_style)
+	hud.add_child(quest_panel)
+	var quest_box := VBoxContainer.new()
+	quest_box.add_theme_constant_override("separation", 4)
+	quest_panel.add_child(quest_box)
 	var title := Label.new()
-	title.text = "TOBI E BREU  •  DARK WORLD"
-	title.add_theme_font_size_override("font_size",18)
-	v.add_child(title)
+	title.text = "TOBI & BREU   /   DARK WORLD"
+	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_color_override("font_color", Color("d8b77c"))
+	quest_box.add_child(title)
+	var quest_kicker := Label.new()
+	quest_kicker.text = "JORNADA ATUAL"
+	quest_kicker.add_theme_font_size_override("font_size", 9)
+	quest_kicker.add_theme_color_override("font_color", Color("8e9a8d"))
+	quest_box.add_child(quest_kicker)
 	quest_label = Label.new()
 	quest_label.text = quest_text
+	quest_label.add_theme_font_size_override("font_size", 13)
+	quest_label.add_theme_color_override("font_color", Color("eee5d3"))
 	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(quest_label)
+	quest_box.add_child(quest_label)
 	objective_label = Label.new()
 	objective_label.text = "Objetivo: encontre Mestre Azulan"
-	objective_label.add_theme_font_size_override("font_size", 13)
-	v.add_child(objective_label)
+	objective_label.add_theme_font_size_override("font_size", 11)
+	objective_label.add_theme_color_override("font_color", Color("c6b18b"))
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	quest_box.add_child(objective_label)
+
+	# Player status card with distinct health and stamina tracks.
+	var status_panel := PanelContainer.new()
+	status_panel.name = "PlayerStatusCard"
+	status_panel.position = Vector2(18, 138)
+	status_panel.custom_minimum_size = Vector2(260, 78)
+	status_panel.add_theme_stylebox_override("panel", panel_style)
+	hud.add_child(status_panel)
+	var status_box := VBoxContainer.new()
+	status_box.add_theme_constant_override("separation", 3)
+	status_panel.add_child(status_box)
+	var status_head := HBoxContainer.new()
+	status_box.add_child(status_head)
 	health_label = Label.new()
 	health_label.text = "TOBI  •  VIDA"
-	health_label.position = Vector2(22,126)
-	health_label.add_theme_font_size_override("font_size",15)
-	hud.add_child(health_label)
+	health_label.add_theme_font_size_override("font_size", 11)
+	health_label.add_theme_color_override("font_color", Color("e6c9a0"))
+	status_head.add_child(health_label)
+	var status_spacer := Control.new()
+	status_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_head.add_child(status_spacer)
+	var health_value := Label.new()
+	health_value.text = "%d / %d" % [player.hp, player.max_hp]
+	health_value.add_theme_font_size_override("font_size", 10)
+	health_value.add_theme_color_override("font_color", Color("e8e0cf"))
+	health_value.name = "HealthValue"
+	status_head.add_child(health_value)
 	health_bar = ProgressBar.new()
-	health_bar.position = Vector2(22,151)
-	health_bar.size = Vector2(230,18)
-	health_bar.max_value = 100
-	health_bar.value = 100
+	health_bar.custom_minimum_size = Vector2(230, 12)
+	health_bar.max_value = player.max_hp
+	health_bar.value = player.hp
 	health_bar.show_percentage = false
-	hud.add_child(health_bar)
+	health_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292d29")))
+	health_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("a84d4b")))
+	status_box.add_child(health_bar)
 	stamina_bar = ProgressBar.new()
-	stamina_bar.position = Vector2(22, 174)
-	stamina_bar.size = Vector2(190, 10)
+	stamina_bar.custom_minimum_size = Vector2(190, 7)
 	stamina_bar.max_value = 100
 	stamina_bar.value = 100
 	stamina_bar.show_percentage = false
-	hud.add_child(stamina_bar)
+	stamina_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292d29")))
+	stamina_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("78a99a")))
+	status_box.add_child(stamina_bar)
+
+	# Level and resources are grouped into one small readable strip.
+	var progress_panel := PanelContainer.new()
+	progress_panel.name = "ProgressCard"
+	progress_panel.position = Vector2(18, 224)
+	progress_panel.custom_minimum_size = Vector2(260, 58)
+	progress_panel.add_theme_stylebox_override("panel", panel_style)
+	hud.add_child(progress_panel)
+	var progress_box := VBoxContainer.new()
+	progress_box.add_theme_constant_override("separation", 3)
+	progress_panel.add_child(progress_box)
+	xp_label = Label.new()
+	xp_label.text = "NÍVEL %d   •   %d / %d XP" % [level, current_level_xp, xp_needed - ((level - 1) * 100)]
+	xp_label.add_theme_font_size_override("font_size", 11)
+	xp_label.add_theme_color_override("font_color", Color("d8b77c"))
+	progress_box.add_child(xp_label)
+	xp_bar = ProgressBar.new()
+	xp_bar.max_value = maxi(1, xp_needed - ((level - 1) * 100))
+	xp_bar.value = current_level_xp
+	xp_bar.custom_minimum_size = Vector2(230, 7)
+	xp_bar.show_percentage = false
+	xp_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292d29")))
+	xp_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("c39a58")))
+	progress_box.add_child(xp_bar)
+	inventory_label = Label.new()
+	inventory_label.text = "POÇÕES %d   •   FRAGMENTOS %d   •   ESPADA +%d" % [potions, shards, weapon_level]
+	inventory_label.add_theme_font_size_override("font_size", 9)
+	inventory_label.add_theme_color_override("font_color", Color("b9c1b5"))
+	progress_box.add_child(inventory_label)
+
+	# Boss encounter bar stays centered and only appears during the boss quest.
 	boss_hud_panel = PanelContainer.new()
+	boss_hud_panel.name = "BossHealthCard"
 	boss_hud_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	boss_hud_panel.position = Vector2(-170, 16)
-	boss_hud_panel.custom_minimum_size = Vector2(340, 48)
+	boss_hud_panel.position = Vector2(-180, 14)
+	boss_hud_panel.custom_minimum_size = Vector2(360, 54)
 	boss_hud_panel.visible = false
+	boss_hud_panel.add_theme_stylebox_override("panel", panel_style)
 	hud.add_child(boss_hud_panel)
 	var boss_box := VBoxContainer.new()
-	boss_box.add_theme_constant_override("separation", 2)
+	boss_box.add_theme_constant_override("separation", 3)
 	boss_hud_panel.add_child(boss_box)
 	boss_health_label = Label.new()
 	boss_health_label.text = "LEVIATÃ DO LODO"
 	boss_health_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	boss_health_label.add_theme_font_size_override("font_size", 13)
+	boss_health_label.add_theme_font_size_override("font_size", 12)
+	boss_health_label.add_theme_color_override("font_color", Color("d99a83"))
 	boss_box.add_child(boss_health_label)
 	boss_health_bar = ProgressBar.new()
 	boss_health_bar.max_value = 680
 	boss_health_bar.value = 680
-	boss_health_bar.custom_minimum_size = Vector2(320, 12)
+	boss_health_bar.custom_minimum_size = Vector2(330, 10)
 	boss_health_bar.show_percentage = false
+	boss_health_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292323")))
+	boss_health_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("a43f46")))
 	boss_box.add_child(boss_health_bar)
+
 	combo_label = Label.new()
-	combo_label.position = Vector2(22, 224)
+	combo_label.position = Vector2(18, 292)
 	combo_label.text = "COMBO  •  pronto"
-	combo_label.add_theme_font_size_override("font_size", 12)
+	combo_label.add_theme_font_size_override("font_size", 10)
+	combo_label.add_theme_color_override("font_color", Color("d8b77c"))
 	hud.add_child(combo_label)
 	whisper_grove_label = Label.new()
-	whisper_grove_label.position = Vector2(22, 300)
+	whisper_grove_label.position = Vector2(18, 310)
 	whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  0/3"
-	whisper_grove_label.add_theme_font_size_override("font_size", 12)
+	whisper_grove_label.add_theme_font_size_override("font_size", 10)
 	whisper_grove_label.add_theme_color_override("font_color", Color("9acfc2"))
 	whisper_grove_label.visible = false
 	hud.add_child(whisper_grove_label)
 	shadow_skill_label = Label.new()
-	shadow_skill_label.position = Vector2(22, 242)
+	shadow_skill_label.position = Vector2(18, 328)
 	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
-	shadow_skill_label.add_theme_font_size_override("font_size", 12)
+	shadow_skill_label.add_theme_font_size_override("font_size", 10)
+	shadow_skill_label.add_theme_color_override("font_color", Color("b6a1d6"))
 	hud.add_child(shadow_skill_label)
-	xp_label = Label.new()
-	xp_label.position = Vector2(22, 260)
-	xp_label.text = "NÍVEL 1  •  0 XP"
-	xp_label.add_theme_font_size_override("font_size", 13)
-	hud.add_child(xp_label)
-	inventory_label = Label.new()
-	inventory_label.position = Vector2(22, 280)
-	inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
-	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
-	inventory_label.add_theme_font_size_override("font_size", 12)
-	hud.add_child(inventory_label)
-	# Full backpack panel: compact, touch-friendly and hidden during exploration.
+
+	# Backpack is centered, padded and safe to use on touch screens.
 	inventory_panel = PanelContainer.new()
-	inventory_panel.position = Vector2(0.12, 0.20)
-	inventory_panel.anchor_left = 0.12
-	inventory_panel.anchor_right = 0.88
-	inventory_panel.anchor_top = 0.20
-	inventory_panel.anchor_bottom = 0.20
-	inventory_panel.custom_minimum_size = Vector2(0, 250)
+	inventory_panel.name = "BackpackPanel"
+	inventory_panel.set_anchors_preset(Control.PRESET_CENTER)
+	inventory_panel.position = Vector2(-190, -145)
+	inventory_panel.custom_minimum_size = Vector2(380, 290)
 	inventory_panel.visible = false
+	inventory_panel.add_theme_stylebox_override("panel", panel_style)
 	hud.add_child(inventory_panel)
 	var inventory_box := VBoxContainer.new()
-	inventory_box.add_theme_constant_override("separation", 10)
+	inventory_box.add_theme_constant_override("separation", 12)
 	inventory_panel.add_child(inventory_box)
 	var inventory_title := Label.new()
 	inventory_title.text = "MOCHILA DE TOBI"
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	inventory_title.add_theme_font_size_override("font_size", 20)
+	inventory_title.add_theme_font_size_override("font_size", 19)
+	inventory_title.add_theme_color_override("font_color", Color("d8b77c"))
 	inventory_box.add_child(inventory_title)
 	inventory_details = Label.new()
 	inventory_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	inventory_details.add_theme_font_size_override("font_size", 12)
 	inventory_box.add_child(inventory_details)
 	var inventory_close := Button.new()
 	inventory_close.text = "FECHAR MOCHILA"
 	inventory_close.custom_minimum_size = Vector2(0, 44)
 	inventory_close.pressed.connect(_toggle_inventory)
 	inventory_box.add_child(inventory_close)
+
 	prompt_label = Label.new()
 	prompt_label.anchor_left = 0.5
 	prompt_label.anchor_right = 0.5
 	prompt_label.anchor_top = 0.78
-	prompt_label.position = Vector2(-210,0)
-	prompt_label.size = Vector2(420,48)
+	prompt_label.position = Vector2(-210, 0)
+	prompt_label.size = Vector2(420, 48)
 	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prompt_label.add_theme_font_size_override("font_size", 14)
+	prompt_label.add_theme_color_override("font_color", Color("f0d39a"))
 	hud.add_child(prompt_label)
 	toast_label = Label.new()
-	toast_label.position = Vector2(22,308)
-	toast_label.add_theme_color_override("font_color",Color("f1d5a5"))
+	toast_label.position = Vector2(18, 350)
+	toast_label.size = Vector2(440, 42)
+	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	toast_label.add_theme_font_size_override("font_size", 11)
+	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
 	hud.add_child(toast_label)
-	# touch movement pad: press-and-hold buttons map to the same input actions as keyboard
+
+	# Mobile movement pad — same input actions, but with unified circular-feel styling.
 	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
 		var move_btn := Button.new()
 		move_btn.text = data.t
-		move_btn.anchor_left = data.p.x; move_btn.anchor_right = data.p.x
-		move_btn.anchor_top = data.p.y; move_btn.anchor_bottom = data.p.y
-		move_btn.position = Vector2(-28,-25); move_btn.size = Vector2(56,50)
-		move_btn.modulate = Color(0.82,0.84,0.78,0.72)
+		move_btn.anchor_left = data.p.x
+		move_btn.anchor_right = data.p.x
+		move_btn.anchor_top = data.p.y
+		move_btn.anchor_bottom = data.p.y
+		move_btn.position = Vector2(-27, -27)
+		move_btn.size = Vector2(54, 54)
+		move_btn.add_theme_font_size_override("font_size", 17)
+		move_btn.modulate = Color(0.92, 0.94, 0.88, 0.88)
 		move_btn.button_down.connect(Input.action_press.bind(data.a))
 		move_btn.button_up.connect(Input.action_release.bind(data.a))
 		hud.add_child(move_btn)
-	# touch action buttons
+
+	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
 	for data in [{"t":"ATACAR","a":"attack","p":Vector2(0.83,0.82)},{"t":"PULAR","a":"jump","p":Vector2(0.91,0.68)},{"t":"INTERAGIR","a":"interact","p":Vector2(0.72,0.9)},{"t":"ESQUIVAR","a":"dodge","p":Vector2(0.84,0.94)},{"t":"POÇÃO","a":"potion","p":Vector2(0.94,0.84)},{"t":"FORJAR","a":"upgrade","p":Vector2(0.70,0.70)},{"t":"MOCHILA","a":"inventory","p":Vector2(0.70,0.61)},{"t":"BREU","a":"shadow","p":Vector2(0.93,0.72)}]:
-		var b := Button.new()
-		b.text = data.t
-		b.anchor_left = data.p.x
-		b.anchor_right = data.p.x
-		b.anchor_top = data.p.y
-		b.anchor_bottom = data.p.y
-		b.position = Vector2(-54,-26)
-		b.size = Vector2(108,52)
-		b.modulate = Color(0.86,0.82,0.73,0.9)
-		b.pressed.connect(_touch_action.bind(data.a))
-		hud.add_child(b)
+		var action_btn := Button.new()
+		action_btn.text = data.t
+		action_btn.anchor_left = data.p.x
+		action_btn.anchor_right = data.p.x
+		action_btn.anchor_top = data.p.y
+		action_btn.anchor_bottom = data.p.y
+		action_btn.position = Vector2(-48, -23)
+		action_btn.size = Vector2(96, 46)
+		action_btn.add_theme_font_size_override("font_size", 10)
+		action_btn.pressed.connect(_touch_action.bind(data.a))
+		hud.add_child(action_btn)
+
+	_update_inventory()
+
+
+func _hud_bar_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.set_corner_radius_all(5)
+	return style
+
 
 func _touch_action(action: String) -> void:
 	if action == "attack": player.do_attack()
