@@ -3,6 +3,7 @@ extends Node3D
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
 var player: CharacterBody3D
@@ -628,8 +629,10 @@ func _build_gothic_gate_accents() -> void:
 	# narrowing the walkable opening or adding physics bodies on mobile.
 	for side in [-1.0, 1.0]:
 		var cap := _box(self, "GateCarvedCap", Vector3(side * 5.5, 5.35, -25.82), Vector3(2.55, 0.42, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)
 		cap.rotation.z = side * -0.035
 		var footing := _box(self, "GateFooting", Vector3(side * 5.5, 0.32, -25.82), Vector3(2.55, 0.64, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)
 		footing.material_override = _material_for_surface("cut stone", Color("514d49"))
 		for spike_index in range(2):
 			var spike := _box(self, "GateIronFinial", Vector3(side * (4.65 + float(spike_index) * 1.25), 6.0, -26.0), Vector3(0.22, 1.25, 0.22), Color("343638"))
