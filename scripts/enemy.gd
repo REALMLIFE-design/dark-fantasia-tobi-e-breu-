@@ -98,6 +98,8 @@ func _ready() -> void:
 	_add_to(head_pivot, hat, Vector3(0, 0.42, -0.015), Color("493e34") if enemy_kind != 4 else Color("263f3b"))
 	var left_arm := _make_enemy_limb("LeftArm", Vector3(-0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
 	var right_arm := _make_enemy_limb("RightArm", Vector3(0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
+	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
+	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var weapon_pivot := Node3D.new(); weapon_pivot.name = "WeaponPivot"; weapon_pivot.position = Vector3(0, -0.40, 0); right_arm.add_child(weapon_pivot)
 	weapon_pivot_ref = weapon_pivot
 	var weapon := BoxMesh.new(); weapon.size = Vector3(0.13, 0.78, 0.13)
@@ -202,8 +204,6 @@ func _ready() -> void:
 		for side in [-1.0, 1.0]:
 			var wrist := SphereMesh.new(); wrist.radius = 0.13; wrist.height = 0.16
 			_add_to(left_arm if side < 0.0 else right_arm, wrist, Vector3(0, -0.42, 0.02), Color("8c7959"))
-	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
-	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	if enemy_kind < 3:
 		for leg_node in [left_leg, right_leg]:
 			var boot := BoxMesh.new(); boot.size = Vector3(0.25, 0.16, 0.34)
