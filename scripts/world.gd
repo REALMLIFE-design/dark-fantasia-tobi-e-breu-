@@ -655,11 +655,31 @@ func _build_region_landmarks() -> void:
 	var rune := _sphere(shrine, "RuneLight", Vector3(0, 2.1, 0.48), 0.25, Color("dfb96b"), 0.3)
 	rune.material_override = _painter_mat(Color("dfb96b"), 8.0, 0.12)
 	var shrine_light := OmniLight3D.new()
+	shrine_light.name = "ShrineLight"
 	shrine_light.position = Vector3(0, 2.4, 1.0)
 	shrine_light.light_color = Color("d5a85c")
 	shrine_light.light_energy = 0.8
 	shrine_light.omni_range = 5.0
 	shrine.add_child(shrine_light)
+
+	# The forgotten shrine now has a subtle magical heartbeat, with three
+	# lightweight floating shards that remain inexpensive on mobile hardware.
+	var rune_pulse := create_tween().set_loops()
+	rune_pulse.tween_property(rune, "scale", Vector3.ONE * 1.18, 0.95).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	rune_pulse.tween_property(rune, "scale", Vector3.ONE * 0.9, 0.95).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var light_pulse := create_tween().set_loops()
+	light_pulse.tween_property(shrine_light, "light_energy", 1.15, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	light_pulse.tween_property(shrine_light, "light_energy", 0.45, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	for i in range(3):
+		var angle := TAU * float(i) / 3.0
+		var shard_position := Vector3(cos(angle) * 1.05, 2.75 + float(i % 2) * 0.22, sin(angle) * 0.72)
+		var shard := _sphere(shrine, "ShrineFloatingShard_%d" % i, shard_position, 0.13, Color("8e303c"), 0.48)
+		shard.scale = Vector3(0.55, 1.7, 0.55)
+		shard.rotation.z = -0.18 if i % 2 == 0 else 0.18
+		shard.material_override = _painter_mat(Color("8e303c"), 7.0, 0.16, 0, Color("421d29"))
+		var shard_tween := create_tween().set_loops()
+		shard_tween.tween_property(shard, "position", shard_position + Vector3(0.0, 0.16, 0.0), 1.0 + float(i) * 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		shard_tween.tween_property(shard, "position", shard_position - Vector3(0.1, 0.12, 0.0), 1.0 + float(i) * 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _build_swamp_region() -> void:
 	# A connected second biome: shallow poisonous pools, dead trees and three cleanseable totems.
