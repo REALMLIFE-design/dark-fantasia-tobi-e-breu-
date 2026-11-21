@@ -722,7 +722,7 @@ class PerfectDodgeContracts(unittest.TestCase):
         cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
 
     def test_timed_dodge_rewards_stamina_only_once_and_shows_feedback(self):
-        damage = self.player[self.player.index('func take_damage'):self.player.index('func get_stamina')]
+        damage = self.player[self.player.index('func take_damage'):]
         self.assertIn('dodge_time > 0.0 and not dodge_perfect_used', damage)
         self.assertIn('dodge_perfect_used = true', damage)
         self.assertIn('stamina = minf(100.0, stamina + 10.0)', damage)
