@@ -232,6 +232,35 @@ func _painter_mat(color: Color, brush_scale := 3.0, brush_strength := 0.08, patt
 	material.set_shader_parameter("brush_scale", brush_scale)
 	material.set_shader_parameter("brush_strength", brush_strength)
 	material.set_shader_parameter("pattern_mode", pattern_mode)
+	var detail_scale := 1.0
+	var triplanar_sharpness := 4.5
+	match pattern_mode:
+		1:
+			detail_scale = 0.92
+			triplanar_sharpness = 3.8
+		2:
+			detail_scale = 1.18
+			triplanar_sharpness = 4.2
+		3:
+			detail_scale = 1.05
+			triplanar_sharpness = 3.6
+		4:
+			detail_scale = 1.28
+			triplanar_sharpness = 5.0
+		5:
+			detail_scale = 0.78
+			triplanar_sharpness = 3.0
+		6:
+			detail_scale = 1.0
+			triplanar_sharpness = 4.0
+		7:
+			detail_scale = 1.12
+			triplanar_sharpness = 5.2
+		8:
+			detail_scale = 1.08
+			triplanar_sharpness = 5.4
+	material.set_shader_parameter("detail_scale", detail_scale)
+	material.set_shader_parameter("triplanar_sharpness", triplanar_sharpness)
 	# Relief is tuned by surface so stone and timber read clearly without
 	# making grass noisy, snow jagged, or water look embossed.
 	var bump_strength := 0.16
@@ -250,11 +279,11 @@ func _painter_mat(color: Color, brush_scale := 3.0, brush_strength := 0.08, patt
 
 func _material_for_surface(surface_name: String, color: Color) -> ShaderMaterial:
 	var key := surface_name.to_lower()
-	if "grass" in key or "forest" in key or "meadow" in key or "brush" in key:
+	if "grass" in key or "forest" in key or "meadow" in key or "brush" in key or "canopy" in key:
 		return _painter_mat(color, 2.8, 0.12, 1, color.darkened(0.28))
 	if "road" in key or "trail" in key or "dirt" in key or "path" in key:
 		return _painter_mat(color, 3.4, 0.12, 2, color.darkened(0.3))
-	if "swamp" in key or "mire" in key or "mud" in key:
+	if "swamp" in key or "mire" in key or "mud" in key or "toxic" in key or "pool" in key:
 		return _painter_mat(color, 3.0, 0.14, 3, Color("263c35"))
 	if "wood" in key or "timber" in key or "bark" in key or "door" in key or "beam" in key:
 		return _painter_mat(color, 4.0, 0.10, 4, color.darkened(0.3))
@@ -289,7 +318,7 @@ func _sphere(parent: Node3D, name: String, pos: Vector3, radius: float, color: C
 	mi.name = name
 	mi.mesh = mesh
 	mi.position = pos
-	mi.material_override = _painter_mat(color, 5.0, 0.10)
+	mi.material_override = _material_for_surface(name, color)
 	parent.add_child(mi)
 	return mi
 
@@ -695,11 +724,12 @@ func _build_tree(pos: Vector3, scale_factor := 1.0) -> void:
 	trunk.name = "PaintedBark"
 	trunk.mesh = trunk_mesh
 	trunk.position = Vector3(0, 2.1, 0)
-	trunk.material_override = _painter_mat(Color("49372d"), 5.0, 0.12)
+	trunk.material_override = _painter_mat(Color("49372d"), 5.0, 0.12, 4, Color("30231e"))
 	tree.add_child(trunk)
 	for i in range(3):
 		var crown := _sphere(tree, "PaintedCanopy", Vector3(randf_range(-0.8,0.8), 4.0 + i*0.9, randf_range(-0.6,0.6)), 2.5 - i*0.25, [Color("405d49"),Color("526e50"),Color("344b42")][i], 3.5)
-		crown.material_override = _painter_mat([Color("405d49"),Color("526e50"),Color("344b42")][i], 4.0, 0.13)
+		var canopy_color: Color = [Color("405d49"),Color("526e50"),Color("344b42")][i]
+		crown.material_override = _painter_mat(canopy_color, 4.0, 0.13, 1, canopy_color.darkened(0.32))
 		crown.scale = Vector3(1.2, 0.9, 1.0)
 
 func _build_ruins_and_props() -> void:
