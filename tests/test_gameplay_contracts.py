@@ -618,3 +618,23 @@ class EnemyTelegraphColorContracts(unittest.TestCase):
             self.assertIn('Color("%s")' % color, enemy)
         self.assertIn("attack_telegraph_material.emission = warning_color", enemy)
 
+class MobileHudAndWorldArtContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+
+    def test_touch_hud_has_responsive_left_and_right_hand_controls(self):
+        self.assertIn("func _apply_mobile_hud_layout(ui_root: Control) -> void:", self.world)
+        self.assertIn('move_btn.name = "TouchMove_" + data.a', self.world)
+        self.assertIn('action_btn.name = "TouchAction_" + data.a', self.world)
+        self.assertIn('var touch_labels := {"attack":"⚔\\nATACAR"', self.world)
+        self.assertIn('"attack": [Vector2(0.91, 0.855), 82.0]', self.world)
+        self.assertIn('"move_left": Vector2(0.045, 0.85)', self.world)
+        self.assertIn("OS.has_feature(\"mobile\")", self.world)
+
+    def test_starting_forest_uses_batched_grass_and_wildflowers(self):
+        self.assertIn("grass_batch.instance_count = 132", self.world)
+        self.assertIn("flower_batch.instance_count = 38", self.world)
+        self.assertIn('"PainterlyGrassField"', self.world)
+        self.assertIn('"MoonlitWildflowers"', self.world)
+
