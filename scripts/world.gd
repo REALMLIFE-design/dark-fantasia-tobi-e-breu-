@@ -1470,9 +1470,11 @@ func _build_menus() -> void:
 	menu_panel = PanelContainer.new()
 	menu_panel.name = "MenuFrame"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
-	menu_panel.position = Vector2(-340, -300)
-	menu_panel.size = Vector2(680, 600)
-	menu_panel.custom_minimum_size = Vector2(680, 600)
+	var viewport_size := get_viewport_rect().size
+	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.90))
+	menu_panel.position = -panel_size * 0.5
+	menu_panel.size = panel_size
+	menu_panel.custom_minimum_size = Vector2(0, 0)
 	menu_panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.035, 0.043, 0.038, 0.99), Color("b18a52"), 22))
 	menu_layer.add_child(menu_panel)
 	var shell := VBoxContainer.new()
@@ -1533,10 +1535,16 @@ func _show_menu_page(page: String) -> void:
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", Color("b8b4a5"))
 	menu_body.add_child(subtitle)
+	var scroll := ScrollContainer.new()
+	scroll.name = "MenuPageScroll"
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	menu_body.add_child(scroll)
 	var content := VBoxContainer.new()
-	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 9)
-	menu_body.add_child(content)
+	scroll.add_child(content)
 	match page:
 		"main":
 			title.text = "A LENDA AINDA NÃO TERMINOU"
@@ -1582,7 +1590,7 @@ func _show_menu_page(page: String) -> void:
 			var damage := 35 + weapon_level * 10 + (level - 1) * 3
 			_menu_add_card(content, "ESPADA DE TOBI  •  NÍVEL +%d" % weapon_level, "Dano atual: %d\nVida máxima: %d\nNível do aventureiro: %d\nFragmentos Rubros: %d" % [damage, player.max_hp, level, shards])
 			if weapon_level < WEAPON_UPGRADE_COSTS.size():
-				var cost := WEAPON_UPGRADE_COSTS[weapon_level]
+				var cost: int = WEAPON_UPGRADE_COSTS[weapon_level]
 				var master := get_node_or_null("Mestre Azulan")
 				var near_forge := is_instance_valid(master) and player.global_position.distance_to(master.global_position) <= 5.0
 				var forge_caption := "APRIMORAR ESPADA  •  %d FRAGMENTOS" % cost if near_forge else "FORJA  •  VISITE MESTRE AZULAN"
