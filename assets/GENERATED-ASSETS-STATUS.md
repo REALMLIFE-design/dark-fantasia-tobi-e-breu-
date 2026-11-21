@@ -5,6 +5,7 @@ Este documento separa ativos gerados de ativos realmente incorporados ao projeto
 ## Bosque da Cicatriz Rubra — PINOC
 
 - Asset ID: `eb40a681-9845-57bd-9e3e-52a740a82fc9`
+- Árvore colossal game-ready gerada no Thrixel: 14.132 triângulos; GLB leve com texturas até 1024 px — [baixar modelo](https://api.thrixel.com/api/v1/51f95b5b-9fc4-419f-96ca-c45b68dc4697/download?format=glb&quality=lite&texture_size=1024).
 - Tipo: cena de ambiente em Gaussian Splat (`.spz`)
 - Estado: geração concluída; três expansões manuais de geometria/visibilidade concluídas (14 créditos PINOC no total: 5 da cena + 3 × 3).
 - Limitação: o arquivo SPZ não é uma malha GLB/FBX e não pode ser importado diretamente pelo pipeline Godot atual. Requer um renderizador compatível com Viggle Splat Engine ou uma etapa de conversão suportada.
