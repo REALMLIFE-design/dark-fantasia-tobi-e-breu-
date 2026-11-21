@@ -977,6 +977,43 @@ func _build_whisper_grove() -> void:
 	_box(arch, "GroveArchRight", Vector3(3.0, 2.2, 0.0), Vector3(0.8, 4.4, 0.9), Color("686f68"))
 	_box(arch, "GroveArchTop", Vector3(0.0, 4.25, 0.0), Vector3(6.8, 0.8, 1.0), Color("77796d"))
 
+	_spawn_thrixel_stag_guardian()
+
+
+func _spawn_thrixel_stag_guardian() -> void:
+	# This GLB is generated in the existing Thrixel project and downloaded by CI.
+	# Keep a graceful fallback for editor sessions where the optional model is absent.
+	var model_path := "res://assets/models/ancient_stag_guardian.glb"
+	if not ResourceLoader.exists(model_path):
+		push_warning("Thrixel stag guardian asset is missing; keeping the grove's procedural landmark.")
+		return
+	var model_scene := load(model_path) as PackedScene
+	if model_scene == null:
+		push_warning("Thrixel stag guardian GLB could not be imported as a PackedScene.")
+		return
+
+	var guardian := Node3D.new()
+	guardian.name = "ThrixelAncientStagGuardian"
+	guardian.position = Vector3(96.0, 0.0, -145.0)
+	add_child(guardian)
+	var model := model_scene.instantiate()
+	model.name = "AncientStagModel"
+	model.scale = Vector3.ONE * 0.78
+	model.rotation.y = PI
+	guardian.add_child(model)
+
+	var eye_glow := OmniLight3D.new()
+	eye_glow.name = "StagSpiritGlow"
+	eye_glow.position = Vector3(0.0, 2.25, 0.0)
+	eye_glow.light_color = Color("72cfc0")
+	eye_glow.light_energy = 0.55
+	eye_glow.omni_range = 6.5
+	guardian.add_child(eye_glow)
+
+	var idle := create_tween().set_loops()
+	idle.tween_property(guardian, "rotation:y", 0.045, 2.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	idle.tween_property(guardian, "rotation:y", -0.045, 5.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 func _build_river_treasure_chests() -> void:
 	# Three optional caches reward exploration on both banks and near the old gate.
 	var positions := [Vector3(39.0, 0.0, -137.0), Vector3(91.0, 0.0, -115.0), Vector3(62.0, 0.0, -164.0)]
