@@ -607,3 +607,16 @@ class StaminaFeedbackContracts(unittest.TestCase):
         self.assertIn('current_stamina <= 20.0', self.world)
         self.assertIn('current_stamina <= 40.0', self.world)
         self.assertIn('stamina_bar.modulate = stamina_color', self.world)
+
+
+class EnemyHitFlashContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_hit_flash_uses_duplicated_materials_and_restores_base_color(self):
+        self.assertIn('var hit_flash_materials: Array[StandardMaterial3D] = []', self.enemy)
+        self.assertIn('source_material.duplicate() as StandardMaterial3D', self.enemy)
+        self.assertIn('hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)', self.enemy)
+        self.assertIn('hit_flash = 0.14', self.enemy)
+        self.assertIn('_update_hit_flash_materials()', self.enemy)
