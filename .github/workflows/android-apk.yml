@@ -35,9 +35,6 @@ jobs:
             exit 1
           fi
 
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-
           yes | "$SDKMANAGER" --licenses || true
 
           "$SDKMANAGER" --install \
@@ -62,8 +59,8 @@ jobs:
       - name: Exportar APK com Godot
         uses: firebelley/godot-export@v8.0.0
         with:
-          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3.3-stable/Godot_v4.3.3-stable_linux.x86_64.zip
-          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3.3-stable/Godot_v4.3.3-stable_export_templates.tpz
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           relative_project_path: ${{ env.PROJECT_PATH }}
 
       - name: Disponibilizar APK
