@@ -1,13 +1,12 @@
 # Modelos 3D gerados para Tobi e Breu
 
-## Guardião Cervo Ancião
+## Guardião Cervo Ancião — aguardando vendoring canônico
 
 - Provider: Thrixel
 - Project: Tobi e Breu — Dark World 3D
-- Submission: `10f1f722-53d8-4ca0-b99b-e0e687bc8fec`
+- Submission: `10f1f722-8f0a-76a1-a977-29e97e2f1e44`
 - Format: GLB, PBR textures capped at 1024 px
 - Geometry: 14,064 triangles, rigged quadruped
-- Runtime path: `assets/models/ancient_stag_guardian.glb`
-- Download: `https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024`
+- Status: gerado e inspecionado; ainda não admitido no projeto Godot.
 
-The Android workflow downloads and validates this model before Godot imports resources and exports the APK. The in-game grove places it as a softly illuminated ancient guardian with a subtle idle turn. No Thrixel generation credits are spent by downloading the existing model.
+A habilidade `game-asset-vendoring` exige um pacote canônico com proveniência, licença, hashes e validação. O CLI local `game-dev` não está disponível neste ambiente, então o GLB não foi copiado para `res://` nem baixado pelo workflow Android. A clareira usa uma estátua procedural temporária e mantém a missão jogável. Não gastar créditos adicionais para esse asset.
