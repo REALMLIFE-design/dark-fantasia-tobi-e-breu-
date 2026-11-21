@@ -42,7 +42,7 @@ if [[ -z "$APP_PID" ]]; then
 fi
 
 adb logcat -d -t 4000 > "$LOG_PATH"
-RESUMED_ACTIVITY="$(adb shell dumpsys activity activities | tr -d '\\r')"
+RESUMED_ACTIVITY="$(adb shell dumpsys activity activities | tr -d '\r')"
 if ! grep -E "mResumedActivity.*$PACKAGE_ID|topResumedActivity.*$PACKAGE_ID" <<< "$RESUMED_ACTIVITY"; then
   echo "$RESUMED_ACTIVITY"
   echo "ERRO: o jogo permaneceu em execução, mas não está mais em primeiro plano após o toque"
