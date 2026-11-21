@@ -1646,12 +1646,14 @@ func _build_hud() -> void:
 	boss_box.add_child(boss_health_bar)
 
 	combo_label = Label.new()
+	combo_label.name = "ComboLabel"
 	combo_label.position = Vector2(18, 292)
 	combo_label.text = "COMBO  •  pronto"
 	combo_label.add_theme_font_size_override("font_size", 10)
 	combo_label.add_theme_color_override("font_color", Color("d8b77c"))
 	ui_root.add_child(combo_label)
 	whisper_grove_label = Label.new()
+	whisper_grove_label.name = "WhisperGroveLabel"
 	whisper_grove_label.position = Vector2(18, 310)
 	whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  0/3"
 	whisper_grove_label.add_theme_font_size_override("font_size", 10)
@@ -1659,6 +1661,7 @@ func _build_hud() -> void:
 	whisper_grove_label.visible = false
 	ui_root.add_child(whisper_grove_label)
 	shadow_skill_label = Label.new()
+	shadow_skill_label.name = "ShadowSkillLabel"
 	shadow_skill_label.position = Vector2(18, 328)
 	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
 	shadow_skill_label.add_theme_font_size_override("font_size", 10)
@@ -1714,6 +1717,7 @@ func _build_hud() -> void:
 	# Mobile movement pad — same input actions, but with unified circular-feel styling.
 	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
 		var move_btn := Button.new()
+		move_btn.name = "TouchMove_" + data.a
 		move_btn.text = data.t
 		move_btn.anchor_left = data.p.x
 		move_btn.anchor_right = data.p.x
@@ -1733,6 +1737,7 @@ func _build_hud() -> void:
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
 	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}]:
 		var action_btn := Button.new()
+		action_btn.name = "TouchAction_" + data.a
 		action_btn.text = data.t
 		action_btn.anchor_left = data.p.x
 		action_btn.anchor_right = data.p.x
@@ -1782,6 +1787,85 @@ func _build_hud() -> void:
 	ui_root.add_child(pause_btn)
 
 	_update_inventory()
+	_apply_mobile_hud_layout(ui_root)
+
+
+func _apply_mobile_hud_layout(ui_root: Control) -> void:
+	# Landscape-first touch layout: generous hit targets, clear left/right hand zones.
+	var viewport_size := get_viewport().get_visible_rect().size
+	var mobile := OS.has_feature("mobile") or viewport_size.x < 900.0
+	if not mobile:
+		return
+	var portrait := viewport_size.y > viewport_size.x
+	var compact_scale := 0.82 if portrait else 1.0
+	var move_layout := {
+		"move_forward": Vector2(0.125, 0.765),
+		"move_back": Vector2(0.125, 0.935),
+		"move_left": Vector2(0.045, 0.85),
+		"move_right": Vector2(0.205, 0.85)
+	}
+	for action in move_layout:
+		var button := ui_root.get_node_or_null("TouchMove_" + action) as Button
+		if button:
+			var size := Vector2(68.0, 68.0) * compact_scale
+			button.anchor_left = move_layout[action].x
+			button.anchor_right = move_layout[action].x
+			button.anchor_top = move_layout[action].y
+			button.anchor_bottom = move_layout[action].y
+			button.position = -size * 0.5
+			button.size = size
+			button.add_theme_font_size_override("font_size", 23)
+			button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var action_layout := {
+		"attack": [Vector2(0.91, 0.855), 82.0],
+		"jump": [Vector2(0.96, 0.69), 66.0],
+		"interact": [Vector2(0.755, 0.79), 64.0],
+		"dodge": [Vector2(0.79, 0.94), 66.0],
+		"potion": [Vector2(0.96, 0.94), 66.0],
+		"shadow": [Vector2(0.82, 0.675), 64.0],
+		"upgrade": [Vector2(0.66, 0.68), 58.0],
+		"inventory": [Vector2(0.66, 0.82), 58.0]
+	}
+	for action in action_layout:
+		var button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+		if button:
+			var data: Array = action_layout[action]
+			var size := Vector2.ONE * float(data[1]) * compact_scale
+			var anchor: Vector2 = data[0]
+			button.anchor_left = anchor.x
+			button.anchor_right = anchor.x
+			button.anchor_top = anchor.y
+			button.anchor_bottom = anchor.y
+			button.position = -size * 0.5
+			button.size = size
+			button.add_theme_font_size_override("font_size", 22 if action == "attack" else 19)
+			button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var pause := ui_root.get_node_or_null("PauseMenuButton") as Button
+	if pause:
+		pause.size = Vector2(54, 54)
+		pause.position = Vector2(-60, 12)
+		pause.add_theme_font_size_override("font_size", 22)
+	var quest := ui_root.get_node_or_null("QuestCard") as PanelContainer
+	if quest:
+		quest.position = Vector2(12, 12)
+		quest.custom_minimum_size.x = minf(300.0, viewport_size.x * (0.43 if not portrait else 0.78))
+	var status := ui_root.get_node_or_null("PlayerStatusCard") as PanelContainer
+	if status:
+		status.position = Vector2(12, 132)
+		status.custom_minimum_size.x = minf(250.0, viewport_size.x * (0.36 if not portrait else 0.74))
+	var progress := ui_root.get_node_or_null("ProgressCard") as PanelContainer
+	if progress:
+		progress.position = Vector2(12, 216)
+		progress.custom_minimum_size.x = minf(250.0, viewport_size.x * (0.36 if not portrait else 0.74))
+	var combo := ui_root.get_node_or_null("ComboLabel") as Label
+	if combo:
+		combo.position = Vector2(14, 282)
+	var grove := ui_root.get_node_or_null("WhisperGroveLabel") as Label
+	if grove:
+		grove.position = Vector2(14, 302)
+	var shadow := ui_root.get_node_or_null("ShadowSkillLabel") as Label
+	if shadow:
+		shadow.position = Vector2(14, 322)
 
 
 func _build_menus() -> void:
