@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 13', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('"save_version", 14', self.world)
+        self.assertIn('save_version > 14', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -651,3 +651,14 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn("hood_point", player)
         self.assertIn("bracer_trim", player)
         self.assertIn("cape_hem", player)
+
+
+class BellTowerSideQuestContracts(unittest.TestCase):
+    def test_echoing_bell_tower_side_quest_is_interactive_and_persistent(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("var bell_tower_ring_count := 0", world)
+        self.assertIn("if bell_tower_ring_count < 3:", world)
+        self.assertIn("bell_tower_ring_count += 1", world)
+        self.assertIn("SINO DO ÚLTIMO VIGIA!", world)
+        self.assertIn('cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)', world)
+        self.assertIn('bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)', world)
