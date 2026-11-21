@@ -104,9 +104,44 @@ jobs:
 
           preset = Path(os.environ['PROJECT_PATH']) / 'export_presets.cfg'
           content = preset.read_text(encoding='utf-8')
-          content = re.sub(r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)true\s*$', r'\1false', content)
+          content = re.sub(r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)true\s*
+          PY
+
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+
+      - name: Importar recursos do Godot
+        timeout-minutes: 5
+        run: |
+          timeout 4m "$GODOT_BIN" --headless --editor --path "$PROJECT_PATH" --import --quit
+
+      - name: Gerar APK
+        timeout-minutes: 16
+        run: |
+          set -o pipefail
+          mkdir -p "$PROJECT_PATH/build"
+          timeout 15m "$GODOT_BIN" --headless --verbose \
+            --path "$PROJECT_PATH" \
+            --export-debug "Android" \
+            "$PROJECT_PATH/build/TobiEBreu.apk" 2>&1 | tee "$RUNNER_TEMP/android-export.log"
+          test -s "$PROJECT_PATH/build/TobiEBreu.apk"
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TobiEBreu-APK
+          path: ${{ env.PROJECT_PATH }}/build/TobiEBreu.apk
+          if-no-files-found: error
+, r'\1false', content)
+          # Godot 4.3 rejects Min/Target SDK overrides when Gradle is disabled.
+          content = re.sub(r'(?m)^\s*gradle_build/(?:min_sdk|target_sdk)\s*=.*\n', '', content)
           preset.write_text(content, encoding='utf-8')
-          print('Exportação Android padrão ativada; Gradle desativado.')
+          print('Exportação Android padrão ativada; Gradle desativado; overrides Min/Target SDK removidos.')
           PY
 
           mkdir -p "$HOME/.config/godot"
