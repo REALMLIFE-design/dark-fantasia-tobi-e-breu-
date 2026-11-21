@@ -287,7 +287,7 @@ func _build_open_world_expansion() -> void:
 		clearing.scale = Vector3(18.0, 0.08, 15.0)
 		for j in range(7):
 			var angle := TAU * float(j) / 7.0
-			var tree_pos := clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
+			var tree_pos: Vector3 = clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
 			_build_tree(tree_pos, randf_range(0.8, 1.25))
 	# Distant mountain wall makes the larger map read as a continuous landmass.
 	for i in range(32):
@@ -679,7 +679,7 @@ func _build_swamp_region() -> void:
 			var limb := _box(self, "DeadBranch", Vector3(x + branch * 0.75, 3.2, z), Vector3(1.8, 0.22, 0.24), Color("4b4439"))
 			limb.rotation.z = branch * -0.42
 	for i in range(3):
-		var x := [-13.0, 0.0, 13.0][i]
+		var x: float = [-13.0, 0.0, 13.0][i]
 		var totem := Node3D.new()
 		totem.name = "SwampTotem_%d" % i
 		totem.position = Vector3(x, 0.0, -91.0 - (i % 2) * 9.0)
@@ -1107,7 +1107,11 @@ func _build_player() -> void:
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	add_child(player)
 
+
 func _build_hud() -> void:
+	var level: int = _get_player_level()
+	var current_level_xp: int = xp - ((level - 1) * 100)
+	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
 	add_child(hud)
 	var panel := PanelContainer.new()
@@ -1426,7 +1430,7 @@ func _open_river_chest(chest_id: int) -> void:
 	if glow: glow.visible = false
 	var light := chest.get_node_or_null("ChestGlowLight")
 	if light: light.light_energy = 0.0
-	var xp_reward := [35, 45, 55][chest_id]
+	var xp_reward: int = [35, 45, 55][chest_id]
 	var essence_reward := 1 if chest_id < 2 else 2
 	var shard_reward := 1 if chest_id == 2 else 0
 	_grant_xp(xp_reward)
