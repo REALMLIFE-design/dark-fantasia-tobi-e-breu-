@@ -632,3 +632,18 @@ class BossChargeFeedbackContracts(unittest.TestCase):
         self.assertIn('core_base_energy := 2.8 if boss_enraged else 1.7', self.enemy)
         self.assertIn('charge_progress * 2.4', self.enemy)
         self.assertIn('boss_core_material.emission_energy_multiplier', self.enemy)
+
+
+class FloatingDamageNumberContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_damage_numbers_float_fade_and_are_more_visible_for_elites(self):
+        self.assertIn('func _spawn_damage_number(amount: int) -> void:', self.enemy)
+        self.assertIn('number_label.text = str(amount)', self.enemy)
+        self.assertIn('number_label.no_depth_test = true', self.enemy)
+        self.assertIn('number_label.position.y + 0.72', self.enemy)
+        self.assertIn('"modulate:a", 0.0, 0.58', self.enemy)
+        self.assertIn('number_label.font_size = 42 if enemy_kind >= 3 else 34', self.enemy)
+        self.assertIn('_spawn_damage_number(amount)', self.enemy)
