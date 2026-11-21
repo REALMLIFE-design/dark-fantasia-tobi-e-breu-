@@ -575,25 +575,87 @@ func _add_region_title(text_value: String, world_pos: Vector3, tint: Color) -> v
 	add_child(title)
 
 func _build_tree(pos: Vector3, scale_factor := 1.0) -> void:
+	# Silhueta de árvore pintada: raízes expostas, tronco afunilado,
+	# galhos visíveis e copa em camadas. Mantém poucos nós por árvore no Android.
 	var tree := Node3D.new()
+	tree.name = "PainterlyAncientTree"
 	tree.position = pos
 	tree.scale = Vector3.ONE * scale_factor
 	add_child(tree)
+
+	var bark := _painter_mat(Color("49372d"), 4.6, 0.16, 4, Color("2d2925"))
 	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.24
+	trunk_mesh.top_radius = 0.20
 	trunk_mesh.bottom_radius = 0.48
-	trunk_mesh.height = 4.2
-	trunk_mesh.radial_segments = 7
+	trunk_mesh.height = 4.8
+	trunk_mesh.radial_segments = 9
 	var trunk := MeshInstance3D.new()
-	trunk.name = "PaintedBark"
+	trunk.name = "TaperedBark"
 	trunk.mesh = trunk_mesh
-	trunk.position = Vector3(0, 2.1, 0)
-	trunk.material_override = _painter_mat(Color("49372d"), 5.0, 0.12)
+	trunk.position = Vector3(0.0, 2.4, 0.0)
+	trunk.material_override = bark
 	tree.add_child(trunk)
+
+	# Raízes largas quebram a aparência de cilindro plantado no chão.
+	for i in range(4):
+		var angle := TAU * float(i) / 4.0 + 0.35
+		var root_mesh := CylinderMesh.new()
+		root_mesh.top_radius = 0.08
+		root_mesh.bottom_radius = 0.25
+		root_mesh.height = 1.45
+		root_mesh.radial_segments = 7
+		var root := MeshInstance3D.new()
+		root.name = "ExposedRoot_%02d" % i
+		root.mesh = root_mesh
+		root.position = Vector3(cos(angle) * 0.48, 0.48, sin(angle) * 0.48)
+		root.rotation.z = cos(angle) * 0.52
+		root.rotation.x = sin(angle) * 0.52
+		root.material_override = bark
+		tree.add_child(root)
+
+	# Dois galhos principais aparecem por baixo da copa e dão leitura de árvore.
+	for i in range(2):
+		var side := -1.0 if i == 0 else 1.0
+		var branch_mesh := CylinderMesh.new()
+		branch_mesh.top_radius = 0.055
+		branch_mesh.bottom_radius = 0.16
+		branch_mesh.height = 2.0
+		branch_mesh.radial_segments = 7
+		var branch := MeshInstance3D.new()
+		branch.name = "MainBranch_%d" % i
+		branch.mesh = branch_mesh
+		branch.position = Vector3(side * 0.58, 3.65, 0.0)
+		branch.rotation.z = -side * 0.72
+		branch.rotation.x = side * 0.16
+		branch.material_override = bark
+		tree.add_child(branch)
+
+	# Copa irregular em camadas, com tons alternados para parecer pintada à mão.
+	var leaf_colors := [
+		Color("344d3d"), Color("405f48"), Color("526f50"),
+		Color("3b5843"), Color("61784f"), Color("496447")
+	]
+	var crown_specs := [
+		[Vector3(0.0, 5.35, 0.0), 2.05, Vector3(1.12, 0.88, 1.0)],
+		[Vector3(-1.15, 4.75, 0.05), 1.48, Vector3(1.15, 0.88, 0.92)],
+		[Vector3(1.12, 4.95, -0.12), 1.55, Vector3(1.08, 0.92, 1.0)],
+		[Vector3(-0.62, 6.05, -0.1), 1.42, Vector3(1.0, 0.94, 0.92)],
+		[Vector3(0.72, 6.25, 0.12), 1.38, Vector3(1.08, 0.9, 1.0)],
+		[Vector3(0.0, 6.85, 0.0), 1.12, Vector3(1.0, 0.95, 0.9)]
+	]
+	for i in range(crown_specs.size()):
+		var spec: Array = crown_specs[i]
+		var crown := _sphere(tree, "LayeredCanopy_%02d" % i, spec[0], float(spec[1]), leaf_colors[i], float(spec[1]) * 1.42)
+		crown.scale = spec[2]
+		crown.material_override = _painter_mat(leaf_colors[i], 3.8, 0.15, 1, leaf_colors[i].darkened(0.28))
+
+	# Pequenos planos de luz nas bordas da copa dão volume sem partículas.
 	for i in range(3):
-		var crown := _sphere(tree, "PaintedCanopy", Vector3(randf_range(-0.8,0.8), 4.0 + i*0.9, randf_range(-0.6,0.6)), 2.5 - i*0.25, [Color("405d49"),Color("526e50"),Color("344b42")][i], 3.5)
-		crown.material_override = _painter_mat([Color("405d49"),Color("526e50"),Color("344b42")][i], 4.0, 0.13)
-		crown.scale = Vector3(1.2, 0.9, 1.0)
+		var accent_pos := Vector3(-1.05 + float(i) * 1.05, 5.9 + float(i % 2) * 0.42, 0.92)
+		var accent_color := Color("71875a") if i == 1 else Color("5d7952")
+		var accent := _sphere(tree, "CanopyLightPatch_%d" % i, accent_pos, 0.48, accent_color, 0.72)
+		accent.scale = Vector3(1.2, 0.58, 0.72)
+		accent.material_override = _painter_mat(accent_color, 5.0, 0.12, 1, Color("3f5b43"))
 
 func _build_ruins_and_props() -> void:
 	for p in [Vector3(-16,0,-12),Vector3(17,0,-19),Vector3(-22,0,22),Vector3(23,0,28),Vector3(-34,0,2),Vector3(34,0,-2),Vector3(10,0,40),Vector3(-12,0,-42)]:
