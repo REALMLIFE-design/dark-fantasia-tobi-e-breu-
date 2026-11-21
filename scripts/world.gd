@@ -1132,23 +1132,36 @@ func _build_hud() -> void:
 	hud.theme = ui_theme
 
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.035, 0.045, 0.043, 0.91)
-	panel_style.border_color = Color("75634a")
-	panel_style.set_border_width_all(1)
-	panel_style.set_corner_radius_all(9)
-	panel_style.content_margin_left = 13.0
-	panel_style.content_margin_right = 13.0
-	panel_style.content_margin_top = 9.0
-	panel_style.content_margin_bottom = 9.0
+	panel_style.bg_color = Color(0.025, 0.033, 0.031, 0.96)
+	panel_style.border_color = Color("9a8058")
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(12)
+	panel_style.corner_detail = 6
+	panel_style.anti_aliasing = true
+	panel_style.content_margin_left = 15.0
+	panel_style.content_margin_right = 15.0
+	panel_style.content_margin_top = 11.0
+	panel_style.content_margin_bottom = 11.0
+	var quest_panel_style := panel_style.duplicate() as StyleBoxFlat
+	quest_panel_style.bg_color = Color(0.055, 0.047, 0.034, 0.97)
+	quest_panel_style.border_color = Color("b18a52")
+	var status_panel_style := panel_style.duplicate() as StyleBoxFlat
+	status_panel_style.bg_color = Color(0.025, 0.045, 0.041, 0.97)
+	status_panel_style.border_color = Color("648c7d")
+	var progress_panel_style := panel_style.duplicate() as StyleBoxFlat
+	progress_panel_style.bg_color = Color(0.047, 0.039, 0.027, 0.97)
+	progress_panel_style.border_color = Color("9d7946")
 	var button_normal := StyleBoxFlat.new()
-	button_normal.bg_color = Color(0.055, 0.075, 0.071, 0.88)
-	button_normal.border_color = Color(0.57, 0.48, 0.34, 0.95)
-	button_normal.set_border_width_all(1)
-	button_normal.set_corner_radius_all(12)
-	button_normal.content_margin_left = 7.0
-	button_normal.content_margin_right = 7.0
-	button_normal.content_margin_top = 5.0
-	button_normal.content_margin_bottom = 5.0
+	button_normal.bg_color = Color(0.07, 0.085, 0.075, 0.96)
+	button_normal.border_color = Color("9c8055")
+	button_normal.set_border_width_all(2)
+	button_normal.set_corner_radius_all(18)
+	button_normal.corner_detail = 6
+	button_normal.anti_aliasing = true
+	button_normal.content_margin_left = 8.0
+	button_normal.content_margin_right = 8.0
+	button_normal.content_margin_top = 6.0
+	button_normal.content_margin_bottom = 6.0
 	var button_hover := button_normal.duplicate() as StyleBoxFlat
 	button_hover.bg_color = Color(0.15, 0.17, 0.13, 0.96)
 	button_hover.border_color = Color("d2ad70")
@@ -1164,30 +1177,32 @@ func _build_hud() -> void:
 	quest_panel.name = "QuestCard"
 	quest_panel.position = Vector2(18, 16)
 	quest_panel.custom_minimum_size = Vector2(330, 112)
-	quest_panel.add_theme_stylebox_override("panel", panel_style)
+	quest_panel.add_theme_stylebox_override("panel", quest_panel_style)
 	hud.add_child(quest_panel)
 	var quest_box := VBoxContainer.new()
-	quest_box.add_theme_constant_override("separation", 4)
+	quest_box.add_theme_constant_override("separation", 5)
 	quest_panel.add_child(quest_box)
 	var title := Label.new()
-	title.text = "TOBI & BREU   /   DARK WORLD"
-	title.add_theme_font_size_override("font_size", 14)
+	title.text = "TOBI  &  BREU"
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_constant_override("outline_size", 2)
+	title.add_theme_color_override("font_outline_color", Color(0.015, 0.012, 0.008, 0.95))
 	title.add_theme_color_override("font_color", Color("d8b77c"))
 	quest_box.add_child(title)
 	var quest_kicker := Label.new()
-	quest_kicker.text = "JORNADA ATUAL"
+	quest_kicker.text = "DARK FANTASY   •   JORNADA ATUAL"
 	quest_kicker.add_theme_font_size_override("font_size", 9)
 	quest_kicker.add_theme_color_override("font_color", Color("8e9a8d"))
 	quest_box.add_child(quest_kicker)
 	quest_label = Label.new()
 	quest_label.text = quest_text
-	quest_label.add_theme_font_size_override("font_size", 13)
+	quest_label.add_theme_font_size_override("font_size", 15)
 	quest_label.add_theme_color_override("font_color", Color("eee5d3"))
 	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quest_box.add_child(quest_label)
 	objective_label = Label.new()
 	objective_label.text = "Objetivo: encontre Mestre Azulan"
-	objective_label.add_theme_font_size_override("font_size", 11)
+	objective_label.add_theme_font_size_override("font_size", 12)
 	objective_label.add_theme_color_override("font_color", Color("c6b18b"))
 	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quest_box.add_child(objective_label)
@@ -1197,7 +1212,7 @@ func _build_hud() -> void:
 	status_panel.name = "PlayerStatusCard"
 	status_panel.position = Vector2(18, 138)
 	status_panel.custom_minimum_size = Vector2(260, 78)
-	status_panel.add_theme_stylebox_override("panel", panel_style)
+	status_panel.add_theme_stylebox_override("panel", status_panel_style)
 	hud.add_child(status_panel)
 	var status_box := VBoxContainer.new()
 	status_box.add_theme_constant_override("separation", 3)
@@ -1219,7 +1234,7 @@ func _build_hud() -> void:
 	health_value_label.name = "HealthValue"
 	status_head.add_child(health_value_label)
 	health_bar = ProgressBar.new()
-	health_bar.custom_minimum_size = Vector2(230, 12)
+	health_bar.custom_minimum_size = Vector2(230, 16)
 	health_bar.max_value = player.max_hp
 	health_bar.value = player.hp
 	health_bar.show_percentage = false
@@ -1227,7 +1242,7 @@ func _build_hud() -> void:
 	health_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("a84d4b")))
 	status_box.add_child(health_bar)
 	stamina_bar = ProgressBar.new()
-	stamina_bar.custom_minimum_size = Vector2(190, 7)
+	stamina_bar.custom_minimum_size = Vector2(230, 9)
 	stamina_bar.max_value = 100
 	stamina_bar.value = 100
 	stamina_bar.show_percentage = false
@@ -1240,7 +1255,7 @@ func _build_hud() -> void:
 	progress_panel.name = "ProgressCard"
 	progress_panel.position = Vector2(18, 224)
 	progress_panel.custom_minimum_size = Vector2(260, 58)
-	progress_panel.add_theme_stylebox_override("panel", panel_style)
+	progress_panel.add_theme_stylebox_override("panel", progress_panel_style)
 	hud.add_child(progress_panel)
 	var progress_box := VBoxContainer.new()
 	progress_box.add_theme_constant_override("separation", 3)
@@ -1253,7 +1268,7 @@ func _build_hud() -> void:
 	xp_bar = ProgressBar.new()
 	xp_bar.max_value = maxi(1, xp_needed - ((level - 1) * 100))
 	xp_bar.value = current_level_xp
-	xp_bar.custom_minimum_size = Vector2(230, 7)
+	xp_bar.custom_minimum_size = Vector2(230, 10)
 	xp_bar.show_percentage = false
 	xp_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292d29")))
 	xp_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("c39a58")))
@@ -1271,7 +1286,7 @@ func _build_hud() -> void:
 	boss_hud_panel.position = Vector2(-180, 14)
 	boss_hud_panel.custom_minimum_size = Vector2(360, 54)
 	boss_hud_panel.visible = false
-	boss_hud_panel.add_theme_stylebox_override("panel", panel_style)
+	boss_hud_panel.add_theme_stylebox_override("panel", progress_panel_style)
 	hud.add_child(boss_hud_panel)
 	var boss_box := VBoxContainer.new()
 	boss_box.add_theme_constant_override("separation", 3)
@@ -1318,7 +1333,7 @@ func _build_hud() -> void:
 	inventory_panel.position = Vector2(-190, -145)
 	inventory_panel.custom_minimum_size = Vector2(380, 290)
 	inventory_panel.visible = false
-	inventory_panel.add_theme_stylebox_override("panel", panel_style)
+	inventory_panel.add_theme_stylebox_override("panel", quest_panel_style)
 	hud.add_child(inventory_panel)
 	var inventory_box := VBoxContainer.new()
 	inventory_box.add_theme_constant_override("separation", 12)
@@ -1326,7 +1341,7 @@ func _build_hud() -> void:
 	var inventory_title := Label.new()
 	inventory_title.text = "MOCHILA DE TOBI"
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	inventory_title.add_theme_font_size_override("font_size", 19)
+	inventory_title.add_theme_font_size_override("font_size", 22)
 	inventory_title.add_theme_color_override("font_color", Color("d8b77c"))
 	inventory_box.add_child(inventory_title)
 	inventory_details = Label.new()
@@ -1335,7 +1350,7 @@ func _build_hud() -> void:
 	inventory_box.add_child(inventory_details)
 	var inventory_close := Button.new()
 	inventory_close.text = "FECHAR MOCHILA"
-	inventory_close.custom_minimum_size = Vector2(0, 44)
+	inventory_close.custom_minimum_size = Vector2(0, 50)
 	inventory_close.pressed.connect(_toggle_inventory)
 	inventory_box.add_child(inventory_close)
 
@@ -1367,8 +1382,11 @@ func _build_hud() -> void:
 		move_btn.anchor_bottom = data.p.y
 		move_btn.position = Vector2(-27, -27)
 		move_btn.size = Vector2(54, 54)
-		move_btn.add_theme_font_size_override("font_size", 17)
-		move_btn.modulate = Color(0.92, 0.94, 0.88, 0.88)
+		move_btn.add_theme_font_size_override("font_size", 19)
+		move_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.075, 0.067, 0.92), Color("6e9b89"), 27))
+		move_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.09, 0.15, 0.12, 0.98), Color("a0c4a9"), 27))
+		move_btn.add_theme_stylebox_override("pressed", _hud_button_style(Color(0.18, 0.23, 0.15, 1.0), Color("d5bd7e"), 27))
+		move_btn.modulate = Color(1, 1, 1, 0.96)
 		move_btn.button_down.connect(Input.action_press.bind(data.a))
 		move_btn.button_up.connect(Input.action_release.bind(data.a))
 		hud.add_child(move_btn)
@@ -1381,9 +1399,29 @@ func _build_hud() -> void:
 		action_btn.anchor_right = data.p.x
 		action_btn.anchor_top = data.p.y
 		action_btn.anchor_bottom = data.p.y
-		action_btn.position = Vector2(-48, -23)
-		action_btn.size = Vector2(96, 46)
-		action_btn.add_theme_font_size_override("font_size", 10)
+		action_btn.position = Vector2(-50, -28)
+		action_btn.size = Vector2(100, 56)
+		action_btn.add_theme_font_size_override("font_size", 11)
+		var action_fill := Color(0.055, 0.071, 0.064, 0.97)
+		var action_accent := Color("9a8058")
+		if data.a == "attack":
+			action_fill = Color(0.20, 0.075, 0.055, 0.98)
+			action_accent = Color("d39b5e")
+			action_btn.size = Vector2(112, 64)
+			action_btn.position = Vector2(-56, -32)
+			action_btn.add_theme_font_size_override("font_size", 12)
+		elif data.a == "shadow":
+			action_fill = Color(0.105, 0.065, 0.16, 0.98)
+			action_accent = Color("a68bcf")
+		elif data.a == "potion":
+			action_fill = Color(0.035, 0.12, 0.095, 0.98)
+			action_accent = Color("7fbaa0")
+		elif data.a == "upgrade":
+			action_fill = Color(0.15, 0.11, 0.045, 0.98)
+			action_accent = Color("d0ad6e")
+		action_btn.add_theme_stylebox_override("normal", _hud_button_style(action_fill, action_accent, 16))
+		action_btn.add_theme_stylebox_override("hover", _hud_button_style(action_fill.lightened(0.16), action_accent.lightened(0.18), 16))
+		action_btn.add_theme_stylebox_override("pressed", _hud_button_style(action_fill.lightened(0.28), Color("f0d49b"), 16))
 		action_btn.pressed.connect(_touch_action.bind(data.a))
 		hud.add_child(action_btn)
 
@@ -1393,7 +1431,25 @@ func _build_hud() -> void:
 func _hud_bar_style(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = color
-	style.set_corner_radius_all(5)
+	style.border_color = color.lightened(0.22)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(7)
+	style.anti_aliasing = true
+	return style
+
+
+func _hud_button_style(fill: Color, accent: Color, radius: int = 16) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = accent
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(radius)
+	style.corner_detail = 6
+	style.anti_aliasing = true
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
 	return style
 
 
