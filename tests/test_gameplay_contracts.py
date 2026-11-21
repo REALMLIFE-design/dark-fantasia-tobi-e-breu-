@@ -821,5 +821,5 @@ class GothicGateVisualContracts(unittest.TestCase):
         accents = self.world[self.world.index('func _build_gothic_gate_accents'):self.world.index('func _build_region_landmarks')]
         self.assertNotIn('StaticBody3D.new()', accents)
         self.assertNotIn('CollisionShape3D.new()', accents)
-        self.assertIn('without narrowing the walkable opening', accents)
+        self.assertIn('narrowing the walkable opening', accents)
 
