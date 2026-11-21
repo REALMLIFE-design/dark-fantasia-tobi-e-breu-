@@ -1036,6 +1036,53 @@ func _build_plugin_world_expansion() -> void:
 		torch_light.omni_range = 6.0
 		torch_root.add_child(torch_light)
 
+	# Three additional landmarks extend exploration beyond the first expansion.
+	var cinder_root := Node3D.new()
+	cinder_root.name = "CinderHollow"
+	cinder_root.position = Vector3(48.0, 0.0, -101.0)
+	add_child(cinder_root)
+	_box(cinder_root, "CinderCaveLeftPillar", Vector3(-2.2, 1.7, 0.0), Vector3(0.9, 3.4, 1.1), Color("51463f"))
+	_box(cinder_root, "CinderCaveRightPillar", Vector3(2.2, 1.7, 0.0), Vector3(0.9, 3.4, 1.1), Color("51463f"))
+	_box(cinder_root, "CinderCaveLintel", Vector3(0.0, 3.35, 0.0), Vector3(5.3, 0.8, 1.2), Color("625044"))
+	for crystal_index in range(3):
+		var crystal := _sphere(cinder_root, "CinderCrystal_%02d" % crystal_index, Vector3(-1.0 + float(crystal_index) * 1.0, 0.55, -1.1), 0.42, Color("a75c54"), 1.25)
+		crystal.rotation.z = deg_to_rad(float(crystal_index - 1) * 18.0)
+		var crystal_light := OmniLight3D.new()
+		crystal_light.position = crystal.position + Vector3(0.0, 0.7, 0.0)
+		crystal_light.light_color = Color("c56b5b")
+		crystal_light.light_energy = 0.38
+		crystal_light.omni_range = 4.5
+		cinder_root.add_child(crystal_light)
+
+	var bridge_root := Node3D.new()
+	bridge_root.name = "WardenStoneBridge"
+	bridge_root.position = Vector3(-48.0, 0.0, -104.0)
+	add_child(bridge_root)
+	_box(bridge_root, "WardenBridgeDeck", Vector3(0.0, 0.22, 0.0), Vector3(10.0, 0.45, 3.4), Color("65645d"))
+	for side in [-1.0, 1.0]:
+		_box(bridge_root, "WardenBridgeParapet", Vector3(side * 4.35, 0.85, 0.0), Vector3(0.55, 1.25, 3.4), Color("77736a"))
+		for pillar_index in range(3):
+			_box(bridge_root, "WardenBridgePillar", Vector3(side * 4.35, 1.75, -1.15 + float(pillar_index) * 1.15), Vector3(0.8, 0.65, 0.65), Color("91806a"))
+	for rune_index in range(5):
+		var rune := _sphere(bridge_root, "WardenBridgeRune_%02d" % rune_index, Vector3(-3.2 + float(rune_index) * 1.6, 0.48, -1.42), 0.16, Color("8db5a0"), 0.12)
+		rune.material_override = _painter_mat(Color("8db5a0"), 7.0, 0.04)
+
+	var bell_root := Node3D.new()
+	bell_root.name = "EchoingBellTower"
+	bell_root.position = Vector3(0.0, 0.0, -121.0)
+	add_child(bell_root)
+	for corner in [Vector2(-1.5, -1.5), Vector2(1.5, -1.5), Vector2(-1.5, 1.5), Vector2(1.5, 1.5)]:
+		_box(bell_root, "BellTowerPillar", Vector3(corner.x, 2.2, corner.y), Vector3(0.42, 4.4, 0.42), Color("625b51"))
+	_box(bell_root, "BellTowerTopBeam", Vector3(0.0, 4.35, 0.0), Vector3(3.8, 0.45, 3.8), Color("76634e"))
+	var bell := _sphere(bell_root, "EchoingBell", Vector3(0.0, 3.1, 0.0), 0.62, Color("b08b52"), 1.0)
+	bell.scale = Vector3(0.85, 1.0, 0.85)
+	var bell_light := OmniLight3D.new()
+	bell_light.position = Vector3(0.0, 3.0, 0.0)
+	bell_light.light_color = Color("e4c27e")
+	bell_light.light_energy = 0.5
+	bell_light.omni_range = 7.0
+	bell_root.add_child(bell_light)
+
 func _build_swamp_region() -> void:
 	# A connected second biome: shallow poisonous pools, dead trees and three cleanseable totems.
 	var swamp_ground := _box(self, "SwampMire", Vector3(0, -0.08, -91), Vector3(74, 0.16, 76), Color("354b43"))
