@@ -1,89 +1,33 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source": "PINOC curated motion library",
   "format": "mixamo-glb",
-  "note": "Each GLB contains an X Bot mesh and Mixamo-named skeleton. Retarget to Tobi's procedural rig before replacing in-game animation. Signed download URLs are intentionally not stored because they expire.",
+  "note": "GLBs include the X Bot mesh and Mixamo-named skeleton. Retarget to Tobi's procedural rig before replacing in-game animation. Signed URLs are intentionally not stored because they expire.",
   "motions": [
-    {
-      "name": "Walking",
-      "id": "32d71c7f-e88a-4d1f-9c0c-1fde2da5f060",
-      "role": "locomotion"
-    },
-    {
-      "name": "Running",
-      "id": "32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a",
-      "role": "locomotion"
-    },
-    {
-      "name": "Dodge Roll Forward",
-      "id": "56bb74fa-7274-46c2-8aec-7bb4381345a3",
-      "role": "evasion"
-    },
-    {
-      "name": "Cast Spell Forward",
-      "id": "6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68",
-      "role": "skill"
-    },
-    {
-      "name": "Hit Reaction Front",
-      "id": "b07839c6-2f7f-403a-95f3-da87c3536e8c",
-      "role": "reaction"
-    },
-    {
-      "name": "Sword Idle",
-      "id": "b1010899-e739-44be-a81a-bf85e98bf049",
-      "role": "combat_idle"
-    },
-    {
-      "name": "Jump",
-      "id": "08872e23-d695-493d-8c03-cb595cd55e9c",
-      "role": "movement"
-    },
-    {
-      "name": "Block",
-      "id": "912b4122-f1b4-481b-a44f-ead641df6e32",
-      "role": "defense"
-    },
-    {
-      "name": "Bow Draw And Release",
-      "id": "369d19ed-1535-4fd1-bfd0-c36791a30058",
-      "role": "ranged"
-    },
-    {
-      "name": "Pick Up Object From Ground",
-      "id": "7875176d-9680-4ba9-971f-1b3c543b8260",
-      "role": "interaction"
-    },
-    {
-      "name": "Climb Over Ledge",
-      "id": "03a3a04d-47ff-4339-a1cf-8abe8023a4e5",
-      "role": "traversal"
-    },
-    {
-      "name": "Vault Over Obstacle",
-      "id": "91c3478c-e380-40fc-bd8c-25f9b883cb11",
-      "role": "traversal"
-    },
-    {
-      "name": "Standing Up From Back",
-      "id": "3ca12348-9552-4702-97c8-57619bb78205",
-      "role": "recovery"
-    },
-    {
-      "name": "Death Backwards",
-      "id": "d9f95018-c2b5-4116-a524-c8415f027203",
-      "role": "death"
-    },
-    {
-      "name": "Drawing Sword",
-      "id": "f70517ef-f591-4003-873e-a7e4cf26d88f",
-      "role": "combat"
-    },
-    {
-      "name": "Fighting Stance Idle",
-      "id": "579f5d87-3ec6-4054-b2bc-e9677eea8510",
-      "role": "combat_idle"
-    }
+    {"name":"Walking","id":"32d71c7f-e88a-4d1f-9c0c-1fde2da5f060","role":"locomotion"},
+    {"name":"Running","id":"32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a","role":"locomotion"},
+    {"name":"Dodge Roll Forward","id":"56bb74fa-7274-46c2-8aec-7bb4381345a3","role":"evasion"},
+    {"name":"Cast Spell Forward","id":"6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68","role":"skill"},
+    {"name":"Hit Reaction Front","id":"b07839c6-2f7f-403a-95f3-da87c3536e8c","role":"reaction"},
+    {"name":"Sword Idle","id":"b1010899-e739-44be-a81a-bf85e98bf049","role":"combat_idle"},
+    {"name":"Jump","id":"08872e23-d695-493d-8c03-cb595cd55e9c","role":"movement"},
+    {"name":"Block","id":"912b4122-f1b4-481b-a44f-ead641df6e32","role":"defense"},
+    {"name":"Bow Draw And Release","id":"369d19ed-1535-4fd1-bfd0-c36791a30058","role":"ranged"},
+    {"name":"Pick Up Object From Ground","id":"7875176d-9680-4ba9-971f-1b3c543b8260","role":"interaction"},
+    {"name":"Climb Over Ledge","id":"03a3a04d-47ff-4339-a1cf-8abe8023a4e5","role":"traversal"},
+    {"name":"Vault Over Obstacle","id":"91c3478c-e380-40fc-bd8c-25f9b883cb11","role":"traversal"},
+    {"name":"Standing Up From Back","id":"3ca12348-9552-4702-97c8-57619bb78205","role":"recovery"},
+    {"name":"Death Backwards","id":"d9f95018-c2b5-4116-a524-c8415f027203","role":"death"},
+    {"name":"Drawing Sword","id":"f70517ef-f591-4003-873e-a7e4cf26d88f","role":"combat"},
+    {"name":"Fighting Stance Idle","id":"579f5d87-3ec6-4054-b2bc-e9677eea8510","role":"combat_idle"},
+    {"name":"Carry Object Walk Forward","id":"ff232e7d-5d1b-44b8-9c48-6ed6aaaf561e","role":"interaction"},
+    {"name":"Crawl Forward","id":"d20f26a8-07a6-4bb1-a26a-e949c333cf80","role":"stealth"},
+    {"name":"Crouch Walk Forward","id":"e4f5b9e6-381c-4227-88d4-94d6a0615df8","role":"stealth"},
+    {"name":"Injured Walk","id":"c0229536-d09f-41c5-a9cf-6699d4e72b8f","role":"damage"},
+    {"name":"Run Jump","id":"92b846c7-a636-45cd-96d5-f34cc0e97be7","role":"locomotion"},
+    {"name":"Sprinting Forward","id":"a075443a-1b3c-45d9-a3c5-6b6296d21bd1","role":"locomotion"},
+    {"name":"Walk Backwards","id":"fb723fdc-945f-49a3-b6ff-1d3a612159fb","role":"locomotion"},
+    {"name":"Walk Strafe Left","id":"4eb48cfd-1b66-4263-996c-59b946744283","role":"combat"}
   ],
-  "status": "downloadable_from_PINOC; not_yet_retargeted_or_installed_in_game"
+  "status": "24 clips catalogued; binary download and retargeting still pending"
 }
