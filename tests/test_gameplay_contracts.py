@@ -602,8 +602,8 @@ class StaminaFeedbackContracts(unittest.TestCase):
         cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
 
     def test_stamina_hud_shows_live_value_and_warning_colors(self):
-        self.assertIn('stamina_label.text = "FOLEGO 100%"', self.world)
-        self.assertIn('stamina_label.text = "FOLEGO %d%%" % roundi(current_stamina)', self.world)
+        self.assertIn('stamina_label.text = "FÔLEGO 100%"', self.world)
+        self.assertIn('stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)', self.world)
         self.assertIn('current_stamina <= 20.0', self.world)
         self.assertIn('current_stamina <= 40.0', self.world)
         self.assertIn('stamina_bar.modulate = stamina_color', self.world)
