@@ -43,7 +43,7 @@ jobs:
             "platforms;android-34" \
             "build-tools;34.0.0"
 
-      - name: Localizar projeto e validar código
+      - name: Locate Godot project (repository root or subfolder)
         run: |
           set -euo pipefail
           if [ -f "$GITHUB_WORKSPACE/project.godot" ]; then
@@ -59,6 +59,7 @@ jobs:
             PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           fi
           echo "PROJECT_PATH=$PROJECT_PATH" >> "$GITHUB_ENV"
+          python3 -m pip install --disable-pip-version-check Pillow
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v
           python3 "$PROJECT_PATH/tools/validate_project.py"
 
