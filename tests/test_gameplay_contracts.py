@@ -698,3 +698,19 @@ class ComboFinisherContracts(unittest.TestCase):
         self.assertIn('knockback_strength := 5.2 if int(enemy.get("enemy_kind")) < 3 else 2.0', attack)
         self.assertIn('enemy.velocity.x += knockback_direction.x * knockback_strength', attack)
         self.assertIn('enemy.hit_recoil = maxf(float(enemy.get("hit_recoil")), 0.28)', attack)
+
+
+class EnemyAttackTelegraphContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_attack_warnings_use_distinct_colors_and_intensify_before_impact(self):
+        self.assertIn('func _attack_warning_color() -> Color:', self.enemy)
+        self.assertIn('return Color("62d8c8")', self.enemy)
+        self.assertIn('return Color("79c9f2")', self.enemy)
+        self.assertIn('return Color("e7c477")', self.enemy)
+        self.assertIn('attack_telegraph_material.emission = warning_color', self.enemy)
+        self.assertIn('windup_progress * 1.2', self.enemy)
+        self.assertIn('attack_telegraph_material.emission_energy_multiplier', self.enemy)
+
