@@ -745,6 +745,8 @@ class PerfectDodgeVisualContracts(unittest.TestCase):
         self.assertIn('var perfect_dodge_flash := 0.0', self.player)
         self.assertIn('perfect_dodge_flash = 0.22', self.player)
         self.assertIn('Color("62d8c8")', self.player)
+        self.assertIn('material.emission_enabled = true', self.player)
         self.assertIn('material.emission = Color("35cdbb")', self.player)
+        self.assertIn('material.emission_enabled = false', self.player)
         self.assertIn('perfect_strength * 1.35', self.player)
 
