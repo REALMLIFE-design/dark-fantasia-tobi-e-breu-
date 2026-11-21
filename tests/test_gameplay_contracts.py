@@ -142,7 +142,8 @@ class GameplayContracts(unittest.TestCase):
             self.assertIn(item, self.world)
         self.assertIn('func _menu_add_item_grid(', self.world)
         self.assertIn('grid.columns = 2', self.world)
-        self.assertIn('VER EQUIPAMENTO E FORJA', self.world)
+        self.assertIn('"EQUIPAMENTO"', self.world)
+        self.assertIn('"MOCHILA"', self.world)
 
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
