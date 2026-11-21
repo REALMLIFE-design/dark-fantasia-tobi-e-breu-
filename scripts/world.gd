@@ -1444,7 +1444,7 @@ func _open_river_chest(chest_id: int) -> void:
 	if glow: glow.visible = false
 	var light := chest.get_node_or_null("ChestGlowLight")
 	if light: light.light_energy = 0.0
-	var xp_reward := [35, 45, 55][chest_id]
+	var xp_reward: int = [35, 45, 55][chest_id]
 	var essence_reward := 1 if chest_id < 2 else 2
 	var shard_reward := 1 if chest_id == 2 else 0
 	_grant_xp(xp_reward)
