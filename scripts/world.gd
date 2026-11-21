@@ -73,6 +73,7 @@ var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
 var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
+var bell_tower_ring_count := 0
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -2898,6 +2899,26 @@ func _open_river_chest(chest_id: int) -> void:
 	_save_game()
 
 func _interact() -> void:
+	var bell_tower := get_node_or_null("EchoingBellTower")
+	if bell_tower and player.global_position.distance_to(bell_tower.global_position) < 5.0:
+		if bell_tower_ring_count < 3:
+			bell_tower_ring_count += 1
+			var bell_mesh := bell_tower.get_node_or_null("EchoingBell")
+			if bell_mesh:
+				bell_mesh.rotation.z = -0.22 if bell_tower_ring_count % 2 == 1 else 0.22
+			if bell_tower_ring_count >= 3:
+				_grant_xp(75)
+				shards += 4
+				dark_essence += 2
+				potions += 1
+				toast_label.text = "SINO DO ÚLTIMO VIGIA! +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
+				_update_inventory()
+			else:
+				toast_label.text = "O sino antigo ecoa pela névoa... (%d/3)" % bell_tower_ring_count
+			_save_game()
+		else:
+			toast_label.text = "O sino repousa. A última vigília foi concluída."
+		return
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
 	if guild_board and player.global_position.distance_to(guild_board.global_position) < 4.5:
 		if not guild_contract_started:
@@ -3351,7 +3372,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 13)
+	cfg.set_value("meta", "save_version", 14)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -3379,6 +3400,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_relic_ids", guild_relic_ids)
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
+	cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
 	cfg.save(save_path)
 	if toast_label and toast_label.text.is_empty():
@@ -3390,7 +3412,7 @@ func _load_save() -> void:
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 13:
+	if save_version > 14:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
@@ -3454,6 +3476,7 @@ func _load_save() -> void:
 	guild_relic_ids.sort()
 	guild_contract_started = bool(cfg.get_value("progress", "guild_contract_started", false))
 	guild_contract_claimed = bool(cfg.get_value("progress", "guild_contract_claimed", false))
+	bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)
 	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
