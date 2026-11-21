@@ -4,7 +4,7 @@
 
 - Provider: Thrixel
 - Project: Tobi e Breu — Dark World 3D
-- Submission: `10f1f722-8f0a-76a1-a977-29e97e2f1e44`
+- Submission: `10f1f722-53d8-4ca0-b99b-e0e687bc8fec`
 - Format: GLB, PBR textures capped at 1024 px
 - Geometry: 14,064 triangles, rigged quadruped
 - Status: gerado e inspecionado; ainda não admitido no projeto Godot.
