@@ -55,6 +55,11 @@ jobs:
             PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           fi
           echo "PROJECT_PATH=$PROJECT_PATH" >> "$GITHUB_ENV"
+          mkdir -p "$PROJECT_PATH/assets/models"
+          curl --fail --location --retry 3 --retry-delay 2 --max-time 120 \
+            "https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024" \
+            --output "$PROJECT_PATH/assets/models/ancient_stag_guardian.glb"
+          python3 -c 'from pathlib import Path; p=Path("'"$PROJECT_PATH"'/assets/models/ancient_stag_guardian.glb"); d=p.read_bytes(); assert d[:4] == b"glTF" and len(d) > 100_000, "Thrixel GLB inválido ou incompleto"; print(f"Thrixel GLB validado: {len(d)} bytes")'
           python3 -m pip install --disable-pip-version-check Pillow
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v
           python3 "$PROJECT_PATH/tools/validate_project.py"
