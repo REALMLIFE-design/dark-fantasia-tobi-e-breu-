@@ -20,6 +20,7 @@ var stamina := 100.0
 var dodge_cooldown := 0.0
 var dodge_time := 0.0
 var dodge_direction := Vector3.ZERO
+var dodge_perfect_used := false
 var camera_yaw_offset := 0.0
 var touch_points: Dictionary = {}
 var pinch_start_distance := 0.0
@@ -426,6 +427,7 @@ func do_shadow_pulse() -> void:
 
 func do_dodge() -> void:
 	if dodge_cooldown > 0.0 or stamina < 28.0 or hp <= 0: return
+	dodge_perfect_used = false
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	dodge_direction = (camera_pivot.global_basis * Vector3(input.x, 0, input.y)).normalized()
 	dodge_direction.y = 0
@@ -441,7 +443,14 @@ func get_stamina() -> float:
 	return stamina
 
 func take_damage(amount: int) -> void:
-	if invulnerable > 0.0 or hp <= 0: return
+	if hp <= 0: return
+	if invulnerable > 0.0:
+		if dodge_time > 0.0 and not dodge_perfect_used:
+			dodge_perfect_used = true
+			stamina = minf(100.0, stamina + 10.0)
+			if world and world.has_method("player_perfect_dodge"):
+				world.player_perfect_dodge()
+		return
 	hp = maxi(0, hp - amount)
 	hit_reaction = 0.22
 	damage_flash = 0.16
