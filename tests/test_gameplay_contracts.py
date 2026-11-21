@@ -823,3 +823,37 @@ class GothicGateVisualContracts(unittest.TestCase):
         self.assertNotIn('CollisionShape3D.new()', accents)
         self.assertIn('narrowing the walkable opening', accents)
 
+class PluginAssetIntegrationContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        cls.loader = (ROOT / 'scripts/plugin_asset_loader.gd').read_text(encoding='utf-8')
+        cls.shader = (ROOT / 'scripts/aqueduct_stone.gdshader').read_text(encoding='utf-8')
+        cls.import_readme = (ROOT / 'assets/plugin_imports/README.md').read_text(encoding='utf-8')
+
+    def test_aqueduct_material_is_optional_until_all_required_maps_exist(self):
+        self.assertIn('PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)', self.world)
+        self.assertIn('PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)', self.world)
+        self.assertIn('FileAccess.file_exists(texture_path)', self.loader)
+        self.assertIn('base_color.png', self.loader)
+        self.assertIn('normal.png', self.loader)
+        self.assertIn('roughness.png', self.loader)
+        self.assertIn('ao.png', self.loader)
+
+    def test_mobile_shader_uses_pbr_maps_without_height_displacement(self):
+        self.assertIn('ALBEDO = base_sample.rgb', self.shader)
+        self.assertIn('ROUGHNESS = texture(roughness_texture, UV).r', self.shader)
+        self.assertIn('NORMAL_MAP = texture(normal_texture, UV).rgb', self.shader)
+        self.assertIn('AO = mix(1.0', self.shader)
+        self.assertNotIn('vertex()', self.shader)
+
+    def test_meshy_gate_loader_is_guarded_and_not_auto_instantiated(self):
+        self.assertIn('func load_meshy_gate(', self.loader)
+        self.assertIn('if parent == null or not ResourceLoader.exists(MESHY_GATE_PATH)', self.loader)
+        self.assertNotIn('load_meshy_gate(', self.world)
+
+    def test_plugin_asset_layout_documents_pinoc_rig_and_splat_limits(self):
+        self.assertIn('X Bot', self.import_readme)
+        self.assertIn('Gaussian Splat SPZ', self.import_readme)
+        self.assertIn('gothic_gate.glb', self.import_readme)
+
