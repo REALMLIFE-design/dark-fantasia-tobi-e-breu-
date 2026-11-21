@@ -594,3 +594,16 @@ class MobileCameraPinchContracts(unittest.TestCase):
         input_handler = self.player[self.player.index('func _unhandled_input'):self.player.index('func do_jump')]
         self.assertIn('if touch_points.size() >= 2:', input_handler)
         self.assertIn('elif event.position.x > get_viewport().get_visible_rect().size.x * 0.42:', input_handler)
+
+
+class StaminaFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_stamina_hud_shows_live_value_and_warning_colors(self):
+        self.assertIn('stamina_label.text = "FOLEGO 100%"', self.world)
+        self.assertIn('stamina_label.text = "FOLEGO %d%%" % roundi(current_stamina)', self.world)
+        self.assertIn('current_stamina <= 20.0', self.world)
+        self.assertIn('current_stamina <= 40.0', self.world)
+        self.assertIn('stamina_bar.modulate = stamina_color', self.world)
