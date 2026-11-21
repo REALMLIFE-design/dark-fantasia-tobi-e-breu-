@@ -87,11 +87,13 @@ func _update_damage_flash() -> void:
 		if is_instance_valid(material):
 			if perfect_strength > 0.0:
 				material.albedo_color = damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)
+				material.emission_enabled = true
 				material.emission = Color("35cdbb")
 				material.emission_energy_multiplier = perfect_strength * 1.35
 			else:
 				material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)
 				material.emission_energy_multiplier = 0.0
+				material.emission_enabled = false
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
