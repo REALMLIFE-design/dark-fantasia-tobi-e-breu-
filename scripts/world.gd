@@ -64,6 +64,7 @@ var river_knights_defeated := 0
 var river_relic_ids: Array[int] = []
 var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
+var whisper_guardian_reward_claimed := false
 var river_boss_hp := 680
 var river_boss_saved_band := -1
 var river_shrine_solved := false
@@ -2125,6 +2126,8 @@ func _process(delta: float) -> void:
 		whisper_grove_label.visible = grove_distance < 24.0
 		whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  %d/3 LANTERNAS" % whisper_lantern_ids.size()
 	var lantern_distance := player.global_position.distance_to(get_node_or_null("WhisperLantern_%d" % nearest_lantern_id).global_position) if nearest_lantern_id >= 0 and get_node_or_null("WhisperLantern_%d" % nearest_lantern_id) else 999.0
+	var stag_guardian := get_node_or_null("ThrixelAncientStagGuardian")
+	var stag_guardian_distance := player.global_position.distance_to(stag_guardian.global_position) if stag_guardian else 999.0
 	var chest_distance := player.global_position.distance_to(get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id).global_position) if nearest_chest_id >= 0 and get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id) else 999.0
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
 	var guild_distance := player.global_position.distance_to(guild_board.global_position) if guild_board else 999.0
@@ -2139,6 +2142,9 @@ func _process(delta: float) -> void:
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
+	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
+	elif stag_guardian_distance < 4.5 and whisper_guardian_reward_claimed: prompt_label.text = "O GUARDIÃO JÁ CONCEDEU SUA BÊNÇÃO"
+	elif stag_guardian_distance < 4.5: prompt_label.text = "E: RECEBER A BÊNÇÃO DO GUARDIÃO"
 	elif river_puzzle_distance < 4.8 and not river_shrine_solved: prompt_label.text = "E: GIRAR O ANEL DO ASTROLÁBIO  •  (%d/3)" % (mini(_river_puzzle_current_ring() + 1, 3))
 	elif river_puzzle_distance < 4.8 and river_shrine_solved: prompt_label.text = "ASTROLÁBIO RESTAURADO — RECOMPENSA COLETADA"
 	elif shrine_distance < 3.8: prompt_label.text = "INTERAGIR — Santuário Esquecido"
@@ -2286,6 +2292,22 @@ func _interact() -> void:
 	var lantern_id := _nearest_whisper_lantern()
 	if lantern_id >= 0:
 		_activate_whisper_lantern(lantern_id)
+		return
+	var stag_guardian := get_node_or_null("ThrixelAncientStagGuardian")
+	if stag_guardian and player.global_position.distance_to(stag_guardian.global_position) < 4.5:
+		if whisper_lantern_ids.size() < 3:
+			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
+		elif whisper_guardian_reward_claimed:
+			toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
+		else:
+			whisper_guardian_reward_claimed = true
+			_grant_xp(90)
+			shards += 3
+			dark_essence += 2
+			potions += 1
+			toast_label.text = "BÊNÇÃO DO CÉRVOR ANCIÃO • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+			_update_inventory()
+			_save_game()
 		return
 	for i in range(3):
 		var relic := get_node_or_null("RiverMemoryRelic_%d" % i)
@@ -2682,7 +2704,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 12)
+	cfg.set_value("meta", "save_version", 13)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -2703,6 +2725,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "river_relic_ids", river_relic_ids)
 	cfg.set_value("progress", "river_chest_ids", river_chest_ids)
 	cfg.set_value("progress", "whisper_lantern_ids", whisper_lantern_ids)
+	cfg.set_value("progress", "whisper_guardian_reward_claimed", whisper_guardian_reward_claimed)
 	cfg.set_value("progress", "river_shrine_solved", river_shrine_solved)
 	cfg.set_value("progress", "river_puzzle_ring_steps", river_puzzle_ring_steps)
 	cfg.set_value("progress", "river_boss_hp", river_boss_hp)
@@ -2720,7 +2743,7 @@ func _load_save() -> void:
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 12:
+	if save_version > 13:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
@@ -2768,6 +2791,7 @@ func _load_save() -> void:
 		if lantern_id >= 0 and lantern_id < 3 and not whisper_lantern_ids.has(lantern_id):
 			whisper_lantern_ids.append(lantern_id)
 	whisper_lantern_ids.sort()
+	whisper_guardian_reward_claimed = bool(cfg.get_value("progress", "whisper_guardian_reward_claimed", false))
 	river_shrine_solved = bool(cfg.get_value("progress", "river_shrine_solved", false))
 	river_puzzle_ring_steps = [0, 0, 0]
 	var saved_ring_steps: Array = cfg.get_value("progress", "river_puzzle_ring_steps", [0, 0, 0])
