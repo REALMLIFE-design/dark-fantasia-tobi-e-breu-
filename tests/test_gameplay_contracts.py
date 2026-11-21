@@ -620,3 +620,15 @@ class EnemyHitFlashContracts(unittest.TestCase):
         self.assertIn('hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)', self.enemy)
         self.assertIn('hit_flash = 0.14', self.enemy)
         self.assertIn('_update_hit_flash_materials()', self.enemy)
+
+
+class BossChargeFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_leviathan_core_brightens_during_telegraphed_attack(self):
+        self.assertIn('var charge_progress := clampf(1.0 - attack_windup_timer / maxf(attack_windup_duration, 0.01)', self.enemy)
+        self.assertIn('core_base_energy := 2.8 if boss_enraged else 1.7', self.enemy)
+        self.assertIn('charge_progress * 2.4', self.enemy)
+        self.assertIn('boss_core_material.emission_energy_multiplier', self.enemy)
