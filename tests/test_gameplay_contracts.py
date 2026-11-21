@@ -660,5 +660,7 @@ class BellTowerSideQuestContracts(unittest.TestCase):
         self.assertIn("if bell_tower_ring_count < 3:", world)
         self.assertIn("bell_tower_ring_count += 1", world)
         self.assertIn("SINO DO ÚLTIMO VIGIA!", world)
+        self.assertIn("E: TOCAR O SINO ANTIGO", world)
+        self.assertIn("bell_tower_distance < 5.0", world)
         self.assertIn('cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)', world)
         self.assertIn('bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)', world)
