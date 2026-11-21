@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Android SDK
+      - name: Instalar Android SDK
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
 
@@ -56,7 +56,30 @@ jobs:
 
           echo "PROJECT_PATH=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
 
-      - name: Corrigir preset Android
+      - name: Baixar Godot e templates
+        run: |
+          mkdir -p /tmp/godot
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O /tmp/godot.zip
+
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
+
+          unzip -q /tmp/godot.zip -d /tmp/godot
+
+          unzip -q /tmp/templates.tpz -d "$HOME/.local/share/godot/export_templates/4.3.stable"
+
+          GODOT_BIN=$(find /tmp/godot -type f -name 'Godot_v4.3-stable_linux.x86_64' -print -quit)
+
+          if [ -z "$GODOT_BIN" ]; then
+            echo "ERRO: executável Godot não encontrado"
+            exit 1
+          fi
+
+          chmod +x "$GODOT_BIN"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+
+      - name: Configurar preset Android
         run: |
           python3 - <<'PY'
           import os
@@ -64,10 +87,6 @@ jobs:
           from pathlib import Path
 
           path = Path(os.environ["PROJECT_PATH"]) / "export_presets.cfg"
-
-          if not path.exists():
-              raise SystemExit("ERRO: export_presets.cfg não encontrado")
-
           content = path.read_text(encoding="utf-8")
 
           content, count = re.subn(
@@ -80,18 +99,24 @@ jobs:
               r'(?m)^\s*gradle_build/use_gradle_build\s*=\s*true\s*$',
               content
           ):
-              raise SystemExit("ERRO: configuração Use Gradle Build não encontrada")
+              raise SystemExit("ERRO: opção Use Gradle Build não encontrada")
 
           path.write_text(content, encoding="utf-8")
-          print("Use Gradle Build ativado com sucesso.")
+          print("Gradle Build ativado.")
           PY
 
-      - name: Exportar APK com Godot
-        uses: firebelley/godot-export@v8.0.0
-        with:
-          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
-          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
-          relative_project_path: ${{ env.PROJECT_PATH }}
+      - name: Instalar template Android do projeto
+        run: |
+          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --install-android-build-template
+
+      - name: Gerar APK
+        run: |
+          mkdir -p "$PROJECT_PATH/build"
+
+          "$GODOT_BIN" --headless \
+            --path "$PROJECT_PATH" \
+            --export-debug "Android" \
+            "$PROJECT_PATH/build/TobiEBreu.apk"
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
