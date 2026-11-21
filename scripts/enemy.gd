@@ -94,7 +94,7 @@ func _ready() -> void:
 	_add_to(head_pivot, head, Vector3(0, 0.08, 0), Color("9caa70") if enemy_kind < 3 else Color("a6a18b"))
 	var brow := BoxMesh.new(); brow.size = Vector3(0.38, 0.09, 0.08)
 	_add_to(head_pivot, brow, Vector3(0, 0.14, 0.245), Color("302b29"))
-	var hat := ConeMesh.new(); hat.radius = 0.42 if enemy_kind == 4 else 0.30; hat.height = 0.62
+	var hat: CylinderMesh = CylinderMesh.new(); hat.top_radius = 0.0; hat.bottom_radius = 0.42 if enemy_kind == 4 else 0.30; hat.height = 0.62
 	_add_to(head_pivot, hat, Vector3(0, 0.42, -0.015), Color("493e34") if enemy_kind != 4 else Color("263f3b"))
 	var left_arm := _make_enemy_limb("LeftArm", Vector3(-0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
 	var right_arm := _make_enemy_limb("RightArm", Vector3(0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
@@ -109,7 +109,7 @@ func _ready() -> void:
 			_add_to(visual, shoulder, Vector3(side * 0.43, 1.18, 0.0), Color("59483c") if enemy_kind == 1 else Color("382d39"))
 	if enemy_kind == 3 or enemy_kind == 4:
 		for side in [-1.0, 1.0]:
-			var horn := ConeMesh.new(); horn.radius = 0.13; horn.height = 0.48
+			var horn: CylinderMesh = CylinderMesh.new(); horn.top_radius = 0.0; horn.bottom_radius = 0.13; horn.height = 0.48
 			_add_to(head_pivot, horn, Vector3(side * 0.25, 0.30, -0.02), Color("3b3035") if enemy_kind == 3 else Color("263f3b"))
 	if enemy_kind == 4:
 		var crystal := SphereMesh.new(); crystal.radius = 0.12; crystal.height = 0.24
@@ -120,7 +120,7 @@ func _ready() -> void:
 		var robe := CylinderMesh.new(); robe.top_radius = 0.30; robe.bottom_radius = 0.52; robe.height = 0.78; robe.radial_segments = 7
 		_add(robe, Vector3(0, 0.48, 0), Color("293f39"))
 		for shard_index in range(5):
-			var shard := ConeMesh.new(); shard.radius = 0.10; shard.height = 0.42
+			var shard: CylinderMesh = CylinderMesh.new(); shard.top_radius = 0.0; shard.bottom_radius = 0.10; shard.height = 0.42
 			_add_to(visual, shard, Vector3(cos(float(shard_index) * TAU / 5.0) * 0.35, 0.20, sin(float(shard_index) * TAU / 5.0) * 0.35), Color("416b58"))
 	elif enemy_kind == 3:
 		var chest_plate := BoxMesh.new(); chest_plate.size = Vector3(0.58, 0.58, 0.16)
@@ -131,7 +131,7 @@ func _ready() -> void:
 		var shell := SphereMesh.new(); shell.radius = 0.52; shell.height = 0.72
 		_add(shell, Vector3(0, 1.12, -0.10), Color("304b45"))
 		for side in [-1.0, 1.0]:
-			var tusk := ConeMesh.new(); tusk.radius = 0.22; tusk.height = 0.82
+			var tusk: CylinderMesh = CylinderMesh.new(); tusk.top_radius = 0.0; tusk.bottom_radius = 0.22; tusk.height = 0.82
 			_add(tusk, Vector3(side * 0.43, 1.28, 0.30), Color("c2b58b"))
 		var core := SphereMesh.new(); core.radius = 0.19; core.height = 0.36
 		var core_material := StandardMaterial3D.new(); core_material.albedo_color = Color("9bc6a0"); core_material.emission_enabled = true; core_material.emission = Color("477b63"); core_material.emission_energy_multiplier = 1.7
@@ -145,7 +145,7 @@ func _ready() -> void:
 		var wraith_glow := StandardMaterial3D.new(); wraith_glow.albedo_color = Color("a9d9df"); wraith_glow.emission_enabled = true; wraith_glow.emission = Color("5da9c0"); wraith_glow.emission_energy_multiplier = 2.2
 		var core_instance := MeshInstance3D.new(); core_instance.mesh = wraith_core; core_instance.position = Vector3(0, 1.02, 0.25); core_instance.material_override = wraith_glow; visual.add_child(core_instance)
 		for side in [-1.0, 1.0]:
-			var claw := ConeMesh.new(); claw.radius = 0.075; claw.height = 0.44
+			var claw: CylinderMesh = CylinderMesh.new(); claw.top_radius = 0.0; claw.bottom_radius = 0.075; claw.height = 0.44
 			_add_to(visual, claw, Vector3(side * 0.48, 0.48, 0.16), Color("9ab9c1"))
 	elif enemy_kind == 8:
 		# Caranguejo de Prata: low profile, broad mineral shell and two oversized claws.
@@ -166,12 +166,12 @@ func _ready() -> void:
 			var claw := BoxMesh.new(); claw.size = Vector3(0.24, 0.22, 0.46)
 			_add_to(claw_pivot, claw, Vector3(0.0, 0.0, 0.04), Color("9baba0"))
 			for pincer_side in [-1.0, 1.0]:
-				var pincer := ConeMesh.new(); pincer.radius = 0.09; pincer.height = 0.27
+				var pincer: CylinderMesh = CylinderMesh.new(); pincer.top_radius = 0.0; pincer.bottom_radius = 0.09; pincer.height = 0.27
 				var pincer_i := _add_to(claw_pivot, pincer, Vector3(pincer_side * 0.10, -0.07, 0.25), Color("c1b88f"))
 				pincer_i.rotation.x = PI * 0.5
 			crab_claws.append(claw_pivot)
 			for pincer_side in [-1.0, 1.0]:
-				var pincer := ConeMesh.new(); pincer.radius = 0.09; pincer.height = 0.27
+				var pincer: CylinderMesh = CylinderMesh.new(); pincer.top_radius = 0.0; pincer.bottom_radius = 0.09; pincer.height = 0.27
 				var pincer_i := _add_to(visual, pincer, Vector3(side * 0.72 + pincer_side * 0.10, 0.48, 0.94), Color("c1b88f"))
 				pincer_i.rotation.x = PI * 0.5
 		var crab_legs: Array[Node3D] = []
@@ -187,8 +187,6 @@ func _ready() -> void:
 				crab_legs.append(leg_pivot)
 		visual.get_meta("left_arm_node", left_arm).visible = false
 		visual.get_meta("right_arm_node", right_arm).visible = false
-		visual.get_meta("left_leg_node", left_leg).visible = false
-		visual.get_meta("right_leg_node", right_leg).visible = false
 		head_pivot.visible = false
 		visual.set_meta("crab_legs", crab_legs)
 	elif enemy_kind == 5:
@@ -204,6 +202,9 @@ func _ready() -> void:
 			_add_to(left_arm if side < 0.0 else right_arm, wrist, Vector3(0, -0.42, 0.02), Color("8c7959"))
 	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
+	if enemy_kind == 8:
+		left_leg.visible = false
+		right_leg.visible = false
 	if enemy_kind < 3:
 		for leg_node in [left_leg, right_leg]:
 			var boot := BoxMesh.new(); boot.size = Vector3(0.25, 0.16, 0.34)
