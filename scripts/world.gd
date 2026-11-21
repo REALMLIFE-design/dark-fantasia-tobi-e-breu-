@@ -1636,13 +1636,6 @@ func _show_menu_page(page: String) -> void:
 			content.add_child(sensitivity_value)
 			_menu_add_card(content, "CONTROLES", "Mover: direcional esquerdo\nCâmera: arraste no lado direito\nAtacar: ATACAR  •  Pular: PULAR\nEsquivar: ESQUIVAR  •  Interagir: INTERAGIR\nPoção: POÇÃO  •  Breu: BREU")
 			_menu_add_button(content, "SALVAR CONFIGURAÇÕES", _save_settings, true)
-	var footer := HBoxContainer.new()
-	footer.add_theme_constant_override("separation", 10)
-	menu_body.add_child(footer)
-	if page != "main":
-		_menu_add_button(footer, "VOLTAR", _menu_back)
-		if page != "pause":
-			_menu_add_button(footer, "PAUSAR", _show_menu_page.bind("pause"))
 
 
 func _menu_add_button(parent: Control, caption: String, callback: Callable, primary := false) -> Button:
@@ -1701,6 +1694,9 @@ func _close_menu() -> void:
 func _menu_back() -> void:
 	if menu_page == "main":
 		if game_started: _close_menu()
+		return
+	if menu_page == "pause":
+		_close_menu()
 		return
 	if menu_page == "hub":
 		_show_menu_page("pause")
