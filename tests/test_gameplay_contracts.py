@@ -669,7 +669,8 @@ class PlayerDamageFlashContracts(unittest.TestCase):
     def test_player_damage_flash_duplicates_materials_and_restores_original_colors(self):
         self.assertIn('func _cache_damage_flash_materials(node: Node) -> void:', self.player)
         self.assertIn('source_material.duplicate() as StandardMaterial3D', self.player)
-        self.assertIn('damage_flash_base_colors[i].lerp(Color("ff5555"), strength * 0.72)', self.player)
+        self.assertIn('damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)', self.player)
+        self.assertIn('damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)', self.player)
         self.assertIn('damage_flash = 0.16', self.player)
         self.assertIn('_update_damage_flash()', self.player)
 
