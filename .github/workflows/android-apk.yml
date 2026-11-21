@@ -1,6 +1,10 @@
 
 name: Build Tobi e Breu APK
 
+concurrency:
+  group: tobi-breu-android-apk
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
   push:
@@ -86,51 +90,38 @@ jobs:
           chmod +x "$GODOT_BIN"
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
 
-      - name: Configurar preset Android
+      - name: Configurar exportação Android sem Gradle
         run: |
           python3 - <<'PY'
           import os
           import re
           from pathlib import Path
 
-          path = Path(os.environ["PROJECT_PATH"]) / "export_presets.cfg"
-          content = path.read_text(encoding="utf-8")
-
-          content, count = re.subn(
-              r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)false\s*$',
-              r'\1true',
-              content
-          )
-
-          if count == 0 and not re.search(
-              r'(?m)^\s*gradle_build/use_gradle_build\s*=\s*true\s*$',
-              content
-          ):
-              raise SystemExit("ERRO: opção Use Gradle Build não encontrada")
-
-          path.write_text(content, encoding="utf-8")
-          print("Gradle Build ativado.")
+          preset = Path(os.environ['PROJECT_PATH']) / 'export_presets.cfg'
+          content = preset.read_text(encoding='utf-8')
+          content = re.sub(r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)true\s*$', r'\1false', content)
+          preset.write_text(content, encoding='utf-8')
+          print('Exportação Android padrão ativada; Gradle desativado.')
           PY
 
-      - name: Instalar template Android do projeto
-        timeout-minutes: 9
-        run: |
-          set -o pipefail
-          echo "Instalando template Android com limite de 8 minutos..."
-          timeout 8m "$GODOT_BIN" --headless --verbose --path "$PROJECT_PATH" --install-android-build-template 2>&1 | tee "$RUNNER_TEMP/android-template-install.log"
-          test -d "$PROJECT_PATH/android/build" || {
-            echo "ERRO: Godot terminou sem criar android/build."
-            exit 1
-          }
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
 
       - name: Gerar APK
+        timeout-minutes: 16
         run: |
+          set -o pipefail
           mkdir -p "$PROJECT_PATH/build"
-
-          "$GODOT_BIN" --headless \
+          timeout 15m "$GODOT_BIN" --headless --verbose \
             --path "$PROJECT_PATH" \
             --export-debug "Android" \
-            "$PROJECT_PATH/build/TobiEBreu.apk"
+            "$PROJECT_PATH/build/TobiEBreu.apk" 2>&1 | tee "$RUNNER_TEMP/android-export.log"
+          test -s "$PROJECT_PATH/build/TobiEBreu.apk"
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
