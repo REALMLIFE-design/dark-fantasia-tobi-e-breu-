@@ -578,3 +578,26 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
         self.assertIn('login falso', menu)
         self.assertIn('ainda não está ativa', menu)
+
+class CombatFeedbackIntegrationContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / "scripts/player.gd").read_text(encoding="utf-8")
+        cls.world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        cls.enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
+
+    def test_perfect_dodge_rewards_stamina_and_shows_feedback(self):
+        self.assertIn("if dodge_time > 0.0 and not dodge_perfect_used:", self.player)
+        self.assertIn("perfect_dodge_flash = 0.22", self.player)
+        self.assertIn("stamina = minf(100.0, stamina + 10.0)", self.player)
+        self.assertIn("func player_perfect_dodge() -> void:", self.world)
+        self.assertIn("ESQUIVA PERFEITA! +10 FÔLEGO", self.world)
+
+    def test_real_hits_trigger_the_damage_flash_and_enemy_feedback_is_connected(self):
+        self.assertIn("damage_flash = 0.16", self.player)
+        self.assertIn("func _cache_damage_flash_materials(node: Node) -> void:", self.player)
+        self.assertIn("func _update_damage_flash() -> void:", self.player)
+        self.assertIn("func _cache_hit_flash_materials(node: Node) -> void:", self.enemy)
+        self.assertIn("func _update_hit_flash_materials() -> void:", self.enemy)
+        self.assertEqual(self.enemy.count("var hit_flash := 0.0"), 1)
+
