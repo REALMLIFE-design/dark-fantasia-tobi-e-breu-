@@ -672,3 +672,16 @@ class PlayerDamageFlashContracts(unittest.TestCase):
         self.assertIn('damage_flash_base_colors[i].lerp(Color("ff5555"), strength * 0.72)', self.player)
         self.assertIn('damage_flash = 0.16', self.player)
         self.assertIn('_update_damage_flash()', self.player)
+
+
+class EnemyStrafeCombatContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_scout_and_wraith_use_flanking_orbit_movement(self):
+        self.assertIn('var strafe_timer := 0.0', self.enemy)
+        self.assertIn('if enemy_kind == 2 or enemy_kind == 7:', self.enemy)
+        self.assertIn('var tangent := Vector3(-chase_direction.z, 0.0, chase_direction.x) * strafe_direction', self.enemy)
+        self.assertIn('preferred_distance := 4.8 if enemy_kind == 2 else 5.8', self.enemy)
+        self.assertIn('desired_direction = (chase_direction * radial_weight + tangent * orbit_weight).normalized()', self.enemy)
