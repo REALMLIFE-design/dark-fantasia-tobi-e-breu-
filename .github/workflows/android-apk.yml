@@ -112,6 +112,11 @@ jobs:
           export/android/java_sdk_path = "$JAVA_HOME"
           EOF
 
+      - name: Importar recursos do Godot
+        timeout-minutes: 5
+        run: |
+          timeout 4m "$GODOT_BIN" --headless --editor --path "$PROJECT_PATH" --import --quit
+
       - name: Gerar APK
         timeout-minutes: 16
         run: |
