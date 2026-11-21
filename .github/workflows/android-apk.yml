@@ -114,7 +114,12 @@ jobs:
       - name: Importar recursos do Godot
         timeout-minutes: 5
         run: |
-          timeout 4m "$GODOT_BIN" --headless --editor --path "$PROJECT_PATH" --import --quit
+          set -o pipefail
+          timeout 4m "$GODOT_BIN" --headless --editor --verbose --path "$PROJECT_PATH" --import --quit 2>&1 | tee "$RUNNER_TEMP/godot-import.log"
+          if grep -E "SCRIPT ERROR: Parse Error|Failed to load script" "$RUNNER_TEMP/godot-import.log"; then
+            echo "ERRO: Godot encontrou scripts inválidos durante a importação"
+            exit 1
+          fi
 
       - name: Gerar APK
         timeout-minutes: 16
