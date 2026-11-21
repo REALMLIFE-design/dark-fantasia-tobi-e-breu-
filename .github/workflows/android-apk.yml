@@ -71,14 +71,19 @@ jobs:
         run: |
           mkdir -p /tmp/godot
           mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+          mkdir -p /tmp/godot-templates
 
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O /tmp/godot.zip
-
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
+          timeout 8m wget --tries=3 --timeout=45 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O /tmp/godot.zip
+          timeout 8m wget --tries=3 --timeout=45 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
 
           unzip -q /tmp/godot.zip -d /tmp/godot
-
-          unzip -q /tmp/templates.tpz -d "$HOME/.local/share/godot/export_templates/4.3.stable"
+          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+          if [ -d /tmp/godot-templates/templates ]; then
+            cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          else
+            cp -a /tmp/godot-templates/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          fi
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
 
           GODOT_BIN=$(find /tmp/godot -type f -name 'Godot_v4.3-stable_linux.x86_64' -print -quit)
 
