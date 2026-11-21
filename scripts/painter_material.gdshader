@@ -41,7 +41,7 @@ float fbm(vec2 p) {
 
 vec2 atlas_uv_for(vec2 world_uv, int tile_index) {
     vec2 tile = vec2(float(tile_index % 4), floor(float(tile_index) / 4.0));
-    vec2 local_uv = fract(world_uv * max(brush_scale, 0.5) * 0.035);
+    vec2 local_uv = fract(world_uv * max(brush_scale, 0.5) * 0.055);
     local_uv = local_uv * 0.94 + 0.03;
     return (local_uv + tile) / vec2(4.0, 2.0);
 }
@@ -50,10 +50,20 @@ void fragment() {
     // Fragment VERTEX is view-space; transform back to world-space so textures
     // stay fixed on surfaces while the camera moves.
     vec3 world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+    vec3 world_normal = normalize(mat3(INV_VIEW_MATRIX) * normalize(NORMAL));
+    vec3 tri_weights = pow(abs(world_normal), vec3(triplanar_sharpness));
+    tri_weights /= max(dot(tri_weights, vec3(1.0)), 0.0001);
+
     vec2 p = world_pos.xz * brush_scale * detail_scale;
-    float broad = fbm(p * 0.42);
-    float fine = noise_value(p * 3.7);
-    float grain = hash(floor(world_pos.xz * brush_scale)) - 0.5;
+    float broad = noise_value(world_pos.zy * brush_scale * detail_scale * 0.42) * tri_weights.x
+        + noise_value(world_pos.xz * brush_scale * detail_scale * 0.42) * tri_weights.y
+        + noise_value(world_pos.xy * brush_scale * detail_scale * 0.42) * tri_weights.z;
+    float fine = noise_value(world_pos.zy * brush_scale * detail_scale * 3.7) * tri_weights.x
+        + noise_value(world_pos.xz * brush_scale * detail_scale * 3.7) * tri_weights.y
+        + noise_value(world_pos.xy * brush_scale * detail_scale * 3.7) * tri_weights.z;
+    float grain = (hash(floor(world_pos.zy * brush_scale)) * tri_weights.x
+        + hash(floor(world_pos.xz * brush_scale)) * tri_weights.y
+        + hash(floor(world_pos.xy * brush_scale)) * tri_weights.z) - 0.5;
     float strokes = sin((world_pos.x + world_pos.y * 0.37) * brush_scale * 2.1) * 0.025;
     float pattern = 0.0;
     vec3 tint = base_tint.rgb;
@@ -72,9 +82,6 @@ void fragment() {
     else if (pattern_mode == 8) { tile_index = 7; }
     // Triplanar world mapping prevents stretched XZ projections on cliffs,
     // walls, towers and other vertical geometry while keeping a shared scale.
-    vec3 world_normal = normalize(mat3(INV_VIEW_MATRIX) * normalize(NORMAL));
-    vec3 tri_weights = pow(abs(world_normal), vec3(triplanar_sharpness));
-    tri_weights /= max(dot(tri_weights, vec3(1.0)), 0.0001);
     vec2 uv_x = atlas_uv_for(world_pos.zy, tile_index);
     vec2 uv_y = atlas_uv_for(world_pos.xz, tile_index);
     vec2 uv_z = atlas_uv_for(world_pos.xy, tile_index);
@@ -131,13 +138,18 @@ void fragment() {
         pattern = grain * brush_strength + strokes + (broad - 0.5) * 0.08;
     }
 
-    ALBEDO = mix(tint, atlas_color, 0.34) * (1.0 + pattern);
-    ROUGHNESS = mix(pattern_mode == 5 ? 0.28 : 0.94, atlas_roughness, 0.38);
+    float atlas_influence = 0.58;
+    if (pattern_mode == 1) { atlas_influence = 0.48; }
+    else if (pattern_mode == 4) { atlas_influence = 0.62; }
+    else if (pattern_mode == 5) { atlas_influence = 0.72; }
+    else if (pattern_mode == 6) { atlas_influence = 0.66; }
+    ALBEDO = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern);
+    ROUGHNESS = mix(pattern_mode == 5 ? 0.24 : 0.90, atlas_roughness, 0.62);
     METALLIC = pattern_mode == 5 ? 0.12 : 0.0;
 
     // Derivative-based bump detail reuses the atlas without another texture
     // binding or a tangent-space normal texture, keeping Android memory low.
-    float relief = dot(atlas_color, vec3(0.299, 0.587, 0.114)) * 0.72 + broad * 0.28;
+    float relief = dot(atlas_color, vec3(0.299, 0.587, 0.114)) * 0.62 + broad * 0.26 + fine * 0.12;
     vec3 dpdx = dFdx(VERTEX);
     vec3 dpdy = dFdy(VERTEX);
     vec3 view_normal = normalize(NORMAL);
