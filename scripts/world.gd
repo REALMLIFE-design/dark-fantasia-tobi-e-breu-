@@ -5,6 +5,7 @@ const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -808,6 +809,7 @@ func _build_ruins_and_props() -> void:
 		_box(self,"GatePillar",Vector3(x,2.6,-27),Vector3(2.2,5.2,2.0),Color("77746a"))
 	_box(self,"GateLintel",Vector3(0,5.0,-27),Vector3(13,1.6,2.4),Color("817c70"))
 	_box(self,"BrokenLintel",Vector3(2.8,6.1,-27),Vector3(4.2,0.7,2.1),Color("6c6b63")).rotation.z = 0.22
+	_build_gothic_gate_accents()
 	# weathered trail lanterns help navigation in the dusk
 	for z in [-15.0, 1.0, 18.0, 34.0]:
 		var post := _box(self, "LanternPost", Vector3(5.6,1.25,z), Vector3(0.18,2.5,0.18), Color("49372d"))
@@ -826,6 +828,36 @@ func _build_ruins_and_props() -> void:
 	fire.light_energy = 2.2
 	fire.omni_range = 10
 	add_child(fire)
+
+func _build_gothic_gate_accents() -> void:
+	# Carved caps, iron finials and crimson seals turn the entrance into a clear landmark.
+	for side in [-1.0, 1.0]:
+		var cap := _box(self, "GateCarvedCap", Vector3(side * 5.5, 5.35, -25.82), Vector3(2.55, 0.42, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)
+		cap.rotation.z = side * -0.035
+		var footing := _box(self, "GateFooting", Vector3(side * 5.5, 0.32, -25.82), Vector3(2.55, 0.64, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)
+		footing.material_override = _material_for_surface("cut stone", Color("514d49"))
+		for spike_index in range(2):
+			var spike := _box(self, "GateIronFinial", Vector3(side * (4.65 + float(spike_index) * 1.25), 6.0, -26.0), Vector3(0.22, 1.25, 0.22), Color("343638"))
+			spike.rotation.z = side * 0.18
+	for i in range(3):
+		var seal := _sphere(self, "GateCrimsonSeal", Vector3(-2.4 + float(i) * 2.4, 4.85, -25.55), 0.19, Color("a83d4b"), 0.42)
+		seal.scale = Vector3(0.72, 1.0, 0.42)
+		var seal_material := StandardMaterial3D.new()
+		seal_material.albedo_color = Color("a83d4b")
+		seal_material.emission_enabled = true
+		seal_material.emission = Color("8f2638")
+		seal_material.emission_energy_multiplier = 0.7
+		seal.material_override = seal_material
+	var gate_glow := OmniLight3D.new()
+	gate_glow.name = "GateCrimsonGlow"
+	gate_glow.position = Vector3(0.0, 5.0, -24.8)
+	gate_glow.light_color = Color("a83d4b")
+	gate_glow.light_energy = 0.42
+	gate_glow.omni_range = 6.0
+	add_child(gate_glow)
+
 
 func _build_region_landmarks() -> void:
 	# Broken watchtower and a red corruption scar give the clearing a memorable skyline.

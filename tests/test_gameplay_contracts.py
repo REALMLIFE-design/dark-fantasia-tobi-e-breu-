@@ -601,3 +601,12 @@ class CombatFeedbackIntegrationContracts(unittest.TestCase):
         self.assertIn("func _update_hit_flash_materials() -> void:", self.enemy)
         self.assertEqual(self.enemy.count("var hit_flash := 0.0"), 1)
 
+class GothicGateVisualContracts(unittest.TestCase):
+    def test_starting_gate_has_restored_dark_fantasy_details(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("_build_gothic_gate_accents()", world)
+        self.assertIn('"GateCarvedCap"', world)
+        self.assertIn('"GateIronFinial"', world)
+        self.assertIn('"GateCrimsonSeal"', world)
+        self.assertIn('"GateCrimsonGlow"', world)
+
