@@ -516,3 +516,23 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('fract(world_uv * max(brush_scale, 0.5)', shader)
         self.assertIn('atlas_uv_for(world_pos.xz, tile_index)', shader)
 
+
+
+class ForgottenShrineVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_forgotten_shrine_has_lightweight_animated_rune_and_shards(self):
+        landmarks = self.world[self.world.index('func _build_region_landmarks'):self.world.index('func _build_swamp_region')]
+        self.assertIn('var rune_pulse := create_tween().set_loops()', landmarks)
+        self.assertIn('var light_pulse := create_tween().set_loops()', landmarks)
+        self.assertIn('ShrineFloatingShard_%d', landmarks)
+        self.assertIn('Tween.TRANS_SINE', landmarks)
+
+    def test_forgotten_shrine_keeps_checkpoint_reward_and_save_contract(self):
+        self.assertIn('checkpoint_position = shrine.global_position + Vector3(0, 0, 4)', self.world)
+        self.assertIn('shards += 1', self.world)
+        self.assertIn('_grant_xp(25)', self.world)
+        self.assertIn('cfg.set_value("progress", "shrine_used"', self.world)
+        self.assertIn('saved_shrine_used = bool(cfg.get_value("progress", "shrine_used", false))', self.world)
