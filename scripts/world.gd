@@ -25,6 +25,14 @@ var potions := 3
 var weapon_level := 0
 const WEAPON_UPGRADE_COSTS := [3, 6, 10]
 var save_path := "user://tobi_breu_save.cfg"
+var settings_path := "user://tobi_breu_settings.cfg"
+var camera_sensitivity_setting := 0.006
+var menu_layer: CanvasLayer
+var menu_panel: PanelContainer
+var menu_body: VBoxContainer
+var menu_feedback: Label
+var menu_page := "main"
+var game_started := false
 var day_clock := 0.0
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
@@ -64,6 +72,7 @@ const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
 	_load_save()
+	_load_settings()
 	river_boss_saved_band = floori(float(river_boss_hp) / 68.0)
 	_build_environment()
 	_build_landscape()
@@ -78,9 +87,11 @@ func _ready() -> void:
 	_build_npcs()
 	_build_enemies()
 	_build_player()
+	player.camera_sensitivity = camera_sensitivity_setting
 	player.hp = clampi(saved_player_hp, 1, player.max_hp)
 	player.global_position = checkpoint_position
 	_build_hud()
+	_build_menus()
 	if quest_stage == 12:
 		boss_hud_panel.visible = true
 		boss_health_changed(river_boss_hp, 680)
@@ -1425,7 +1436,287 @@ func _build_hud() -> void:
 		action_btn.pressed.connect(_touch_action.bind(data.a))
 		hud.add_child(action_btn)
 
+	# Dedicated pause/menu access remains reachable on touch screens.
+	var pause_btn := Button.new()
+	pause_btn.name = "PauseMenuButton"
+	pause_btn.text = "Ⅱ"
+	pause_btn.anchor_left = 0.965
+	pause_btn.anchor_right = 0.965
+	pause_btn.anchor_top = 0.045
+	pause_btn.anchor_bottom = 0.045
+	pause_btn.position = Vector2(-34, -4)
+	pause_btn.size = Vector2(48, 48)
+	pause_btn.add_theme_font_size_override("font_size", 19)
+	pause_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.045, 0.04, 0.96), Color("b18a52"), 16))
+	pause_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.13, 0.11, 0.075, 0.98), Color("dfbd7b"), 16))
+	pause_btn.pressed.connect(_open_menu.bind("pause"))
+	hud.add_child(pause_btn)
+
 	_update_inventory()
+
+
+func _build_menus() -> void:
+	menu_layer = CanvasLayer.new()
+	menu_layer.name = "GameMenus"
+	menu_layer.layer = 30
+	menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(menu_layer)
+	var dimmer := ColorRect.new()
+	dimmer.name = "MenuBackdrop"
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dimmer.color = Color(0.012, 0.018, 0.018, 0.88)
+	dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
+	menu_layer.add_child(dimmer)
+	menu_panel = PanelContainer.new()
+	menu_panel.name = "MenuFrame"
+	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
+	menu_panel.position = Vector2(-340, -300)
+	menu_panel.size = Vector2(680, 600)
+	menu_panel.custom_minimum_size = Vector2(680, 600)
+	menu_panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.035, 0.043, 0.038, 0.99), Color("b18a52"), 22))
+	menu_layer.add_child(menu_panel)
+	var shell := VBoxContainer.new()
+	shell.name = "MenuShell"
+	shell.add_theme_constant_override("separation", 10)
+	menu_panel.add_child(shell)
+	var top_rule := HBoxContainer.new()
+	shell.add_child(top_rule)
+	var brand := Label.new()
+	brand.text = "TOBI  &  BREU"
+	brand.add_theme_font_size_override("font_size", 13)
+	brand.add_theme_color_override("font_color", Color("b18a52"))
+	top_rule.add_child(brand)
+	var top_spacer := Control.new()
+	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_rule.add_child(top_spacer)
+	var close_btn := Button.new()
+	close_btn.text = "×"
+	close_btn.custom_minimum_size = Vector2(44, 40)
+	close_btn.add_theme_font_size_override("font_size", 24)
+	close_btn.pressed.connect(_menu_back)
+	top_rule.add_child(close_btn)
+	var rule := ColorRect.new()
+	rule.custom_minimum_size = Vector2(0, 2)
+	rule.color = Color("806342")
+	shell.add_child(rule)
+	menu_body = VBoxContainer.new()
+	menu_body.name = "MenuPageContent"
+	menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_body.add_theme_constant_override("separation", 10)
+	shell.add_child(menu_body)
+	menu_feedback = Label.new()
+	menu_feedback.name = "MenuFeedback"
+	menu_feedback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_feedback.add_theme_font_size_override("font_size", 11)
+	menu_feedback.add_theme_color_override("font_color", Color("9acfc2"))
+	shell.add_child(menu_feedback)
+	menu_layer.visible = true
+	_show_menu_page("main")
+	get_tree().paused = true
+
+
+func _show_menu_page(page: String) -> void:
+	if not is_instance_valid(menu_body): return
+	menu_page = page
+	for child in menu_body.get_children():
+		menu_body.remove_child(child)
+		child.queue_free()
+	menu_feedback.text = ""
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 25)
+	title.add_theme_color_override("font_color", Color("e4c58e"))
+	menu_body.add_child(title)
+	var subtitle := Label.new()
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.add_theme_color_override("font_color", Color("b8b4a5"))
+	menu_body.add_child(subtitle)
+	var content := VBoxContainer.new()
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 9)
+	menu_body.add_child(content)
+	match page:
+		"main":
+			title.text = "A LENDA AINDA NÃO TERMINOU"
+			subtitle.text = "Uma jornada entre ruínas, sombras e antigos juramentos."
+			_menu_add_card(content, "JORNADA ATUAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Encontre Mestre Azulan"))
+			_menu_add_button(content, "ENTRAR NO MUNDO", _start_game, true)
+			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
+			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
+		"pause":
+			title.text = "JORNADA PAUSADA"
+			subtitle.text = "Escolha para onde deseja ir."
+			var grid := GridContainer.new()
+			grid.columns = 2
+			grid.add_theme_constant_override("h_separation", 10)
+			grid.add_theme_constant_override("v_separation", 10)
+			content.add_child(grid)
+			_menu_add_button(grid, "✦  DIÁRIO", _show_menu_page.bind("quests"))
+			_menu_add_button(grid, "▣  MOCHILA", _show_menu_page.bind("inventory"))
+			_menu_add_button(grid, "⚔  EQUIPAMENTO", _show_menu_page.bind("equipment"))
+			_menu_add_button(grid, "✧  HABILIDADES", _show_menu_page.bind("skills"))
+			_menu_add_button(grid, "⌖  ATLAS", _show_menu_page.bind("map"))
+			_menu_add_button(grid, "⚙  CONFIGURAÇÕES", _show_menu_page.bind("settings"))
+			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
+			_menu_add_button(content, "RETOMAR A AVENTURA", _close_menu, true)
+		"inventory":
+			title.text = "MOCHILA DE TOBI"
+			subtitle.text = "Tudo o que você carrega nesta jornada."
+			_update_inventory()
+			_menu_add_card(content, "INVENTÁRIO", inventory_details.text if is_instance_valid(inventory_details) else "Nenhum item registrado.")
+			_menu_add_card(content, "ATALHOS", "Poção: botão POÇÃO  •  Fragmentos: usados na forja  •  Materiais: obtidos durante a exploração.")
+		"equipment":
+			title.text = "EQUIPAMENTO & FORJA"
+			subtitle.text = "Prepare Tobi antes de enfrentar as criaturas do mundo."
+			var level := _get_player_level()
+			var damage := 35 + weapon_level * 10 + (level - 1) * 3
+			_menu_add_card(content, "ESPADA DE TOBI  •  NÍVEL +%d" % weapon_level, "Dano atual: %d\nVida máxima: %d\nNível do aventureiro: %d\nFragmentos Rubros: %d" % [damage, player.max_hp, level, shards])
+			if weapon_level < WEAPON_UPGRADE_COSTS.size():
+				var cost := WEAPON_UPGRADE_COSTS[weapon_level]
+				var forge := _menu_add_button(content, "APRIMORAR ESPADA  •  %d FRAGMENTOS" % cost, _upgrade_from_menu, true)
+				forge.disabled = shards < cost
+			else:
+				_menu_add_card(content, "FORJA", "Sua espada já alcançou o nível máximo disponível nesta versão.")
+			_menu_add_card(content, "PROTEÇÃO", "Vida máxima atual: %d. Poções disponíveis: %d." % [player.max_hp, potions])
+		"skills":
+			title.text = "TÉCNICAS & VÍNCULO"
+			subtitle.text = "As habilidades reais disponíveis para Tobi e Breu."
+			_menu_add_card(content, "COMBATE • GOLPE COMBO", "Sequência de até 3 golpes. O terceiro ataque causa dano ampliado e consome vigor.")
+			_menu_add_card(content, "ESQUIVA", "Deslocamento rápido para escapar de ataques. Usa vigor, que se recupera com o tempo. Vigor atual: %d%%." % int(player.stamina))
+			_menu_add_card(content, "BREU • PULSO SOMBRIO", "A habilidade do companheiro revela presenças ocultas e atinge inimigos próximos. Recarga: %.1f s." % player.shadow_pulse_cooldown)
+			_menu_add_card(content, "SALTO", "Pule para atravessar desníveis e explorar o terreno.")
+		"quests":
+			title.text = "DIÁRIO DA JORNADA"
+			subtitle.text = "A história, os objetivos e os contratos registrados."
+			_menu_add_card(content, "OBJETIVO PRINCIPAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Sem objetivo ativo."))
+			_menu_add_card(content, "PROGRESSO", "Inimigos derrotados: %d\nCavaleiros Afogados: %d/3\nTotens purificados: %d/3\nNível: %d  •  XP total: %d" % [defeated_count, river_knights_defeated, swamp_totems, _get_player_level(), xp])
+			if guild_contract_started:
+				_menu_add_card(content, "CONTRATO DA GUILDA", "Selos recuperados: %d/3\nEstado: %s" % [guild_relic_ids.size(), "Concluído" if guild_contract_claimed else "Em andamento"])
+		"map":
+			title.text = "ATLAS DO MUNDO"
+			subtitle.text = "Regiões e marcos conhecidos de Tobi e Breu."
+			_menu_add_card(content, "REGIÕES NATURAIS", "CLAREIRA INICIAL  •  (0, 0)\nPÂNTANO DOS RATOS  •  (0, -91)\nRIO PRATEADO  •  (55, -127)\nBOSQUE DOS SUSSURROS  •  (96, -145)\nFLORESTA ANCESTRAL  •  (-158, -104)\nMONTANHA GELADA  •  (-166, -260)\nDESFILADEIRO RUBRO  •  (166, -260)\nRUÍNAS ANTIGAS  •  (164, -65)\nPLANÍCIE DOURADA  •  (0, 246)\nCUME DAS NUVENS  •  (0, -325)\nTEMPLO DO CORAÇÃO  •  (165, -330)")
+			_menu_add_card(content, "CIVILIZAÇÃO & EXPLORAÇÃO", "VILA DO CARVALHO  •  CIDADE DE PEDRA\nGUILDA DOS VIGIAS  •  CAVERNA DO ECO\nMASMORRA DAS CINZAS  •  CASTELO DO SILÊNCIO")
+			_menu_add_card(content, "LEGENDA", "As coordenadas são aproximadas e usam a Clareira Inicial como referência. O atlas não teletransporta o personagem.")
+		"settings":
+			title.text = "CONFIGURAÇÕES"
+			subtitle.text = "Ajuste a câmera e consulte os controles."
+			_menu_add_card(content, "SENSIBILIDADE DA CÂMERA", "Arraste na metade direita da tela para girar a câmera. Ajuste a velocidade abaixo.")
+			var sensitivity := HSlider.new()
+			sensitivity.min_value = 0.003
+			sensitivity.max_value = 0.012
+			sensitivity.step = 0.001
+			sensitivity.value = camera_sensitivity_setting
+			sensitivity.custom_minimum_size = Vector2(0, 42)
+			sensitivity.value_changed.connect(_set_camera_sensitivity)
+			sensitivity.drag_ended.connect(func(_changed: bool): _save_settings())
+			content.add_child(sensitivity)
+			var sensitivity_value := Label.new()
+			sensitivity_value.text = "Sensibilidade: %.3f" % camera_sensitivity_setting
+			sensitivity_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			sensitivity_value.add_theme_color_override("font_color", Color("d8b77c"))
+			sensitivity.value_changed.connect(func(value: float): sensitivity_value.text = "Sensibilidade: %.3f" % value)
+			content.add_child(sensitivity_value)
+			_menu_add_card(content, "CONTROLES", "Mover: direcional esquerdo\nCâmera: arraste no lado direito\nAtacar: ATACAR  •  Pular: PULAR\nEsquivar: ESQUIVAR  •  Interagir: INTERAGIR\nPoção: POÇÃO  •  Breu: BREU")
+			_menu_add_button(content, "SALVAR CONFIGURAÇÕES", _save_settings, true)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 10)
+	menu_body.add_child(footer)
+	if page != "main":
+		_menu_add_button(footer, "VOLTAR", _menu_back)
+		if page != "pause":
+			_menu_add_button(footer, "PAUSAR", _show_menu_page.bind("pause"))
+
+
+func _menu_add_button(parent: Control, caption: String, callback: Callable, primary := false) -> Button:
+	var button := Button.new()
+	button.text = caption
+	button.custom_minimum_size = Vector2(0, 54)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 13 if primary else 11)
+	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
+	var edge := Color("d8b77c") if primary else Color("8c7956")
+	button.add_theme_stylebox_override("normal", _hud_button_style(fill, edge, 13))
+	button.add_theme_stylebox_override("hover", _hud_button_style(fill.lightened(0.18), edge.lightened(0.2), 13))
+	button.add_theme_stylebox_override("pressed", _hud_button_style(fill.lightened(0.3), Color("f0d49b"), 13))
+	button.pressed.connect(callback)
+	parent.add_child(button)
+	return button
+
+
+func _menu_add_card(parent: Control, heading: String, body: String) -> void:
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _hud_button_style(Color(0.055, 0.067, 0.059, 0.98), Color("68583f"), 12))
+	parent.add_child(card)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 5)
+	card.add_child(box)
+	var title := Label.new()
+	title.text = heading
+	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_color_override("font_color", Color("d8b77c"))
+	box.add_child(title)
+	var detail := Label.new()
+	detail.text = body
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.add_theme_font_size_override("font_size", 12)
+	detail.add_theme_color_override("font_color", Color("e5dfd0"))
+	box.add_child(detail)
+
+
+func _open_menu(page: String = "pause") -> void:
+	if not is_instance_valid(menu_layer): return
+	menu_layer.visible = true
+	get_tree().paused = true
+	_show_menu_page(page)
+
+
+func _start_game() -> void:
+	game_started = true
+	_close_menu()
+
+
+func _close_menu() -> void:
+	if is_instance_valid(menu_layer): menu_layer.visible = false
+	get_tree().paused = false
+
+
+func _menu_back() -> void:
+	if menu_page == "main":
+		if game_started: _close_menu()
+		return
+	_show_menu_page("pause" if game_started else "main")
+
+
+func _save_from_menu() -> void:
+	_save_game()
+	menu_feedback.text = "PROGRESSO SALVO COM SUCESSO"
+
+
+func _upgrade_from_menu() -> void:
+	_upgrade_weapon()
+	_show_menu_page("equipment")
+
+
+func _set_camera_sensitivity(value: float) -> void:
+	camera_sensitivity_setting = value
+	if is_instance_valid(player): player.camera_sensitivity = value
+
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(settings_path) == OK:
+		camera_sensitivity_setting = clampf(float(cfg.get_value("controls", "camera_sensitivity", 0.006)), 0.003, 0.012)
+
+
+func _save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("controls", "camera_sensitivity", camera_sensitivity_setting)
+	var result := cfg.save(settings_path)
+	if is_instance_valid(menu_feedback):
+		menu_feedback.text = "CONFIGURAÇÕES SALVAS" if result == OK else "NÃO FOI POSSÍVEL SALVAR"
 
 
 func _hud_bar_style(color: Color) -> StyleBoxFlat:
@@ -1464,13 +1755,26 @@ func _touch_action(action: String) -> void:
 	elif action == "shadow": player.do_shadow_pulse()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
-		_toggle_inventory()
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			if is_instance_valid(menu_layer) and menu_layer.visible:
+				_menu_back()
+			elif game_started:
+				_open_menu("pause")
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_I:
+			if is_instance_valid(menu_layer) and menu_layer.visible:
+				_show_menu_page("inventory")
+			else:
+				_open_menu("inventory")
+			get_viewport().set_input_as_handled()
 
 func _toggle_inventory() -> void:
-	if not inventory_panel: return
-	inventory_panel.visible = not inventory_panel.visible
-	_update_inventory()
+	if is_instance_valid(menu_layer) and menu_layer.visible:
+		if menu_page == "inventory": _menu_back()
+		else: _show_menu_page("inventory")
+	else:
+		_open_menu("inventory")
 
 func _process(delta: float) -> void:
 	day_clock = fposmod(day_clock + delta * 0.0022, TAU)
