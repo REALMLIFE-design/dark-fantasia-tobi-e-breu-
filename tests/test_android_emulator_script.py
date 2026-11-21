@@ -59,6 +59,12 @@ if args[:2] == ['logcat', '-d']:
         script = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("adb shell input tap 640 490", script)
 
+    def test_verifies_game_remains_the_resumed_android_activity(self):
+        script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("dumpsys activity activities", script)
+        self.assertIn("topResumedActivity", script)
+        self.assertNotIn('grep -q "TOBI_BREU_GAME_STARTED"', script)
+
     def test_fails_with_clear_diagnostics_if_game_exits_after_interaction(self):
         result = self.run_script(exit_after_tap=True)
         self.assertNotEqual(result.returncode, 0)
