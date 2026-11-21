@@ -13,6 +13,7 @@ var quest_label: Label
 var prompt_label: Label
 var toast_label: Label
 var health_label: Label
+var health_value_label: Label
 var health_bar: ProgressBar
 var combo_label: Label
 var objective_label: Label
@@ -1211,12 +1212,12 @@ func _build_hud() -> void:
 	var status_spacer := Control.new()
 	status_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status_head.add_child(status_spacer)
-	var health_value := Label.new()
-	health_value.text = "%d / %d" % [player.hp, player.max_hp]
-	health_value.add_theme_font_size_override("font_size", 10)
-	health_value.add_theme_color_override("font_color", Color("e8e0cf"))
-	health_value.name = "HealthValue"
-	status_head.add_child(health_value)
+	health_value_label = Label.new()
+	health_value_label.text = "%d / %d" % [player.hp, player.max_hp]
+	health_value_label.add_theme_font_size_override("font_size", 10)
+	health_value_label.add_theme_color_override("font_color", Color("e8e0cf"))
+	health_value_label.name = "HealthValue"
+	status_head.add_child(health_value_label)
 	health_bar = ProgressBar.new()
 	health_bar.custom_minimum_size = Vector2(230, 12)
 	health_bar.max_value = player.max_hp
@@ -1959,7 +1960,8 @@ func player_health_changed(current: int, maximum: int) -> void:
 	if health_bar:
 		health_bar.max_value = maximum
 		health_bar.value = current
-	if health_label: health_label.text = "TOBI  •  VIDA %d/%d" % [current, maximum]
+	if health_label: health_label.text = "TOBI  •  VIDA"
+	if health_value_label: health_value_label.text = "%d / %d" % [current, maximum]
 
 func player_defeated() -> void:
 	toast_label.text = "Tobi caiu! Retornando ao acampamento..."
