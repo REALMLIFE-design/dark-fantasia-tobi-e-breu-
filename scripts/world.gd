@@ -74,6 +74,7 @@ var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
 var bell_tower_ring_count := 0
+var ancient_waystone_ids: Array[int] = []
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -99,6 +100,7 @@ func _ready() -> void:
 	_build_river_region()
 	_build_whisper_grove()
 	_build_outer_regions()
+	_build_ancient_waystones()
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
 	_build_world_civilization()
@@ -2777,6 +2779,9 @@ func _process(delta: float) -> void:
 	var guild_distance := player.global_position.distance_to(guild_board.global_position) if guild_board else 999.0
 	var bell_tower := get_node_or_null("EchoingBellTower")
 	var bell_tower_distance := player.global_position.distance_to(bell_tower.global_position) if bell_tower else 999.0
+	var nearest_waystone_id := _nearest_ancient_waystone()
+	var waystone_node := get_node_or_null("AncientWaystone_%d" % nearest_waystone_id) if nearest_waystone_id >= 0 else null
+	var waystone_distance := player.global_position.distance_to(waystone_node.global_position) if waystone_node else 999.0
 	var nearest_guild_relic_distance := 999.0
 	for relic_id in range(3):
 		var relic := get_node_or_null("GuildRelic_%d" % relic_id)
@@ -2791,6 +2796,7 @@ func _process(delta: float) -> void:
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
 	elif stag_guardian_distance < 4.5 and whisper_guardian_reward_claimed: prompt_label.text = "O GUARDIÃO JÁ CONCEDEU SUA BÊNÇÃO"
 	elif stag_guardian_distance < 4.5: prompt_label.text = "E: RECEBER A BÊNÇÃO DO GUARDIÃO"
+	elif waystone_distance < 4.0: prompt_label.text = "E: ATIVAR PEDRA-ÂNCORA ANTIGA  •  (%d/3)" % ancient_waystone_ids.size()
 	elif bell_tower_distance < 5.0 and bell_tower_ring_count < 3: prompt_label.text = "E: TOCAR O SINO ANTIGO  •  (%d/3)" % bell_tower_ring_count
 	elif bell_tower_distance < 5.0: prompt_label.text = "SINO DO ÚLTIMO VIGIA — CONCLUÍDO"
 	elif river_puzzle_distance < 4.8 and not river_shrine_solved: prompt_label.text = "E: GIRAR O ANEL DO ASTROLÁBIO  •  (%d/3)" % (mini(_river_puzzle_current_ring() + 1, 3))
@@ -2877,6 +2883,37 @@ func _nearest_river_chest() -> int:
 				best_id = i
 	return best_id
 
+func _nearest_ancient_waystone() -> int:
+	if not is_instance_valid(player): return -1
+	var best_id := -1
+	var best_distance := 4.0
+	for i in range(3):
+		if ancient_waystone_ids.has(i): continue
+		var stone := get_node_or_null("AncientWaystone_%d" % i)
+		if stone:
+			var distance := player.global_position.distance_to(stone.global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best_id = i
+	return best_id
+
+func _build_ancient_waystones() -> void:
+	var positions := [Vector3(-158.0, 0.0, -91.0), Vector3(-166.0, 0.0, -247.0), Vector3(158.0, 0.0, -91.0)]
+	var labels := ["Raiz", "Geada", "Brasa"]
+	for i in range(positions.size()):
+		var stone := Node3D.new()
+		stone.name = "AncientWaystone_%d" % i
+		stone.position = positions[i]
+		add_child(stone)
+		var pillar := _box(stone, "WaystonePillar", Vector3(0.0, 1.7, 0.0), Vector3(1.35, 3.4, 0.8), Color("59665d"))
+		pillar.rotation.z = -0.08 if i % 2 == 0 else 0.08
+		_box(stone, "WaystoneBase", Vector3(0.0, 0.25, 0.0), Vector3(2.2, 0.5, 1.5), Color("454e49"))
+		var rune := _sphere(stone, "WaystoneRune", Vector3(0.0, 1.8, 0.46), 0.28, Color("779b8a"), 1.6)
+		rune.scale = Vector3(0.7, 1.4, 0.35)
+		_add_region_title("PEDRA-ÂNCORA: " + labels[i].to_upper(), stone.position + Vector3(0.0, 4.2, 0.0), Color("b9d8c1"))
+		if ancient_waystone_ids.has(i):
+			rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
+
 func _open_river_chest(chest_id: int) -> void:
 	if chest_id < 0 or chest_id >= 3 or river_chest_ids.has(chest_id): return
 	var chest := get_node_or_null("RiverTreasureChest_%d" % chest_id)
@@ -2903,6 +2940,29 @@ func _open_river_chest(chest_id: int) -> void:
 	_save_game()
 
 func _interact() -> void:
+	var waystone_id := _nearest_ancient_waystone()
+	if waystone_id >= 0:
+		var waystone := get_node_or_null("AncientWaystone_%d" % waystone_id)
+		if waystone and player.global_position.distance_to(waystone.global_position) < 4.0:
+			if not ancient_waystone_ids.has(waystone_id):
+				ancient_waystone_ids.append(waystone_id)
+				ancient_waystone_ids.sort()
+				var rune := waystone.get_node_or_null("WaystoneRune")
+				if rune: rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
+				_grant_xp(30)
+				dark_essence += 1
+				if ancient_waystone_ids.size() >= 3:
+					_grant_xp(120)
+					shards += 4
+					potions += 2
+					toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! +120 XP • 4 Fragmentos • 2 Poções"
+				else:
+					toast_label.text = "PEDRA-ÂNCORA DESPERTADA • +30 XP • Essência +1 (%d/3)" % ancient_waystone_ids.size()
+				_update_inventory()
+				_save_game()
+			else:
+				toast_label.text = "Esta Pedra-Âncora já foi despertada."
+			return
 	var bell_tower := get_node_or_null("EchoingBellTower")
 	if bell_tower and player.global_position.distance_to(bell_tower.global_position) < 5.0:
 		if bell_tower_ring_count < 3:
@@ -3376,7 +3436,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 14)
+	cfg.set_value("meta", "save_version", 15)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -3405,6 +3465,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)
+	cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
 	cfg.save(save_path)
 	if toast_label and toast_label.text.is_empty():
@@ -3416,7 +3477,7 @@ func _load_save() -> void:
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 14:
+	if save_version > 15:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
@@ -3481,6 +3542,13 @@ func _load_save() -> void:
 	guild_contract_started = bool(cfg.get_value("progress", "guild_contract_started", false))
 	guild_contract_claimed = bool(cfg.get_value("progress", "guild_contract_claimed", false))
 	bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)
+	ancient_waystone_ids.clear()
+	var saved_waystone_ids: Array = cfg.get_value("progress", "ancient_waystone_ids", [])
+	for saved_waystone_id in saved_waystone_ids:
+		var waystone_id := int(saved_waystone_id)
+		if waystone_id >= 0 and waystone_id < 3 and not ancient_waystone_ids.has(waystone_id):
+			ancient_waystone_ids.append(waystone_id)
+	ancient_waystone_ids.sort()
 	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
