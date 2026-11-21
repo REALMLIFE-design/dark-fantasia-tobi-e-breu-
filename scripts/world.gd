@@ -1857,22 +1857,22 @@ func _show_menu_page(page: String) -> void:
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
 		"inventory":
 			title.text = "MOCHILA DE TOBI"
-			subtitle.text = "Seus recursos e materiais reunidos durante a jornada."
+			subtitle.text = "Poções, materiais e arma de Tobi."
 			_update_inventory()
-			_menu_add_section_label(content, "CONSUMÍVEIS", "Itens de uso durante a aventura")
+			_menu_add_section_label(content, "CONSUMÍVEIS", "Poções para recuperar vida")
 			_menu_add_item_grid(content, [
-				{"symbol": "✚", "name": "Poção de vida", "count": potions, "detail": "Restaura 45 pontos de vida", "accent": Color("c77d72")}
+				{"symbol": "✚", "name": "Poção de vida", "count": potions, "detail": "Recupera 45 de vida", "accent": Color("c77d72")}
 			])
-			_menu_add_section_label(content, "MATERIAIS", "Recursos encontrados e recompensas")
+			_menu_add_section_label(content, "MATERIAIS", "Materiais coletados")
 			_menu_add_item_grid(content, [
-				{"symbol": "◆", "name": "Fragmentos Rubros", "count": shards, "detail": "Usados para aprimorar a espada", "accent": Color("bd7a78")},
-				{"symbol": "⌁", "name": "Orelhas de Goblin", "count": goblin_ears, "detail": "Prova de caça aos goblins", "accent": Color("b5a078")},
-				{"symbol": "❋", "name": "Ervas do Pântano", "count": swamp_herbs, "detail": "Recurso coletado no pântano", "accent": Color("88a77c")},
-				{"symbol": "◈", "name": "Essência Sombria", "count": dark_essence, "detail": "Energia extraída das criaturas", "accent": Color("a88bc4")}
+				{"symbol": "◆", "name": "Fragmentos Rubros", "count": shards, "detail": "Aprimoram a espada", "accent": Color("bd7a78")},
+				{"symbol": "⌁", "name": "Orelhas de Goblin", "count": goblin_ears, "detail": "Troféus de goblins", "accent": Color("b5a078")},
+				{"symbol": "❋", "name": "Ervas do Pântano", "count": swamp_herbs, "detail": "Coleta do pântano", "accent": Color("88a77c")},
+				{"symbol": "◈", "name": "Essência Sombria", "count": dark_essence, "detail": "Saque de criaturas", "accent": Color("a88bc4")}
 			])
-			_menu_add_section_label(content, "EQUIPAMENTO", "Arma atualmente empunhada")
+			_menu_add_section_label(content, "EQUIPAMENTO", "Arma atual")
 			_menu_add_card(content, "ESPADA DE TOBI  •  NÍVEL +%d" % weapon_level, "Dano: %d   •   Vida máxima: %d   •   Nível: %d" % [35 + weapon_level * 10 + (_get_player_level() - 1) * 3, player.max_hp, _get_player_level()])
-			_menu_add_button(content, "VER EQUIPAMENTO E FORJA", _show_menu_page.bind("equipment"))
+			_menu_add_button(content, "EQUIPAMENTO", _show_menu_page.bind("equipment"))
 		"equipment":
 			title.text = "EQUIPAMENTO & FORJA"
 			subtitle.text = "Prepare Tobi antes de enfrentar as criaturas do mundo."
