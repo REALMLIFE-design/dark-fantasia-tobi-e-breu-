@@ -360,6 +360,13 @@ func do_attack() -> void:
 		var flat := Vector3(offset.x, 0.0, offset.z)
 		if flat.length() <= 2.65 and (flat.length() < 0.01 or forward.dot(flat.normalized()) > 0.18):
 			enemy.take_damage(combo_damage)
+			if combo_step == 3 and not enemy.get("dead"):
+				# O terceiro golpe encerra o combo com impacto e empurrão; chefes resistem parcialmente.
+				var knockback_direction := flat.normalized() if flat.length() > 0.01 else global_basis.z
+				var knockback_strength := 5.2 if int(enemy.get("enemy_kind")) < 3 else 2.0
+				enemy.velocity.x += knockback_direction.x * knockback_strength
+				enemy.velocity.z += knockback_direction.z * knockback_strength
+				enemy.hit_recoil = maxf(float(enemy.get("hit_recoil")), 0.28)
 
 
 func _create_shadow_pulse_visual() -> void:
