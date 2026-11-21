@@ -409,6 +409,12 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
+	# O núcleo do Leviatã carrega energia durante o aviso do golpe.
+	if enemy_kind == 6 and is_instance_valid(boss_core_material):
+		var charge_progress := clampf(1.0 - attack_windup_timer / maxf(attack_windup_duration, 0.01), 0.0, 1.0) if attack_windup_timer > 0.0 else 0.0
+		var core_base_energy := 2.8 if boss_enraged else 1.7
+		var core_pulse := absf(sin(idle_time * 10.0)) * 0.35
+		boss_core_material.emission_energy_multiplier = core_base_energy + charge_progress * 2.4 + core_pulse * charge_progress
 	if crab_lunge_timer > 0.0:
 		crab_lunge_timer = maxf(0.0, crab_lunge_timer - delta)
 		velocity.x = crab_lunge_velocity.x
