@@ -1807,13 +1807,13 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 	for action in move_layout:
 		var button := ui_root.get_node_or_null("TouchMove_" + action) as Button
 		if button:
-			var size := Vector2(68.0, 68.0) * compact_scale
+			var move_size := Vector2(68.0, 68.0) * compact_scale
 			button.anchor_left = move_layout[action].x
 			button.anchor_right = move_layout[action].x
 			button.anchor_top = move_layout[action].y
 			button.anchor_bottom = move_layout[action].y
-			button.position = -size * 0.5
-			button.size = size
+			button.position = -move_size * 0.5
+			button.size = move_size
 			button.add_theme_font_size_override("font_size", 23)
 			button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var action_layout := {
@@ -1830,15 +1830,18 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		var button := ui_root.get_node_or_null("TouchAction_" + action) as Button
 		if button:
 			var data: Array = action_layout[action]
-			var size := Vector2.ONE * float(data[1]) * compact_scale
+			var action_size := Vector2.ONE * float(data[1]) * compact_scale
 			var anchor: Vector2 = data[0]
 			button.anchor_left = anchor.x
 			button.anchor_right = anchor.x
 			button.anchor_top = anchor.y
 			button.anchor_bottom = anchor.y
-			button.position = -size * 0.5
-			button.size = size
+			button.position = -action_size * 0.5
+			button.size = action_size
 			button.add_theme_font_size_override("font_size", 22 if action == "attack" else 19)
+			var touch_labels := {"attack":"⚔\nATACAR", "jump":"↟\nPULAR", "interact":"E\nUSAR", "dodge":"◇\nROLAR", "potion":"✚\nCURA", "shadow":"✦\nBREU", "upgrade":"⚒\nFORJAR", "inventory":"▣\nMOCHILA"}
+			button.text = touch_labels[action]
+			button.add_theme_font_size_override("font_size", 12 if action != "attack" else 14)
 			button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var pause := ui_root.get_node_or_null("PauseMenuButton") as Button
 	if pause:
