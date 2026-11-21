@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 12', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('"save_version", 13', self.world)
+        self.assertIn('save_version > 13', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -112,6 +112,38 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('BOSQUE DESPERTOU!', self.world)
         self.assertIn('whisper_grove_label.visible = grove_distance < 24.0', self.world)
         self.assertIn('BOSQUE DOS SUSSURROS  •  %d/3 LANTERNAS', self.world)
+        self.assertIn('func _spawn_whisper_stag_guardian()', self.world)
+        self.assertIn('whisper_guardian_reward_claimed', self.world)
+        self.assertIn('Bênção do Cervo Ancião', self.world)
+
+    def test_whisper_guardian_uses_procedural_geometry_until_asset_vendoring_is_available(self):
+        self.assertIn('func _spawn_whisper_stag_guardian()', self.world)
+        self.assertIn('WhisperStagGuardian', self.world)
+        self.assertIn('StagAntlerLeftMain', self.world)
+        self.assertIn('func _add_stag_antler_segment', self.world)
+        self.assertNotIn('ancient_stag_guardian.glb', self.world)
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        self.assertNotIn("api.thrixel.com", workflow)
+
+
+    def test_main_menu_copy_and_close_target_are_mobile_friendly(self):
+        self.assertIn('title.text = "A lenda desperta"', self.world)
+        self.assertIn('_menu_add_button(content, "Jogar", _start_game, true)', self.world)
+        self.assertIn('close_btn.custom_minimum_size = Vector2(44, 44)', self.world)
+
+    def test_quest_journal_tracks_whisper_grove_side_quest(self):
+        self.assertIn('"Lanternas do Bosque"', self.world)
+        self.assertIn('"RECOMPENSA DO BOSQUE"', self.world)
+        self.assertIn('whisper_lantern_ids.size()', self.world)
+        self.assertIn('"Converse com o Cervo Guardião após acender as lanternas"', self.world)
+
+    def test_inventory_uses_item_slots_for_persisted_resources(self):
+        for item in ('Poção de vida', 'Fragmentos Rubros', 'Orelhas de Goblin', 'Ervas do Pântano', 'Essência Sombria'):
+            self.assertIn(item, self.world)
+        self.assertIn('func _menu_add_item_grid(', self.world)
+        self.assertIn('grid.columns = 2', self.world)
+        self.assertIn('"EQUIPAMENTO"', self.world)
+        self.assertIn('"MOCHILA"', self.world)
 
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
@@ -139,7 +171,10 @@ class GameplayContracts(unittest.TestCase):
 
     def test_shadow_pulse_touch_and_keyboard_controls_exist(self):
         self.assertIn('KEY_K', self.player)
-        self.assertIn('"t":"BREU","a":"shadow"', self.world)
+        self.assertIn('{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}', self.world)
+        self.assertIn('elif data.a == "shadow":', self.world)
+        self.assertIn('action_btn.pressed.connect(_touch_action.bind(data.a))', self.world)
+        self.assertIn('elif action == "shadow": player.do_shadow_pulse()', self.world)
         self.assertIn('Pulso Sombrio pronto', self.world)
 
 
@@ -200,8 +235,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 12', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('"save_version", 13', self.world)
+        self.assertIn('save_version > 13', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
 
@@ -317,7 +352,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('save_version > 13', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -363,20 +398,29 @@ class AndroidBuildContracts(unittest.TestCase):
         self.assertIn('export_path="build/TobiEBreu.apk"', preset)
         self.assertIn('architectures/arm64-v8a=true', preset)
         self.assertIn('package/unique_name="com.tobiebreu.darkworld3d"', preset)
+        self.assertIn('gradle_build/use_gradle_build=false', preset)
+        self.assertNotIn('gradle_build/min_sdk=', preset)
+        self.assertNotIn('gradle_build/target_sdk=', preset)
 
     def test_github_actions_build_can_be_started_manually_and_uploads_apk(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('workflow_dispatch:', workflow)
-        self.assertIn('firebelley/godot-export@v8.0.0', workflow)
-        self.assertIn('presets_to_export: Android', workflow)
         self.assertIn('actions/upload-artifact@v4', workflow)
         self.assertIn('build/TobiEBreu.apk', workflow)
+        self.assertIn('python3 -m pip install --disable-pip-version-check Pillow', workflow)
+        self.assertIn('--export-debug "Android"', workflow)
+        self.assertIn('Configurar exportação Android sem Gradle', workflow)
+        self.assertIn("gradle_build/min_sdk", workflow)
+        self.assertIn("gradle_build/target_sdk", workflow)
+
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('Locate Godot project (repository root or subfolder)', workflow)
-        self.assertIn('if [ -f project.godot ]', workflow)
-        self.assertIn('elif [ -f TobiEBreu-3D/project.godot ]', workflow)
-        self.assertIn('steps.locate-project.outputs.project_path', workflow)
+        self.assertIn('if [ -f "$GITHUB_WORKSPACE/project.godot" ]', workflow)
+        self.assertIn('find extracted -name project.godot', workflow)
+        self.assertIn('PROJECT_PATH=', workflow)
+        self.assertIn('python3 -m unittest discover', workflow)
+        self.assertIn('tools/validate_project.py', workflow)
 
     def test_world_has_expanded_exploration_space_and_branch_trails(self):
         world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
@@ -511,3 +555,26 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('fract(world_uv * max(brush_scale, 0.5)', shader)
         self.assertIn('atlas_uv_for(world_pos.xz, tile_index)', shader)
 
+
+    def test_android_export_enables_etc2_astc_texture_import(self):
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        self.assertIn('textures/vram_compression/import_etc2_astc=true', project)
+
+    def test_main_menu_is_the_game_entry_point_and_keeps_story_world(self):
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        menu_scene = (ROOT / 'scenes/menu.tscn').read_text(encoding='utf-8')
+        self.assertIn('run/main_scene="res://scenes/menu.tscn"', project)
+        self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
+        self.assertIn('func _start_story()', menu)
+        self.assertIn('MODO HISTÓRIA', menu)
+        self.assertIn('HISTÓRIA COOPERATIVA', menu)
+        self.assertIn('MULTIPLAYER', menu)
+        self.assertIn('AMIGOS', menu)
+        self.assertIn('scripts/main_menu.gd', menu_scene)
+
+    def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
+        menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
+        self.assertIn('login falso', menu)
+        self.assertIn('ainda não está ativa', menu)

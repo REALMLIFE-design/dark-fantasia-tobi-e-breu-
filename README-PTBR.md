@@ -2,6 +2,16 @@
 
 Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D original não foi alterada.
 
+## Revisão de conteúdo e Android — 21/11/2026
+
+- O Bosque dos Sussurros recebeu uma estátua espiritual procedural do Cervo Ancião, com galhadas, olhos luminosos e movimento sutil.
+- Acender as três lanternas e falar com o guardião libera uma bênção única: 90 XP, 3 Fragmentos Rubros, 2 Essências Sombrias e 1 Poção.
+- A recompensa do guardião é persistida no save; a versão do salvamento passou para 13 e continua aceitando versões anteriores.
+- Um modelo rigado de 14.064 triângulos foi gerado no Thrixel, mas permanece fora do jogo aguardando empacotamento e validação canônicos.
+- O CLI local `game-dev`, exigido pela habilidade de vendoring, não está instalado. Nenhum download bruto foi copiado para o projeto nem ferramenta foi instalada para contornar essa regra.
+- Menu principal: cópia mais curta e botão de fechar com alvo de toque 44×44.
+- Teste Android separado em script Bash para evitar que blocos condicionais sejam quebrados pelo executor do emulador.
+
 ## Atualizações do protótipo 0.7 — revisão visual e animação
 
 - Tobi recebeu novas camadas de roupa, ombreiras, joelheiras, bolsos, fecho da capa e painel frontal da túnica.
@@ -53,7 +63,7 @@ Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D ori
 
 ## Estado real desta entrega
 
-A revisão 0.12.0 aprimora o combate do Leviatã do Lodo com golpes de impacto em área alternados com ataques próximos, telegráficos maiores e janela de reação ampliada na fase enfurecida. Mantém progressão por XP, combate, inventário, chefes e checkpoints. Continua sendo um protótipo: ainda não foi compilado nem executado dentro do Godot neste ambiente.
+A revisão 0.12.0 aprimora o combate do Leviatã do Lodo com golpes de impacto em área alternados com ataques próximos, telegráficos maiores e janela de reação ampliada na fase enfurecida. Mantém progressão por XP, combate, inventário, chefes e checkpoints. Na validação automatizada do commit `e343353ff916450d60b74a4fcfd0b36ba09ae9e2`, a importação dos recursos e o teste headless de inicialização da cena principal passaram; o APK Android foi gerado, assinado e validado. O teste de abertura/interação em emulador ainda está em andamento, e não há validação em aparelho físico.
 
 O protótipo em Godot 4 agora inclui a clareira inicial, o Pântano dos Ratos e o Rio Prateado, com Tobi, Breu, Mestre Azulan, Guardião do Rio, goblins, Guardião do Silêncio, Bruxa do Pântano e Cavaleiros Afogados. Há movimento, câmera touch, pulo, esquiva, combos, Pulso Sombrio, forja, inventário, progressão por XP, checkpoints e duas cadeias de capítulo. O mundo e os personagens usam meshes procedurais low-poly e materiais ásperos para estabelecer a direção de arte pintada à mão sem depender de modelos pagos.
 
