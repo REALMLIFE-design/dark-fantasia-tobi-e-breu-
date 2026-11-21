@@ -27,6 +27,8 @@ if args[:2] == ['shell', 'pidof']:
     raise SystemExit(0)
 if args[:3] == ['shell', 'input', 'tap'] and os.environ.get('FAKE_ADB_EXIT_AFTER_TAP') == '1':
     state.write_text('no')
+if args[:2] == ['shell', 'dumpsys'] and args[2:4] == ['activity', 'activities']:
+    print('mResumedActivity: ActivityRecord{abc com.tobiebreu.darkworld3d/.MainActivity}')
 if args[:2] == ['logcat', '-d']:
     print('TOBI_BREU_GAME_STARTED')
 """)
