@@ -734,3 +734,16 @@ class PerfectDodgeContracts(unittest.TestCase):
         dodge = self.player[self.player.index('func do_dodge'):self.player.index('func get_stamina')]
         self.assertIn('dodge_perfect_used = false', dodge)
 
+
+class PerfectDodgeVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_perfect_dodge_uses_a_short_cyan_emissive_flash(self):
+        self.assertIn('var perfect_dodge_flash := 0.0', self.player)
+        self.assertIn('perfect_dodge_flash = 0.22', self.player)
+        self.assertIn('Color("62d8c8")', self.player)
+        self.assertIn('material.emission = Color("35cdbb")', self.player)
+        self.assertIn('perfect_strength * 1.35', self.player)
+
