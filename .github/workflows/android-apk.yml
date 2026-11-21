@@ -87,7 +87,12 @@ jobs:
           PRESET="$PROJECT_PATH/export_presets.cfg"
           # Godot 4.3 rejects SDK overrides when the prebuilt APK template is used.
           sed -i -e '/^gradle_build\/min_sdk=/d' -e '/^gradle_build\/target_sdk=/d' "$PRESET"
-          grep -q '^gradle_build/use_gradle_build=false
+          grep -q '^gradle_build/use_gradle_build=false$' "$PRESET"
+          if grep -Eq '^gradle_build\/(min_sdk|target_sdk)=' "$PRESET"; then
+            echo "ERRO: SDK overrides incompatíveis com exportação sem Gradle"
+            exit 1
+          fi
+          mkdir -p "$HOME/.config/godot"
           cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
           [resource]
