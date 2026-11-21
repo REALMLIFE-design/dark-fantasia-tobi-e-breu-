@@ -56,6 +56,36 @@ jobs:
 
           echo "PROJECT_PATH=$(dirname "$PROJECT_FILE")" >> "$GITHUB_ENV"
 
+      - name: Corrigir preset Android
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          path = Path(os.environ["PROJECT_PATH"]) / "export_presets.cfg"
+
+          if not path.exists():
+              raise SystemExit("ERRO: export_presets.cfg não encontrado")
+
+          content = path.read_text(encoding="utf-8")
+
+          content, count = re.subn(
+              r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)false\s*$',
+              r'\1true',
+              content
+          )
+
+          if count == 0 and not re.search(
+              r'(?m)^\s*gradle_build/use_gradle_build\s*=\s*true\s*$',
+              content
+          ):
+              raise SystemExit("ERRO: configuração Use Gradle Build não encontrada")
+
+          path.write_text(content, encoding="utf-8")
+          print("Use Gradle Build ativado com sucesso.")
+          PY
+
       - name: Exportar APK com Godot
         uses: firebelley/godot-export@v8.0.0
         with:
