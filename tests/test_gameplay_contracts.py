@@ -540,3 +540,28 @@ class ForgottenShrineVisualContracts(unittest.TestCase):
         self.assertIn('_grant_xp(25)', self.world)
         self.assertIn('cfg.set_value("progress", "shrine_used"', self.world)
         self.assertIn('saved_shrine_used = bool(cfg.get_value("progress", "shrine_used", false))', self.world)
+
+class MobileControlContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+        cls.project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+
+    def test_touch_movement_buttons_press_and_release_input_actions(self):
+        self.assertIn('move_btn.button_down.connect(Input.action_press.bind(data.a))', self.world)
+        self.assertIn('move_btn.button_up.connect(Input.action_release.bind(data.a))', self.world)
+        for action in ['move_forward', 'move_back', 'move_left', 'move_right']:
+            self.assertIn('"a":"%s"' % action, self.world)
+            self.assertIn(action + '={', self.project)
+
+    def test_touch_action_buttons_route_to_gameplay_handlers(self):
+        for action in ['attack', 'jump', 'interact', 'dodge', 'potion', 'upgrade', 'inventory', 'shadow']:
+            self.assertIn('"a":"%s"' % action, self.world)
+        for handler in ['player.do_attack()', 'player.do_jump()', '_interact()', 'player.do_dodge()', '_use_potion()', '_upgrade_weapon()', '_toggle_inventory()', 'player.do_shadow_pulse()']:
+            self.assertIn(handler, self.world)
+
+    def test_touch_camera_drag_is_limited_to_right_side_of_screen(self):
+        self.assertIn('if event is InputEventScreenDrag:', self.player)
+        self.assertIn('event.position.x > get_viewport().get_visible_rect().size.x * 0.42', self.player)
+        self.assertIn('camera_yaw_offset -= event.relative.x * 0.006', self.player)
