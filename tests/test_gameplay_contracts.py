@@ -647,3 +647,15 @@ class FloatingDamageNumberContracts(unittest.TestCase):
         self.assertIn('"modulate:a", 0.0, 0.58', self.enemy)
         self.assertIn('number_label.font_size = 42 if enemy_kind >= 3 else 34', self.enemy)
         self.assertIn('_spawn_damage_number(amount)', self.enemy)
+
+
+class DodgeCooldownHudContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_dodge_hud_shows_cooldown_and_ready_state(self):
+        self.assertIn('var dodge_label: Label', self.world)
+        self.assertIn('dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown', self.world)
+        self.assertIn('dodge_label.text = "ESQUIVA  •  pronta"', self.world)
+        self.assertIn('dodge_label.add_theme_color_override("font_color", Color("e6bd72"))', self.world)
