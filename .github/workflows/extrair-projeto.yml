@@ -32,7 +32,7 @@ jobs:
           test -n "$PROJECT_FILE" || { echo "::error::Não encontrei project.godot dentro do ZIP."; exit 1; }
           PROJECT_DIR="$(dirname "$PROJECT_FILE")"
           echo "Projeto encontrado em: $PROJECT_DIR"
-          rsync -a --delete             --exclude='.git/'             --exclude='.github/'             "$PROJECT_DIR/" ./
+          rsync -a             --exclude='.git/'             --exclude='.github/'             "$PROJECT_DIR/" ./
           test -f project.godot || { echo "::error::A extração não colocou project.godot na raiz."; exit 1; }
 
       - name: Salvar arquivos extraídos no GitHub
