@@ -28,6 +28,7 @@ var day_clock := 0.0
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
+var stamina_label: Label
 var xp_label: Label
 var xp_bar: ProgressBar
 var boss_health_bar: ProgressBar
@@ -1168,6 +1169,12 @@ func _build_hud() -> void:
 	stamina_bar.value = 100
 	stamina_bar.show_percentage = false
 	hud.add_child(stamina_bar)
+	stamina_label = Label.new()
+	stamina_label.position = Vector2(220, 169)
+	stamina_label.text = "FOLEGO 100%"
+	stamina_label.add_theme_font_size_override("font_size", 11)
+	stamina_label.add_theme_color_override("font_color", Color("9acfc2"))
+	hud.add_child(stamina_label)
 	boss_hud_panel = PanelContainer.new()
 	boss_hud_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	boss_hud_panel.position = Vector2(-170, 16)
@@ -1352,7 +1359,13 @@ func _process(delta: float) -> void:
 	elif quest_stage == 5 and _nearest_swamp_totem_distance() < 3.5: prompt_label.text = "INTERAGIR — Purificar Totem"
 	else: prompt_label.text = "Arraste o lado direito para mover a câmera"
 	if stamina_bar and player.has_method("get_stamina"):
-		stamina_bar.value = player.get_stamina()
+		var current_stamina: float = player.get_stamina()
+		stamina_bar.value = current_stamina
+		var stamina_color := Color("ff7777") if current_stamina <= 20.0 else (Color("e6bd72") if current_stamina <= 40.0 else Color("9acfc2"))
+		stamina_bar.modulate = stamina_color
+		if stamina_label:
+			stamina_label.text = "FOLEGO %d%%" % roundi(current_stamina)
+			stamina_label.add_theme_color_override("font_color", stamina_color)
 	if shadow_skill_label and player.shadow_pulse_cooldown > 0.0:
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: %.1fs" % player.shadow_pulse_cooldown
 	elif shadow_skill_label:
