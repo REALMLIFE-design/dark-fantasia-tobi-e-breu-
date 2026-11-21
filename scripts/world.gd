@@ -1547,20 +1547,28 @@ func _show_menu_page(page: String) -> void:
 			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
 		"pause":
 			title.text = "JORNADA PAUSADA"
-			subtitle.text = "Escolha para onde deseja ir."
-			var grid := GridContainer.new()
-			grid.columns = 2
-			grid.add_theme_constant_override("h_separation", 10)
-			grid.add_theme_constant_override("v_separation", 10)
-			content.add_child(grid)
-			_menu_add_button(grid, "✦  DIÁRIO", _show_menu_page.bind("quests"))
-			_menu_add_button(grid, "▣  MOCHILA", _show_menu_page.bind("inventory"))
-			_menu_add_button(grid, "⚔  EQUIPAMENTO", _show_menu_page.bind("equipment"))
-			_menu_add_button(grid, "✧  HABILIDADES", _show_menu_page.bind("skills"))
-			_menu_add_button(grid, "⌖  ATLAS", _show_menu_page.bind("map"))
-			_menu_add_button(grid, "⚙  CONFIGURAÇÕES", _show_menu_page.bind("settings"))
-			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
+			subtitle.text = "O mundo espera. Retome quando estiver pronto."
 			_menu_add_button(content, "RETOMAR A AVENTURA", _close_menu, true)
+			_menu_add_button(content, "ABRIR MENU DA JORNADA", _show_menu_page.bind("hub"))
+			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
+		"hub":
+			title.text = "MENU DA JORNADA"
+			subtitle.text = "Escolha uma parte da sua aventura."
+			_menu_add_button(content, "PERSONAGEM  •  ITENS E TÉCNICAS", _show_menu_page.bind("character"), true)
+			_menu_add_button(content, "MUNDO  •  DIÁRIO E ATLAS", _show_menu_page.bind("world"))
+			_menu_add_button(content, "RETOMAR A AVENTURA", _close_menu)
+		"character":
+			title.text = "PERSONAGEM"
+			subtitle.text = "Recursos, equipamento e técnicas de Tobi e Breu."
+			_menu_add_button(content, "MOCHILA", _show_menu_page.bind("inventory"), true)
+			_menu_add_button(content, "EQUIPAMENTO & FORJA", _show_menu_page.bind("equipment"))
+			_menu_add_button(content, "HABILIDADES", _show_menu_page.bind("skills"))
+		"world":
+			title.text = "MUNDO & MISSÕES"
+			subtitle.text = "Acompanhe a história e explore as regiões."
+			_menu_add_button(content, "DIÁRIO DE MISSÕES", _show_menu_page.bind("quests"), true)
+			_menu_add_button(content, "ATLAS DO MUNDO", _show_menu_page.bind("map"))
+			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
 		"inventory":
 			title.text = "MOCHILA DE TOBI"
 			subtitle.text = "Tudo o que você carrega nesta jornada."
@@ -1590,7 +1598,7 @@ func _show_menu_page(page: String) -> void:
 		"skills":
 			title.text = "TÉCNICAS & VÍNCULO"
 			subtitle.text = "As habilidades reais disponíveis para Tobi e Breu."
-			_menu_add_card(content, "COMBATE • GOLPE COMBO", "Sequência de até 3 golpes. O terceiro ataque causa dano ampliado e consome vigor.")
+			_menu_add_card(content, "COMBATE • SEQUÊNCIA DE GOLPES", "Encadeie até três ataques. O terceiro golpe causa dano ampliado e consome vigor.")
 			_menu_add_card(content, "ESQUIVA", "Deslocamento rápido para escapar de ataques. Usa vigor, que se recupera com o tempo. Vigor atual: %d%%." % int(player.stamina))
 			_menu_add_card(content, "BREU • PULSO SOMBRIO", "A habilidade do companheiro revela presenças ocultas e atinge inimigos próximos. Recarga: %.1f s." % player.shadow_pulse_cooldown)
 			_menu_add_card(content, "SALTO", "Pule para atravessar desníveis e explorar o terreno.")
@@ -1694,7 +1702,16 @@ func _menu_back() -> void:
 	if menu_page == "main":
 		if game_started: _close_menu()
 		return
-	_show_menu_page("pause" if game_started else "main")
+	if menu_page == "hub":
+		_show_menu_page("pause")
+	elif menu_page == "character" or menu_page == "world":
+		_show_menu_page("hub")
+	elif menu_page == "inventory" or menu_page == "equipment" or menu_page == "skills":
+		_show_menu_page("character")
+	elif menu_page == "quests" or menu_page == "map" or menu_page == "settings":
+		_show_menu_page("world" if game_started else "main")
+	else:
+		_show_menu_page("pause" if game_started else "main")
 
 
 func _save_from_menu() -> void:
