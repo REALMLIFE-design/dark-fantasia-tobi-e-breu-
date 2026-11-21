@@ -1,0 +1,42 @@
+{
+  "project": "Tobi e Breu — Dark Fantasia 3D",
+  "generated_with": {
+    "aqueduct": {
+      "project_id": "0931f547-7cd7-40af-a785-d6ddf642c7ce",
+      "export_job_id": "exp_6ffe739b-1ac5-4e1a-a1f5-0ff85879283e",
+      "maps": ["base_color", "normal", "roughness", "ao"],
+      "resolution": 1024,
+      "normal_format": "opengl",
+      "status": "exported"
+    },
+    "meshy": {
+      "preview_task_id": "01a20014-96e3-743e-ae07-354d22b8557e",
+      "texture_task_id": "01a20014-fcbc-770c-b0e4-a7c027e9d5e6",
+      "asset": "cursed_rune_obelisk",
+      "geometry_model": "meshy-t2",
+      "texture_model": "meshy-6-lite",
+      "target_polycount": 4000,
+      "status": "texturing"
+    },
+    "pinoc": {
+      "motions": {
+        "walking": "32d71c7f-e88a-4d1f-9c0c-1fde2da5f060",
+        "running": "32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a",
+        "dodge_roll_forward": "56bb74fa-7274-46c2-8aec-7bb4381345a3",
+        "cast_spell_forward": "6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68",
+        "hit_reaction_front": "b07839c6-2f7f-403a-95f3-da87c3536e8c",
+        "sword_idle": "b1010899-e739-44be-a81a-bf85e98bf049",
+        "jump": "08872e23-d695-493d-8c03-cb595cd55e9c"
+      },
+      "status": "library_assets_taken",
+      "format": "mixamo-glb",
+      "note": "These are skeleton animations with bundled X Bot mesh; retarget before applying to Tobi's procedural character."
+    }
+  },
+  "expected_import_paths": {
+    "aqueduct": "assets/plugin_imports/aqueduct/",
+    "meshy": "assets/plugin_imports/meshy/cursed_rune_obelisk.glb",
+    "pinoc": "assets/plugin_imports/pinoc/"
+  },
+  "binary_files_transferred_to_repository": false
+}
