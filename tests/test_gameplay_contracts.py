@@ -803,3 +803,23 @@ class EnemyDeathBurstContracts(unittest.TestCase):
         self.assertIn('shard_tween.tween_callback(burst.queue_free)', burst)
         for color in ('d85a4d', '79c9f2', '62d8c8', 'e7c477'):
             self.assertIn('Color("%s")' % color, burst)
+
+class GothicGateVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_ruined_gate_gets_crimson_dark_fantasy_details(self):
+        self.assertIn('_build_gothic_gate_accents()', self.world)
+        self.assertIn('func _build_gothic_gate_accents() -> void:', self.world)
+        self.assertIn('GateCarvedCap', self.world)
+        self.assertIn('GateIronFinial', self.world)
+        self.assertIn('GateCrimsonSeal', self.world)
+        self.assertIn('GateCrimsonGlow', self.world)
+
+    def test_gate_accents_remain_visual_only_and_keep_the_entrance_open(self):
+        accents = self.world[self.world.index('func _build_gothic_gate_accents'):self.world.index('func _build_region_landmarks')]
+        self.assertNotIn('StaticBody3D.new()', accents)
+        self.assertNotIn('CollisionShape3D.new()', accents)
+        self.assertIn('without narrowing the walkable opening', accents)
+
