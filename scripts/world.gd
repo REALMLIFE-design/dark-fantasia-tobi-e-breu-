@@ -1774,17 +1774,41 @@ func _show_menu_page(page: String) -> void:
 		menu_body.remove_child(child)
 		child.queue_free()
 	menu_feedback.text = ""
+	var header := PanelContainer.new()
+	header.name = "MenuPageHeader"
+	var header_style := _hud_button_style(Color("17211c"), Color("66563c"), 10)
+	header_style.set_border_width_all(1)
+	header_style.content_margin_left = 16.0
+	header_style.content_margin_right = 16.0
+	header_style.content_margin_top = 12.0
+	header_style.content_margin_bottom = 12.0
+	header.add_theme_stylebox_override("panel", header_style)
+	menu_body.add_child(header)
+	var header_box := VBoxContainer.new()
+	header_box.add_theme_constant_override("separation", 5)
+	header.add_child(header_box)
+	var eyebrow := Label.new()
+	eyebrow.text = "CRÔNICAS DO REINO   /   " + ("MENU PRINCIPAL" if page == "main" else "JORNADA")
+	eyebrow.add_theme_font_size_override("font_size", 9)
+	eyebrow.add_theme_color_override("font_color", Color("91aa9b"))
+	header_box.add_child(eyebrow)
 	var title := Label.new()
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 25)
-	title.add_theme_color_override("font_color", Color("e4c58e"))
-	menu_body.add_child(title)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.add_theme_font_size_override("font_size", 27)
+	title.add_theme_color_override("font_color", Color("f0d8a7"))
+	title.add_theme_color_override("font_outline_color", Color("090d0b"))
+	title.add_theme_constant_override("outline_size", 2)
+	header_box.add_child(title)
 	var subtitle := Label.new()
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.add_theme_font_size_override("font_size", 12)
-	subtitle.add_theme_color_override("font_color", Color("b8b4a5"))
-	menu_body.add_child(subtitle)
+	subtitle.add_theme_color_override("font_color", Color("c0c7b9"))
+	header_box.add_child(subtitle)
+	var header_rule := ColorRect.new()
+	header_rule.custom_minimum_size = Vector2(0, 2)
+	header_rule.color = Color("806342")
+	header_box.add_child(header_rule)
 	var scroll := ScrollContainer.new()
 	scroll.name = "MenuPageScroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1797,6 +1821,7 @@ func _show_menu_page(page: String) -> void:
 	scroll.add_child(content)
 	if page == "main":
 		_menu_add_hero(content)
+	_menu_add_stat_strip(content)
 	match page:
 		"main":
 			title.text = "A lenda desperta"
@@ -1865,10 +1890,17 @@ func _show_menu_page(page: String) -> void:
 		"quests":
 			title.text = "DIÁRIO DA JORNADA"
 			subtitle.text = "A história, os objetivos e os contratos registrados."
+			_menu_add_section_label(content, "CAPÍTULO ATUAL", "A missão que guia seus passos")
 			_menu_add_card(content, "OBJETIVO PRINCIPAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Sem objetivo ativo."))
-			_menu_add_card(content, "PROGRESSO", "Inimigos derrotados: %d\nCavaleiros Afogados: %d/3\nTotens purificados: %d/3\nLanternas do Bosque: %d/3\nBênção do Cervo: %s\nNível: %d  •  XP total: %d" % [defeated_count, river_knights_defeated, swamp_totems, whisper_lantern_ids.size(), "Recebida" if whisper_guardian_reward_claimed else "Pendente", _get_player_level(), xp])
+			_menu_add_section_label(content, "REGISTRO DE EXPLORAÇÃO", "Atividades opcionais e descobertas")
+			_menu_add_progress_row(content, "Cavaleiros Afogados", "Derrote os guardiões do Rio Prateado", river_knights_defeated, 3, Color("7da9ad"))
+			_menu_add_progress_row(content, "Totens Purificados", "Quebre os selos corrompidos do pântano", swamp_totems, 3, Color("c49a62"))
+			_menu_add_progress_row(content, "Lanternas do Bosque", "Acenda as três lanternas dos sussurros", whisper_lantern_ids.size(), 3, Color("83b9a7"))
+			var blessing_text := "Bênção recebida" if whisper_guardian_reward_claimed else "Converse com o Cervo Guardião após acender as lanternas"
+			_menu_add_card(content, "RECOMPENSA DO BOSQUE", blessing_text)
 			if guild_contract_started:
-				_menu_add_card(content, "CONTRATO DA GUILDA", "Selos recuperados: %d/3\nEstado: %s" % [guild_relic_ids.size(), "Concluído" if guild_contract_claimed else "Em andamento"])
+				_menu_add_progress_row(content, "Contrato da Guilda", "Recupere os selos antigos", guild_relic_ids.size(), 3, Color("c49a62"))
+				_menu_add_card(content, "ESTADO DO CONTRATO", "Concluído" if guild_contract_claimed else "Em andamento")
 		"map":
 			title.text = "ATLAS DO MUNDO"
 			subtitle.text = "Regiões e marcos conhecidos de Tobi e Breu."
@@ -1896,6 +1928,103 @@ func _show_menu_page(page: String) -> void:
 			content.add_child(sensitivity_value)
 			_menu_add_card(content, "CONTROLES", "Mover: direcional esquerdo\nCâmera: arraste no lado direito\nAtacar: ATACAR  •  Pular: PULAR\nEsquivar: ESQUIVAR  •  Interagir: INTERAGIR\nPoção: POÇÃO  •  Breu: BREU")
 			_menu_add_button(content, "SALVAR CONFIGURAÇÕES", _save_settings, true)
+
+
+func _menu_add_stat_strip(parent: Control) -> void:
+	var strip := HBoxContainer.new()
+	strip.name = "JourneyStatStrip"
+	strip.add_theme_constant_override("separation", 8)
+	parent.add_child(strip)
+	var level := _get_player_level()
+	_menu_add_stat_tile(strip, "NÍVEL", "%02d" % level, Color("d8b77c"))
+	_menu_add_stat_tile(strip, "VIDA", "%d/%d" % [player.hp, player.max_hp], Color("c77d72"))
+	_menu_add_stat_tile(strip, "POÇÕES", "%02d" % potions, Color("83b9a7"))
+	_menu_add_stat_tile(strip, "FRAGMENTOS", "%02d" % shards, Color("b58bcb"))
+
+
+func _menu_add_stat_tile(parent: Control, caption: String, value: String, accent: Color) -> void:
+	var tile := PanelContainer.new()
+	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var tile_style := _hud_button_style(Color("202a24"), Color("596c5d"), 9)
+	tile_style.set_border_width_all(1)
+	tile_style.content_margin_left = 8.0
+	tile_style.content_margin_right = 8.0
+	tile_style.content_margin_top = 8.0
+	tile_style.content_margin_bottom = 8.0
+	tile.add_theme_stylebox_override("panel", tile_style)
+	parent.add_child(tile)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 2)
+	tile.add_child(stack)
+	var number := Label.new()
+	number.text = value
+	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	number.add_theme_font_size_override("font_size", 18)
+	number.add_theme_color_override("font_color", accent)
+	stack.add_child(number)
+	var name := Label.new()
+	name.text = caption
+	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name.add_theme_font_size_override("font_size", 8)
+	name.add_theme_color_override("font_color", Color("aeb9ad"))
+	stack.add_child(name)
+
+
+func _menu_add_section_label(parent: Control, kicker: String, caption: String) -> void:
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", 2)
+	parent.add_child(group)
+	var label := Label.new()
+	label.text = kicker
+	label.add_theme_font_size_override("font_size", 9)
+	label.add_theme_color_override("font_color", Color("c49a62"))
+	group.add_child(label)
+	var detail := Label.new()
+	detail.text = caption
+	detail.add_theme_font_size_override("font_size", 11)
+	detail.add_theme_color_override("font_color", Color("b9c4b8"))
+	group.add_child(detail)
+
+
+func _menu_add_progress_row(parent: Control, heading: String, detail: String, current: int, target: int, accent: Color) -> void:
+	var card := PanelContainer.new()
+	var style := _hud_button_style(Color("19231e"), Color("526457"), 10)
+	style.set_border_width_all(1)
+	style.content_margin_left = 13.0
+	style.content_margin_right = 13.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
+	card.add_theme_stylebox_override("panel", style)
+	parent.add_child(card)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 5)
+	card.add_child(stack)
+	var heading_row := HBoxContainer.new()
+	stack.add_child(heading_row)
+	var title := Label.new()
+	title.text = heading
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_color_override("font_color", Color("e5d7bd"))
+	heading_row.add_child(title)
+	var count := Label.new()
+	count.text = "%d / %d" % [mini(current, target), target]
+	count.add_theme_font_size_override("font_size", 11)
+	count.add_theme_color_override("font_color", accent)
+	heading_row.add_child(count)
+	var note := Label.new()
+	note.text = detail
+	note.add_theme_font_size_override("font_size", 10)
+	note.add_theme_color_override("font_color", Color("9eaa9f"))
+	stack.add_child(note)
+	var progress := ProgressBar.new()
+	progress.custom_minimum_size = Vector2(0, 9)
+	progress.max_value = maxi(1, target)
+	progress.value = clampi(current, 0, target)
+	progress.show_percentage = false
+	progress.add_theme_stylebox_override("background", _hud_bar_style(Color("303a33")))
+	progress.add_theme_stylebox_override("fill", _hud_bar_style(accent))
+	stack.add_child(progress)
 
 
 func _menu_add_hero(parent: Control) -> void:
