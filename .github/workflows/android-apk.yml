@@ -85,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           PRESET="$PROJECT_PATH/export_presets.cfg"
-          # Godot 4.3 rejects SDK overrides when the prebuilt APK template is used.
+          # Remove gradle_build/min_sdk and gradle_build/target_sdk overrides: Godot 4.3 rejects them with the prebuilt APK template.
           sed -i -e '/^gradle_build\/min_sdk=/d' -e '/^gradle_build\/target_sdk=/d' "$PRESET"
           grep -q '^gradle_build/use_gradle_build=false$' "$PRESET"
           if grep -Eq '^gradle_build\/(min_sdk|target_sdk)=' "$PRESET"; then
