@@ -1239,7 +1239,11 @@ func _build_hud() -> void:
 	ui_theme.set_color("font_hover_color", "Button", Color("fff2cf"))
 	ui_theme.set_color("font_pressed_color", "Button", Color("d8bd8b"))
 	ui_theme.set_font_size("font_size", "Button", 12)
-	hud.theme = ui_theme
+	var ui_root := Control.new()
+	ui_root.name = "HUDRoot"
+	ui_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui_root.theme = ui_theme
+	hud.add_child(ui_root)
 
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.025, 0.033, 0.031, 0.96)
@@ -1288,7 +1292,7 @@ func _build_hud() -> void:
 	quest_panel.position = Vector2(18, 16)
 	quest_panel.custom_minimum_size = Vector2(330, 112)
 	quest_panel.add_theme_stylebox_override("panel", quest_panel_style)
-	hud.add_child(quest_panel)
+	ui_root.add_child(quest_panel)
 	var quest_box := VBoxContainer.new()
 	quest_box.add_theme_constant_override("separation", 5)
 	quest_panel.add_child(quest_box)
@@ -1323,7 +1327,7 @@ func _build_hud() -> void:
 	status_panel.position = Vector2(18, 138)
 	status_panel.custom_minimum_size = Vector2(260, 78)
 	status_panel.add_theme_stylebox_override("panel", status_panel_style)
-	hud.add_child(status_panel)
+	ui_root.add_child(status_panel)
 	var status_box := VBoxContainer.new()
 	status_box.add_theme_constant_override("separation", 3)
 	status_panel.add_child(status_box)
@@ -1366,7 +1370,7 @@ func _build_hud() -> void:
 	progress_panel.position = Vector2(18, 224)
 	progress_panel.custom_minimum_size = Vector2(260, 58)
 	progress_panel.add_theme_stylebox_override("panel", progress_panel_style)
-	hud.add_child(progress_panel)
+	ui_root.add_child(progress_panel)
 	var progress_box := VBoxContainer.new()
 	progress_box.add_theme_constant_override("separation", 3)
 	progress_panel.add_child(progress_box)
@@ -1397,7 +1401,7 @@ func _build_hud() -> void:
 	boss_hud_panel.custom_minimum_size = Vector2(360, 54)
 	boss_hud_panel.visible = false
 	boss_hud_panel.add_theme_stylebox_override("panel", progress_panel_style)
-	hud.add_child(boss_hud_panel)
+	ui_root.add_child(boss_hud_panel)
 	var boss_box := VBoxContainer.new()
 	boss_box.add_theme_constant_override("separation", 3)
 	boss_hud_panel.add_child(boss_box)
@@ -1421,20 +1425,20 @@ func _build_hud() -> void:
 	combo_label.text = "COMBO  •  pronto"
 	combo_label.add_theme_font_size_override("font_size", 10)
 	combo_label.add_theme_color_override("font_color", Color("d8b77c"))
-	hud.add_child(combo_label)
+	ui_root.add_child(combo_label)
 	whisper_grove_label = Label.new()
 	whisper_grove_label.position = Vector2(18, 310)
 	whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  0/3"
 	whisper_grove_label.add_theme_font_size_override("font_size", 10)
 	whisper_grove_label.add_theme_color_override("font_color", Color("9acfc2"))
 	whisper_grove_label.visible = false
-	hud.add_child(whisper_grove_label)
+	ui_root.add_child(whisper_grove_label)
 	shadow_skill_label = Label.new()
 	shadow_skill_label.position = Vector2(18, 328)
 	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
 	shadow_skill_label.add_theme_font_size_override("font_size", 10)
 	shadow_skill_label.add_theme_color_override("font_color", Color("b6a1d6"))
-	hud.add_child(shadow_skill_label)
+	ui_root.add_child(shadow_skill_label)
 
 	# Backpack is centered, padded and safe to use on touch screens.
 	inventory_panel = PanelContainer.new()
@@ -1444,7 +1448,7 @@ func _build_hud() -> void:
 	inventory_panel.custom_minimum_size = Vector2(380, 290)
 	inventory_panel.visible = false
 	inventory_panel.add_theme_stylebox_override("panel", quest_panel_style)
-	hud.add_child(inventory_panel)
+	ui_root.add_child(inventory_panel)
 	var inventory_box := VBoxContainer.new()
 	inventory_box.add_theme_constant_override("separation", 12)
 	inventory_panel.add_child(inventory_box)
@@ -1473,14 +1477,14 @@ func _build_hud() -> void:
 	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	prompt_label.add_theme_font_size_override("font_size", 14)
 	prompt_label.add_theme_color_override("font_color", Color("f0d39a"))
-	hud.add_child(prompt_label)
+	ui_root.add_child(prompt_label)
 	toast_label = Label.new()
 	toast_label.position = Vector2(18, 350)
 	toast_label.size = Vector2(440, 42)
 	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast_label.add_theme_font_size_override("font_size", 11)
 	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
-	hud.add_child(toast_label)
+	ui_root.add_child(toast_label)
 
 	# Mobile movement pad — same input actions, but with unified circular-feel styling.
 	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
@@ -1499,7 +1503,7 @@ func _build_hud() -> void:
 		move_btn.modulate = Color(1, 1, 1, 0.96)
 		move_btn.button_down.connect(Input.action_press.bind(data.a))
 		move_btn.button_up.connect(Input.action_release.bind(data.a))
-		hud.add_child(move_btn)
+		ui_root.add_child(move_btn)
 
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
 	for data in [{"t":"ATACAR","a":"attack","p":Vector2(0.83,0.82)},{"t":"PULAR","a":"jump","p":Vector2(0.91,0.68)},{"t":"INTERAGIR","a":"interact","p":Vector2(0.72,0.9)},{"t":"ESQUIVAR","a":"dodge","p":Vector2(0.84,0.94)},{"t":"POÇÃO","a":"potion","p":Vector2(0.94,0.84)},{"t":"FORJAR","a":"upgrade","p":Vector2(0.70,0.70)},{"t":"MOCHILA","a":"inventory","p":Vector2(0.70,0.61)},{"t":"BREU","a":"shadow","p":Vector2(0.93,0.72)}]:
@@ -1533,7 +1537,7 @@ func _build_hud() -> void:
 		action_btn.add_theme_stylebox_override("hover", _hud_button_style(action_fill.lightened(0.16), action_accent.lightened(0.18), 16))
 		action_btn.add_theme_stylebox_override("pressed", _hud_button_style(action_fill.lightened(0.28), Color("f0d49b"), 16))
 		action_btn.pressed.connect(_touch_action.bind(data.a))
-		hud.add_child(action_btn)
+		ui_root.add_child(action_btn)
 
 	# Dedicated pause/menu access remains reachable on touch screens.
 	var pause_btn := Button.new()
@@ -1549,7 +1553,7 @@ func _build_hud() -> void:
 	pause_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.045, 0.04, 0.96), Color("b18a52"), 16))
 	pause_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.13, 0.11, 0.075, 0.98), Color("dfbd7b"), 16))
 	pause_btn.pressed.connect(_open_menu.bind("pause"))
-	hud.add_child(pause_btn)
+	ui_root.add_child(pause_btn)
 
 	_update_inventory()
 
