@@ -171,7 +171,9 @@ class GameplayContracts(unittest.TestCase):
 
     def test_shadow_pulse_touch_and_keyboard_controls_exist(self):
         self.assertIn('KEY_K', self.player)
-        self.assertIn('"t":"BREU","a":"shadow"', self.world)
+        self.assertIn('{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}', self.world)
+        self.assertIn('elif data.a == "shadow":', self.world)
+        self.assertIn('action_btn.button_down.connect(Input.action_press.bind(data.a))', self.world)
         self.assertIn('Pulso Sombrio pronto', self.world)
 
 
