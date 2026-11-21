@@ -132,6 +132,7 @@ func _ready() -> void:
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	print("TOBI_BREU_BOOT_READY")
 
 
 func _create_loading_screen() -> void:
@@ -1809,6 +1810,7 @@ func _start_game() -> void:
 	_set_loading_progress(100.0, "Bem-vindo de volta, aventureiro.")
 	await get_tree().create_timer(0.18, true).timeout
 	game_started = true
+	print("TOBI_BREU_GAME_STARTED")
 	await _hide_loading_screen()
 	get_tree().paused = false
 
