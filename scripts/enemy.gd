@@ -16,7 +16,6 @@ var enemy_kind := 0
 var move_speed := 2.25
 var attack_damage := 9
 var attack_range := 1.65
-var hit_flash := 0.0
 var hit_flash_materials: Array[StandardMaterial3D] = []
 var hit_flash_base_colors: Array[Color] = []
 var hit_recoil := 0.0
