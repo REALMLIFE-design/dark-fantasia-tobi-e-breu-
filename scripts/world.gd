@@ -29,6 +29,7 @@ var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
 var stamina_label: Label
+var dodge_label: Label
 var xp_label: Label
 var xp_bar: ProgressBar
 var boss_health_bar: ProgressBar
@@ -1175,6 +1176,12 @@ func _build_hud() -> void:
 	stamina_label.add_theme_font_size_override("font_size", 11)
 	stamina_label.add_theme_color_override("font_color", Color("9acfc2"))
 	hud.add_child(stamina_label)
+	dodge_label = Label.new()
+	dodge_label.position = Vector2(22, 188)
+	dodge_label.text = "ESQUIVA  •  pronta"
+	dodge_label.add_theme_font_size_override("font_size", 11)
+	dodge_label.add_theme_color_override("font_color", Color("9acfc2"))
+	hud.add_child(dodge_label)
 	boss_hud_panel = PanelContainer.new()
 	boss_hud_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	boss_hud_panel.position = Vector2(-170, 16)
@@ -1366,6 +1373,13 @@ func _process(delta: float) -> void:
 		if stamina_label:
 			stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)
 			stamina_label.add_theme_color_override("font_color", stamina_color)
+	if dodge_label:
+		if player.dodge_cooldown > 0.0:
+			dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown
+			dodge_label.add_theme_color_override("font_color", Color("e6bd72"))
+		else:
+			dodge_label.text = "ESQUIVA  •  pronta"
+			dodge_label.add_theme_color_override("font_color", Color("9acfc2"))
 	if shadow_skill_label and player.shadow_pulse_cooldown > 0.0:
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: %.1fs" % player.shadow_pulse_cooldown
 	elif shadow_skill_label:
