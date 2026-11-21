@@ -2947,8 +2947,8 @@ func _interact() -> void:
 			if not ancient_waystone_ids.has(waystone_id):
 				ancient_waystone_ids.append(waystone_id)
 				ancient_waystone_ids.sort()
-				var rune := waystone.get_node_or_null("WaystoneRune")
-				if rune: rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
+				var waystone_rune := waystone.get_node_or_null("WaystoneRune")
+				if waystone_rune: waystone_rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
 				_grant_xp(30)
 				dark_essence += 1
 				if ancient_waystone_ids.size() >= 3:
