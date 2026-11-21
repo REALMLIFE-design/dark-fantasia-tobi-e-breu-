@@ -8,6 +8,7 @@ var notice_dialog: AcceptDialog
 
 func _ready() -> void:
 	_build_menu()
+	print("TOBI_BREU_BOOT_READY")
 
 func _build_menu() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
