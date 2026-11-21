@@ -132,9 +132,17 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('close_btn.custom_minimum_size = Vector2(44, 44)', self.world)
 
     def test_quest_journal_tracks_whisper_grove_side_quest(self):
-        self.assertIn('Lanternas do Bosque: %d/3', self.world)
-        self.assertIn('Bênção do Cervo: %s', self.world)
+        self.assertIn('"Lanternas do Bosque"', self.world)
+        self.assertIn('"RECOMPENSA DO BOSQUE"', self.world)
         self.assertIn('whisper_lantern_ids.size()', self.world)
+        self.assertIn('"Converse com o Cervo Guardião após acender as lanternas"', self.world)
+
+    def test_inventory_uses_item_slots_for_persisted_resources(self):
+        for item in ('Poção de vida', 'Fragmentos Rubros', 'Orelhas de Goblin', 'Ervas do Pântano', 'Essência Sombria'):
+            self.assertIn(item, self.world)
+        self.assertIn('func _menu_add_item_grid(', self.world)
+        self.assertIn('grid.columns = 2', self.world)
+        self.assertIn('VER EQUIPAMENTO E FORJA', self.world)
 
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
