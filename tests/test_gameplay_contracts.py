@@ -86,8 +86,13 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('player.global_position = checkpoint_position', self.world)
 
     def test_checkpoint_coordinates_are_validated_on_load(self):
-        self.assertIn('absf(checkpoint_x) <= 140.0', self.world)
-        self.assertIn('absf(checkpoint_z) <= 140.0', self.world)
+        self.assertIn('absf(checkpoint_x) <= 330.0', self.world)
+        self.assertIn('absf(checkpoint_z) <= 330.0', self.world)
+        self.assertIn('700x700 world bounds', self.world)
+
+    def test_checkpoint_validation_covers_expanded_world_with_safety_margin(self):
+        self.assertIn('plane.size = Vector2(700, 700)', self.world)
+        self.assertIn('absf(checkpoint_x) <= 330.0 and absf(checkpoint_z) <= 330.0', self.world)
 
     def test_river_treasure_chests_are_interactive_and_persistent(self):
         self.assertIn('func _build_river_treasure_chests()', self.world)
