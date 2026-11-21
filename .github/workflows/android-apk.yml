@@ -121,6 +121,16 @@ jobs:
             exit 1
           fi
 
+      - name: Testar inicialização da cena principal no Godot
+        timeout-minutes: 3
+        run: |
+          set -o pipefail
+          timeout 90 "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 180 2>&1 | tee "$RUNNER_TEMP/godot-startup.log"
+          if grep -E "SCRIPT ERROR:|Parse Error|Failed to load script|ERROR: Failed to load" "$RUNNER_TEMP/godot-startup.log"; then
+            echo "ERRO: a cena principal apresentou falha durante a inicialização"
+            exit 1
+          fi
+
       - name: Gerar APK
         timeout-minutes: 16
         run: |
@@ -147,6 +157,44 @@ jobs:
           mv "$SIGNED" "$APK"
           rm -f "$ALIGNED"
           test -s "$APK"
+
+      - name: Testar APK em emulador Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            adb wait-for-device
+            adb shell wm size 1280x720
+            adb install -r "$PROJECT_PATH/build/TobiEBreu.apk"
+            adb shell am force-stop com.tobiebreu.darkworld3d
+            adb shell monkey -p com.tobiebreu.darkworld3d -c android.intent.category.LAUNCHER 1
+            sleep 18
+            APP_PID="$(adb shell pidof com.tobiebreu.darkworld3d | tr -d '\r')"
+            if [ -z "$APP_PID" ]; then
+              adb logcat -d -t 3000 > "$RUNNER_TEMP/android-launch-failure.log"
+              cat "$RUNNER_TEMP/android-launch-failure.log"
+              echo "ERRO: o jogo fechou antes de permanecer aberto no Android"
+              exit 1
+            fi
+            adb shell input tap 640 460
+            sleep 3
+            APP_PID="$(adb shell pidof com.tobiebreu.darkworld3d | tr -d '\r')"
+            if [ -z "$APP_PID" ]; then
+              adb logcat -d -t 3000 > "$RUNNER_TEMP/android-launch-failure.log"
+              cat "$RUNNER_TEMP/android-launch-failure.log"
+              echo "ERRO: o jogo fechou depois da interação inicial"
+              exit 1
+            fi
+            adb logcat -d -t 3000 > "$RUNNER_TEMP/android-launch.log"
+            if grep -E "FATAL EXCEPTION|Fatal signal|SIGSEGV|Process com.tobiebreu.darkworld3d has died" "$RUNNER_TEMP/android-launch.log"; then
+              echo "ERRO: falha fatal no processo Android do jogo"
+              exit 1
+            fi
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
