@@ -32,6 +32,8 @@ var boss_core_material: StandardMaterial3D
 var crab_lunge_velocity := Vector3.ZERO
 var crab_lunge_timer := 0.0
 var crab_claws: Array[Node3D] = []
+var strafe_timer := 0.0
+var strafe_direction := 1.0
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -398,8 +400,21 @@ func _physics_process(delta: float) -> void:
 		var d := target.global_position - global_position
 		d.y = 0.0
 		if d.length() < 15.0 and d.length() > attack_range:
-			velocity.x = move_toward(velocity.x, d.normalized().x * move_speed, 8.0 * delta)
-			velocity.z = move_toward(velocity.z, d.normalized().z * move_speed, 8.0 * delta)
+			var chase_direction := d.normalized()
+			var desired_direction := chase_direction
+			if enemy_kind == 2 or enemy_kind == 7:
+				# Batedores e espectros circulam o jogador em vez de correr sempre em linha reta.
+				strafe_timer -= delta
+				if strafe_timer <= 0.0:
+					strafe_timer = randf_range(1.1, 2.0) if enemy_kind == 2 else randf_range(1.7, 2.8)
+					strafe_direction = -strafe_direction if randf() < 0.72 else strafe_direction
+				var tangent := Vector3(-chase_direction.z, 0.0, chase_direction.x) * strafe_direction
+				var preferred_distance := 4.8 if enemy_kind == 2 else 5.8
+				var radial_weight := clampf((d.length() - preferred_distance) / 3.0, -0.65, 0.8)
+				var orbit_weight := 0.82 if enemy_kind == 2 else 0.68
+				desired_direction = (chase_direction * radial_weight + tangent * orbit_weight).normalized()
+			velocity.x = move_toward(velocity.x, desired_direction.x * move_speed, 8.0 * delta)
+			velocity.z = move_toward(velocity.z, desired_direction.z * move_speed, 8.0 * delta)
 			look_at(Vector3(target.global_position.x, global_position.y, target.global_position.z))
 		elif d.length() <= attack_range:
 			velocity.x = move_toward(velocity.x, 0.0, 12.0 * delta)
