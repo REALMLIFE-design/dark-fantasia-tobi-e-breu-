@@ -22,7 +22,7 @@ class PluginAssetBridgeContracts(unittest.TestCase):
         self.assertIn('FileAccess.file_exists', self.plugin)
 
     def test_catalog_lists_external_plugin_assets(self):
-        for asset in ['aqueduct_base_color', 'aqueduct_height', 'meshy_gate', 'meshy_way_shrine', 'pinoc_walking', 'pinoc_forest_splat']:
+        for asset in ['aqueduct_base_color', 'aqueduct_height', 'meshy_gate', 'meshy_way_shrine', 'meshy_tobi_hero', 'pinoc_walking', 'pinoc_forest_splat']:
             self.assertIn(asset, self.catalog)
         self.assertIn('func get_missing_assets()', self.catalog)
 
@@ -35,8 +35,10 @@ class PluginAssetBridgeContracts(unittest.TestCase):
             self.assertIn(motion["path"], self.catalog)
 
     def test_runtime_loader_guards_optional_meshy_model(self):
-        self.assertIn('ResourceLoader.exists(MESHY_GATE_PATH)', self.loader)
+        self.assertIn('func load_optional_scene(asset_key: String) -> PackedScene:', self.loader)
+        self.assertIn('func load_meshy_asset(', self.loader)
         self.assertIn('func load_meshy_gate', self.loader)
+        self.assertIn('func load_pinoc_motion', self.loader)
 
     def test_runtime_loader_does_not_apply_partial_pbr_sets(self):
         self.assertIn('if not FileAccess.file_exists(texture_path):', self.loader)

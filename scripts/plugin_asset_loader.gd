@@ -25,19 +25,40 @@ static func apply_aqueduct_stone(target: MeshInstance3D) -> bool:
 	return true
 
 
-static func load_meshy_gate(parent: Node3D, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
-	if parent == null or not ResourceLoader.exists(MESHY_GATE_PATH):
+static func load_optional_scene(asset_key: String) -> PackedScene:
+	if not PluginAssetCatalog.ASSETS.has(asset_key):
 		return null
-	var packed_scene := load(MESHY_GATE_PATH) as PackedScene
+	var asset_path: String = PluginAssetCatalog.ASSETS[asset_key]
+	if not ResourceLoader.exists(asset_path):
+		return null
+	var packed_scene := load(asset_path) as PackedScene
 	if packed_scene == null:
-		push_warning("O GLB do portão Meshy não pôde ser carregado como PackedScene.")
+		push_warning("O asset opcional não pôde ser carregado: " + asset_key)
+	return packed_scene
+
+
+static func load_meshy_asset(parent: Node3D, asset_key: String, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
+	if parent == null or not asset_key.begins_with("meshy_"):
+		return null
+	var packed_scene := load_optional_scene(asset_key)
+	if packed_scene == null:
 		return null
 	var instance := packed_scene.instantiate() as Node3D
 	if instance == null:
-		push_warning("A raiz do GLB do portão Meshy não é Node3D.")
+		push_warning("A raiz do asset Meshy não é Node3D: " + asset_key)
 		return null
-	instance.name = "MeshyGothicGate"
+	instance.name = asset_key
 	instance.position = position
 	instance.scale = scale
 	parent.add_child(instance)
 	return instance
+
+
+static func load_pinoc_motion(asset_key: String) -> PackedScene:
+	if not asset_key.begins_with("pinoc_") or asset_key == "pinoc_forest_splat":
+		return null
+	return load_optional_scene(asset_key)
+
+
+static func load_meshy_gate(parent: Node3D, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
+	return load_meshy_asset(parent, "meshy_gate", position, scale)

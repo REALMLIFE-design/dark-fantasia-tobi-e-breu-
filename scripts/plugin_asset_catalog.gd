@@ -10,6 +10,7 @@ const ASSETS := {
 	"meshy_gate": "res://assets/plugin_imports/meshy/gothic_gate.glb",
 	"meshy_rune_obelisk": "res://assets/plugin_imports/meshy/rune_obelisk.glb",
 	"meshy_way_shrine": "res://assets/plugin_imports/meshy/stone_way_shrine.glb",
+	"meshy_tobi_hero": "res://assets/plugin_imports/meshy/tobi_hero.glb",
 	"pinoc_walking": "res://assets/plugin_imports/pinoc/animations/walking.glb",
 	"pinoc_running": "res://assets/plugin_imports/pinoc/animations/running.glb",
 	"pinoc_dodge_roll": "res://assets/plugin_imports/pinoc/animations/dodge_roll.glb",
