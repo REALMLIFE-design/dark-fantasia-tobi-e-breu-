@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 12', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('"save_version", 13', self.world)
+        self.assertIn('save_version > 13', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -112,6 +112,18 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('BOSQUE DESPERTOU!', self.world)
         self.assertIn('whisper_grove_label.visible = grove_distance < 24.0', self.world)
         self.assertIn('BOSQUE DOS SUSSURROS  •  %d/3 LANTERNAS', self.world)
+        self.assertIn('func _spawn_thrixel_stag_guardian()', self.world)
+        self.assertIn('ancient_stag_guardian.glb', self.world)
+        self.assertIn('whisper_guardian_reward_claimed', self.world)
+        self.assertIn('BÊNÇÃO DO CÉRVOR ANCIÃO', self.world)
+
+    def test_thrixel_guardian_model_is_downloaded_as_a_valid_glb(self):
+        model = ROOT / "assets/models/ancient_stag_guardian.glb"
+        self.assertTrue(model.is_file(), "Android workflow must download the generated Thrixel model before tests")
+        self.assertEqual(model.read_bytes()[:4], b"glTF")
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb", workflow)
+
 
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
@@ -200,8 +212,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 12', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('"save_version", 13', self.world)
+        self.assertIn('save_version > 13', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
 
@@ -317,7 +329,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 12', self.world)
+        self.assertIn('save_version > 13', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
