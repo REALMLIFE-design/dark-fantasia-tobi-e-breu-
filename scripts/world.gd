@@ -28,6 +28,9 @@ var save_path := "user://tobi_breu_save.cfg"
 var settings_path := "user://tobi_breu_settings.cfg"
 var camera_sensitivity_setting := 0.006
 var menu_layer: CanvasLayer
+var loading_layer: CanvasLayer
+var loading_progress: ProgressBar
+var loading_status: Label
 var menu_panel: PanelContainer
 var menu_body: VBoxContainer
 var menu_feedback: Label
@@ -71,21 +74,34 @@ var guild_contract_claimed := false
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
+	_create_loading_screen()
+	_set_loading_progress(4.0, "ACENDENDO AS RUNAS...")
+	await get_tree().process_frame
 	_load_save()
 	_load_settings()
 	river_boss_saved_band = floori(float(river_boss_hp) / 68.0)
+	_set_loading_progress(10.0, "MOLDANDO O MUNDO...")
+	await get_tree().process_frame
 	_build_environment()
 	_build_landscape()
+	_set_loading_progress(24.0, "ERGUENDO AS TERRAS ESQUECIDAS...")
+	await get_tree().process_frame
 	_build_open_world_expansion()
 	_build_ruins_and_props()
 	_build_region_landmarks()
+	_set_loading_progress(40.0, "DESPERTANDO AS REGIÕES...")
+	await get_tree().process_frame
 	_build_swamp_region()
 	_build_river_region()
 	_build_whisper_grove()
 	_build_outer_regions()
+	_set_loading_progress(62.0, "REACENDENDO AS CIDADES...")
+	await get_tree().process_frame
 	_build_world_civilization()
 	_build_npcs()
 	_build_enemies()
+	_set_loading_progress(78.0, "PREPARANDO TOBI E BREU...")
+	await get_tree().process_frame
 	_build_player()
 	player.camera_sensitivity = camera_sensitivity_setting
 	player.hp = clampi(saved_player_hp, 1, player.max_hp)
@@ -113,6 +129,89 @@ func _ready() -> void:
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
+	_set_loading_progress(100.0, "A JORNADA AGUARDA...")
+	await get_tree().create_timer(0.2, true).timeout
+	await _hide_loading_screen()
+
+
+func _create_loading_screen() -> void:
+	loading_layer = CanvasLayer.new()
+	loading_layer.name = "DarkFantasyLoading"
+	loading_layer.layer = 100
+	loading_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(loading_layer)
+	var backdrop := ColorRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.color = Color("080b0d")
+	loading_layer.add_child(backdrop)
+	var frame := PanelContainer.new()
+	frame.set_anchors_preset(Control.PRESET_CENTER)
+	frame.position = Vector2(-190.0, -205.0)
+	frame.size = Vector2(380.0, 410.0)
+	frame.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.035, 0.035, 0.98), Color("9d7546"), 20))
+	loading_layer.add_child(frame)
+	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 12)
+	frame.add_child(stack)
+	var emblem := TextureRect.new()
+	emblem.custom_minimum_size = Vector2(112.0, 112.0)
+	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	emblem.texture = load("res://assets/icons/tobi_breu_icon.svg")
+	stack.add_child(emblem)
+	var heading := Label.new()
+	heading.text = "TOBI  &  BREU"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 26)
+	heading.add_theme_color_override("font_color", Color("e5c58c"))
+	stack.add_child(heading)
+	var subtitle := Label.new()
+	subtitle.text = "DARK FANTASY  •  UMA JORNADA NAS SOMBRAS"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 10)
+	subtitle.add_theme_color_override("font_color", Color("a8a18e"))
+	stack.add_child(subtitle)
+	loading_progress = ProgressBar.new()
+	loading_progress.custom_minimum_size = Vector2(290.0, 15.0)
+	loading_progress.min_value = 0.0
+	loading_progress.max_value = 100.0
+	loading_progress.value = 0.0
+	loading_progress.show_percentage = false
+	loading_progress.add_theme_stylebox_override("background", _hud_bar_style(Color("242a28")))
+	loading_progress.add_theme_stylebox_override("fill", _hud_bar_style(Color("b18a52")))
+	stack.add_child(loading_progress)
+	loading_status = Label.new()
+	loading_status.text = "PREPARANDO A AVENTURA..."
+	loading_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	loading_status.add_theme_font_size_override("font_size", 11)
+	loading_status.add_theme_color_override("font_color", Color("c9c0aa"))
+	stack.add_child(loading_status)
+	var footer := Label.new()
+	footer.text = "QUE A LUZ ENCONTRE O SEU CAMINHO"
+	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer.add_theme_font_size_override("font_size", 9)
+	footer.add_theme_color_override("font_color", Color("777d75"))
+	stack.add_child(footer)
+
+
+func _set_loading_progress(value: float, message: String) -> void:
+	if is_instance_valid(loading_progress):
+		loading_progress.value = clampf(value, 0.0, 100.0)
+	if is_instance_valid(loading_status):
+		loading_status.text = message
+
+
+func _hide_loading_screen() -> void:
+	if not is_instance_valid(loading_layer):
+		return
+	var layer_to_remove := loading_layer
+	loading_layer = null
+	var fade := layer_to_remove.create_tween()
+	fade.tween_property(layer_to_remove, "modulate:a", 0.0, 0.28)
+	await fade.finished
+	layer_to_remove.queue_free()
+
 
 func _mat(color: Color, roughness := 0.92) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -1690,8 +1789,24 @@ func _open_menu(page: String = "pause") -> void:
 
 
 func _start_game() -> void:
+	if game_started:
+		_close_menu()
+		return
+	if is_instance_valid(menu_layer):
+		menu_layer.visible = false
+	_create_loading_screen()
+	_set_loading_progress(28.0, "ABRINDO OS CAMINHOS...")
+	get_tree().paused = false
+	await get_tree().process_frame
+	var transition := loading_layer.create_tween()
+	transition.tween_property(loading_progress, "value", 100.0, 0.72)
+	_set_loading_progress(28.0, "AS SOMBRAS SE AFASTAM...")
+	await transition.finished
+	_set_loading_progress(100.0, "BEM-VINDO DE VOLTA, AVENTUREIRO.")
+	await get_tree().create_timer(0.18, true).timeout
 	game_started = true
-	_close_menu()
+	await _hide_loading_screen()
+	get_tree().paused = false
 
 
 func _close_menu() -> void:
