@@ -25,6 +25,9 @@ var touch_points: Dictionary = {}
 var pinch_start_distance := 0.0
 var pinch_start_camera_distance := 6.5
 var hit_reaction := 0.0
+var damage_flash := 0.0
+var damage_flash_materials: Array[StandardMaterial3D] = []
+var damage_flash_base_colors: Array[Color] = []
 var death_pose := false
 var landing_time := 0.0
 var combo_step := 0
@@ -51,6 +54,7 @@ func _ready() -> void:
 	visual.add_child(attack_visual)
 	_create_shadow_pulse_visual()
 	_make_character()
+	_cache_damage_flash_materials(visual)
 	camera_pivot = Node3D.new()
 	camera_pivot.position.y = 1.45
 	add_child(camera_pivot)
@@ -60,6 +64,25 @@ func _ready() -> void:
 	camera.current = true
 	camera.fov = 72
 	camera_pivot.add_child(camera)
+
+func _cache_damage_flash_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var source_material := mesh_instance.material_override as StandardMaterial3D
+		if source_material:
+			var flash_material := source_material.duplicate() as StandardMaterial3D
+			mesh_instance.material_override = flash_material
+			damage_flash_materials.append(flash_material)
+			damage_flash_base_colors.append(flash_material.albedo_color)
+	for child in node.get_children():
+		_cache_damage_flash_materials(child)
+
+func _update_damage_flash() -> void:
+	var strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	for i in range(damage_flash_materials.size()):
+		var material := damage_flash_materials[i]
+		if is_instance_valid(material):
+			material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), strength * 0.72)
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -192,6 +215,8 @@ func _physics_process(delta: float) -> void:
 	stamina = minf(100.0, stamina + 16.0 * delta)
 	attack_flash = maxf(0.0,attack_flash-delta)
 	hit_reaction = maxf(0.0, hit_reaction - delta)
+	damage_flash = maxf(0.0, damage_flash - delta)
+	_update_damage_flash()
 	landing_time = maxf(0.0, landing_time - delta)
 	invulnerable = maxf(0.0,invulnerable-delta)
 	anim_time += delta
@@ -412,6 +437,7 @@ func take_damage(amount: int) -> void:
 	if invulnerable > 0.0 or hp <= 0: return
 	hp = maxi(0, hp - amount)
 	hit_reaction = 0.22
+	damage_flash = 0.16
 	invulnerable = 0.65
 	if world and world.has_method("player_health_changed"):
 		world.player_health_changed(hp, max_hp)
