@@ -761,3 +761,22 @@ class PerfectDodgeHudPersistenceContracts(unittest.TestCase):
         self.assertIn('perfect_dodge_feedback_timer = maxf(0.0, perfect_dodge_feedback_timer - delta)', self.world)
         self.assertIn('if perfect_dodge_feedback_timer > 0.0:', self.world)
         self.assertIn('perfect_dodge_feedback_timer = 0.9', self.world)
+
+
+
+class EnemyDeathBurstContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_defeat_spawns_six_fading_shards_with_type_colors(self):
+        death = self.enemy[self.enemy.index('func take_damage'):self.enemy.index('func _spawn_damage_number')]
+        burst = self.enemy[self.enemy.index('func _spawn_death_burst'):self.enemy.index('func _add(mesh')]
+        self.assertIn('_spawn_death_burst()', death)
+        self.assertIn('for shard_index in range(6):', burst)
+        self.assertIn('BaseMaterial3D.TRANSPARENCY_ALPHA', burst)
+        self.assertIn('shard_tween.parallel().tween_property(shard, "scale", Vector3.ZERO, 0.38)', burst)
+        self.assertIn('shard_tween.parallel().tween_property(shard_material, "albedo_color"', burst)
+        self.assertIn('shard_tween.tween_callback(burst.queue_free)', burst)
+        for color in ('d85a4d', '79c9f2', '62d8c8', 'e7c477'):
+            self.assertIn('Color("%s")' % color, burst)
