@@ -138,7 +138,7 @@ func _make_character() -> void:
 	var cat_head := SphereMesh.new(); cat_head.radius = 0.23; cat_head.height = 0.42
 	_add_visual_part(cat_head_pivot, cat_head, Vector3.ZERO, Color("171b21"))
 	for x in [-0.14, 0.14]:
-		var ear := ConeMesh.new(); ear.radius = 0.085; ear.height = 0.22
+		var ear: CylinderMesh = CylinderMesh.new(); ear.top_radius = 0.0; ear.bottom_radius = 0.085; ear.height = 0.22
 		_add_visual_part(cat_head_pivot, ear, Vector3(x, 0.19, -0.015), Color("171b21"))
 		var eye := SphereMesh.new(); eye.radius = 0.035
 		_add_visual_part(cat_head_pivot, eye, Vector3(x * 0.62, -0.015, 0.205), Color("d5c46d"))
