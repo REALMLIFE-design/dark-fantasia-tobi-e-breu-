@@ -115,7 +115,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func _spawn_thrixel_stag_guardian()', self.world)
         self.assertIn('ancient_stag_guardian.glb', self.world)
         self.assertIn('whisper_guardian_reward_claimed', self.world)
-        self.assertIn('BÊNÇÃO DO CÉRVOR ANCIÃO', self.world)
+        self.assertIn('Bênção do Cervo Ancião', self.world)
 
     def test_thrixel_guardian_model_is_downloaded_as_a_valid_glb(self):
         model = ROOT / "assets/models/ancient_stag_guardian.glb"
