@@ -2,6 +2,15 @@
 
 Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D original não foi alterada.
 
+## Revisão de conteúdo e Android — 21/11/2026
+
+- O Bosque dos Sussurros recebeu o Guardião Cervo Ancião, modelo 3D rigado gerado no Thrixel (14.064 triângulos).
+- Acender as três lanternas e falar com o guardião libera uma bênção única: 90 XP, 3 Fragmentos Rubros, 2 Essências Sombrias e 1 Poção.
+- A recompensa do guardião é persistida no save; a versão do salvamento passou para 13 e continua aceitando versões anteriores.
+- O workflow Android baixa e valida o GLB do Thrixel antes da importação do Godot. O modelo não é armazenado como binário no repositório.
+- Menu principal: cópia mais curta e botão de fechar com alvo de toque 44×44.
+- Teste Android separado em script Bash para evitar que blocos condicionais sejam quebrados pelo executor do emulador.
+
 ## Atualizações do protótipo 0.7 — revisão visual e animação
 
 - Tobi recebeu novas camadas de roupa, ombreiras, joelheiras, bolsos, fecho da capa e painel frontal da túnica.
