@@ -101,6 +101,7 @@ func _ready() -> void:
 	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
+	print("TOBI_BREU_BOOT_READY")
 
 func _mat(color: Color, roughness := 0.92) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
