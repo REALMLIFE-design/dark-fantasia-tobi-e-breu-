@@ -577,3 +577,20 @@ class LowHealthFeedbackContracts(unittest.TestCase):
         self.assertIn('"  •  CRÍTICO" if low_health else ""', health_update)
         self.assertIn('Color("ff7777") if low_health else Color("ffffff")', health_update)
         self.assertIn('health_bar.modulate', health_update)
+
+class MobileCameraPinchContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_two_finger_pinch_zoom_is_clamped_and_preserves_camera_angle(self):
+        self.assertIn('if event is InputEventScreenTouch:', self.player)
+        self.assertIn('touch_points[event.index] = event.position', self.player)
+        self.assertIn('pinch_start_distance = points[0].distance_to(points[1])', self.player)
+        self.assertIn('camera.position.z = clampf(pinch_start_camera_distance - (pinch_distance - pinch_start_distance) * 0.018, 4.2, 9.5)', self.player)
+        self.assertIn('camera.position.y = camera.position.z * 0.369', self.player)
+
+    def test_pinch_gesture_does_not_rotate_camera_as_single_finger_drag(self):
+        input_handler = self.player[self.player.index('func _unhandled_input'):self.player.index('func do_jump')]
+        self.assertIn('if touch_points.size() >= 2:', input_handler)
+        self.assertIn('elif event.position.x > get_viewport().get_visible_rect().size.x * 0.42:', input_handler)
