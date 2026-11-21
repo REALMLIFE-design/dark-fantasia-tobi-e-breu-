@@ -287,7 +287,7 @@ func _build_open_world_expansion() -> void:
 		clearing.scale = Vector3(18.0, 0.08, 15.0)
 		for j in range(7):
 			var angle := TAU * float(j) / 7.0
-			var tree_pos := clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
+			var tree_pos: Vector3 = clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
 			_build_tree(tree_pos, randf_range(0.8, 1.25))
 	# Distant mountain wall makes the larger map read as a continuous landmass.
 	for i in range(32):
@@ -699,7 +699,7 @@ func _build_swamp_region() -> void:
 			var limb := _box(self, "DeadBranch", Vector3(x + branch * 0.75, 3.2, z), Vector3(1.8, 0.22, 0.24), Color("4b4439"))
 			limb.rotation.z = branch * -0.42
 	for i in range(3):
-		var x := [-13.0, 0.0, 13.0][i]
+		var x: float = [-13.0, 0.0, 13.0][i]
 		var totem := Node3D.new()
 		totem.name = "SwampTotem_%d" % i
 		totem.position = Vector3(x, 0.0, -91.0 - (i % 2) * 9.0)
@@ -1212,8 +1212,6 @@ func _build_hud() -> void:
 	inventory_label = Label.new()
 	inventory_label.position = Vector2(22, 280)
 	inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
-	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
 	inventory_label.add_theme_font_size_override("font_size", 12)
 	hud.add_child(inventory_label)
 	# Full backpack panel: compact, touch-friendly and hidden during exploration.
