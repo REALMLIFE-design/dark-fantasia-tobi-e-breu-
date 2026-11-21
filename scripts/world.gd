@@ -30,6 +30,7 @@ var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
 var stamina_label: Label
 var dodge_label: Label
+var perfect_dodge_feedback_timer := 0.0
 var xp_label: Label
 var xp_bar: ProgressBar
 var boss_health_bar: ProgressBar
@@ -1373,8 +1374,12 @@ func _process(delta: float) -> void:
 		if stamina_label:
 			stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)
 			stamina_label.add_theme_color_override("font_color", stamina_color)
+	perfect_dodge_feedback_timer = maxf(0.0, perfect_dodge_feedback_timer - delta)
 	if dodge_label:
-		if player.dodge_cooldown > 0.0:
+		if perfect_dodge_feedback_timer > 0.0:
+			dodge_label.text = "ESQUIVA  •  PERFEITA!"
+			dodge_label.add_theme_color_override("font_color", Color("e6d17a"))
+		elif player.dodge_cooldown > 0.0:
 			dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown
 			dodge_label.add_theme_color_override("font_color", Color("e6bd72"))
 		else:
@@ -1821,6 +1826,7 @@ func enemy_defeated(kind: int = 0) -> void:
 
 
 func player_perfect_dodge() -> void:
+	perfect_dodge_feedback_timer = 0.9
 	if is_instance_valid(toast_label):
 		toast_label.text = "ESQUIVA PERFEITA! +10 FÔLEGO"
 	if is_instance_valid(dodge_label):
