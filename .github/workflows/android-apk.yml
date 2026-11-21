@@ -12,6 +12,9 @@ on:
       - master
       - 'fix/**'
       - 'integration/**'
+  pull_request:
+    branches:
+      - 'fix/android-ci-validation'
 
 jobs:
   build:
