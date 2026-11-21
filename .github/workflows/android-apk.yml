@@ -124,6 +124,25 @@ jobs:
           timeout 15m "$GODOT_BIN" --headless --verbose --path "$PROJECT_PATH" --export-debug "Android" "$PROJECT_PATH/build/TobiEBreu.apk" 2>&1 | tee "$RUNNER_TEMP/android-export.log"
           test -s "$PROJECT_PATH/build/TobiEBreu.apk"
 
+      - name: Assinar e validar APK
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
+          APK="$PROJECT_PATH/build/TobiEBreu.apk"
+          ALIGNED="$PROJECT_PATH/build/TobiEBreu-aligned.apk"
+          SIGNED="$PROJECT_PATH/build/TobiEBreu-signed.apk"
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "$SIGNED" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED"
+          mv "$SIGNED" "$APK"
+          rm -f "$ALIGNED"
+          test -s "$APK"
+
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
