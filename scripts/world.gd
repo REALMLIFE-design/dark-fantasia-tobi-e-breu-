@@ -1171,7 +1171,7 @@ func _build_hud() -> void:
 	hud.add_child(stamina_bar)
 	stamina_label = Label.new()
 	stamina_label.position = Vector2(220, 169)
-	stamina_label.text = "FOLEGO 100%"
+	stamina_label.text = "FÔLEGO 100%"
 	stamina_label.add_theme_font_size_override("font_size", 11)
 	stamina_label.add_theme_color_override("font_color", Color("9acfc2"))
 	hud.add_child(stamina_label)
@@ -1364,7 +1364,7 @@ func _process(delta: float) -> void:
 		var stamina_color := Color("ff7777") if current_stamina <= 20.0 else (Color("e6bd72") if current_stamina <= 40.0 else Color("9acfc2"))
 		stamina_bar.modulate = stamina_color
 		if stamina_label:
-			stamina_label.text = "FOLEGO %d%%" % roundi(current_stamina)
+			stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)
 			stamina_label.add_theme_color_override("font_color", stamina_color)
 	if shadow_skill_label and player.shadow_pulse_cooldown > 0.0:
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: %.1fs" % player.shadow_pulse_cooldown
