@@ -2935,6 +2935,10 @@ func combat_combo_changed(step: int) -> void:
 	else:
 		combo_label.text = "COMBO %d/3  •  %s" % [step, ["Corte", "Corte duplo", "Golpe final"][step - 1]]
 
+func player_perfect_dodge() -> void:
+	if is_instance_valid(toast_label):
+		toast_label.text = "ESQUIVA PERFEITA! +10 FÔLEGO"
+
 func shadow_pulse_used(cooldown: float) -> void:
 	if is_instance_valid(shadow_skill_label):
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: recarregando"

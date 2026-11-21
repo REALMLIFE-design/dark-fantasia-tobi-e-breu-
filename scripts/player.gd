@@ -399,9 +399,18 @@ func get_stamina() -> float:
 	return stamina
 
 func take_damage(amount: int) -> void:
-	if invulnerable > 0.0 or hp <= 0: return
+	if hp <= 0: return
+	if invulnerable > 0.0:
+		if dodge_time > 0.0 and not dodge_perfect_used:
+			dodge_perfect_used = true
+			perfect_dodge_flash = 0.22
+			stamina = minf(100.0, stamina + 10.0)
+			if world and world.has_method("player_perfect_dodge"):
+				world.player_perfect_dodge()
+		return
 	hp = maxi(0, hp - amount)
 	hit_reaction = 0.22
+	damage_flash = 0.16
 	invulnerable = 0.65
 	if world and world.has_method("player_health_changed"):
 		world.player_health_changed(hp, max_hp)
