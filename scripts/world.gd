@@ -91,7 +91,6 @@ func _ready() -> void:
 	player.hp = clampi(saved_player_hp, 1, player.max_hp)
 	player.global_position = checkpoint_position
 	_build_hud()
-	_build_menus()
 	if quest_stage == 12:
 		boss_hud_panel.visible = true
 		boss_health_changed(river_boss_hp, 680)
@@ -113,6 +112,7 @@ func _ready() -> void:
 	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
+	_build_menus()
 
 func _mat(color: Color, roughness := 0.92) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
