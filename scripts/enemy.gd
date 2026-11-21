@@ -8,6 +8,8 @@ var attack_telegraph: MeshInstance3D
 var attack_telegraph_material: StandardMaterial3D
 var attack_impact_flash := 0.0
 var hit_flash := 0.0
+var hit_flash_materials: Array[StandardMaterial3D] = []
+var hit_flash_base_colors: Array[Color] = []
 var visual: Node3D
 var target: Node3D
 var patrol_origin := Vector3.ZERO
@@ -228,6 +230,26 @@ func _ready() -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	visual.add_child(label)
 	target = get_tree().get_first_node_in_group("player")
+	_cache_hit_flash_materials(visual)
+
+func _cache_hit_flash_materials(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var mesh_instance := child as MeshInstance3D
+			var source_material := mesh_instance.material_override as StandardMaterial3D
+			if source_material:
+				var flash_material := source_material.duplicate() as StandardMaterial3D
+				mesh_instance.material_override = flash_material
+				hit_flash_materials.append(flash_material)
+				hit_flash_base_colors.append(flash_material.albedo_color)
+		_cache_hit_flash_materials(child)
+
+func _update_hit_flash_materials() -> void:
+	var strength := clampf(hit_flash / 0.14, 0.0, 1.0)
+	for i in range(hit_flash_materials.size()):
+		var material := hit_flash_materials[i]
+		if is_instance_valid(material):
+			material.albedo_color = hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)
 
 func sync_boss_phase() -> void:
 	if enemy_kind == 6 and hp <= 340:
@@ -355,6 +377,7 @@ func _physics_process(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 	attack_pose = maxf(0.0, attack_pose - delta)
 	hit_flash = maxf(0.0, hit_flash - delta)
+	_update_hit_flash_materials()
 	hit_recoil = maxf(0.0, hit_recoil - delta)
 	attack_impact_flash = maxf(0.0, attack_impact_flash - delta)
 	if not is_instance_valid(target): target = get_tree().get_first_node_in_group("player")
@@ -452,6 +475,7 @@ func take_damage(amount: int) -> void:
 		if get_parent().has_method("boss_health_changed"):
 			get_parent().boss_health_changed(maxi(0, hp), 680)
 	hit_recoil = 0.16
+	hit_flash = 0.14
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
 		dead = true
