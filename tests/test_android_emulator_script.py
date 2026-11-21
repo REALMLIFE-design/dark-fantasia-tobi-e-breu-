@@ -55,6 +55,10 @@ if args[:2] == ['logcat', '-d']:
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("TOBI_BREU_ANDROID_INTERACTION_OK", result.stdout)
 
+    def test_taps_the_redesigned_play_button(self):
+        script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("adb shell input tap 640 490", script)
+
     def test_fails_with_clear_diagnostics_if_game_exits_after_interaction(self):
         result = self.run_script(exit_after_tap=True)
         self.assertNotEqual(result.returncode, 0)
