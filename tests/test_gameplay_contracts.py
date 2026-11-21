@@ -522,4 +522,5 @@ class ProceduralTextureContracts(unittest.TestCase):
 
 
     def test_android_export_enables_etc2_astc_texture_import(self):
-        self.assertIn('textures/vram_compression/import_etc2_astc=true', self.project)
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        self.assertIn('textures/vram_compression/import_etc2_astc=true', project)
