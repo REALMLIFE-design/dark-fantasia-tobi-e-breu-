@@ -131,6 +131,11 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('_menu_add_button(content, "Jogar", _start_game, true)', self.world)
         self.assertIn('close_btn.custom_minimum_size = Vector2(44, 44)', self.world)
 
+    def test_quest_journal_tracks_whisper_grove_side_quest(self):
+        self.assertIn('Lanternas do Bosque: %d/3', self.world)
+        self.assertIn('Bênção do Cervo: %s', self.world)
+        self.assertIn('whisper_lantern_ids.size()', self.world)
+
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
 
