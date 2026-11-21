@@ -371,8 +371,10 @@ class AndroidBuildContracts(unittest.TestCase):
         self.assertIn('build/TobiEBreu.apk', workflow)
         self.assertIn('python3 -m pip install --disable-pip-version-check Pillow', workflow)
         self.assertIn('--export-debug "Android"', workflow)
-        self.assertIn('Configurar preset Android', workflow)
-        self.assertIn('gradle_build/use_gradle_build', workflow)
+        self.assertIn('Configurar exportação Android sem Gradle', workflow)
+        self.assertIn('gradle_build/min_sdk', workflow)
+        self.assertIn('gradle_build/target_sdk', workflow)
+        self.assertIn('Disponibilizar APK assinado', workflow)
 
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
@@ -382,6 +384,8 @@ class AndroidBuildContracts(unittest.TestCase):
         self.assertIn('PROJECT_PATH=', workflow)
         self.assertIn('python3 -m unittest discover', workflow)
         self.assertIn('tools/validate_project.py', workflow)
+        self.assertIn('--import --quit', workflow)
+        self.assertIn('TOBI_BREU_BOOT_READY', workflow)
 
     def test_world_has_expanded_exploration_space_and_branch_trails(self):
         world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
