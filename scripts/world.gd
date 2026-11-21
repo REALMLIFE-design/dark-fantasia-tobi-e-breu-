@@ -1638,24 +1638,25 @@ func _build_hud() -> void:
 		ui_root.add_child(move_btn)
 
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
-	for data in [{"t":"ATACAR","a":"attack","p":Vector2(0.83,0.82)},{"t":"PULAR","a":"jump","p":Vector2(0.91,0.68)},{"t":"INTERAGIR","a":"interact","p":Vector2(0.72,0.9)},{"t":"ESQUIVAR","a":"dodge","p":Vector2(0.84,0.94)},{"t":"POÇÃO","a":"potion","p":Vector2(0.94,0.84)},{"t":"FORJAR","a":"upgrade","p":Vector2(0.70,0.70)},{"t":"MOCHILA","a":"inventory","p":Vector2(0.70,0.61)},{"t":"BREU","a":"shadow","p":Vector2(0.93,0.72)}]:
+	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}]:
 		var action_btn := Button.new()
 		action_btn.text = data.t
 		action_btn.anchor_left = data.p.x
 		action_btn.anchor_right = data.p.x
 		action_btn.anchor_top = data.p.y
 		action_btn.anchor_bottom = data.p.y
-		action_btn.position = Vector2(-50, -28)
-		action_btn.size = Vector2(100, 56)
-		action_btn.add_theme_font_size_override("font_size", 11)
+		action_btn.position = Vector2(-25, -25)
+		action_btn.size = Vector2(50, 50)
+		action_btn.add_theme_font_size_override("font_size", 19)
+		action_btn.tooltip_text = {"attack":"Ataque","jump":"Pular","interact":"Interagir","dodge":"Esquivar","potion":"Poção","upgrade":"Forjar","inventory":"Mochila","shadow":"Pulso sombrio"}[data.a]
 		var action_fill := Color(0.055, 0.071, 0.064, 0.97)
 		var action_accent := Color("9a8058")
 		if data.a == "attack":
 			action_fill = Color(0.20, 0.075, 0.055, 0.98)
 			action_accent = Color("d39b5e")
-			action_btn.size = Vector2(112, 64)
-			action_btn.position = Vector2(-56, -32)
-			action_btn.add_theme_font_size_override("font_size", 12)
+			action_btn.size = Vector2(62, 62)
+			action_btn.position = Vector2(-31, -31)
+			action_btn.add_theme_font_size_override("font_size", 22)
 		elif data.a == "shadow":
 			action_fill = Color(0.105, 0.065, 0.16, 0.98)
 			action_accent = Color("a68bcf")
