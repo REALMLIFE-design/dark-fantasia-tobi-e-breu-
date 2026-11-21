@@ -125,6 +125,11 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb", workflow)
 
 
+    def test_main_menu_copy_and_close_target_are_mobile_friendly(self):
+        self.assertIn('title.text = "A lenda desperta"', self.world)
+        self.assertIn('_menu_add_button(content, "Jogar", _start_game, true)', self.world)
+        self.assertIn('close_btn.custom_minimum_size = Vector2(44, 44)', self.world)
+
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.0', self.project)
 
