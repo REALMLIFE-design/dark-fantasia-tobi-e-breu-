@@ -2075,10 +2075,13 @@ func _menu_add_hero(parent: Control) -> void:
 
 func _menu_add_button(parent: Control, caption: String, callback: Callable, primary := false) -> Button:
 	var button := Button.new()
-	button.text = caption
-	button.custom_minimum_size = Vector2(0, 58)
+	button.text = ("✦  " if primary else "◇  ") + caption + "     ›"
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.custom_minimum_size = Vector2(0, 62 if primary else 56)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 13 if primary else 11)
+	button.add_theme_font_size_override("font_size", 14 if primary else 12)
+	button.add_theme_color_override("font_color", Color("f0dfbf") if primary else Color("c5cfc2"))
+	button.add_theme_color_override("font_hover_color", Color("fff0cf"))
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
 	var normal_style := _hud_button_style(fill, edge, 13)
@@ -2109,16 +2112,29 @@ func _menu_add_card(parent: Control, heading: String, body: String) -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 5)
 	card.add_child(box)
+	var heading_row := HBoxContainer.new()
+	box.add_child(heading_row)
+	var marker := Label.new()
+	marker.text = "◆"
+	marker.add_theme_font_size_override("font_size", 10)
+	marker.add_theme_color_override("font_color", Color("b18a52"))
+	heading_row.add_child(marker)
 	var title := Label.new()
 	title.text = heading
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color("d8b77c"))
-	box.add_child(title)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 11)
+	title.add_theme_color_override("font_color", Color("dfc18e"))
+	heading_row.add_child(title)
+	var rule := ColorRect.new()
+	rule.custom_minimum_size = Vector2(0, 1)
+	rule.color = Color(0.48, 0.39, 0.25, 0.55)
+	box.add_child(rule)
 	var detail := Label.new()
 	detail.text = body
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	detail.add_theme_font_size_override("font_size", 12)
+	detail.add_theme_font_size_override("font_size", 13)
 	detail.add_theme_color_override("font_color", Color("e5dfd0"))
+	detail.add_theme_constant_override("line_spacing", 3)
 	box.add_child(detail)
 
 
