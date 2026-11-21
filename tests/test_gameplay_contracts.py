@@ -520,3 +520,6 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('fract(world_uv * max(brush_scale, 0.5)', shader)
         self.assertIn('atlas_uv_for(world_pos.xz, tile_index)', shader)
 
+
+    def test_android_export_enables_etc2_astc_texture_import(self):
+        self.assertIn('textures/vram_compression/import_etc2_astc=true', self.project)
