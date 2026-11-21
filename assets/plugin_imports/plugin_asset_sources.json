@@ -45,10 +45,10 @@
           "geometry_model": "meshy-t2.5",
           "texture_model": "meshy-6-lite",
           "target_polycount": 15000,
-          "status": "texture_generation_in_progress"
+          "status": "textured_download_restricted"
         }
       ],
-      "download_note": "Meshy download_model currently responds 'Please upgrade plan to download models'; no binary was copied."
+      "download_note": "Meshy download_model responds 'Please upgrade plan to download models'; all generated models remain preserved in the Meshy account, but no binary was copied."
     },
     "pinoc": {
       "motions": [
