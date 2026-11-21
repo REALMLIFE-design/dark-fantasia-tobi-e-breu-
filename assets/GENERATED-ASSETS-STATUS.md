@@ -34,3 +34,10 @@ Este documento separa ativos gerados de ativos realmente incorporados ao projeto
 - A versão procedural existente foi aprimorada com três fragmentos rubros flutuantes e pulsação suave da runa e da luz.
 - A interação, o checkpoint e a persistência do save foram preservados.
 - O efeito usa malhas simples e tweens nativos para manter custo baixo em dispositivos móveis.
+
+### Atualização de validação — 21/11/2026
+
+- PINOC confirmou a conclusão da expansão `14f94909-4915-4a56-9457-32f9c963acb8`; o ambiente está disponível como `splat-raw` (`.spz`), eixo vertical informado `-y`.
+- O link assinado de download é temporário e não deve ser embutido em arquivos permanentes do jogo.
+- Thrixel confirmou que a árvore possui 14.132 triângulos em uma única malha. O saldo atual da conta é zero; operações gratuitas de redução de triângulos/transformação continuam disponíveis, mas não há créditos para gerar novas texturas ou modelos.
+- Nenhum desses dois arquivos externos foi incorporado ao projeto Godot nesta rodada; o ambiente SPZ exige runtime compatível e a árvore ainda depende de transferência do GLB para o repositório.
