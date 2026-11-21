@@ -141,16 +141,20 @@ func _create_loading_screen() -> void:
 	loading_layer.layer = 100
 	loading_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(loading_layer)
+	var loading_root := Control.new()
+	loading_root.name = "LoadingRoot"
+	loading_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	loading_layer.add_child(loading_root)
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.color = Color("080b0d")
-	loading_layer.add_child(backdrop)
+	loading_root.add_child(backdrop)
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
 	frame.position = Vector2(-190.0, -205.0)
 	frame.size = Vector2(380.0, 410.0)
 	frame.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.035, 0.035, 0.98), Color("9d7546"), 20))
-	loading_layer.add_child(frame)
+	loading_root.add_child(frame)
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 12)
@@ -208,9 +212,11 @@ func _hide_loading_screen() -> void:
 		return
 	var layer_to_remove := loading_layer
 	loading_layer = null
-	var fade := layer_to_remove.create_tween()
-	fade.tween_property(layer_to_remove, "modulate:a", 0.0, 0.28)
-	await fade.finished
+	var fade_target := layer_to_remove.get_node_or_null("LoadingRoot") as Control
+	if is_instance_valid(fade_target):
+		var fade := layer_to_remove.create_tween()
+		fade.tween_property(fade_target, "modulate:a", 0.0, 0.28)
+		await fade.finished
 	layer_to_remove.queue_free()
 
 
