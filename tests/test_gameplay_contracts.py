@@ -112,17 +112,18 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('BOSQUE DESPERTOU!', self.world)
         self.assertIn('whisper_grove_label.visible = grove_distance < 24.0', self.world)
         self.assertIn('BOSQUE DOS SUSSURROS  •  %d/3 LANTERNAS', self.world)
-        self.assertIn('func _spawn_thrixel_stag_guardian()', self.world)
-        self.assertIn('ancient_stag_guardian.glb', self.world)
+        self.assertIn('func _spawn_whisper_stag_guardian()', self.world)
         self.assertIn('whisper_guardian_reward_claimed', self.world)
         self.assertIn('Bênção do Cervo Ancião', self.world)
 
-    def test_thrixel_guardian_model_is_downloaded_as_a_valid_glb(self):
-        model = ROOT / "assets/models/ancient_stag_guardian.glb"
-        self.assertTrue(model.is_file(), "Android workflow must download the generated Thrixel model before tests")
-        self.assertEqual(model.read_bytes()[:4], b"glTF")
+    def test_whisper_guardian_uses_procedural_geometry_until_asset_vendoring_is_available(self):
+        self.assertIn('func _spawn_whisper_stag_guardian()', self.world)
+        self.assertIn('WhisperStagGuardian', self.world)
+        self.assertIn('StagAntlerLeftMain', self.world)
+        self.assertIn('func _add_stag_antler_segment', self.world)
+        self.assertNotIn('ancient_stag_guardian.glb', self.world)
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
-        self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb", workflow)
+        self.assertNotIn("api.thrixel.com", workflow)
 
 
     def test_main_menu_copy_and_close_target_are_mobile_friendly(self):
