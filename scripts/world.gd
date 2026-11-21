@@ -1064,8 +1064,8 @@ func _build_plugin_world_expansion() -> void:
 		for pillar_index in range(3):
 			_box(bridge_root, "WardenBridgePillar", Vector3(side * 4.35, 1.75, -1.15 + float(pillar_index) * 1.15), Vector3(0.8, 0.65, 0.65), Color("91806a"))
 	for rune_index in range(5):
-		var rune := _sphere(bridge_root, "WardenBridgeRune_%02d" % rune_index, Vector3(-3.2 + float(rune_index) * 1.6, 0.48, -1.42), 0.16, Color("8db5a0"), 0.12)
-		rune.material_override = _painter_mat(Color("8db5a0"), 7.0, 0.04)
+		var bridge_rune := _sphere(bridge_root, "WardenBridgeRune_%02d" % rune_index, Vector3(-3.2 + float(rune_index) * 1.6, 0.48, -1.42), 0.16, Color("8db5a0"), 0.12)
+		bridge_rune.material_override = _painter_mat(Color("8db5a0"), 7.0, 0.04)
 
 	var bell_root := Node3D.new()
 	bell_root.name = "EchoingBellTower"
