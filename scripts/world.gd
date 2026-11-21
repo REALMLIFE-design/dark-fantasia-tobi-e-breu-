@@ -1836,12 +1836,22 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		return
 	var portrait := viewport_size.y > viewport_size.x
 	var compact_scale := 0.82 if portrait else 1.0
-	var move_layout := {
-		"move_forward": Vector2(0.125, 0.765),
-		"move_back": Vector2(0.125, 0.935),
-		"move_left": Vector2(0.045, 0.85),
-		"move_right": Vector2(0.205, 0.85)
-	}
+	var move_layout: Dictionary
+	if portrait:
+		# Portrait D-pad: three columns with enough spacing for separate fingers.
+		move_layout = {
+			"move_forward": Vector2(0.27, 0.74),
+			"move_back": Vector2(0.27, 0.94),
+			"move_left": Vector2(0.12, 0.84),
+			"move_right": Vector2(0.42, 0.84)
+		}
+	else:
+		move_layout = {
+			"move_forward": Vector2(0.125, 0.765),
+			"move_back": Vector2(0.125, 0.935),
+			"move_left": Vector2(0.045, 0.85),
+			"move_right": Vector2(0.205, 0.85)
+		}
 	for action in move_layout:
 		var button := ui_root.get_node_or_null("TouchMove_" + action) as Button
 		if button:
@@ -1854,21 +1864,35 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 			button.size = move_size
 			button.add_theme_font_size_override("font_size", 23)
 			button.mouse_filter = Control.MOUSE_FILTER_STOP
-	var action_layout := {
-		"attack": [Vector2(0.91, 0.855), 82.0],
-		"jump": [Vector2(0.96, 0.69), 66.0],
-		"interact": [Vector2(0.755, 0.79), 64.0],
-		"dodge": [Vector2(0.79, 0.94), 66.0],
-		"potion": [Vector2(0.96, 0.94), 66.0],
-		"shadow": [Vector2(0.82, 0.675), 64.0],
-		"upgrade": [Vector2(0.66, 0.68), 58.0],
-		"inventory": [Vector2(0.66, 0.82), 58.0]
-	}
+	var action_layout: Dictionary
+	if portrait:
+		# Two clean columns on the right; four rows keep all eight actions tappable.
+		action_layout = {
+			"attack": [Vector2(0.92, 0.72), 82.0],
+			"jump": [Vector2(0.72, 0.59), 58.0],
+			"interact": [Vector2(0.72, 0.72), 56.0],
+			"dodge": [Vector2(0.72, 0.85), 56.0],
+			"potion": [Vector2(0.92, 0.85), 56.0],
+			"shadow": [Vector2(0.92, 0.59), 56.0],
+			"upgrade": [Vector2(0.72, 0.96), 54.0],
+			"inventory": [Vector2(0.92, 0.96), 54.0]
+		}
+	else:
+		action_layout = {
+			"attack": [Vector2(0.91, 0.855), 82.0],
+			"jump": [Vector2(0.96, 0.69), 66.0],
+			"interact": [Vector2(0.755, 0.79), 64.0],
+			"dodge": [Vector2(0.79, 0.94), 66.0],
+			"potion": [Vector2(0.96, 0.94), 66.0],
+			"shadow": [Vector2(0.82, 0.675), 64.0],
+			"upgrade": [Vector2(0.66, 0.68), 58.0],
+			"inventory": [Vector2(0.66, 0.82), 58.0]
+		}
 	for action in action_layout:
 		var button := ui_root.get_node_or_null("TouchAction_" + action) as Button
 		if button:
 			var data: Array = action_layout[action]
-			var action_size := Vector2.ONE * float(data[1]) * compact_scale
+			var action_size := Vector2.ONE * maxf(54.0, float(data[1]) * compact_scale)
 			var anchor: Vector2 = data[0]
 			button.anchor_left = anchor.x
 			button.anchor_right = anchor.x

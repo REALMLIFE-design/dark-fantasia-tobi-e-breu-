@@ -638,3 +638,16 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn('"PainterlyGrassField"', self.world)
         self.assertIn('"MoonlitWildflowers"', self.world)
 
+    def test_portrait_hud_uses_separated_touch_zones(self):
+        self.assertIn('"move_forward": Vector2(0.27, 0.74)', self.world)
+        self.assertIn('"move_right": Vector2(0.42, 0.84)', self.world)
+        self.assertIn('"attack": [Vector2(0.92, 0.72), 82.0]', self.world)
+        self.assertIn('"inventory": [Vector2(0.92, 0.96), 54.0]', self.world)
+        self.assertIn('maxf(54.0, float(data[1]) * compact_scale)', self.world)
+
+    def test_tobi_has_hero_crest_and_travel_gear(self):
+        player = (ROOT / "scripts/player.gd").read_text(encoding="utf-8")
+        self.assertIn("chest_crest", player)
+        self.assertIn("hood_point", player)
+        self.assertIn("bracer_trim", player)
+        self.assertIn("cape_hem", player)

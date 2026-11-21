@@ -137,6 +137,22 @@ func _make_character() -> void:
 		_add_visual_part(visual, pouch, Vector3(side * 0.31, 0.61, 0.12), Color("674a37"))
 	var cape_clasp := SphereMesh.new(); cape_clasp.radius = 0.075
 	_add_visual_part(visual, cape_clasp, Vector3(0, 1.37, 0.20), Color("d0ad68"))
+	# A readable hero crest and layered travel gear give Tobi a stronger silhouette.
+	var chest_crest := CylinderMesh.new(); chest_crest.top_radius = 0.105; chest_crest.bottom_radius = 0.105; chest_crest.height = 0.045; chest_crest.radial_segments = 8
+	var crest_instance := _add_visual_part(visual, chest_crest, Vector3(0, 1.12, 0.235), Color("c6a05e"))
+	crest_instance.rotation.x = PI * 0.5
+	var crest_glow := _mat(Color("d5b66f")); crest_glow.emission_enabled = true; crest_glow.emission = Color("8c5d2f"); crest_glow.emission_energy_multiplier = 0.22; crest_instance.material_override = crest_glow
+	var hood_point := CylinderMesh.new(); hood_point.top_radius = 0.015; hood_point.bottom_radius = 0.19; hood_point.height = 0.34; hood_point.radial_segments = 8
+	_add_visual_part(head_pivot, hood_point, Vector3(0, 0.48, -0.10), Color("2d4542"), Vector3(0.88, 1.0, 0.8))
+	for side in [-1.0, 1.0]:
+		var bracer := BoxMesh.new(); bracer.size = Vector3(0.22, 0.16, 0.24)
+		_add_visual_part(visual, bracer, Vector3(side * 0.40, 0.98, 0.035), Color("785b43"))
+		var bracer_trim := BoxMesh.new(); bracer_trim.size = Vector3(0.225, 0.035, 0.245)
+		_add_visual_part(visual, bracer_trim, Vector3(side * 0.40, 0.91, 0.035), Color("b28b58"))
+		var boot_strap := BoxMesh.new(); boot_strap.size = Vector3(0.235, 0.07, 0.245)
+		_add_visual_part(visual, boot_strap, Vector3(side * 0.19, 0.30, 0.015), Color("896746"))
+	var cape_hem := BoxMesh.new(); cape_hem.size = Vector3(0.70, 0.07, 0.105)
+	_add_visual_part(cape_pivot, cape_hem, Vector3(0, -0.89, -0.03), Color("9b6049"))
 	# Breu, the shadow cat companion, has four articulated paws and a segmented tail.
 	cat = Node3D.new(); cat.name = "Breu"; cat.position = Vector3(-0.9, 0, 0.65); visual.add_child(cat)
 	var cat_body := SphereMesh.new(); cat_body.radius = 0.31; cat_body.height = 0.58
