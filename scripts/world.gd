@@ -1322,7 +1322,8 @@ func _process(delta: float) -> void:
 			world_environment.environment.ambient_light_energy = 0.28 + daylight * 0.42
 	if save_toast_timer > 0.0:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
-		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
+		if save_toast_timer == 0.0 and toast_label and (toast_label.text == "Progresso salvo" or toast_label.text == "Falha ao salvar progresso"):
+			toast_label.text = ""
 	if boss_hud_panel:
 		boss_hud_panel.visible = quest_stage == 12
 		if quest_stage == 12:
@@ -1961,9 +1962,17 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	var save_error := cfg.save(save_path)
+	if save_error != OK:
+		push_error("Falha ao salvar progresso: %s" % error_string(save_error))
+		if toast_label:
+			toast_label.text = "Falha ao salvar progresso"
+			toast_label.add_theme_color_override("font_color", Color("ff7777"))
+			save_toast_timer = 3.0
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
+		toast_label.add_theme_color_override("font_color", Color("9acfc2"))
 		save_toast_timer = 1.6
 
 func _load_save() -> void:
