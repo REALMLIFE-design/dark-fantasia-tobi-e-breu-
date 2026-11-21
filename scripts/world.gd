@@ -1820,6 +1820,13 @@ func enemy_defeated(kind: int = 0) -> void:
 			_update_quest()
 
 
+func player_perfect_dodge() -> void:
+	if is_instance_valid(toast_label):
+		toast_label.text = "ESQUIVA PERFEITA! +10 FÔLEGO"
+	if is_instance_valid(dodge_label):
+		dodge_label.text = "ESQUIVA  •  PERFEITA!"
+		dodge_label.add_theme_color_override("font_color", Color("e6d17a"))
+
 func combat_combo_changed(step: int) -> void:
 	if not is_instance_valid(combo_label): return
 	if step <= 0:
