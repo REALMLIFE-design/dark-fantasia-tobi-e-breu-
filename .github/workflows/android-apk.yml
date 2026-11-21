@@ -1,5 +1,8 @@
-
 name: Build Tobi e Breu APK
+
+concurrency:
+  group: tobi-breu-android-apk
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -7,12 +10,12 @@ on:
     branches:
       - main
       - master
+      - 'fix/**'
       - feature/forgotten-rune-shrine
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -30,18 +33,12 @@ jobs:
       - name: Instalar Android SDK
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
-
           if [ -z "$SDKMANAGER" ]; then
             echo "ERRO: sdkmanager não encontrado"
             exit 1
           fi
-
           yes | "$SDKMANAGER" --licenses || true
-
-          "$SDKMANAGER" --install \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0"
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;23.2.8568313" "cmake;3.10.2.4988404"
 
       - name: Locate Godot project (repository root or subfolder)
         run: |
@@ -65,67 +62,108 @@ jobs:
 
       - name: Baixar Godot e templates
         run: |
-          mkdir -p /tmp/godot
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
-
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O /tmp/godot.zip
-
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
-
+          set -euo pipefail
+          mkdir -p /tmp/godot /tmp/godot-templates "$HOME/.local/share/godot/export_templates/4.3.stable"
+          timeout 8m wget --tries=3 --timeout=45 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip -O /tmp/godot.zip
+          timeout 8m wget --tries=3 --timeout=45 -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz -O /tmp/templates.tpz
           unzip -q /tmp/godot.zip -d /tmp/godot
-
-          unzip -q /tmp/templates.tpz -d "$HOME/.local/share/godot/export_templates/4.3.stable"
-
+          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+          if [ -d /tmp/godot-templates/templates ]; then
+            cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          else
+            cp -a /tmp/godot-templates/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          fi
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
           GODOT_BIN=$(find /tmp/godot -type f -name 'Godot_v4.3-stable_linux.x86_64' -print -quit)
-
           if [ -z "$GODOT_BIN" ]; then
             echo "ERRO: executável Godot não encontrado"
             exit 1
           fi
-
           chmod +x "$GODOT_BIN"
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
 
-      - name: Configurar preset Android
+      - name: Configurar exportação Android sem Gradle
         run: |
-          python3 - <<'PY'
-          import os
-          import re
-          from pathlib import Path
+          set -euo pipefail
+          PRESET="$PROJECT_PATH/export_presets.cfg"
+          # Remove gradle_build/min_sdk and gradle_build/target_sdk overrides: Godot 4.3 rejects them with the prebuilt APK template.
+          sed -i -e '/^gradle_build\/min_sdk=/d' -e '/^gradle_build\/target_sdk=/d' "$PRESET"
+          grep -q '^gradle_build/use_gradle_build=false$' "$PRESET"
+          if grep -Eq '^gradle_build\/(min_sdk|target_sdk)=' "$PRESET"; then
+            echo "ERRO: SDK overrides incompatíveis com exportação sem Gradle"
+            exit 1
+          fi
+          # Godot 4.3 validates the debug keystore even for a debug APK export.
+          mkdir -p "$HOME/.android" "$HOME/.config/godot"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/debug_keystore = "$HOME/.android/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF
+          test -s "$HOME/.android/debug.keystore"
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -d "$ANDROID_HOME/platforms/android-34"
+          test -d "$ANDROID_HOME/build-tools/34.0.0"
+          test -d "$ANDROID_HOME/ndk/23.2.8568313"
+          test -d "$ANDROID_HOME/cmake/3.10.2.4988404"
 
-          path = Path(os.environ["PROJECT_PATH"]) / "export_presets.cfg"
-          content = path.read_text(encoding="utf-8")
-
-          content, count = re.subn(
-              r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)false\s*$',
-              r'\1true',
-              content
-          )
-
-          if count == 0 and not re.search(
-              r'(?m)^\s*gradle_build/use_gradle_build\s*=\s*true\s*$',
-              content
-          ):
-              raise SystemExit("ERRO: opção Use Gradle Build não encontrada")
-
-          path.write_text(content, encoding="utf-8")
-          print("Gradle Build ativado.")
-          PY
-
-      - name: Instalar template Android do projeto
+      - name: Importar recursos do Godot
+        timeout-minutes: 5
         run: |
-          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --install-android-build-template
+          set -o pipefail
+          timeout 4m "$GODOT_BIN" --headless --editor --verbose --path "$PROJECT_PATH" --import --quit 2>&1 | tee "$RUNNER_TEMP/godot-import.log"
+          if grep -E "SCRIPT ERROR: Parse Error|Failed to load script" "$RUNNER_TEMP/godot-import.log"; then
+            echo "ERRO: Godot encontrou scripts inválidos durante a importação"
+            exit 1
+          fi
+
+      - name: Testar inicialização da cena principal no Godot
+        timeout-minutes: 3
+        run: |
+          set -o pipefail
+          timeout 90 "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 180 2>&1 | tee "$RUNNER_TEMP/godot-startup.log"
+          if grep -E "SCRIPT ERROR:|Parse Error|Failed to load script|ERROR: Failed to load" "$RUNNER_TEMP/godot-startup.log"; then
+            echo "ERRO: a cena principal apresentou falha durante a inicialização"
+            exit 1
+          fi
+          if ! grep -q "TOBI_BREU_BOOT_READY" "$RUNNER_TEMP/godot-startup.log"; then
+            echo "ERRO: a cena principal não concluiu a inicialização"
+            exit 1
+          fi
 
       - name: Gerar APK
+        timeout-minutes: 16
         run: |
+          set -o pipefail
           mkdir -p "$PROJECT_PATH/build"
+          timeout 15m "$GODOT_BIN" --headless --verbose --path "$PROJECT_PATH" --export-debug "Android" "$PROJECT_PATH/build/TobiEBreu.apk" 2>&1 | tee "$RUNNER_TEMP/android-export.log"
+          test -s "$PROJECT_PATH/build/TobiEBreu.apk"
 
-          "$GODOT_BIN" --headless \
-            --path "$PROJECT_PATH" \
-            --export-debug "Android" \
-            "$PROJECT_PATH/build/TobiEBreu.apk"
+      - name: Assinar e validar APK
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
+          APK="$PROJECT_PATH/build/TobiEBreu.apk"
+          ALIGNED="$PROJECT_PATH/build/TobiEBreu-aligned.apk"
+          SIGNED="$PROJECT_PATH/build/TobiEBreu-signed.apk"
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --out "$SIGNED" "$ALIGNED"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED"
+          mv "$SIGNED" "$APK"
+          rm -f "$ALIGNED"
+          test -s "$APK"
 
-      - name: Disponibilizar APK
+      - name: Disponibilizar APK assinado
         uses: actions/upload-artifact@v4
         with:
           name: TobiEBreu-APK
