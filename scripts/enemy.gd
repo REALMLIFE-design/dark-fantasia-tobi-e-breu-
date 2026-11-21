@@ -80,6 +80,7 @@ func _ready() -> void:
 	var col := CollisionShape3D.new(); col.shape = capsule; col.position.y = 0.75; add_child(col)
 	visual = Node3D.new(); add_child(visual)
 	_create_attack_telegraph()
+	_cache_hit_flash_materials(visual)
 	var body := CapsuleMesh.new(); body.radius = 0.36; body.height = 0.88
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
 	_add(body, Vector3(0, 0.78, 0), body_color)
@@ -359,6 +360,7 @@ func _physics_process(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 	attack_pose = maxf(0.0, attack_pose - delta)
 	hit_flash = maxf(0.0, hit_flash - delta)
+	_update_hit_flash_materials()
 	hit_recoil = maxf(0.0, hit_recoil - delta)
 	attack_impact_flash = maxf(0.0, attack_impact_flash - delta)
 	if not is_instance_valid(target): target = get_tree().get_first_node_in_group("player")

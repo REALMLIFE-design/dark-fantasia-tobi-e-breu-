@@ -388,6 +388,7 @@ func do_dodge() -> void:
 	dodge_direction.y = 0
 	if dodge_direction.length() < 0.1: dodge_direction = -global_basis.z
 	dodge_direction = dodge_direction.normalized()
+	dodge_perfect_used = false
 	dodge_time = 0.24
 	dodge_cooldown = 0.85
 	stamina -= 28.0
