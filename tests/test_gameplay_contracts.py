@@ -610,3 +610,11 @@ class GothicGateVisualContracts(unittest.TestCase):
         self.assertIn('"GateCrimsonSeal"', world)
         self.assertIn('"GateCrimsonGlow"', world)
 
+class EnemyTelegraphColorContracts(unittest.TestCase):
+    def test_enemy_types_have_distinct_attack_warning_colors(self):
+        enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertIn("func _attack_warning_color() -> Color:", enemy)
+        for color in ('ff4d32', 'f08a43', '62d8c8', '79c9f2', 'e7c477', 'ef765f'):
+            self.assertIn('Color("%s")' % color, enemy)
+        self.assertIn("attack_telegraph_material.emission = warning_color", enemy)
+

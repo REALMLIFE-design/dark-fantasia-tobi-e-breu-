@@ -294,6 +294,17 @@ func _create_attack_telegraph() -> void:
 	attack_telegraph.material_override = attack_telegraph_material
 	add_child(attack_telegraph)
 
+func _attack_warning_color() -> Color:
+	if enemy_kind == 6:
+		return Color("ff4d32") if boss_enraged else Color("f08a43")
+	if enemy_kind == 8:
+		return Color("62d8c8")
+	if enemy_kind == 7:
+		return Color("79c9f2")
+	if enemy_kind == 5:
+		return Color("e7c477")
+	return Color("ef765f")
+
 func _begin_attack() -> void:
 	var enraged := enemy_kind == 6 and hp <= 340
 	if enemy_kind == 6:
@@ -310,6 +321,9 @@ func _begin_attack() -> void:
 	attack_windup_timer = attack_windup_duration
 	attack_pose = attack_windup_duration
 	attack_telegraph.visible = true
+	var warning_color := _attack_warning_color()
+	attack_telegraph_material.albedo_color = Color(warning_color.r, warning_color.g, warning_color.b, 0.82)
+	attack_telegraph_material.emission = warning_color
 	var warning_radius := boss_slam_radius if boss_slam_active else (2.75 if enemy_kind == 8 else attack_range)
 	attack_telegraph.scale = Vector3(warning_radius, 1.0, warning_radius)
 	attack_timer = 1.25 if enemy_kind != 2 else 0.95
