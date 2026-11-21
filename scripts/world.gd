@@ -1866,7 +1866,7 @@ func _show_menu_page(page: String) -> void:
 			title.text = "DIÁRIO DA JORNADA"
 			subtitle.text = "A história, os objetivos e os contratos registrados."
 			_menu_add_card(content, "OBJETIVO PRINCIPAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Sem objetivo ativo."))
-			_menu_add_card(content, "PROGRESSO", "Inimigos derrotados: %d\nCavaleiros Afogados: %d/3\nTotens purificados: %d/3\nNível: %d  •  XP total: %d" % [defeated_count, river_knights_defeated, swamp_totems, _get_player_level(), xp])
+			_menu_add_card(content, "PROGRESSO", "Inimigos derrotados: %d\nCavaleiros Afogados: %d/3\nTotens purificados: %d/3\nLanternas do Bosque: %d/3\nBênção do Cervo: %s\nNível: %d  •  XP total: %d" % [defeated_count, river_knights_defeated, swamp_totems, whisper_lantern_ids.size(), "Recebida" if whisper_guardian_reward_claimed else "Pendente", _get_player_level(), xp])
 			if guild_contract_started:
 				_menu_add_card(content, "CONTRATO DA GUILDA", "Selos recuperados: %d/3\nEstado: %s" % [guild_relic_ids.size(), "Concluído" if guild_contract_claimed else "Em andamento"])
 		"map":
