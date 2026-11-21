@@ -181,7 +181,7 @@ jobs:
               echo "ERRO: o jogo fechou antes de permanecer aberto no Android"
               exit 1
             fi
-            adb shell input tap 640 460
+            adb shell input tap 640 300
             sleep 3
             APP_PID="$(adb shell pidof com.tobiebreu.darkworld3d | tr -d '\r')"
             if [ -z "$APP_PID" ]; then
