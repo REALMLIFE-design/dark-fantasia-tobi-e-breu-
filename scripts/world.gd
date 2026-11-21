@@ -2041,8 +2041,8 @@ func _load_save() -> void:
 	if saved_shrine_used and not cfg.has_section_key("progress", "checkpoint_x"):
 		checkpoint_x = 15.0
 		checkpoint_z = 29.0
-	# Reject corrupted or out-of-world checkpoint coordinates before using them.
-	if absf(checkpoint_x) <= 140.0 and absf(checkpoint_z) <= 140.0:
+	# Reject corrupted checkpoints outside the 700x700 world bounds, with a 20-unit safety margin.
+	if absf(checkpoint_x) <= 330.0 and absf(checkpoint_z) <= 330.0:
 		checkpoint_position = Vector3(checkpoint_x, 0.0, checkpoint_z)
 
 func _notification(what: int) -> void:
