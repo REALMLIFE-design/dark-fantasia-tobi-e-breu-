@@ -42,9 +42,10 @@ if [[ -z "$APP_PID" ]]; then
 fi
 
 adb logcat -d -t 4000 > "$LOG_PATH"
-if ! grep -q "TOBI_BREU_GAME_STARTED" "$LOG_PATH"; then
-  cat "$LOG_PATH"
-  echo "ERRO: o botão Entrar no Mundo não concluiu a transição"
+RESUMED_ACTIVITY="$(adb shell dumpsys activity activities | tr -d '\\r')"
+if ! grep -E "mResumedActivity.*$PACKAGE_ID|topResumedActivity.*$PACKAGE_ID" <<< "$RESUMED_ACTIVITY"; then
+  echo "$RESUMED_ACTIVITY"
+  echo "ERRO: o jogo permaneceu em execução, mas não está mais em primeiro plano após o toque"
   exit 1
 fi
 if grep -E "FATAL EXCEPTION|Fatal signal|SIGSEGV|Process $PACKAGE_ID has died" "$LOG_PATH"; then
