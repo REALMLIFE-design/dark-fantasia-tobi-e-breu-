@@ -1821,7 +1821,8 @@ func _show_menu_page(page: String) -> void:
 	scroll.add_child(content)
 	if page == "main":
 		_menu_add_hero(content)
-	_menu_add_stat_strip(content)
+	if page in ["main", "hub", "character"]:
+		_menu_add_stat_strip(content)
 	match page:
 		"main":
 			title.text = "A lenda desperta"
@@ -1856,10 +1857,22 @@ func _show_menu_page(page: String) -> void:
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
 		"inventory":
 			title.text = "MOCHILA DE TOBI"
-			subtitle.text = "Tudo o que você carrega nesta jornada."
+			subtitle.text = "Seus recursos e materiais reunidos durante a jornada."
 			_update_inventory()
-			_menu_add_card(content, "INVENTÁRIO", inventory_details.text if is_instance_valid(inventory_details) else "Nenhum item registrado.")
-			_menu_add_card(content, "ATALHOS", "Poção: botão POÇÃO  •  Fragmentos: usados na forja  •  Materiais: obtidos durante a exploração.")
+			_menu_add_section_label(content, "CONSUMÍVEIS", "Itens de uso durante a aventura")
+			_menu_add_item_grid(content, [
+				{"symbol": "✚", "name": "Poção de vida", "count": potions, "detail": "Restaura 45 pontos de vida", "accent": Color("c77d72")}
+			])
+			_menu_add_section_label(content, "MATERIAIS", "Recursos encontrados e recompensas")
+			_menu_add_item_grid(content, [
+				{"symbol": "◆", "name": "Fragmentos Rubros", "count": shards, "detail": "Usados para aprimorar a espada", "accent": Color("bd7a78")},
+				{"symbol": "⌁", "name": "Orelhas de Goblin", "count": goblin_ears, "detail": "Prova de caça aos goblins", "accent": Color("b5a078")},
+				{"symbol": "❋", "name": "Ervas do Pântano", "count": swamp_herbs, "detail": "Recurso coletado no pântano", "accent": Color("88a77c")},
+				{"symbol": "◈", "name": "Essência Sombria", "count": dark_essence, "detail": "Energia extraída das criaturas", "accent": Color("a88bc4")}
+			])
+			_menu_add_section_label(content, "EQUIPAMENTO", "Arma atualmente empunhada")
+			_menu_add_card(content, "ESPADA DE TOBI  •  NÍVEL +%d" % weapon_level, "Dano: %d   •   Vida máxima: %d   •   Nível: %d" % [35 + weapon_level * 10 + (_get_player_level() - 1) * 3, player.max_hp, _get_player_level()])
+			_menu_add_button(content, "VER EQUIPAMENTO E FORJA", _show_menu_page.bind("equipment"))
 		"equipment":
 			title.text = "EQUIPAMENTO & FORJA"
 			subtitle.text = "Prepare Tobi antes de enfrentar as criaturas do mundo."
@@ -1928,6 +1941,55 @@ func _show_menu_page(page: String) -> void:
 			content.add_child(sensitivity_value)
 			_menu_add_card(content, "CONTROLES", "Mover: direcional esquerdo\nCâmera: arraste no lado direito\nAtacar: ATACAR  •  Pular: PULAR\nEsquivar: ESQUIVAR  •  Interagir: INTERAGIR\nPoção: POÇÃO  •  Breu: BREU")
 			_menu_add_button(content, "SALVAR CONFIGURAÇÕES", _save_settings, true)
+
+
+func _menu_add_item_grid(parent: Control, items: Array) -> void:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 9)
+	grid.add_theme_constant_override("v_separation", 9)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(grid)
+	for item in items:
+		var slot := PanelContainer.new()
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var style := _hud_button_style(Color("18211d"), Color("596a5c"), 9)
+		style.set_border_width_all(1)
+		style.content_margin_left = 11.0
+		style.content_margin_right = 11.0
+		style.content_margin_top = 10.0
+		style.content_margin_bottom = 10.0
+		slot.add_theme_stylebox_override("panel", style)
+		grid.add_child(slot)
+		var stack := VBoxContainer.new()
+		stack.add_theme_constant_override("separation", 4)
+		slot.add_child(stack)
+		var top := HBoxContainer.new()
+		stack.add_child(top)
+		var symbol := Label.new()
+		symbol.text = str(item.get("symbol", "◇"))
+		symbol.add_theme_font_size_override("font_size", 18)
+		symbol.add_theme_color_override("font_color", item.get("accent", Color("d8b77c")))
+		top.add_child(symbol)
+		var amount := Label.new()
+		amount.text = "× %d" % int(item.get("count", 0))
+		amount.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		amount.add_theme_font_size_override("font_size", 15)
+		amount.add_theme_color_override("font_color", Color("f0dfbf"))
+		top.add_child(amount)
+		var item_name := Label.new()
+		item_name.text = str(item.get("name", "Item"))
+		item_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		item_name.add_theme_font_size_override("font_size", 11)
+		item_name.add_theme_color_override("font_color", Color("dfc18e"))
+		stack.add_child(item_name)
+		var detail := Label.new()
+		detail.text = str(item.get("detail", ""))
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.add_theme_font_size_override("font_size", 9)
+		detail.add_theme_color_override("font_color", Color("9eaa9f"))
+		stack.add_child(detail)
 
 
 func _menu_add_stat_strip(parent: Control) -> void:
