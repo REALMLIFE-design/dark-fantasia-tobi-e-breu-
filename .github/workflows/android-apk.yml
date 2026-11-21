@@ -104,7 +104,11 @@ jobs:
 
           preset = Path(os.environ['PROJECT_PATH']) / 'export_presets.cfg'
           content = preset.read_text(encoding='utf-8')
-          content = re.sub(r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)true\s*
+          content = re.sub(r'(?m)^(\s*gradle_build/use_gradle_build\s*=\s*)true\s*$', r'\1false', content)
+          # Godot 4.3 rejects Min/Target SDK overrides when Gradle is disabled.
+          content = re.sub(r'(?m)^\s*gradle_build/(?:min_sdk|target_sdk)\s*=.*\n', '', content)
+          preset.write_text(content, encoding='utf-8')
+          print('Exportação Android padrão ativada; Gradle desativado; overrides Min/Target SDK removidos.')
           PY
 
           mkdir -p "$HOME/.config/godot"
