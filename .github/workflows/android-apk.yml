@@ -45,7 +45,7 @@ jobs:
       - name: Extrair projeto
         run: |
           mkdir extracted
-          unzip -q TobiEBreu-PBR-Ajustes-Biomas-v0.18.zip -d extracted
+          unzip -q "TobiEBreu-PBR-Ajustes-Biomas-v0.18(1).zip" -d extracted
 
           PROJECT_FILE=$(find extracted -name project.godot -print -quit)
 
