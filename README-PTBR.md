@@ -4,10 +4,11 @@ Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D ori
 
 ## Revisão de conteúdo e Android — 21/11/2026
 
-- O Bosque dos Sussurros recebeu o Guardião Cervo Ancião, modelo 3D rigado gerado no Thrixel (14.064 triângulos).
+- O Bosque dos Sussurros recebeu uma estátua espiritual procedural do Cervo Ancião, com galhadas, olhos luminosos e movimento sutil.
 - Acender as três lanternas e falar com o guardião libera uma bênção única: 90 XP, 3 Fragmentos Rubros, 2 Essências Sombrias e 1 Poção.
 - A recompensa do guardião é persistida no save; a versão do salvamento passou para 13 e continua aceitando versões anteriores.
-- O workflow Android baixa e valida o GLB do Thrixel antes da importação do Godot. O modelo não é armazenado como binário no repositório.
+- Um modelo rigado de 14.064 triângulos foi gerado no Thrixel, mas permanece fora do jogo aguardando empacotamento e validação canônicos.
+- O CLI local `game-dev`, exigido pela habilidade de vendoring, não está instalado. Nenhum download bruto foi copiado para o projeto nem ferramenta foi instalada para contornar essa regra.
 - Menu principal: cópia mais curta e botão de fechar com alvo de toque 44×44.
 - Teste Android separado em script Bash para evitar que blocos condicionais sejam quebrados pelo executor do emulador.
 
