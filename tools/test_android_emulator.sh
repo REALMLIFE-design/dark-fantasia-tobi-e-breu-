@@ -31,7 +31,7 @@ if [[ -z "$APP_PID" ]]; then
   exit 1
 fi
 
-adb shell input tap 640 300
+adb shell input tap 640 490
 sleep "$INTERACTION_WAIT"
 APP_PID="$(adb shell pidof "$PACKAGE_ID" | tr -d '\r')"
 if [[ -z "$APP_PID" ]]; then
