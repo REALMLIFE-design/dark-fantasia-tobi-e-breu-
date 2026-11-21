@@ -1575,8 +1575,15 @@ func _show_menu_page(page: String) -> void:
 			_menu_add_card(content, "ESPADA DE TOBI  •  NÍVEL +%d" % weapon_level, "Dano atual: %d\nVida máxima: %d\nNível do aventureiro: %d\nFragmentos Rubros: %d" % [damage, player.max_hp, level, shards])
 			if weapon_level < WEAPON_UPGRADE_COSTS.size():
 				var cost := WEAPON_UPGRADE_COSTS[weapon_level]
-				var forge := _menu_add_button(content, "APRIMORAR ESPADA  •  %d FRAGMENTOS" % cost, _upgrade_from_menu, true)
-				forge.disabled = shards < cost
+				var master := get_node_or_null("Mestre Azulan")
+				var near_forge := is_instance_valid(master) and player.global_position.distance_to(master.global_position) <= 5.0
+				var forge_caption := "APRIMORAR ESPADA  •  %d FRAGMENTOS" % cost if near_forge else "FORJA  •  VISITE MESTRE AZULAN"
+				var forge := _menu_add_button(content, forge_caption, _upgrade_from_menu, true)
+				forge.disabled = not near_forge or shards < cost
+				if not near_forge:
+					_menu_add_card(content, "FORJA DISTANTE", "Aprimoramentos só podem ser feitos ao lado de Mestre Azulan, na Clareira Inicial.")
+				elif shards < cost:
+					_menu_add_card(content, "FALTAM FRAGMENTOS", "Você precisa de mais %d Fragmentos Rubros." % (cost - shards))
 			else:
 				_menu_add_card(content, "FORJA", "Sua espada já alcançou o nível máximo disponível nesta versão.")
 			_menu_add_card(content, "PROTEÇÃO", "Vida máxima atual: %d. Poções disponíveis: %d." % [player.max_hp, potions])
@@ -1696,8 +1703,13 @@ func _save_from_menu() -> void:
 
 
 func _upgrade_from_menu() -> void:
+	var previous_level := weapon_level
 	_upgrade_weapon()
 	_show_menu_page("equipment")
+	if weapon_level > previous_level:
+		menu_feedback.text = "ESPADA APRIMORADA • NÍVEL +%d" % weapon_level
+	elif is_instance_valid(toast_label):
+		menu_feedback.text = toast_label.text
 
 
 func _set_camera_sensitivity(value: float) -> void:
