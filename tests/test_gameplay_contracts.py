@@ -363,6 +363,9 @@ class AndroidBuildContracts(unittest.TestCase):
         self.assertIn('export_path="build/TobiEBreu.apk"', preset)
         self.assertIn('architectures/arm64-v8a=true', preset)
         self.assertIn('package/unique_name="com.tobiebreu.darkworld3d"', preset)
+        self.assertIn('gradle_build/use_gradle_build=false', preset)
+        self.assertNotIn('gradle_build/min_sdk=', preset)
+        self.assertNotIn('gradle_build/target_sdk=', preset)
 
     def test_github_actions_build_can_be_started_manually_and_uploads_apk(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
@@ -371,6 +374,9 @@ class AndroidBuildContracts(unittest.TestCase):
         self.assertIn('build/TobiEBreu.apk', workflow)
         self.assertIn('python3 -m pip install --disable-pip-version-check Pillow', workflow)
         self.assertIn('--export-debug "Android"', workflow)
+        self.assertIn('Configurar exportação Android sem Gradle', workflow)
+        self.assertIn("gradle_build/min_sdk", workflow)
+        self.assertIn("gradle_build/target_sdk", workflow)
 
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
