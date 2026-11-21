@@ -1684,7 +1684,7 @@ func _build_menus() -> void:
 	brand_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	top_rule.add_child(brand_icon)
 	var brand := Label.new()
-	brand.text = "TOBI  &  BREU"
+	brand.text = "Tobi & Breu"
 	brand.add_theme_font_size_override("font_size", 17)
 	brand.add_theme_color_override("font_color", Color("e3c38b"))
 	brand.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1694,7 +1694,7 @@ func _build_menus() -> void:
 	top_rule.add_child(top_spacer)
 	var close_btn := Button.new()
 	close_btn.text = "×"
-	close_btn.custom_minimum_size = Vector2(44, 40)
+	close_btn.custom_minimum_size = Vector2(44, 44)
 	close_btn.add_theme_font_size_override("font_size", 24)
 	close_btn.pressed.connect(_menu_back)
 	top_rule.add_child(close_btn)
@@ -1750,10 +1750,10 @@ func _show_menu_page(page: String) -> void:
 		_menu_add_hero(content)
 	match page:
 		"main":
-			title.text = "A LENDA COMEÇA AQUI"
+			title.text = "A lenda desperta"
 			subtitle.text = "Explore um mundo esquecido. Proteja o vínculo entre Tobi e Breu."
 			_menu_add_card(content, "JORNADA ATUAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Encontre Mestre Azulan"))
-			_menu_add_button(content, "ENTRAR NO MUNDO", _start_game, true)
+			_menu_add_button(content, "Jogar", _start_game, true)
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
 			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
 		"pause":
@@ -1883,7 +1883,7 @@ func _menu_add_hero(parent: Control) -> void:
 	names.add_theme_color_override("font_color", Color("f0d8a7"))
 	copy.add_child(names)
 	var descriptor := Label.new()
-	descriptor.text = "DARK FANTASY  •  AVENTURA 3D"
+	descriptor.text = "Fantasia sombria  •  Aventura 3D"
 	descriptor.add_theme_font_size_override("font_size", 10)
 	descriptor.add_theme_color_override("font_color", Color("a9b9a9"))
 	copy.add_child(descriptor)
@@ -2305,7 +2305,7 @@ func _interact() -> void:
 			shards += 3
 			dark_essence += 2
 			potions += 1
-			toast_label.text = "BÊNÇÃO DO CÉRVOR ANCIÃO • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+			toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
 			_update_inventory()
 			_save_game()
 		return
