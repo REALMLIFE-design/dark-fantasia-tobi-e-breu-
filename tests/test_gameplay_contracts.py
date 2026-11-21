@@ -565,3 +565,15 @@ class MobileControlContracts(unittest.TestCase):
         self.assertIn('if event is InputEventScreenDrag:', self.player)
         self.assertIn('event.position.x > get_viewport().get_visible_rect().size.x * 0.42', self.player)
         self.assertIn('camera_yaw_offset -= event.relative.x * 0.006', self.player)
+
+class LowHealthFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_critical_health_has_clear_visual_warning_and_recovers(self):
+        health_update = self.world[self.world.index('func player_health_changed'):self.world.index('func player_defeated')]
+        self.assertIn('current <= int(float(maximum) * 0.30)', health_update)
+        self.assertIn('"  •  CRÍTICO" if low_health else ""', health_update)
+        self.assertIn('Color("ff7777") if low_health else Color("ffffff")', health_update)
+        self.assertIn('health_bar.modulate', health_update)
