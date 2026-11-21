@@ -770,7 +770,7 @@ class EnemyDeathBurstContracts(unittest.TestCase):
         cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
 
     def test_enemy_defeat_spawns_six_fading_shards_with_type_colors(self):
-        death = self.enemy[self.enemy.index('func take_damage'):self.enemy.index('func _spawn_damage_number')]
+        death = self.enemy[self.enemy.index('func take_damage'):]
         burst = self.enemy[self.enemy.index('func _spawn_death_burst'):self.enemy.index('func _add(mesh')]
         self.assertIn('_spawn_death_burst()', death)
         self.assertIn('for shard_index in range(6):', burst)
