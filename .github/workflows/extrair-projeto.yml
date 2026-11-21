@@ -1,6 +1,10 @@
 name: Extrair projeto Godot para o repositório
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/extrair-projeto.yml"
   workflow_dispatch:
 
 permissions:
