@@ -367,16 +367,21 @@ class AndroidBuildContracts(unittest.TestCase):
     def test_github_actions_build_can_be_started_manually_and_uploads_apk(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('workflow_dispatch:', workflow)
-        self.assertIn('firebelley/godot-export@v8.0.0', workflow)
-        self.assertIn('presets_to_export: Android', workflow)
         self.assertIn('actions/upload-artifact@v4', workflow)
         self.assertIn('build/TobiEBreu.apk', workflow)
+        self.assertIn('python3 -m pip install --disable-pip-version-check Pillow', workflow)
+        self.assertIn('--export-debug "Android"', workflow)
+        self.assertIn('Configurar preset Android', workflow)
+        self.assertIn('gradle_build/use_gradle_build', workflow)
+
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('Locate Godot project (repository root or subfolder)', workflow)
-        self.assertIn('if [ -f project.godot ]', workflow)
-        self.assertIn('elif [ -f TobiEBreu-3D/project.godot ]', workflow)
-        self.assertIn('steps.locate-project.outputs.project_path', workflow)
+        self.assertIn('if [ -f "$GITHUB_WORKSPACE/project.godot" ]', workflow)
+        self.assertIn('find extracted -name project.godot', workflow)
+        self.assertIn('PROJECT_PATH=', workflow)
+        self.assertIn('python3 -m unittest discover', workflow)
+        self.assertIn('tools/validate_project.py', workflow)
 
     def test_world_has_expanded_exploration_space_and_branch_trails(self):
         world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
