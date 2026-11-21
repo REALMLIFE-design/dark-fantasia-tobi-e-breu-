@@ -1293,6 +1293,9 @@ func _build_hud() -> void:
 	panel_style.content_margin_right = 15.0
 	panel_style.content_margin_top = 11.0
 	panel_style.content_margin_bottom = 11.0
+	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.58)
+	panel_style.shadow_size = 10
+	panel_style.shadow_offset = Vector2(0, 4)
 	var quest_panel_style := panel_style.duplicate() as StyleBoxFlat
 	quest_panel_style.bg_color = Color(0.055, 0.047, 0.034, 0.97)
 	quest_panel_style.border_color = Color("b18a52")
@@ -1313,6 +1316,9 @@ func _build_hud() -> void:
 	button_normal.content_margin_right = 8.0
 	button_normal.content_margin_top = 6.0
 	button_normal.content_margin_bottom = 6.0
+	button_normal.shadow_color = Color(0.0, 0.0, 0.0, 0.48)
+	button_normal.shadow_size = 5
+	button_normal.shadow_offset = Vector2(0, 2)
 	var button_hover := button_normal.duplicate() as StyleBoxFlat
 	button_hover.bg_color = Color(0.15, 0.17, 0.13, 0.96)
 	button_hover.border_color = Color("d2ad70")
@@ -1604,7 +1610,7 @@ func _build_menus() -> void:
 	var dimmer := ColorRect.new()
 	dimmer.name = "MenuBackdrop"
 	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dimmer.color = Color(0.012, 0.018, 0.018, 0.88)
+	dimmer.color = Color(0.006, 0.009, 0.012, 0.94)
 	dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
 	menu_layer.add_child(dimmer)
 	menu_panel = PanelContainer.new()
@@ -1615,7 +1621,16 @@ func _build_menus() -> void:
 	menu_panel.position = -panel_size * 0.5
 	menu_panel.size = panel_size
 	menu_panel.custom_minimum_size = Vector2(0, 0)
-	menu_panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.035, 0.043, 0.038, 0.99), Color("b18a52"), 22))
+	var menu_frame_style := _hud_button_style(Color("111916"), Color("a98752"), 18)
+	menu_frame_style.set_border_width_all(2)
+	menu_frame_style.shadow_color = Color(0.0, 0.0, 0.0, 0.82)
+	menu_frame_style.shadow_size = 28
+	menu_frame_style.shadow_offset = Vector2(0, 10)
+	menu_frame_style.content_margin_left = 22.0
+	menu_frame_style.content_margin_right = 22.0
+	menu_frame_style.content_margin_top = 18.0
+	menu_frame_style.content_margin_bottom = 18.0
+	menu_panel.add_theme_stylebox_override("panel", menu_frame_style)
 	menu_layer.add_child(menu_panel)
 	var shell := VBoxContainer.new()
 	shell.name = "MenuShell"
@@ -1623,10 +1638,18 @@ func _build_menus() -> void:
 	menu_panel.add_child(shell)
 	var top_rule := HBoxContainer.new()
 	shell.add_child(top_rule)
+	var brand_icon := TextureRect.new()
+	brand_icon.name = "BrandSigil"
+	brand_icon.texture = load("res://assets/icons/tobi_breu_icon.svg")
+	brand_icon.custom_minimum_size = Vector2(34, 34)
+	brand_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	brand_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	top_rule.add_child(brand_icon)
 	var brand := Label.new()
 	brand.text = "TOBI  &  BREU"
-	brand.add_theme_font_size_override("font_size", 13)
-	brand.add_theme_color_override("font_color", Color("b18a52"))
+	brand.add_theme_font_size_override("font_size", 17)
+	brand.add_theme_color_override("font_color", Color("e3c38b"))
+	brand.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	top_rule.add_child(brand)
 	var top_spacer := Control.new()
 	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1644,7 +1667,7 @@ func _build_menus() -> void:
 	menu_body = VBoxContainer.new()
 	menu_body.name = "MenuPageContent"
 	menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	menu_body.add_theme_constant_override("separation", 10)
+	menu_body.add_theme_constant_override("separation", 14)
 	shell.add_child(menu_body)
 	menu_feedback = Label.new()
 	menu_feedback.name = "MenuFeedback"
@@ -1683,12 +1706,14 @@ func _show_menu_page(page: String) -> void:
 	menu_body.add_child(scroll)
 	var content := VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 9)
+	content.add_theme_constant_override("separation", 12)
 	scroll.add_child(content)
+	if page == "main":
+		_menu_add_hero(content)
 	match page:
 		"main":
-			title.text = "A LENDA AINDA NÃO TERMINOU"
-			subtitle.text = "Uma jornada entre ruínas, sombras e antigos juramentos."
+			title.text = "A LENDA COMEÇA AQUI"
+			subtitle.text = "Explore um mundo esquecido. Proteja o vínculo entre Tobi e Breu."
 			_menu_add_card(content, "JORNADA ATUAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Encontre Mestre Azulan"))
 			_menu_add_button(content, "ENTRAR NO MUNDO", _start_game, true)
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
@@ -1786,15 +1811,65 @@ func _show_menu_page(page: String) -> void:
 			_menu_add_button(content, "SALVAR CONFIGURAÇÕES", _save_settings, true)
 
 
+func _menu_add_hero(parent: Control) -> void:
+	var hero := PanelContainer.new()
+	hero.name = "MainMenuHero"
+	var hero_style := _hud_button_style(Color("1b2822"), Color("a98752"), 16)
+	hero_style.set_border_width_all(1)
+	hero_style.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
+	hero_style.shadow_size = 12
+	hero_style.shadow_offset = Vector2(0, 5)
+	hero_style.content_margin_left = 14.0
+	hero_style.content_margin_right = 14.0
+	hero_style.content_margin_top = 14.0
+	hero_style.content_margin_bottom = 14.0
+	hero.add_theme_stylebox_override("panel", hero_style)
+	parent.add_child(hero)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	hero.add_child(row)
+	var sigil := TextureRect.new()
+	sigil.name = "TobiBreuEmblem"
+	sigil.texture = load("res://assets/icons/tobi_breu_icon.svg")
+	sigil.custom_minimum_size = Vector2(112, 112)
+	sigil.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	sigil.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(sigil)
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.add_theme_constant_override("separation", 7)
+	row.add_child(copy)
+	var names := Label.new()
+	names.text = "TOBI  &  BREU"
+	names.add_theme_font_size_override("font_size", 22)
+	names.add_theme_color_override("font_color", Color("f0d8a7"))
+	copy.add_child(names)
+	var descriptor := Label.new()
+	descriptor.text = "DARK FANTASY  •  AVENTURA 3D"
+	descriptor.add_theme_font_size_override("font_size", 10)
+	descriptor.add_theme_color_override("font_color", Color("a9b9a9"))
+	copy.add_child(descriptor)
+	var story := Label.new()
+	story.text = "Dois companheiros. Um mundo consumido pelas sombras."
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.add_theme_font_size_override("font_size", 13)
+	story.add_theme_color_override("font_color", Color("e2e0d3"))
+	copy.add_child(story)
+
+
 func _menu_add_button(parent: Control, caption: String, callback: Callable, primary := false) -> Button:
 	var button := Button.new()
 	button.text = caption
-	button.custom_minimum_size = Vector2(0, 54)
+	button.custom_minimum_size = Vector2(0, 58)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.add_theme_font_size_override("font_size", 13 if primary else 11)
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
-	button.add_theme_stylebox_override("normal", _hud_button_style(fill, edge, 13))
+	var normal_style := _hud_button_style(fill, edge, 13)
+	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.52)
+	normal_style.shadow_size = 7
+	normal_style.shadow_offset = Vector2(0, 3)
+	button.add_theme_stylebox_override("normal", normal_style)
 	button.add_theme_stylebox_override("hover", _hud_button_style(fill.lightened(0.18), edge.lightened(0.2), 13))
 	button.add_theme_stylebox_override("pressed", _hud_button_style(fill.lightened(0.3), Color("f0d49b"), 13))
 	button.pressed.connect(callback)
@@ -1804,7 +1879,16 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 
 func _menu_add_card(parent: Control, heading: String, body: String) -> void:
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _hud_button_style(Color(0.055, 0.067, 0.059, 0.98), Color("68583f"), 12))
+	var card_style := _hud_button_style(Color("1a241f"), Color("786443"), 12)
+	card_style.set_border_width_all(1)
+	card_style.shadow_color = Color(0.0, 0.0, 0.0, 0.38)
+	card_style.shadow_size = 6
+	card_style.shadow_offset = Vector2(0, 3)
+	card_style.content_margin_left = 15.0
+	card_style.content_margin_right = 15.0
+	card_style.content_margin_top = 12.0
+	card_style.content_margin_bottom = 12.0
+	card.add_theme_stylebox_override("panel", card_style)
 	parent.add_child(card)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 5)
@@ -1924,6 +2008,9 @@ func _hud_button_style(fill: Color, accent: Color, radius: int = 16) -> StyleBox
 	style.bg_color = fill
 	style.border_color = accent
 	style.set_border_width_all(2)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
+	style.shadow_size = 5
+	style.shadow_offset = Vector2(0, 2)
 	style.set_corner_radius_all(radius)
 	style.corner_detail = 6
 	style.anti_aliasing = true
