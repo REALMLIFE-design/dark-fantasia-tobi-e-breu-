@@ -24,8 +24,9 @@ Este documento separa ativos gerados de ativos realmente incorporados ao projeto
 - Projeto: `0931f547-7cd7-40af-a785-d6ddf642c7ce`
 - Nome: Tobi e Breu — Materiais PBR Dark Fantasy
 - Mapas definidos: base color, normal, roughness, height e AO.
-- Estado: grafo existente inspecionado; a prévia de material falhou por erro do executor de renderização.
-- Integração no jogo: pendente até exportação e validação dos mapas.
+- Estado: grafo existente inspecionado; a prévia de material falhou por erro do executor, mas a exportação de pacote foi concluída com sucesso.
+- Mapas exportados: base color, normal, roughness, height (16-bit) e AO, PNG 1024×1024, em pacote ZIP.
+- Integração no jogo: pendente de transferência dos PNGs para `assets/` e validação do material no Godot.
 
 ## Santuário Esquecido — Godot
 
