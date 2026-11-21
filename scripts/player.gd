@@ -21,6 +21,9 @@ var dodge_cooldown := 0.0
 var dodge_time := 0.0
 var dodge_direction := Vector3.ZERO
 var camera_yaw_offset := 0.0
+var touch_points: Dictionary = {}
+var pinch_start_distance := 0.0
+var pinch_start_camera_distance := 6.5
 var hit_reaction := 0.0
 var death_pose := false
 var landing_time := 0.0
@@ -286,9 +289,27 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_K:
 		do_shadow_pulse()
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touch_points[event.index] = event.position
+			if touch_points.size() == 2:
+				var points: Array = touch_points.values()
+				pinch_start_distance = points[0].distance_to(points[1])
+				pinch_start_camera_distance = camera.position.z
+		else:
+			touch_points.erase(event.index)
+			if touch_points.size() < 2:
+				pinch_start_distance = 0.0
 	if event is InputEventScreenDrag:
-		# Drag on the right half of the screen to orbit the camera.
-		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
+		touch_points[event.index] = event.position
+		if touch_points.size() >= 2:
+			var points: Array = touch_points.values()
+			var pinch_distance: float = points[0].distance_to(points[1])
+			if pinch_start_distance > 0.0:
+				camera.position.z = clampf(pinch_start_camera_distance - (pinch_distance - pinch_start_distance) * 0.018, 4.2, 9.5)
+				camera.position.y = camera.position.z * 0.369
+		elif event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
+			# One-finger drag on the right side orbits the camera.
 			camera_yaw_offset -= event.relative.x * 0.006
 			camera.rotation.x = clampf(camera.rotation.x - event.relative.y * 0.003, -0.75, -0.08)
 
