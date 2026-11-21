@@ -769,6 +769,24 @@ class PerfectDodgeHudPersistenceContracts(unittest.TestCase):
 
 
 
+class SaveFailureFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_save_errors_are_reported_instead_of_silently_claiming_success(self):
+        save_block = self.world[self.world.index('func _save_game'):self.world.index('func _load_save')]
+        self.assertIn('var save_error := cfg.save(save_path)', save_block)
+        self.assertIn('if save_error != OK:', save_block)
+        self.assertIn('push_error("Falha ao salvar progresso:', save_block)
+        self.assertIn('toast_label.text = "Falha ao salvar progresso"', save_block)
+        self.assertIn('Color("ff7777")', save_block)
+
+    def test_save_feedback_clears_after_timeout_for_success_and_failure(self):
+        self.assertIn('toast_label.text == "Progresso salvo" or toast_label.text == "Falha ao salvar progresso"', self.world)
+        self.assertIn('save_toast_timer = 3.0', self.world)
+
+
 class EnemyDeathBurstContracts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
