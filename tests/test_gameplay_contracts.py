@@ -750,3 +750,14 @@ class PerfectDodgeVisualContracts(unittest.TestCase):
         self.assertIn('material.emission_enabled = false', self.player)
         self.assertIn('perfect_strength * 1.35', self.player)
 
+
+class PerfectDodgeHudPersistenceContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_perfect_dodge_message_survives_hud_refresh(self):
+        self.assertIn('var perfect_dodge_feedback_timer := 0.0', self.world)
+        self.assertIn('perfect_dodge_feedback_timer = maxf(0.0, perfect_dodge_feedback_timer - delta)', self.world)
+        self.assertIn('if perfect_dodge_feedback_timer > 0.0:', self.world)
+        self.assertIn('perfect_dodge_feedback_timer = 0.9', self.world)
