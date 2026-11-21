@@ -37,3 +37,7 @@ As nove animações Mixamo (X Bot) ficam em `assets/plugin_imports/pinoc/animati
 O ambiente é Gaussian Splat SPZ, com eixo vertical `-y`. Não é uma malha GLB. O projeto atual usa Godot 4.3 + GL Compatibility; não o adicionamos à cena principal até validar um importador/runtime SPZ compatível com Android e o renderer atual.
 
 Nenhum link temporário assinado é armazenado neste repositório. Isso evita que o jogo dependa de URLs que expiram.
+
+## Conteúdo novo inspirado nos plugins
+
+O construtor `PluginInspiredWorldExpansion` em `scripts/world.gd` adiciona o Santuário do Poço Lunar, o Posto da Vigia Caída, sete marcos rúnicos e três tochas de trilha. São modelos procedurais leves para Android, inspirados na direção de arte dos assets Meshy, Aqueduct e PINOC. Eles entram no carregamento do mundo enquanto os arquivos binários originais ainda dependem de exportação/importação.

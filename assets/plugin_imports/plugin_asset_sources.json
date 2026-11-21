@@ -216,5 +216,24 @@
     "pinoc": "assets/plugin_imports/pinoc/"
   },
   "binary_files_transferred_to_repository": false,
-  "integration_policy": "Do not store expiring signed URLs. Keep source IDs and import paths; do not claim assets are in-game until binary files exist and runtime integration is verified."
+  "integration_policy": "Do not store expiring signed URLs. Keep source IDs and import paths; do not claim assets are in-game until binary files exist and runtime integration is verified.",
+  "runtime_content": {
+    "procedural_expansion": {
+      "script": "scripts/world.gd",
+      "builder": "_build_plugin_world_expansion",
+      "landmarks": [
+        "MoonwellSanctuary",
+        "FallenWatchOutpost",
+        "AncientTrailMarker_0..6",
+        "AncientTrailTorch_0..2"
+      ],
+      "design_sources": [
+        "Aqueduct dark-fantasy PBR stone direction",
+        "Meshy cursed obelisk and stone shrine concepts",
+        "PINOC Scarlet Scar Grove mood"
+      ],
+      "status": "implemented_in_world_boot_on_integration_branch",
+      "note": "Procedural runtime geometry is an intentional mobile-friendly fallback while source plugin binary exports remain inaccessible."
+    }
+  }
 }
