@@ -2775,6 +2775,8 @@ func _process(delta: float) -> void:
 	var chest_distance := player.global_position.distance_to(get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id).global_position) if nearest_chest_id >= 0 and get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id) else 999.0
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
 	var guild_distance := player.global_position.distance_to(guild_board.global_position) if guild_board else 999.0
+	var bell_tower := get_node_or_null("EchoingBellTower")
+	var bell_tower_distance := player.global_position.distance_to(bell_tower.global_position) if bell_tower else 999.0
 	var nearest_guild_relic_distance := 999.0
 	for relic_id in range(3):
 		var relic := get_node_or_null("GuildRelic_%d" % relic_id)
@@ -2789,6 +2791,8 @@ func _process(delta: float) -> void:
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
 	elif stag_guardian_distance < 4.5 and whisper_guardian_reward_claimed: prompt_label.text = "O GUARDIÃO JÁ CONCEDEU SUA BÊNÇÃO"
 	elif stag_guardian_distance < 4.5: prompt_label.text = "E: RECEBER A BÊNÇÃO DO GUARDIÃO"
+	elif bell_tower_distance < 5.0 and bell_tower_ring_count < 3: prompt_label.text = "E: TOCAR O SINO ANTIGO  •  (%d/3)" % bell_tower_ring_count
+	elif bell_tower_distance < 5.0: prompt_label.text = "SINO DO ÚLTIMO VIGIA — CONCLUÍDO"
 	elif river_puzzle_distance < 4.8 and not river_shrine_solved: prompt_label.text = "E: GIRAR O ANEL DO ASTROLÁBIO  •  (%d/3)" % (mini(_river_puzzle_current_ring() + 1, 3))
 	elif river_puzzle_distance < 4.8 and river_shrine_solved: prompt_label.text = "ASTROLÁBIO RESTAURADO — RECOMPENSA COLETADA"
 	elif shrine_distance < 3.8: prompt_label.text = "INTERAGIR — Santuário Esquecido"
