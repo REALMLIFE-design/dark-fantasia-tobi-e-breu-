@@ -556,3 +556,22 @@ class ProceduralTextureContracts(unittest.TestCase):
     def test_android_export_enables_etc2_astc_texture_import(self):
         project = (ROOT / 'project.godot').read_text(encoding='utf-8')
         self.assertIn('textures/vram_compression/import_etc2_astc=true', project)
+
+    def test_main_menu_is_the_game_entry_point_and_keeps_story_world(self):
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        menu_scene = (ROOT / 'scenes/menu.tscn').read_text(encoding='utf-8')
+        self.assertIn('run/main_scene="res://scenes/menu.tscn"', project)
+        self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
+        self.assertIn('func _start_story()', menu)
+        self.assertIn('MODO HISTÓRIA', menu)
+        self.assertIn('HISTÓRIA COOPERATIVA', menu)
+        self.assertIn('MULTIPLAYER', menu)
+        self.assertIn('AMIGOS', menu)
+        self.assertIn('scripts/main_menu.gd', menu_scene)
+
+    def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
+        menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
+        self.assertIn('login falso', menu)
+        self.assertIn('ainda não está ativa', menu)
