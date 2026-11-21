@@ -24,7 +24,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 14', self.world)
+        self.assertIn('"save_version", 15', self.world)
         self.assertIn('save_version > 14', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
@@ -664,3 +664,15 @@ class BellTowerSideQuestContracts(unittest.TestCase):
         self.assertIn("bell_tower_distance < 5.0", world)
         self.assertIn('cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)', world)
         self.assertIn('bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)', world)
+
+
+class AncientWaystoneContracts(unittest.TestCase):
+    def test_three_waystones_are_interactive_and_persisted(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("func _build_ancient_waystones() -> void:", world)
+        self.assertIn("func _nearest_ancient_waystone() -> int:", world)
+        self.assertIn("ancient_waystone_ids.append(waystone_id)", world)
+        self.assertIn("AS TRÊS PEDRAS-ÂNCORA DESPERTARAM!", world)
+        self.assertIn('cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)', world)
+        self.assertIn('cfg.get_value("progress", "ancient_waystone_ids", [])', world)
+        self.assertIn('cfg.set_value("meta", "save_version", 15)', world)
