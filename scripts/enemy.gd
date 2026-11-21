@@ -277,6 +277,45 @@ func _enter_boss_enrage(notify_world: bool = true) -> void:
 	if notify_world and get_parent().has_method("river_boss_phase_changed"):
 		get_parent().river_boss_phase_changed()
 
+
+func _spawn_death_burst() -> void:
+	# Small low-cost shards make enemy defeats readable without particle systems.
+	var burst := Node3D.new()
+	get_parent().add_child(burst)
+	burst.global_position = global_position
+	var burst_color := Color("d7c7a0")
+	if enemy_kind == 6:
+		burst_color = Color("d85a4d")
+	elif enemy_kind == 7:
+		burst_color = Color("79c9f2")
+	elif enemy_kind == 8:
+		burst_color = Color("62d8c8")
+	elif enemy_kind >= 3:
+		burst_color = Color("e7c477")
+	for shard_index in range(6):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.12, 0.18, 0.12)
+		shard.mesh = shard_mesh
+		var shard_material := StandardMaterial3D.new()
+		shard_material.albedo_color = burst_color
+		shard_material.emission_enabled = true
+		shard_material.emission = burst_color
+		shard_material.emission_energy_multiplier = 0.65
+		shard_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		shard.material_override = shard_material
+		burst.add_child(shard)
+		var angle := TAU * float(shard_index) / 6.0
+		shard.position = Vector3(cos(angle) * 0.16, 0.48 + float(shard_index % 2) * 0.12, sin(angle) * 0.16)
+		shard.rotation = Vector3(angle * 0.5, angle, 0.0)
+		var destination := shard.position + Vector3(cos(angle) * 0.72, 0.42 + float(shard_index % 3) * 0.08, sin(angle) * 0.72)
+		var shard_tween := burst.create_tween()
+		shard_tween.tween_property(shard, "position", destination, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		shard_tween.parallel().tween_property(shard, "scale", Vector3.ZERO, 0.38)
+		shard_tween.parallel().tween_property(shard_material, "albedo_color", Color(burst_color.r, burst_color.g, burst_color.b, 0.0), 0.38)
+		if shard_index == 5:
+			shard_tween.tween_callback(burst.queue_free)
+
 func _add(mesh: Mesh, pos: Vector3, color: Color) -> void:
 	var mi := MeshInstance3D.new(); mi.mesh = mesh; mi.position = pos
 	var m := StandardMaterial3D.new(); m.albedo_color = color; m.roughness = 0.95; mi.material_override = m; visual.add_child(mi)
@@ -534,6 +573,7 @@ func take_damage(amount: int) -> void:
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
 		dead = true
+		_spawn_death_burst()
 		attack_pose = 0.0
 		attack_windup_timer = 0.0
 		attack_telegraph.visible = false
