@@ -1420,7 +1420,9 @@ func _build_hud() -> void:
 	var quest_panel := PanelContainer.new()
 	quest_panel.name = "QuestCard"
 	quest_panel.position = Vector2(18, 16)
-	quest_panel.custom_minimum_size = Vector2(330, 112)
+	var hud_viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var hud_compact := hud_viewport_size.x < 700.0
+	quest_panel.custom_minimum_size = Vector2(minf(330.0, maxf(248.0, hud_viewport_size.x * 0.78)), 112 if not hud_compact else 104)
 	quest_panel.add_theme_stylebox_override("panel", quest_panel_style)
 	ui_root.add_child(quest_panel)
 	var quest_box := VBoxContainer.new()
@@ -1455,7 +1457,7 @@ func _build_hud() -> void:
 	var status_panel := PanelContainer.new()
 	status_panel.name = "PlayerStatusCard"
 	status_panel.position = Vector2(18, 138)
-	status_panel.custom_minimum_size = Vector2(260, 78)
+	status_panel.custom_minimum_size = Vector2(minf(260.0, maxf(224.0, hud_viewport_size.x * 0.72)), 78 if not hud_compact else 72)
 	status_panel.add_theme_stylebox_override("panel", status_panel_style)
 	ui_root.add_child(status_panel)
 	var status_box := VBoxContainer.new()
@@ -1478,7 +1480,7 @@ func _build_hud() -> void:
 	health_value_label.name = "HealthValue"
 	status_head.add_child(health_value_label)
 	health_bar = ProgressBar.new()
-	health_bar.custom_minimum_size = Vector2(230, 16)
+	health_bar.custom_minimum_size = Vector2(minf(230.0, maxf(194.0, hud_viewport_size.x * 0.64)), 16)
 	health_bar.max_value = player.max_hp
 	health_bar.value = player.hp
 	health_bar.show_percentage = false
@@ -1486,7 +1488,7 @@ func _build_hud() -> void:
 	health_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("a84d4b")))
 	status_box.add_child(health_bar)
 	stamina_bar = ProgressBar.new()
-	stamina_bar.custom_minimum_size = Vector2(230, 9)
+	stamina_bar.custom_minimum_size = Vector2(minf(230.0, maxf(194.0, hud_viewport_size.x * 0.64)), 9)
 	stamina_bar.max_value = 100
 	stamina_bar.value = 100
 	stamina_bar.show_percentage = false
@@ -1498,7 +1500,7 @@ func _build_hud() -> void:
 	var progress_panel := PanelContainer.new()
 	progress_panel.name = "ProgressCard"
 	progress_panel.position = Vector2(18, 224)
-	progress_panel.custom_minimum_size = Vector2(260, 58)
+	progress_panel.custom_minimum_size = Vector2(minf(260.0, maxf(224.0, hud_viewport_size.x * 0.72)), 58)
 	progress_panel.add_theme_stylebox_override("panel", progress_panel_style)
 	ui_root.add_child(progress_panel)
 	var progress_box := VBoxContainer.new()
@@ -1512,7 +1514,7 @@ func _build_hud() -> void:
 	xp_bar = ProgressBar.new()
 	xp_bar.max_value = maxi(1, xp_needed - ((level - 1) * 100))
 	xp_bar.value = current_level_xp
-	xp_bar.custom_minimum_size = Vector2(230, 10)
+	xp_bar.custom_minimum_size = Vector2(minf(230.0, maxf(194.0, hud_viewport_size.x * 0.64)), 10)
 	xp_bar.show_percentage = false
 	xp_bar.add_theme_stylebox_override("background", _hud_bar_style(Color("292d29")))
 	xp_bar.add_theme_stylebox_override("fill", _hud_bar_style(Color("c39a58")))
