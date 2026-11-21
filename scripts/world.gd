@@ -1841,7 +1841,12 @@ func player_health_changed(current: int, maximum: int) -> void:
 	if health_bar:
 		health_bar.max_value = maximum
 		health_bar.value = current
-	if health_label: health_label.text = "TOBI  •  VIDA %d/%d" % [current, maximum]
+	var low_health := current > 0 and current <= int(float(maximum) * 0.30)
+	if health_label:
+		health_label.text = "TOBI  •  VIDA %d/%d%s" % [current, maximum, "  •  CRÍTICO" if low_health else ""]
+		health_label.add_theme_color_override("font_color", Color("ff7777") if low_health else Color("ffffff"))
+	if health_bar:
+		health_bar.modulate = Color("ff7777") if low_health else Color("ffffff")
 
 func player_defeated() -> void:
 	toast_label.text = "Tobi caiu! Retornando ao acampamento..."
