@@ -34,3 +34,6 @@ jump={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":32)]}
 dodge={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":81)]}
 potion={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":72)]}
 upgrade={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":85)]}
+
+[editor_plugins]
+enabled=PackedStringArray("res://addons/dark_fantasy_asset_bridge/plugin.cfg")
