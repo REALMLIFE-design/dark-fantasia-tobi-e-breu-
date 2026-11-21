@@ -1470,7 +1470,7 @@ func _build_menus() -> void:
 	menu_panel = PanelContainer.new()
 	menu_panel.name = "MenuFrame"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
-	var viewport_size := get_viewport_rect().size
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.90))
 	menu_panel.position = -panel_size * 0.5
 	menu_panel.size = panel_size
