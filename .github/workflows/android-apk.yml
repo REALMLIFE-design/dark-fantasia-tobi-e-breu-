@@ -2,7 +2,7 @@ name: Build Tobi e Breu APK
 
 concurrency:
   group: tobi-breu-android-apk
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
