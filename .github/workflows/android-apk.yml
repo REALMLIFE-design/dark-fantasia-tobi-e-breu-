@@ -179,38 +179,4 @@ jobs:
           arch: x86_64
           profile: pixel_2
           disable-animations: true
-          script: |
-            set -euo pipefail
-            adb wait-for-device
-            adb shell wm size 1280x720
-            adb install -r "$PROJECT_PATH/build/TobiEBreu.apk"
-            adb shell am force-stop com.tobiebreu.darkworld3d
-            adb shell monkey -p com.tobiebreu.darkworld3d -c android.intent.category.LAUNCHER 1
-            sleep 18
-            APP_PID="$(adb shell pidof com.tobiebreu.darkworld3d | tr -d '\r')"
-            if [ -z "$APP_PID" ]; then
-              adb logcat -d -t 3000 > "$RUNNER_TEMP/android-launch-failure.log"
-              cat "$RUNNER_TEMP/android-launch-failure.log"
-              echo "ERRO: o jogo fechou antes de permanecer aberto no Android"
-              exit 1
-            fi
-            adb shell input tap 640 300
-            sleep 3
-            APP_PID="$(adb shell pidof com.tobiebreu.darkworld3d | tr -d '\r')"
-            if [ -z "$APP_PID" ]; then
-              adb logcat -d -t 3000 > "$RUNNER_TEMP/android-launch-failure.log"
-              cat "$RUNNER_TEMP/android-launch-failure.log"
-              echo "ERRO: o jogo fechou depois da interação inicial"
-              exit 1
-            fi
-            adb logcat -d -t 4000 > "$RUNNER_TEMP/android-launch.log"
-            if ! grep -q "TOBI_BREU_GAME_STARTED" "$RUNNER_TEMP/android-launch.log"; then
-              cat "$RUNNER_TEMP/android-launch.log"
-              echo "ERRO: o botão Entrar no Mundo não concluiu a transição"
-              exit 1
-            fi
-            if grep -E "FATAL EXCEPTION|Fatal signal|SIGSEGV|Process com.tobiebreu.darkworld3d has died" "$RUNNER_TEMP/android-launch.log"; then
-              echo "ERRO: falha fatal no processo Android do jogo"
-              exit 1
-            fi
-
+          script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
