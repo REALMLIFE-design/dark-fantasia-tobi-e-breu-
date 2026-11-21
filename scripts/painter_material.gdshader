@@ -138,14 +138,20 @@ void fragment() {
         pattern = grain * brush_strength + strokes + (broad - 0.5) * 0.08;
     }
 
-    float atlas_influence = 0.58;
-    if (pattern_mode == 1) { atlas_influence = 0.48; }
-    else if (pattern_mode == 4) { atlas_influence = 0.62; }
-    else if (pattern_mode == 5) { atlas_influence = 0.72; }
-    else if (pattern_mode == 6) { atlas_influence = 0.66; }
-    ALBEDO = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern);
-    ROUGHNESS = mix(pattern_mode == 5 ? 0.24 : 0.90, atlas_roughness, 0.62);
-    METALLIC = pattern_mode == 5 ? 0.12 : 0.0;
+    // A second, restrained pigment scale breaks up large repeated surfaces
+    // without adding texture bindings or large memory costs on Android.
+    float micro_mottle = fbm(world_pos.xz * brush_scale * detail_scale * 1.65);
+    float pigment_variation = (micro_mottle - 0.5) * 0.10;
+    float atlas_influence = 0.64;
+    if (pattern_mode == 1) { atlas_influence = 0.56; }
+    else if (pattern_mode == 3) { atlas_influence = 0.68; }
+    else if (pattern_mode == 4) { atlas_influence = 0.70; }
+    else if (pattern_mode == 5) { atlas_influence = 0.76; }
+    else if (pattern_mode == 6) { atlas_influence = 0.70; }
+    ALBEDO = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern + pigment_variation);
+    float base_roughness = pattern_mode == 5 ? 0.20 : (pattern_mode == 3 ? 0.78 : 0.94);
+    ROUGHNESS = clamp(mix(base_roughness, atlas_roughness, 0.72) + (micro_mottle - 0.5) * 0.08, 0.12, 1.0);
+    METALLIC = pattern_mode == 5 ? 0.16 : 0.0;
 
     // Derivative-based bump detail reuses the atlas without another texture
     // binding or a tangent-space normal texture, keeping Android memory low.
