@@ -1,33 +1,201 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "source": "PINOC curated motion library",
   "format": "mixamo-glb",
-  "note": "GLBs include the X Bot mesh and Mixamo-named skeleton. Retarget to Tobi's procedural rig before replacing in-game animation. Signed URLs are intentionally not stored because they expire.",
+  "note": "Each GLB contains the X Bot mesh and Mixamo-named skeleton. Retarget to the final Tobi rig before binding animations. Temporary signed URLs are intentionally not stored.",
+  "status": "24 clips catalogued; binary transfer and retarget pending",
   "motions": [
-    {"name":"Walking","id":"32d71c7f-e88a-4d1f-9c0c-1fde2da5f060","role":"locomotion"},
-    {"name":"Running","id":"32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a","role":"locomotion"},
-    {"name":"Dodge Roll Forward","id":"56bb74fa-7274-46c2-8aec-7bb4381345a3","role":"evasion"},
-    {"name":"Cast Spell Forward","id":"6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68","role":"skill"},
-    {"name":"Hit Reaction Front","id":"b07839c6-2f7f-403a-95f3-da87c3536e8c","role":"reaction"},
-    {"name":"Sword Idle","id":"b1010899-e739-44be-a81a-bf85e98bf049","role":"combat_idle"},
-    {"name":"Jump","id":"08872e23-d695-493d-8c03-cb595cd55e9c","role":"movement"},
-    {"name":"Block","id":"912b4122-f1b4-481b-a44f-ead641df6e32","role":"defense"},
-    {"name":"Bow Draw And Release","id":"369d19ed-1535-4fd1-bfd0-c36791a30058","role":"ranged"},
-    {"name":"Pick Up Object From Ground","id":"7875176d-9680-4ba9-971f-1b3c543b8260","role":"interaction"},
-    {"name":"Climb Over Ledge","id":"03a3a04d-47ff-4339-a1cf-8abe8023a4e5","role":"traversal"},
-    {"name":"Vault Over Obstacle","id":"91c3478c-e380-40fc-bd8c-25f9b883cb11","role":"traversal"},
-    {"name":"Standing Up From Back","id":"3ca12348-9552-4702-97c8-57619bb78205","role":"recovery"},
-    {"name":"Death Backwards","id":"d9f95018-c2b5-4116-a524-c8415f027203","role":"death"},
-    {"name":"Drawing Sword","id":"f70517ef-f591-4003-873e-a7e4cf26d88f","role":"combat"},
-    {"name":"Fighting Stance Idle","id":"579f5d87-3ec6-4054-b2bc-e9677eea8510","role":"combat_idle"},
-    {"name":"Carry Object Walk Forward","id":"ff232e7d-5d1b-44b8-9c48-6ed6aaaf561e","role":"interaction"},
-    {"name":"Crawl Forward","id":"d20f26a8-07a6-4bb1-a26a-e949c333cf80","role":"stealth"},
-    {"name":"Crouch Walk Forward","id":"e4f5b9e6-381c-4227-88d4-94d6a0615df8","role":"stealth"},
-    {"name":"Injured Walk","id":"c0229536-d09f-41c5-a9cf-6699d4e72b8f","role":"damage"},
-    {"name":"Run Jump","id":"92b846c7-a636-45cd-96d5-f34cc0e97be7","role":"locomotion"},
-    {"name":"Sprinting Forward","id":"a075443a-1b3c-45d9-a3c5-6b6296d21bd1","role":"locomotion"},
-    {"name":"Walk Backwards","id":"fb723fdc-945f-49a3-b6ff-1d3a612159fb","role":"locomotion"},
-    {"name":"Walk Strafe Left","id":"4eb48cfd-1b66-4263-996c-59b946744283","role":"combat"}
-  ],
-  "status": "24 clips catalogued; binary download and retargeting still pending"
+    {
+      "name": "Walking",
+      "id": "32d71c7f-e88a-4d1f-9c0c-1fde2da5f060",
+      "key": "walking",
+      "role": "locomotion",
+      "path": "assets/plugin_imports/pinoc/animations/walking.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Running",
+      "id": "32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a",
+      "key": "running",
+      "role": "locomotion",
+      "path": "assets/plugin_imports/pinoc/animations/running.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Dodge Roll Forward",
+      "id": "56bb74fa-7274-46c2-8aec-7bb4381345a3",
+      "key": "dodge_roll",
+      "role": "evasion",
+      "path": "assets/plugin_imports/pinoc/animations/dodge_roll.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Cast Spell Forward",
+      "id": "6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68",
+      "key": "cast_spell",
+      "role": "skill",
+      "path": "assets/plugin_imports/pinoc/animations/cast_spell.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Hit Reaction Front",
+      "id": "b07839c6-2f7f-403a-95f3-da87c3536e8c",
+      "key": "hit_reaction",
+      "role": "reaction",
+      "path": "assets/plugin_imports/pinoc/animations/hit_reaction.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Sword Idle",
+      "id": "b1010899-e739-44be-a81a-bf85e98bf049",
+      "key": "sword_idle",
+      "role": "combat_idle",
+      "path": "assets/plugin_imports/pinoc/animations/sword_idle.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Jump",
+      "id": "08872e23-d695-493d-8c03-cb595cd55e9c",
+      "key": "jump",
+      "role": "movement",
+      "path": "assets/plugin_imports/pinoc/animations/jump.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Block",
+      "id": "912b4122-f1b4-481b-a44f-ead641df6e32",
+      "key": "block",
+      "role": "defense",
+      "path": "assets/plugin_imports/pinoc/animations/block.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Bow Draw And Release",
+      "id": "369d19ed-1535-4fd1-bfd0-c36791a30058",
+      "key": "bow_draw",
+      "role": "ranged",
+      "path": "assets/plugin_imports/pinoc/animations/bow_draw.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Pick Up Object From Ground",
+      "id": "7875176d-9680-4ba9-971f-1b3c543b8260",
+      "key": "pick_up",
+      "role": "interaction",
+      "path": "assets/plugin_imports/pinoc/animations/pick_up.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Climb Over Ledge",
+      "id": "03a3a04d-47ff-4339-a1cf-8abe8023a4e5",
+      "key": "climb",
+      "role": "traversal",
+      "path": "assets/plugin_imports/pinoc/animations/climb.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Vault Over Obstacle",
+      "id": "91c3478c-e380-40fc-bd8c-25f9b883cb11",
+      "key": "vault",
+      "role": "traversal",
+      "path": "assets/plugin_imports/pinoc/animations/vault.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Standing Up From Back",
+      "id": "3ca12348-9552-4702-97c8-57619bb78205",
+      "key": "stand_up",
+      "role": "recovery",
+      "path": "assets/plugin_imports/pinoc/animations/stand_up.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Death Backwards",
+      "id": "d9f95018-c2b5-4116-a524-c8415f027203",
+      "key": "death",
+      "role": "death",
+      "path": "assets/plugin_imports/pinoc/animations/death.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Drawing Sword",
+      "id": "f70517ef-f591-4003-873e-a7e4cf26d88f",
+      "key": "drawing_sword",
+      "role": "combat",
+      "path": "assets/plugin_imports/pinoc/animations/drawing_sword.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Fighting Stance Idle",
+      "id": "579f5d87-3ec6-4054-b2bc-e9677eea8510",
+      "key": "fighting_stance",
+      "role": "combat_idle",
+      "path": "assets/plugin_imports/pinoc/animations/fighting_stance.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Carry Object Walk Forward",
+      "id": "ff232e7d-5d1b-44b8-9c48-6ed6aaaf561e",
+      "key": "carry_walk",
+      "role": "interaction",
+      "path": "assets/plugin_imports/pinoc/animations/carry_walk.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Crawl Forward",
+      "id": "d20f26a8-07a6-4bb1-a26a-e949c333cf80",
+      "key": "crawl",
+      "role": "stealth",
+      "path": "assets/plugin_imports/pinoc/animations/crawl.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Crouch Walk Forward",
+      "id": "e4f5b9e6-381c-4227-88d4-94d6a0615df8",
+      "key": "crouch_walk",
+      "role": "stealth",
+      "path": "assets/plugin_imports/pinoc/animations/crouch_walk.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Injured Walk",
+      "id": "c0229536-d09f-41c5-a9cf-6699d4e72b8f",
+      "key": "injured_walk",
+      "role": "damage",
+      "path": "assets/plugin_imports/pinoc/animations/injured_walk.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Run Jump",
+      "id": "92b846c7-a636-45cd-96d5-f34cc0e97be7",
+      "key": "run_jump",
+      "role": "locomotion",
+      "path": "assets/plugin_imports/pinoc/animations/run_jump.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Sprinting Forward",
+      "id": "a075443a-1b3c-45d9-a3c5-6b6296d21bd1",
+      "key": "sprint",
+      "role": "locomotion",
+      "path": "assets/plugin_imports/pinoc/animations/sprint.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Walk Backwards",
+      "id": "fb723fdc-945f-49a3-b6ff-1d3a612159fb",
+      "key": "walk_backwards",
+      "role": "locomotion",
+      "path": "assets/plugin_imports/pinoc/animations/walk_backwards.glb",
+      "integration_status": "catalogued_not_transferred"
+    },
+    {
+      "name": "Walk Strafe Left",
+      "id": "4eb48cfd-1b66-4263-996c-59b946744283",
+      "key": "strafe_left",
+      "role": "combat",
+      "path": "assets/plugin_imports/pinoc/animations/strafe_left.glb",
+      "integration_status": "catalogued_not_transferred"
+    }
+  ]
 }

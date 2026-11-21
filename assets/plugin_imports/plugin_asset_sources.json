@@ -4,47 +4,217 @@
     "aqueduct": {
       "project_id": "0931f547-7cd7-40af-a785-d6ddf642c7ce",
       "export_job_id": "exp_edaba8b3-ae4e-4011-b627-910bd03d17e3",
-      "maps": ["base_color", "normal", "roughness", "ao", "height"],
+      "maps": [
+        "base_color",
+        "normal",
+        "roughness",
+        "ao",
+        "height"
+      ],
       "resolution": 1024,
       "normal_format": "opengl",
-      "status": "exported"
+      "status": "export_completed_download_not_transferred"
     },
     "meshy": {
-      "preview_task_id": "01a20014-96e3-743e-ae07-354d22b8557e",
-      "texture_task_id": "01a20014-fcbc-770c-b0e4-a7c027e9d5e6",
-      "asset": "cursed_rune_obelisk",
-      "geometry_model": "meshy-t2",
-      "texture_model": "meshy-6-lite",
-      "target_polycount": 4000,
-      "status": "textured_download_restricted",
-      "note": "Modelo gerado e texturizado; o plano atual bloqueia o download GLB. O obelisco procedural permanece como fallback."
+      "assets": [
+        {
+          "asset": "cursed_rune_obelisk",
+          "preview_task_id": "01a20014-96e3-743e-ae07-354d22b8557e",
+          "texture_task_id": "01a20014-fcbc-770c-b0e4-a7c027e9d5e6",
+          "geometry_model": "meshy-t2",
+          "texture_model": "meshy-6-lite",
+          "target_polycount": 4000,
+          "status": "textured_download_restricted"
+        },
+        {
+          "asset": "stone_way_shrine",
+          "preview_task_id": "01a1ffc0-a9b2-7084-8575-2ac3e71c28bd",
+          "texture_task_id": "01a1ffc1-4452-7384-9c4c-4a81ece4fc4a",
+          "status": "textured_download_restricted"
+        },
+        {
+          "asset": "gothic_cursed_gate",
+          "preview_task_id": "01a1ff11-8f0a-76a1-a977-29e97e2f1e44",
+          "texture_task_id": "01a1ff12-3dd2-707a-8c0e-016625d9d9d5",
+          "status": "textured_download_restricted"
+        },
+        {
+          "asset": "tobi_hero_replacement",
+          "preview_task_id": "01a20055-e96f-7732-8d09-8fd8e962bc5c",
+          "texture_task_id": "01a20058-ae2b-72a1-b2e6-52a6120cc2cf",
+          "geometry_model": "meshy-t2.5",
+          "texture_model": "meshy-6-lite",
+          "target_polycount": 15000,
+          "status": "texture_generation_in_progress"
+        }
+      ],
+      "download_note": "Meshy download_model currently responds 'Please upgrade plan to download models'; no binary was copied."
     },
     "pinoc": {
-      "motions": {
-        "walking": "32d71c7f-e88a-4d1f-9c0c-1fde2da5f060",
-        "running": "32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a",
-        "dodge_roll_forward": "56bb74fa-7274-46c2-8aec-7bb4381345a3",
-        "cast_spell_forward": "6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68",
-        "hit_reaction_front": "b07839c6-2f7f-403a-95f3-da87c3536e8c",
-        "sword_idle": "b1010899-e739-44be-a81a-bf85e98bf049",
-        "jump": "08872e23-d695-493d-8c03-cb595cd55e9c"
-      },
-      "status": "library_assets_taken",
+      "motions": [
+        {
+          "name": "Walking",
+          "id": "32d71c7f-e88a-4d1f-9c0c-1fde2da5f060",
+          "key": "walking",
+          "role": "locomotion"
+        },
+        {
+          "name": "Running",
+          "id": "32c1d7ba-29d6-466c-a2bc-56ff17ca4d1a",
+          "key": "running",
+          "role": "locomotion"
+        },
+        {
+          "name": "Dodge Roll Forward",
+          "id": "56bb74fa-7274-46c2-8aec-7bb4381345a3",
+          "key": "dodge_roll",
+          "role": "evasion"
+        },
+        {
+          "name": "Cast Spell Forward",
+          "id": "6dfd60de-5ccd-4bc4-b7d9-87a7dd624f68",
+          "key": "cast_spell",
+          "role": "skill"
+        },
+        {
+          "name": "Hit Reaction Front",
+          "id": "b07839c6-2f7f-403a-95f3-da87c3536e8c",
+          "key": "hit_reaction",
+          "role": "reaction"
+        },
+        {
+          "name": "Sword Idle",
+          "id": "b1010899-e739-44be-a81a-bf85e98bf049",
+          "key": "sword_idle",
+          "role": "combat_idle"
+        },
+        {
+          "name": "Jump",
+          "id": "08872e23-d695-493d-8c03-cb595cd55e9c",
+          "key": "jump",
+          "role": "movement"
+        },
+        {
+          "name": "Block",
+          "id": "912b4122-f1b4-481b-a44f-ead641df6e32",
+          "key": "block",
+          "role": "defense"
+        },
+        {
+          "name": "Bow Draw And Release",
+          "id": "369d19ed-1535-4fd1-bfd0-c36791a30058",
+          "key": "bow_draw",
+          "role": "ranged"
+        },
+        {
+          "name": "Pick Up Object From Ground",
+          "id": "7875176d-9680-4ba9-971f-1b3c543b8260",
+          "key": "pick_up",
+          "role": "interaction"
+        },
+        {
+          "name": "Climb Over Ledge",
+          "id": "03a3a04d-47ff-4339-a1cf-8abe8023a4e5",
+          "key": "climb",
+          "role": "traversal"
+        },
+        {
+          "name": "Vault Over Obstacle",
+          "id": "91c3478c-e380-40fc-bd8c-25f9b883cb11",
+          "key": "vault",
+          "role": "traversal"
+        },
+        {
+          "name": "Standing Up From Back",
+          "id": "3ca12348-9552-4702-97c8-57619bb78205",
+          "key": "stand_up",
+          "role": "recovery"
+        },
+        {
+          "name": "Death Backwards",
+          "id": "d9f95018-c2b5-4116-a524-c8415f027203",
+          "key": "death",
+          "role": "death"
+        },
+        {
+          "name": "Drawing Sword",
+          "id": "f70517ef-f591-4003-873e-a7e4cf26d88f",
+          "key": "drawing_sword",
+          "role": "combat"
+        },
+        {
+          "name": "Fighting Stance Idle",
+          "id": "579f5d87-3ec6-4054-b2bc-e9677eea8510",
+          "key": "fighting_stance",
+          "role": "combat_idle"
+        },
+        {
+          "name": "Carry Object Walk Forward",
+          "id": "ff232e7d-5d1b-44b8-9c48-6ed6aaaf561e",
+          "key": "carry_walk",
+          "role": "interaction"
+        },
+        {
+          "name": "Crawl Forward",
+          "id": "d20f26a8-07a6-4bb1-a26a-e949c333cf80",
+          "key": "crawl",
+          "role": "stealth"
+        },
+        {
+          "name": "Crouch Walk Forward",
+          "id": "e4f5b9e6-381c-4227-88d4-94d6a0615df8",
+          "key": "crouch_walk",
+          "role": "stealth"
+        },
+        {
+          "name": "Injured Walk",
+          "id": "c0229536-d09f-41c5-a9cf-6699d4e72b8f",
+          "key": "injured_walk",
+          "role": "damage"
+        },
+        {
+          "name": "Run Jump",
+          "id": "92b846c7-a636-45cd-96d5-f34cc0e97be7",
+          "key": "run_jump",
+          "role": "locomotion"
+        },
+        {
+          "name": "Sprinting Forward",
+          "id": "a075443a-1b3c-45d9-a3c5-6b6296d21bd1",
+          "key": "sprint",
+          "role": "locomotion"
+        },
+        {
+          "name": "Walk Backwards",
+          "id": "fb723fdc-945f-49a3-b6ff-1d3a612159fb",
+          "key": "walk_backwards",
+          "role": "locomotion"
+        },
+        {
+          "name": "Walk Strafe Left",
+          "id": "4eb48cfd-1b66-4263-996c-59b946744283",
+          "key": "strafe_left",
+          "role": "combat"
+        }
+      ],
+      "status": "24_library_assets_confirmed_binary_transfer_pending",
       "format": "mixamo-glb",
-      "note": "Clipes esqueléticos com malha X Bot incluída; precisam de retarget para o personagem procedural de Tobi antes de uso."
+      "note": "Clips use bundled X Bot skeleton; retarget to Tobi after the final hero rig is available."
     },
     "pinoc_environment": {
       "asset_id": "eb40a681-9845-57bd-9e3e-52a740a82fc9",
       "name": "Bosque da Cicatriz Rubra — Tobi e Breu",
       "format": "spz",
       "down_axis": "-y",
-      "status": "generated_not_godot_compatible"
+      "status": "generated_not_directly_compatible_with_godot_gl_compatibility",
+      "note": "Gaussian splat, not a GLB mesh. Preserve as source and use only with a compatible Splat renderer or after a deliberate conversion workflow."
     }
   },
   "expected_import_paths": {
     "aqueduct": "assets/plugin_imports/aqueduct/",
-    "meshy": "assets/plugin_imports/meshy/cursed_rune_obelisk.glb",
+    "meshy": "assets/plugin_imports/meshy/",
     "pinoc": "assets/plugin_imports/pinoc/"
   },
-  "binary_files_transferred_to_repository": false
+  "binary_files_transferred_to_repository": false,
+  "integration_policy": "Do not store expiring signed URLs. Keep source IDs and import paths; do not claim assets are in-game until binary files exist and runtime integration is verified."
 }

@@ -11,6 +11,7 @@ class PluginAssetBridgeContracts(unittest.TestCase):
         cls.plugin = (ROOT / "addons/dark_fantasy_asset_bridge/plugin.gd").read_text(encoding="utf-8")
         cls.catalog = (ROOT / "scripts/plugin_asset_catalog.gd").read_text(encoding="utf-8")
         cls.loader = (ROOT / "scripts/plugin_asset_loader.gd").read_text(encoding="utf-8")
+        cls.motion_catalog = (ROOT / "assets/plugin_imports/pinoc/motion_catalog.json").read_text(encoding="utf-8")
 
     def test_editor_plugin_is_enabled_in_project(self):
         self.assertIn('res://addons/dark_fantasy_asset_bridge/plugin.cfg', self.project)
@@ -21,9 +22,17 @@ class PluginAssetBridgeContracts(unittest.TestCase):
         self.assertIn('FileAccess.file_exists', self.plugin)
 
     def test_catalog_lists_external_plugin_assets(self):
-        for asset in ['aqueduct_base_color', 'meshy_gate', 'pinoc_walking', 'pinoc_forest_splat']:
+        for asset in ['aqueduct_base_color', 'aqueduct_height', 'meshy_gate', 'meshy_way_shrine', 'pinoc_walking', 'pinoc_forest_splat']:
             self.assertIn(asset, self.catalog)
         self.assertIn('func get_missing_assets()', self.catalog)
+
+    def test_catalog_preserves_all_24_pinoc_motion_paths(self):
+        import json
+        catalog = json.loads(self.motion_catalog)
+        self.assertEqual(len(catalog["motions"]), 24)
+        for motion in catalog["motions"]:
+            self.assertIn(f'"pinoc_{motion["key"]}"', self.catalog)
+            self.assertIn(motion["path"], self.catalog)
 
     def test_runtime_loader_guards_optional_meshy_model(self):
         self.assertIn('ResourceLoader.exists(MESHY_GATE_PATH)', self.loader)
