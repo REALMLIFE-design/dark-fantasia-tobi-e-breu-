@@ -113,8 +113,15 @@ jobs:
           PY
 
       - name: Instalar template Android do projeto
+        timeout-minutes: 9
         run: |
-          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --install-android-build-template
+          set -o pipefail
+          echo "Instalando template Android com limite de 8 minutos..."
+          timeout 8m "$GODOT_BIN" --headless --verbose --path "$PROJECT_PATH" --install-android-build-template 2>&1 | tee "$RUNNER_TEMP/android-template-install.log"
+          test -d "$PROJECT_PATH/android/build" || {
+            echo "ERRO: Godot terminou sem criar android/build."
+            exit 1
+          }
 
       - name: Gerar APK
         run: |
