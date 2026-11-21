@@ -1583,7 +1583,7 @@ func _build_hud() -> void:
 	inventory_box.add_theme_constant_override("separation", 12)
 	inventory_panel.add_child(inventory_box)
 	var inventory_title := Label.new()
-	inventory_title.text = "INVENTÁRIO"
+	inventory_title.text = "MOCHILA"
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	inventory_title.add_theme_font_size_override("font_size", 22)
 	inventory_title.add_theme_color_override("font_color", Color("d8b77c"))
