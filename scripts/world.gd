@@ -3,6 +3,7 @@ extends Node3D
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
 var player: CharacterBody3D
@@ -28,6 +29,9 @@ var day_clock := 0.0
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
+var stamina_label: Label
+var dodge_label: Label
+var perfect_dodge_feedback_timer := 0.0
 var xp_label: Label
 var xp_bar: ProgressBar
 var boss_health_bar: ProgressBar
@@ -101,6 +105,7 @@ func _ready() -> void:
 	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
+	print("TOBI_BREU_BOOT_READY")
 
 func _mat(color: Color, roughness := 0.92) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -287,7 +292,7 @@ func _build_open_world_expansion() -> void:
 		clearing.scale = Vector3(18.0, 0.08, 15.0)
 		for j in range(7):
 			var angle := TAU * float(j) / 7.0
-			var tree_pos := clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
+			var tree_pos: Vector3 = clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
 			_build_tree(tree_pos, randf_range(0.8, 1.25))
 	# Distant mountain wall makes the larger map read as a continuous landmass.
 	for i in range(32):
@@ -598,6 +603,7 @@ func _build_ruins_and_props() -> void:
 		_box(self,"GatePillar",Vector3(x,2.6,-27),Vector3(2.2,5.2,2.0),Color("77746a"))
 	_box(self,"GateLintel",Vector3(0,5.0,-27),Vector3(13,1.6,2.4),Color("817c70"))
 	_box(self,"BrokenLintel",Vector3(2.8,6.1,-27),Vector3(4.2,0.7,2.1),Color("6c6b63")).rotation.z = 0.22
+	_build_gothic_gate_accents()
 	# weathered trail lanterns help navigation in the dusk
 	for z in [-15.0, 1.0, 18.0, 34.0]:
 		var post := _box(self, "LanternPost", Vector3(5.6,1.25,z), Vector3(0.18,2.5,0.18), Color("49372d"))
@@ -616,6 +622,38 @@ func _build_ruins_and_props() -> void:
 	fire.light_energy = 2.2
 	fire.omni_range = 10
 	add_child(fire)
+
+
+func _build_gothic_gate_accents() -> void:
+	# Decorative dark-fantasy details frame the existing entrance without
+	# narrowing the walkable opening or adding physics bodies on mobile.
+	for side in [-1.0, 1.0]:
+		var cap := _box(self, "GateCarvedCap", Vector3(side * 5.5, 5.35, -25.82), Vector3(2.55, 0.42, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)
+		cap.rotation.z = side * -0.035
+		var footing := _box(self, "GateFooting", Vector3(side * 5.5, 0.32, -25.82), Vector3(2.55, 0.64, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)
+		footing.material_override = _material_for_surface("cut stone", Color("514d49"))
+		for spike_index in range(2):
+			var spike := _box(self, "GateIronFinial", Vector3(side * (4.65 + float(spike_index) * 1.25), 6.0, -26.0), Vector3(0.22, 1.25, 0.22), Color("343638"))
+			spike.rotation.z = side * 0.18
+	# Three small crimson seals make the entrance readable from the approach.
+	for i in range(3):
+		var seal := _sphere(self, "GateCrimsonSeal", Vector3(-2.4 + float(i) * 2.4, 4.85, -25.55), 0.19, Color("a83d4b"), 0.42)
+		seal.scale = Vector3(0.72, 1.0, 0.42)
+		var seal_material := StandardMaterial3D.new()
+		seal_material.albedo_color = Color("a83d4b")
+		seal_material.emission_enabled = true
+		seal_material.emission = Color("8f2638")
+		seal_material.emission_energy_multiplier = 0.7
+		seal.material_override = seal_material
+	var gate_glow := OmniLight3D.new()
+	gate_glow.name = "GateCrimsonGlow"
+	gate_glow.position = Vector3(0.0, 5.0, -24.8)
+	gate_glow.light_color = Color("a83d4b")
+	gate_glow.light_energy = 0.42
+	gate_glow.omni_range = 6.0
+	add_child(gate_glow)
 
 func _build_region_landmarks() -> void:
 	# Broken watchtower and a red corruption scar give the clearing a memorable skyline.
@@ -655,11 +693,31 @@ func _build_region_landmarks() -> void:
 	var rune := _sphere(shrine, "RuneLight", Vector3(0, 2.1, 0.48), 0.25, Color("dfb96b"), 0.3)
 	rune.material_override = _painter_mat(Color("dfb96b"), 8.0, 0.12)
 	var shrine_light := OmniLight3D.new()
+	shrine_light.name = "ShrineLight"
 	shrine_light.position = Vector3(0, 2.4, 1.0)
 	shrine_light.light_color = Color("d5a85c")
 	shrine_light.light_energy = 0.8
 	shrine_light.omni_range = 5.0
 	shrine.add_child(shrine_light)
+
+	# The forgotten shrine now has a subtle magical heartbeat, with three
+	# lightweight floating shards that remain inexpensive on mobile hardware.
+	var rune_pulse := create_tween().set_loops()
+	rune_pulse.tween_property(rune, "scale", Vector3.ONE * 1.18, 0.95).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	rune_pulse.tween_property(rune, "scale", Vector3.ONE * 0.9, 0.95).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	var light_pulse := create_tween().set_loops()
+	light_pulse.tween_property(shrine_light, "light_energy", 1.15, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	light_pulse.tween_property(shrine_light, "light_energy", 0.45, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	for i in range(3):
+		var angle := TAU * float(i) / 3.0
+		var shard_position := Vector3(cos(angle) * 1.05, 2.75 + float(i % 2) * 0.22, sin(angle) * 0.72)
+		var shard := _sphere(shrine, "ShrineFloatingShard_%d" % i, shard_position, 0.13, Color("8e303c"), 0.48)
+		shard.scale = Vector3(0.55, 1.7, 0.55)
+		shard.rotation.z = -0.18 if i % 2 == 0 else 0.18
+		shard.material_override = _painter_mat(Color("8e303c"), 7.0, 0.16, 0, Color("421d29"))
+		var shard_tween := create_tween().set_loops()
+		shard_tween.tween_property(shard, "position", shard_position + Vector3(0.0, 0.16, 0.0), 1.0 + float(i) * 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		shard_tween.tween_property(shard, "position", shard_position - Vector3(0.1, 0.12, 0.0), 1.0 + float(i) * 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _build_swamp_region() -> void:
 	# A connected second biome: shallow poisonous pools, dead trees and three cleanseable totems.
@@ -679,7 +737,7 @@ func _build_swamp_region() -> void:
 			var limb := _box(self, "DeadBranch", Vector3(x + branch * 0.75, 3.2, z), Vector3(1.8, 0.22, 0.24), Color("4b4439"))
 			limb.rotation.z = branch * -0.42
 	for i in range(3):
-		var x := [-13.0, 0.0, 13.0][i]
+		var x: float = [-13.0, 0.0, 13.0][i]
 		var totem := Node3D.new()
 		totem.name = "SwampTotem_%d" % i
 		totem.position = Vector3(x, 0.0, -91.0 - (i % 2) * 9.0)
@@ -1147,6 +1205,18 @@ func _build_hud() -> void:
 	stamina_bar.value = 100
 	stamina_bar.show_percentage = false
 	hud.add_child(stamina_bar)
+	stamina_label = Label.new()
+	stamina_label.position = Vector2(220, 169)
+	stamina_label.text = "FÔLEGO 100%"
+	stamina_label.add_theme_font_size_override("font_size", 11)
+	stamina_label.add_theme_color_override("font_color", Color("9acfc2"))
+	hud.add_child(stamina_label)
+	dodge_label = Label.new()
+	dodge_label.position = Vector2(22, 188)
+	dodge_label.text = "ESQUIVA  •  pronta"
+	dodge_label.add_theme_font_size_override("font_size", 11)
+	dodge_label.add_theme_color_override("font_color", Color("9acfc2"))
+	hud.add_child(dodge_label)
 	boss_hud_panel = PanelContainer.new()
 	boss_hud_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	boss_hud_panel.position = Vector2(-170, 16)
@@ -1192,8 +1262,6 @@ func _build_hud() -> void:
 	inventory_label = Label.new()
 	inventory_label.position = Vector2(22, 280)
 	inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
-	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
 	inventory_label.add_theme_font_size_override("font_size", 12)
 	hud.add_child(inventory_label)
 	# Full backpack panel: compact, touch-friendly and hidden during exploration.
@@ -1288,7 +1356,8 @@ func _process(delta: float) -> void:
 			world_environment.environment.ambient_light_energy = 0.28 + daylight * 0.42
 	if save_toast_timer > 0.0:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
-		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
+		if save_toast_timer == 0.0 and toast_label and (toast_label.text == "Progresso salvo" or toast_label.text == "Falha ao salvar progresso"):
+			toast_label.text = ""
 	if boss_hud_panel:
 		boss_hud_panel.visible = quest_stage == 12
 		if quest_stage == 12:
@@ -1333,7 +1402,24 @@ func _process(delta: float) -> void:
 	elif quest_stage == 5 and _nearest_swamp_totem_distance() < 3.5: prompt_label.text = "INTERAGIR — Purificar Totem"
 	else: prompt_label.text = "Arraste o lado direito para mover a câmera"
 	if stamina_bar and player.has_method("get_stamina"):
-		stamina_bar.value = player.get_stamina()
+		var current_stamina: float = player.get_stamina()
+		stamina_bar.value = current_stamina
+		var stamina_color := Color("ff7777") if current_stamina <= 20.0 else (Color("e6bd72") if current_stamina <= 40.0 else Color("9acfc2"))
+		stamina_bar.modulate = stamina_color
+		if stamina_label:
+			stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)
+			stamina_label.add_theme_color_override("font_color", stamina_color)
+	perfect_dodge_feedback_timer = maxf(0.0, perfect_dodge_feedback_timer - delta)
+	if dodge_label:
+		if perfect_dodge_feedback_timer > 0.0:
+			dodge_label.text = "ESQUIVA  •  PERFEITA!"
+			dodge_label.add_theme_color_override("font_color", Color("e6d17a"))
+		elif player.dodge_cooldown > 0.0:
+			dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown
+			dodge_label.add_theme_color_override("font_color", Color("e6bd72"))
+		else:
+			dodge_label.text = "ESQUIVA  •  pronta"
+			dodge_label.add_theme_color_override("font_color", Color("9acfc2"))
 	if shadow_skill_label and player.shadow_pulse_cooldown > 0.0:
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: %.1fs" % player.shadow_pulse_cooldown
 	elif shadow_skill_label:
@@ -1426,7 +1512,7 @@ func _open_river_chest(chest_id: int) -> void:
 	if glow: glow.visible = false
 	var light := chest.get_node_or_null("ChestGlowLight")
 	if light: light.light_energy = 0.0
-	var xp_reward := [35, 45, 55][chest_id]
+	var xp_reward: int = [35, 45, 55][chest_id]
 	var essence_reward := 1 if chest_id < 2 else 2
 	var shard_reward := 1 if chest_id == 2 else 0
 	_grant_xp(xp_reward)
@@ -1774,6 +1860,14 @@ func enemy_defeated(kind: int = 0) -> void:
 			_update_quest()
 
 
+func player_perfect_dodge() -> void:
+	perfect_dodge_feedback_timer = 0.9
+	if is_instance_valid(toast_label):
+		toast_label.text = "ESQUIVA PERFEITA! +10 FÔLEGO"
+	if is_instance_valid(dodge_label):
+		dodge_label.text = "ESQUIVA  •  PERFEITA!"
+		dodge_label.add_theme_color_override("font_color", Color("e6d17a"))
+
 func combat_combo_changed(step: int) -> void:
 	if not is_instance_valid(combo_label): return
 	if step <= 0:
@@ -1822,7 +1916,12 @@ func player_health_changed(current: int, maximum: int) -> void:
 	if health_bar:
 		health_bar.max_value = maximum
 		health_bar.value = current
-	if health_label: health_label.text = "TOBI  •  VIDA %d/%d" % [current, maximum]
+	var low_health := current > 0 and current <= int(float(maximum) * 0.30)
+	if health_label:
+		health_label.text = "TOBI  •  VIDA %d/%d%s" % [current, maximum, "  •  CRÍTICO" if low_health else ""]
+		health_label.add_theme_color_override("font_color", Color("ff7777") if low_health else Color("ffffff"))
+	if health_bar:
+		health_bar.modulate = Color("ff7777") if low_health else Color("ffffff")
 
 func player_defeated() -> void:
 	toast_label.text = "Tobi caiu! Retornando ao acampamento..."
@@ -1897,9 +1996,17 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	var save_error := cfg.save(save_path)
+	if save_error != OK:
+		push_error("Falha ao salvar progresso: %s" % error_string(save_error))
+		if toast_label:
+			toast_label.text = "Falha ao salvar progresso"
+			toast_label.add_theme_color_override("font_color", Color("ff7777"))
+			save_toast_timer = 3.0
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
+		toast_label.add_theme_color_override("font_color", Color("9acfc2"))
 		save_toast_timer = 1.6
 
 func _load_save() -> void:
@@ -1977,8 +2084,8 @@ func _load_save() -> void:
 	if saved_shrine_used and not cfg.has_section_key("progress", "checkpoint_x"):
 		checkpoint_x = 15.0
 		checkpoint_z = 29.0
-	# Reject corrupted or out-of-world checkpoint coordinates before using them.
-	if absf(checkpoint_x) <= 140.0 and absf(checkpoint_z) <= 140.0:
+	# Reject corrupted checkpoints outside the 700x700 world bounds, with a 20-unit safety margin.
+	if absf(checkpoint_x) <= 330.0 and absf(checkpoint_z) <= 330.0:
 		checkpoint_position = Vector3(checkpoint_x, 0.0, checkpoint_z)
 
 func _notification(what: int) -> void:

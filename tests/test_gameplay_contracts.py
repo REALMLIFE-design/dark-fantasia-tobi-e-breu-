@@ -86,8 +86,13 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('player.global_position = checkpoint_position', self.world)
 
     def test_checkpoint_coordinates_are_validated_on_load(self):
-        self.assertIn('absf(checkpoint_x) <= 140.0', self.world)
-        self.assertIn('absf(checkpoint_z) <= 140.0', self.world)
+        self.assertIn('absf(checkpoint_x) <= 330.0', self.world)
+        self.assertIn('absf(checkpoint_z) <= 330.0', self.world)
+        self.assertIn('700x700 world bounds', self.world)
+
+    def test_checkpoint_validation_covers_expanded_world_with_safety_margin(self):
+        self.assertIn('plane.size = Vector2(700, 700)', self.world)
+        self.assertIn('absf(checkpoint_x) <= 330.0 and absf(checkpoint_z) <= 330.0', self.world)
 
     def test_river_treasure_chests_are_interactive_and_persistent(self):
         self.assertIn('func _build_river_treasure_chests()', self.world)
@@ -367,16 +372,25 @@ class AndroidBuildContracts(unittest.TestCase):
     def test_github_actions_build_can_be_started_manually_and_uploads_apk(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('workflow_dispatch:', workflow)
-        self.assertIn('firebelley/godot-export@v8.0.0', workflow)
-        self.assertIn('presets_to_export: Android', workflow)
         self.assertIn('actions/upload-artifact@v4', workflow)
         self.assertIn('build/TobiEBreu.apk', workflow)
+        self.assertIn('python3 -m pip install --disable-pip-version-check Pillow', workflow)
+        self.assertIn('--export-debug "Android"', workflow)
+        self.assertIn('Configurar exportação Android sem Gradle', workflow)
+        self.assertIn('gradle_build/min_sdk', workflow)
+        self.assertIn('gradle_build/target_sdk', workflow)
+        self.assertIn('Disponibilizar APK assinado', workflow)
+
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('Locate Godot project (repository root or subfolder)', workflow)
-        self.assertIn('if [ -f project.godot ]', workflow)
-        self.assertIn('elif [ -f TobiEBreu-3D/project.godot ]', workflow)
-        self.assertIn('steps.locate-project.outputs.project_path', workflow)
+        self.assertIn('if [ -f "$GITHUB_WORKSPACE/project.godot" ]', workflow)
+        self.assertIn('find extracted -name project.godot', workflow)
+        self.assertIn('PROJECT_PATH=', workflow)
+        self.assertIn('python3 -m unittest discover', workflow)
+        self.assertIn('tools/validate_project.py', workflow)
+        self.assertIn('--import --quit', workflow)
+        self.assertIn('TOBI_BREU_BOOT_READY', workflow)
 
     def test_world_has_expanded_exploration_space_and_branch_trails(self):
         world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
@@ -510,4 +524,336 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('INV_VIEW_MATRIX * vec4(VERTEX, 1.0)', shader)
         self.assertIn('fract(world_uv * max(brush_scale, 0.5)', shader)
         self.assertIn('atlas_uv_for(world_pos.xz, tile_index)', shader)
+
+
+
+class ForgottenShrineVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_forgotten_shrine_has_lightweight_animated_rune_and_shards(self):
+        landmarks = self.world[self.world.index('func _build_region_landmarks'):self.world.index('func _build_swamp_region')]
+        self.assertIn('var rune_pulse := create_tween().set_loops()', landmarks)
+        self.assertIn('var light_pulse := create_tween().set_loops()', landmarks)
+        self.assertIn('ShrineFloatingShard_%d', landmarks)
+        self.assertIn('Tween.TRANS_SINE', landmarks)
+
+    def test_forgotten_shrine_keeps_checkpoint_reward_and_save_contract(self):
+        self.assertIn('checkpoint_position = shrine.global_position + Vector3(0, 0, 4)', self.world)
+        self.assertIn('shards += 1', self.world)
+        self.assertIn('_grant_xp(25)', self.world)
+        self.assertIn('cfg.set_value("progress", "shrine_used"', self.world)
+        self.assertIn('saved_shrine_used = bool(cfg.get_value("progress", "shrine_used", false))', self.world)
+
+class MobileControlContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+        cls.project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+
+    def test_touch_movement_buttons_press_and_release_input_actions(self):
+        self.assertIn('move_btn.button_down.connect(Input.action_press.bind(data.a))', self.world)
+        self.assertIn('move_btn.button_up.connect(Input.action_release.bind(data.a))', self.world)
+        for action in ['move_forward', 'move_back', 'move_left', 'move_right']:
+            self.assertIn('"a":"%s"' % action, self.world)
+            self.assertIn(action + '={', self.project)
+
+    def test_touch_action_buttons_route_to_gameplay_handlers(self):
+        for action in ['attack', 'jump', 'interact', 'dodge', 'potion', 'upgrade', 'inventory', 'shadow']:
+            self.assertIn('"a":"%s"' % action, self.world)
+        for handler in ['player.do_attack()', 'player.do_jump()', '_interact()', 'player.do_dodge()', '_use_potion()', '_upgrade_weapon()', '_toggle_inventory()', 'player.do_shadow_pulse()']:
+            self.assertIn(handler, self.world)
+
+    def test_touch_camera_drag_is_limited_to_right_side_of_screen(self):
+        self.assertIn('if event is InputEventScreenDrag:', self.player)
+        self.assertIn('event.position.x > get_viewport().get_visible_rect().size.x * 0.42', self.player)
+        self.assertIn('camera_yaw_offset -= event.relative.x * 0.006', self.player)
+
+class LowHealthFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_critical_health_has_clear_visual_warning_and_recovers(self):
+        health_update = self.world[self.world.index('func player_health_changed'):self.world.index('func player_defeated')]
+        self.assertIn('current <= int(float(maximum) * 0.30)', health_update)
+        self.assertIn('"  •  CRÍTICO" if low_health else ""', health_update)
+        self.assertIn('Color("ff7777") if low_health else Color("ffffff")', health_update)
+        self.assertIn('health_bar.modulate', health_update)
+
+class MobileCameraPinchContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_two_finger_pinch_zoom_is_clamped_and_preserves_camera_angle(self):
+        self.assertIn('if event is InputEventScreenTouch:', self.player)
+        self.assertIn('touch_points[event.index] = event.position', self.player)
+        self.assertIn('pinch_start_distance = points[0].distance_to(points[1])', self.player)
+        self.assertIn('camera.position.z = clampf(pinch_start_camera_distance - (pinch_distance - pinch_start_distance) * 0.018, 4.2, 9.5)', self.player)
+        self.assertIn('camera.position.y = camera.position.z * 0.369', self.player)
+
+    def test_pinch_gesture_does_not_rotate_camera_as_single_finger_drag(self):
+        input_handler = self.player[self.player.index('func _unhandled_input'):self.player.index('func do_jump')]
+        self.assertIn('if touch_points.size() >= 2:', input_handler)
+        self.assertIn('elif event.position.x > get_viewport().get_visible_rect().size.x * 0.42:', input_handler)
+
+
+class StaminaFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_stamina_hud_shows_live_value_and_warning_colors(self):
+        self.assertIn('stamina_label.text = "FÔLEGO 100%"', self.world)
+        self.assertIn('stamina_label.text = "FÔLEGO %d%%" % roundi(current_stamina)', self.world)
+        self.assertIn('current_stamina <= 20.0', self.world)
+        self.assertIn('current_stamina <= 40.0', self.world)
+        self.assertIn('stamina_bar.modulate = stamina_color', self.world)
+
+
+class EnemyHitFlashContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_hit_flash_uses_duplicated_materials_and_restores_base_color(self):
+        self.assertIn('var hit_flash_materials: Array[StandardMaterial3D] = []', self.enemy)
+        self.assertIn('source_material.duplicate() as StandardMaterial3D', self.enemy)
+        self.assertIn('hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)', self.enemy)
+        self.assertIn('hit_flash = 0.14', self.enemy)
+        self.assertIn('_update_hit_flash_materials()', self.enemy)
+
+
+class BossChargeFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_leviathan_core_brightens_during_telegraphed_attack(self):
+        self.assertIn('var charge_progress := clampf(1.0 - attack_windup_timer / maxf(attack_windup_duration, 0.01)', self.enemy)
+        self.assertIn('core_base_energy := 2.8 if boss_enraged else 1.7', self.enemy)
+        self.assertIn('charge_progress * 2.4', self.enemy)
+        self.assertIn('boss_core_material.emission_energy_multiplier', self.enemy)
+
+
+class FloatingDamageNumberContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_damage_numbers_float_fade_and_are_more_visible_for_elites(self):
+        self.assertIn('func _spawn_damage_number(amount: int) -> void:', self.enemy)
+        self.assertIn('number_label.text = str(amount)', self.enemy)
+        self.assertIn('number_label.no_depth_test = true', self.enemy)
+        self.assertIn('number_label.position.y + 0.72', self.enemy)
+        self.assertIn('"modulate:a", 0.0, 0.58', self.enemy)
+        self.assertIn('number_label.font_size = 42 if enemy_kind >= 3 else 34', self.enemy)
+        self.assertIn('_spawn_damage_number(amount)', self.enemy)
+
+
+class DodgeCooldownHudContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_dodge_hud_shows_cooldown_and_ready_state(self):
+        self.assertIn('var dodge_label: Label', self.world)
+        self.assertIn('dodge_label.text = "ESQUIVA  •  %.1fs" % player.dodge_cooldown', self.world)
+        self.assertIn('dodge_label.text = "ESQUIVA  •  pronta"', self.world)
+        self.assertIn('dodge_label.add_theme_color_override("font_color", Color("e6bd72"))', self.world)
+
+
+class PlayerDamageFlashContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_player_damage_flash_duplicates_materials_and_restores_original_colors(self):
+        self.assertIn('func _cache_damage_flash_materials(node: Node) -> void:', self.player)
+        self.assertIn('source_material.duplicate() as StandardMaterial3D', self.player)
+        self.assertIn('damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)', self.player)
+        self.assertIn('damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)', self.player)
+        self.assertIn('damage_flash = 0.16', self.player)
+        self.assertIn('_update_damage_flash()', self.player)
+
+
+class EnemyStrafeCombatContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_scout_and_wraith_use_flanking_orbit_movement(self):
+        self.assertIn('var strafe_timer := 0.0', self.enemy)
+        self.assertIn('if enemy_kind == 2 or enemy_kind == 7:', self.enemy)
+        self.assertIn('var tangent := Vector3(-chase_direction.z, 0.0, chase_direction.x) * strafe_direction', self.enemy)
+        self.assertIn('preferred_distance := 4.8 if enemy_kind == 2 else 5.8', self.enemy)
+        self.assertIn('desired_direction = (chase_direction * radial_weight + tangent * orbit_weight).normalized()', self.enemy)
+
+
+class ComboFinisherContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_third_combo_hit_knocks_back_regular_enemies_and_respects_boss_resistance(self):
+        attack = self.player[self.player.index('func do_attack'):self.player.index('func _create_shadow_pulse_visual')]
+        self.assertIn('if combo_step == 3 and not enemy.get("dead"):', attack)
+        self.assertIn('knockback_strength := 5.2 if int(enemy.get("enemy_kind")) < 3 else 2.0', attack)
+        self.assertIn('enemy.velocity.x += knockback_direction.x * knockback_strength', attack)
+        self.assertIn('enemy.hit_recoil = maxf(float(enemy.get("hit_recoil")), 0.28)', attack)
+
+
+class EnemyAttackTelegraphContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_attack_warnings_use_distinct_colors_and_intensify_before_impact(self):
+        self.assertIn('func _attack_warning_color() -> Color:', self.enemy)
+        self.assertIn('return Color("62d8c8")', self.enemy)
+        self.assertIn('return Color("79c9f2")', self.enemy)
+        self.assertIn('return Color("e7c477")', self.enemy)
+        self.assertIn('attack_telegraph_material.emission = warning_color', self.enemy)
+        self.assertIn('windup_progress * 1.2', self.enemy)
+        self.assertIn('attack_telegraph_material.emission_energy_multiplier', self.enemy)
+
+
+class PerfectDodgeContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_timed_dodge_rewards_stamina_only_once_and_shows_feedback(self):
+        damage = self.player[self.player.index('func take_damage'):]
+        self.assertIn('dodge_time > 0.0 and not dodge_perfect_used', damage)
+        self.assertIn('dodge_perfect_used = true', damage)
+        self.assertIn('stamina = minf(100.0, stamina + 10.0)', damage)
+        self.assertIn('world.player_perfect_dodge()', damage)
+        self.assertIn('ESQUIVA PERFEITA! +10 FÔLEGO', self.world)
+        self.assertIn('ESQUIVA  •  PERFEITA!', self.world)
+
+    def test_each_new_dodge_resets_perfect_dodge_reward(self):
+        dodge = self.player[self.player.index('func do_dodge'):self.player.index('func get_stamina')]
+        self.assertIn('dodge_perfect_used = false', dodge)
+
+
+class PerfectDodgeVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.player = (ROOT / 'scripts/player.gd').read_text(encoding='utf-8')
+
+    def test_perfect_dodge_uses_a_short_cyan_emissive_flash(self):
+        self.assertIn('var perfect_dodge_flash := 0.0', self.player)
+        self.assertIn('perfect_dodge_flash = 0.22', self.player)
+        self.assertIn('Color("62d8c8")', self.player)
+        self.assertIn('material.emission_enabled = true', self.player)
+        self.assertIn('material.emission = Color("35cdbb")', self.player)
+        self.assertIn('material.emission_enabled = false', self.player)
+        self.assertIn('perfect_strength * 1.35', self.player)
+
+
+class PerfectDodgeHudPersistenceContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_perfect_dodge_message_survives_hud_refresh(self):
+        self.assertIn('var perfect_dodge_feedback_timer := 0.0', self.world)
+        self.assertIn('perfect_dodge_feedback_timer = maxf(0.0, perfect_dodge_feedback_timer - delta)', self.world)
+        self.assertIn('if perfect_dodge_feedback_timer > 0.0:', self.world)
+        self.assertIn('perfect_dodge_feedback_timer = 0.9', self.world)
+
+
+
+class SaveFailureFeedbackContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_save_errors_are_reported_instead_of_silently_claiming_success(self):
+        save_block = self.world[self.world.index('func _save_game'):self.world.index('func _load_save')]
+        self.assertIn('var save_error := cfg.save(save_path)', save_block)
+        self.assertIn('if save_error != OK:', save_block)
+        self.assertIn('push_error("Falha ao salvar progresso:', save_block)
+        self.assertIn('toast_label.text = "Falha ao salvar progresso"', save_block)
+        self.assertIn('Color("ff7777")', save_block)
+
+    def test_save_feedback_clears_after_timeout_for_success_and_failure(self):
+        self.assertIn('toast_label.text == "Progresso salvo" or toast_label.text == "Falha ao salvar progresso"', self.world)
+        self.assertIn('save_toast_timer = 3.0', self.world)
+
+
+class EnemyDeathBurstContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+
+    def test_enemy_defeat_spawns_six_fading_shards_with_type_colors(self):
+        death = self.enemy[self.enemy.index('func take_damage'):]
+        burst = self.enemy[self.enemy.index('func _spawn_death_burst'):self.enemy.index('func _add(mesh')]
+        self.assertIn('_spawn_death_burst()', death)
+        self.assertIn('for shard_index in range(6):', burst)
+        self.assertIn('BaseMaterial3D.TRANSPARENCY_ALPHA', burst)
+        self.assertIn('shard_tween.parallel().tween_property(shard, "scale", Vector3.ZERO, 0.38)', burst)
+        self.assertIn('shard_tween.parallel().tween_property(shard_material, "albedo_color"', burst)
+        self.assertIn('shard_tween.tween_callback(burst.queue_free)', burst)
+        for color in ('d85a4d', '79c9f2', '62d8c8', 'e7c477'):
+            self.assertIn('Color("%s")' % color, burst)
+
+class GothicGateVisualContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+
+    def test_ruined_gate_gets_crimson_dark_fantasy_details(self):
+        self.assertIn('_build_gothic_gate_accents()', self.world)
+        self.assertIn('func _build_gothic_gate_accents() -> void:', self.world)
+        self.assertIn('GateCarvedCap', self.world)
+        self.assertIn('GateIronFinial', self.world)
+        self.assertIn('GateCrimsonSeal', self.world)
+        self.assertIn('GateCrimsonGlow', self.world)
+
+    def test_gate_accents_remain_visual_only_and_keep_the_entrance_open(self):
+        accents = self.world[self.world.index('func _build_gothic_gate_accents'):self.world.index('func _build_region_landmarks')]
+        self.assertNotIn('StaticBody3D.new()', accents)
+        self.assertNotIn('CollisionShape3D.new()', accents)
+        self.assertIn('narrowing the walkable opening', accents)
+
+class PluginAssetIntegrationContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        cls.loader = (ROOT / 'scripts/plugin_asset_loader.gd').read_text(encoding='utf-8')
+        cls.shader = (ROOT / 'scripts/aqueduct_stone.gdshader').read_text(encoding='utf-8')
+        cls.import_readme = (ROOT / 'assets/plugin_imports/README.md').read_text(encoding='utf-8')
+
+    def test_aqueduct_material_is_optional_until_all_required_maps_exist(self):
+        self.assertIn('PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)', self.world)
+        self.assertIn('PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)', self.world)
+        self.assertIn('FileAccess.file_exists(texture_path)', self.loader)
+        self.assertIn('base_color.png', self.loader)
+        self.assertIn('normal.png', self.loader)
+        self.assertIn('roughness.png', self.loader)
+        self.assertIn('ao.png', self.loader)
+
+    def test_mobile_shader_uses_pbr_maps_without_height_displacement(self):
+        self.assertIn('ALBEDO = base_sample.rgb', self.shader)
+        self.assertIn('ROUGHNESS = texture(roughness_texture, UV).r', self.shader)
+        self.assertIn('NORMAL_MAP = texture(normal_texture, UV).rgb', self.shader)
+        self.assertIn('AO = mix(1.0', self.shader)
+        self.assertNotIn('vertex()', self.shader)
+
+    def test_meshy_gate_loader_is_guarded_and_not_auto_instantiated(self):
+        self.assertIn('func load_meshy_gate(', self.loader)
+        self.assertIn('if parent == null or not ResourceLoader.exists(MESHY_GATE_PATH)', self.loader)
+        self.assertNotIn('load_meshy_gate(', self.world)
+
+    def test_plugin_asset_layout_documents_pinoc_rig_and_splat_limits(self):
+        self.assertIn('X Bot', self.import_readme)
+        self.assertIn('Gaussian Splat SPZ', self.import_readme)
+        self.assertIn('gothic_gate.glb', self.import_readme)
 

@@ -20,8 +20,16 @@ var stamina := 100.0
 var dodge_cooldown := 0.0
 var dodge_time := 0.0
 var dodge_direction := Vector3.ZERO
+var dodge_perfect_used := false
 var camera_yaw_offset := 0.0
+var touch_points: Dictionary = {}
+var pinch_start_distance := 0.0
+var pinch_start_camera_distance := 6.5
 var hit_reaction := 0.0
+var damage_flash := 0.0
+var perfect_dodge_flash := 0.0
+var damage_flash_materials: Array[StandardMaterial3D] = []
+var damage_flash_base_colors: Array[Color] = []
 var death_pose := false
 var landing_time := 0.0
 var combo_step := 0
@@ -48,6 +56,7 @@ func _ready() -> void:
 	visual.add_child(attack_visual)
 	_create_shadow_pulse_visual()
 	_make_character()
+	_cache_damage_flash_materials(visual)
 	camera_pivot = Node3D.new()
 	camera_pivot.position.y = 1.45
 	add_child(camera_pivot)
@@ -57,6 +66,34 @@ func _ready() -> void:
 	camera.current = true
 	camera.fov = 72
 	camera_pivot.add_child(camera)
+
+func _cache_damage_flash_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var source_material := mesh_instance.material_override as StandardMaterial3D
+		if source_material:
+			var flash_material := source_material.duplicate() as StandardMaterial3D
+			mesh_instance.material_override = flash_material
+			damage_flash_materials.append(flash_material)
+			damage_flash_base_colors.append(flash_material.albedo_color)
+	for child in node.get_children():
+		_cache_damage_flash_materials(child)
+
+func _update_damage_flash() -> void:
+	var damage_strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	var perfect_strength := clampf(perfect_dodge_flash / 0.22, 0.0, 1.0)
+	for i in range(damage_flash_materials.size()):
+		var material := damage_flash_materials[i]
+		if is_instance_valid(material):
+			if perfect_strength > 0.0:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)
+				material.emission_enabled = true
+				material.emission = Color("35cdbb")
+				material.emission_energy_multiplier = perfect_strength * 1.35
+			else:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)
+				material.emission_energy_multiplier = 0.0
+				material.emission_enabled = false
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -138,7 +175,7 @@ func _make_character() -> void:
 	var cat_head := SphereMesh.new(); cat_head.radius = 0.23; cat_head.height = 0.42
 	_add_visual_part(cat_head_pivot, cat_head, Vector3.ZERO, Color("171b21"))
 	for x in [-0.14, 0.14]:
-		var ear := ConeMesh.new(); ear.radius = 0.085; ear.height = 0.22
+		var ear := CylinderMesh.new(); ear.top_radius = 0.0; ear.bottom_radius = 0.085; ear.height = 0.22; ear.radial_segments = 8
 		_add_visual_part(cat_head_pivot, ear, Vector3(x, 0.19, -0.015), Color("171b21"))
 		var eye := SphereMesh.new(); eye.radius = 0.035
 		_add_visual_part(cat_head_pivot, eye, Vector3(x * 0.62, -0.015, 0.205), Color("d5c46d"))
@@ -189,6 +226,9 @@ func _physics_process(delta: float) -> void:
 	stamina = minf(100.0, stamina + 16.0 * delta)
 	attack_flash = maxf(0.0,attack_flash-delta)
 	hit_reaction = maxf(0.0, hit_reaction - delta)
+	damage_flash = maxf(0.0, damage_flash - delta)
+	perfect_dodge_flash = maxf(0.0, perfect_dodge_flash - delta)
+	_update_damage_flash()
 	landing_time = maxf(0.0, landing_time - delta)
 	invulnerable = maxf(0.0,invulnerable-delta)
 	anim_time += delta
@@ -286,9 +326,27 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_K:
 		do_shadow_pulse()
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touch_points[event.index] = event.position
+			if touch_points.size() == 2:
+				var points: Array = touch_points.values()
+				pinch_start_distance = points[0].distance_to(points[1])
+				pinch_start_camera_distance = camera.position.z
+		else:
+			touch_points.erase(event.index)
+			if touch_points.size() < 2:
+				pinch_start_distance = 0.0
 	if event is InputEventScreenDrag:
-		# Drag on the right half of the screen to orbit the camera.
-		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
+		touch_points[event.index] = event.position
+		if touch_points.size() >= 2:
+			var points: Array = touch_points.values()
+			var pinch_distance: float = points[0].distance_to(points[1])
+			if pinch_start_distance > 0.0:
+				camera.position.z = clampf(pinch_start_camera_distance - (pinch_distance - pinch_start_distance) * 0.018, 4.2, 9.5)
+				camera.position.y = camera.position.z * 0.369
+		elif event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
+			# One-finger drag on the right side orbits the camera.
 			camera_yaw_offset -= event.relative.x * 0.006
 			camera.rotation.x = clampf(camera.rotation.x - event.relative.y * 0.003, -0.75, -0.08)
 
@@ -314,6 +372,13 @@ func do_attack() -> void:
 		var flat := Vector3(offset.x, 0.0, offset.z)
 		if flat.length() <= 2.65 and (flat.length() < 0.01 or forward.dot(flat.normalized()) > 0.18):
 			enemy.take_damage(combo_damage)
+			if combo_step == 3 and not enemy.get("dead"):
+				# O terceiro golpe encerra o combo com impacto e empurrão; chefes resistem parcialmente.
+				var knockback_direction := flat.normalized() if flat.length() > 0.01 else global_basis.z
+				var knockback_strength := 5.2 if int(enemy.get("enemy_kind")) < 3 else 2.0
+				enemy.velocity.x += knockback_direction.x * knockback_strength
+				enemy.velocity.z += knockback_direction.z * knockback_strength
+				enemy.hit_recoil = maxf(float(enemy.get("hit_recoil")), 0.28)
 
 
 func _create_shadow_pulse_visual() -> void:
@@ -373,6 +438,7 @@ func do_shadow_pulse() -> void:
 
 func do_dodge() -> void:
 	if dodge_cooldown > 0.0 or stamina < 28.0 or hp <= 0: return
+	dodge_perfect_used = false
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	dodge_direction = (camera_pivot.global_basis * Vector3(input.x, 0, input.y)).normalized()
 	dodge_direction.y = 0
@@ -388,9 +454,18 @@ func get_stamina() -> float:
 	return stamina
 
 func take_damage(amount: int) -> void:
-	if invulnerable > 0.0 or hp <= 0: return
+	if hp <= 0: return
+	if invulnerable > 0.0:
+		if dodge_time > 0.0 and not dodge_perfect_used:
+			dodge_perfect_used = true
+			perfect_dodge_flash = 0.22
+			stamina = minf(100.0, stamina + 10.0)
+			if world and world.has_method("player_perfect_dodge"):
+				world.player_perfect_dodge()
+		return
 	hp = maxi(0, hp - amount)
 	hit_reaction = 0.22
+	damage_flash = 0.16
 	invulnerable = 0.65
 	if world and world.has_method("player_health_changed"):
 		world.player_health_changed(hp, max_hp)

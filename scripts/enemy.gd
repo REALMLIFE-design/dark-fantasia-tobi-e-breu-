@@ -8,6 +8,8 @@ var attack_telegraph: MeshInstance3D
 var attack_telegraph_material: StandardMaterial3D
 var attack_impact_flash := 0.0
 var hit_flash := 0.0
+var hit_flash_materials: Array[StandardMaterial3D] = []
+var hit_flash_base_colors: Array[Color] = []
 var visual: Node3D
 var target: Node3D
 var patrol_origin := Vector3.ZERO
@@ -30,6 +32,8 @@ var boss_core_material: StandardMaterial3D
 var crab_lunge_velocity := Vector3.ZERO
 var crab_lunge_timer := 0.0
 var crab_claws: Array[Node3D] = []
+var strafe_timer := 0.0
+var strafe_direction := 1.0
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -94,10 +98,12 @@ func _ready() -> void:
 	_add_to(head_pivot, head, Vector3(0, 0.08, 0), Color("9caa70") if enemy_kind < 3 else Color("a6a18b"))
 	var brow := BoxMesh.new(); brow.size = Vector3(0.38, 0.09, 0.08)
 	_add_to(head_pivot, brow, Vector3(0, 0.14, 0.245), Color("302b29"))
-	var hat := ConeMesh.new(); hat.radius = 0.42 if enemy_kind == 4 else 0.30; hat.height = 0.62
+	var hat := CylinderMesh.new(); hat.top_radius = 0.0; hat.bottom_radius = 0.42 if enemy_kind == 4 else 0.30; hat.height = 0.62; hat.radial_segments = 8
 	_add_to(head_pivot, hat, Vector3(0, 0.42, -0.015), Color("493e34") if enemy_kind != 4 else Color("263f3b"))
 	var left_arm := _make_enemy_limb("LeftArm", Vector3(-0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
 	var right_arm := _make_enemy_limb("RightArm", Vector3(0.38, 1.12, 0), Vector3(0, -0.22, 0), Vector3(0.18, 0.52, 0.18), body_color.darkened(0.08))
+	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
+	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var weapon_pivot := Node3D.new(); weapon_pivot.name = "WeaponPivot"; weapon_pivot.position = Vector3(0, -0.40, 0); right_arm.add_child(weapon_pivot)
 	weapon_pivot_ref = weapon_pivot
 	var weapon := BoxMesh.new(); weapon.size = Vector3(0.13, 0.78, 0.13)
@@ -109,7 +115,7 @@ func _ready() -> void:
 			_add_to(visual, shoulder, Vector3(side * 0.43, 1.18, 0.0), Color("59483c") if enemy_kind == 1 else Color("382d39"))
 	if enemy_kind == 3 or enemy_kind == 4:
 		for side in [-1.0, 1.0]:
-			var horn := ConeMesh.new(); horn.radius = 0.13; horn.height = 0.48
+			var horn := CylinderMesh.new(); horn.top_radius = 0.0; horn.bottom_radius = 0.13; horn.height = 0.48; horn.radial_segments = 8
 			_add_to(head_pivot, horn, Vector3(side * 0.25, 0.30, -0.02), Color("3b3035") if enemy_kind == 3 else Color("263f3b"))
 	if enemy_kind == 4:
 		var crystal := SphereMesh.new(); crystal.radius = 0.12; crystal.height = 0.24
@@ -120,7 +126,7 @@ func _ready() -> void:
 		var robe := CylinderMesh.new(); robe.top_radius = 0.30; robe.bottom_radius = 0.52; robe.height = 0.78; robe.radial_segments = 7
 		_add(robe, Vector3(0, 0.48, 0), Color("293f39"))
 		for shard_index in range(5):
-			var shard := ConeMesh.new(); shard.radius = 0.10; shard.height = 0.42
+			var shard := CylinderMesh.new(); shard.top_radius = 0.0; shard.bottom_radius = 0.10; shard.height = 0.42; shard.radial_segments = 6
 			_add_to(visual, shard, Vector3(cos(float(shard_index) * TAU / 5.0) * 0.35, 0.20, sin(float(shard_index) * TAU / 5.0) * 0.35), Color("416b58"))
 	elif enemy_kind == 3:
 		var chest_plate := BoxMesh.new(); chest_plate.size = Vector3(0.58, 0.58, 0.16)
@@ -131,7 +137,7 @@ func _ready() -> void:
 		var shell := SphereMesh.new(); shell.radius = 0.52; shell.height = 0.72
 		_add(shell, Vector3(0, 1.12, -0.10), Color("304b45"))
 		for side in [-1.0, 1.0]:
-			var tusk := ConeMesh.new(); tusk.radius = 0.22; tusk.height = 0.82
+			var tusk := CylinderMesh.new(); tusk.top_radius = 0.0; tusk.bottom_radius = 0.22; tusk.height = 0.82; tusk.radial_segments = 8
 			_add(tusk, Vector3(side * 0.43, 1.28, 0.30), Color("c2b58b"))
 		var core := SphereMesh.new(); core.radius = 0.19; core.height = 0.36
 		var core_material := StandardMaterial3D.new(); core_material.albedo_color = Color("9bc6a0"); core_material.emission_enabled = true; core_material.emission = Color("477b63"); core_material.emission_energy_multiplier = 1.7
@@ -145,7 +151,7 @@ func _ready() -> void:
 		var wraith_glow := StandardMaterial3D.new(); wraith_glow.albedo_color = Color("a9d9df"); wraith_glow.emission_enabled = true; wraith_glow.emission = Color("5da9c0"); wraith_glow.emission_energy_multiplier = 2.2
 		var core_instance := MeshInstance3D.new(); core_instance.mesh = wraith_core; core_instance.position = Vector3(0, 1.02, 0.25); core_instance.material_override = wraith_glow; visual.add_child(core_instance)
 		for side in [-1.0, 1.0]:
-			var claw := ConeMesh.new(); claw.radius = 0.075; claw.height = 0.44
+			var claw := CylinderMesh.new(); claw.top_radius = 0.0; claw.bottom_radius = 0.075; claw.height = 0.44; claw.radial_segments = 6
 			_add_to(visual, claw, Vector3(side * 0.48, 0.48, 0.16), Color("9ab9c1"))
 	elif enemy_kind == 8:
 		# Caranguejo de Prata: low profile, broad mineral shell and two oversized claws.
@@ -166,12 +172,12 @@ func _ready() -> void:
 			var claw := BoxMesh.new(); claw.size = Vector3(0.24, 0.22, 0.46)
 			_add_to(claw_pivot, claw, Vector3(0.0, 0.0, 0.04), Color("9baba0"))
 			for pincer_side in [-1.0, 1.0]:
-				var pincer := ConeMesh.new(); pincer.radius = 0.09; pincer.height = 0.27
+				var pincer := CylinderMesh.new(); pincer.top_radius = 0.0; pincer.bottom_radius = 0.09; pincer.height = 0.27; pincer.radial_segments = 6
 				var pincer_i := _add_to(claw_pivot, pincer, Vector3(pincer_side * 0.10, -0.07, 0.25), Color("c1b88f"))
 				pincer_i.rotation.x = PI * 0.5
 			crab_claws.append(claw_pivot)
 			for pincer_side in [-1.0, 1.0]:
-				var pincer := ConeMesh.new(); pincer.radius = 0.09; pincer.height = 0.27
+				var pincer := CylinderMesh.new(); pincer.top_radius = 0.0; pincer.bottom_radius = 0.09; pincer.height = 0.27; pincer.radial_segments = 6
 				var pincer_i := _add_to(visual, pincer, Vector3(side * 0.72 + pincer_side * 0.10, 0.48, 0.94), Color("c1b88f"))
 				pincer_i.rotation.x = PI * 0.5
 		var crab_legs: Array[Node3D] = []
@@ -202,8 +208,6 @@ func _ready() -> void:
 		for side in [-1.0, 1.0]:
 			var wrist := SphereMesh.new(); wrist.radius = 0.13; wrist.height = 0.16
 			_add_to(left_arm if side < 0.0 else right_arm, wrist, Vector3(0, -0.42, 0.02), Color("8c7959"))
-	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
-	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	if enemy_kind < 3:
 		for leg_node in [left_leg, right_leg]:
 			var boot := BoxMesh.new(); boot.size = Vector3(0.25, 0.16, 0.34)
@@ -228,6 +232,26 @@ func _ready() -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	visual.add_child(label)
 	target = get_tree().get_first_node_in_group("player")
+	_cache_hit_flash_materials(visual)
+
+func _cache_hit_flash_materials(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			var mesh_instance := child as MeshInstance3D
+			var source_material := mesh_instance.material_override as StandardMaterial3D
+			if source_material:
+				var flash_material := source_material.duplicate() as StandardMaterial3D
+				mesh_instance.material_override = flash_material
+				hit_flash_materials.append(flash_material)
+				hit_flash_base_colors.append(flash_material.albedo_color)
+		_cache_hit_flash_materials(child)
+
+func _update_hit_flash_materials() -> void:
+	var strength := clampf(hit_flash / 0.14, 0.0, 1.0)
+	for i in range(hit_flash_materials.size()):
+		var material := hit_flash_materials[i]
+		if is_instance_valid(material):
+			material.albedo_color = hit_flash_base_colors[i].lerp(Color.WHITE, strength * 0.88)
 
 func sync_boss_phase() -> void:
 	if enemy_kind == 6 and hp <= 340:
@@ -252,6 +276,45 @@ func _enter_boss_enrage(notify_world: bool = true) -> void:
 		attack_telegraph_material.albedo_color = Color(1.0, 0.24, 0.035, 0.9)
 	if notify_world and get_parent().has_method("river_boss_phase_changed"):
 		get_parent().river_boss_phase_changed()
+
+
+func _spawn_death_burst() -> void:
+	# Small low-cost shards make enemy defeats readable without particle systems.
+	var burst := Node3D.new()
+	get_parent().add_child(burst)
+	burst.global_position = global_position
+	var burst_color := Color("d7c7a0")
+	if enemy_kind == 6:
+		burst_color = Color("d85a4d")
+	elif enemy_kind == 7:
+		burst_color = Color("79c9f2")
+	elif enemy_kind == 8:
+		burst_color = Color("62d8c8")
+	elif enemy_kind >= 3:
+		burst_color = Color("e7c477")
+	for shard_index in range(6):
+		var shard := MeshInstance3D.new()
+		var shard_mesh := BoxMesh.new()
+		shard_mesh.size = Vector3(0.12, 0.18, 0.12)
+		shard.mesh = shard_mesh
+		var shard_material := StandardMaterial3D.new()
+		shard_material.albedo_color = burst_color
+		shard_material.emission_enabled = true
+		shard_material.emission = burst_color
+		shard_material.emission_energy_multiplier = 0.65
+		shard_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		shard.material_override = shard_material
+		burst.add_child(shard)
+		var angle := TAU * float(shard_index) / 6.0
+		shard.position = Vector3(cos(angle) * 0.16, 0.48 + float(shard_index % 2) * 0.12, sin(angle) * 0.16)
+		shard.rotation = Vector3(angle * 0.5, angle, 0.0)
+		var destination := shard.position + Vector3(cos(angle) * 0.72, 0.42 + float(shard_index % 3) * 0.08, sin(angle) * 0.72)
+		var shard_tween := burst.create_tween()
+		shard_tween.tween_property(shard, "position", destination, 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		shard_tween.parallel().tween_property(shard, "scale", Vector3.ZERO, 0.38)
+		shard_tween.parallel().tween_property(shard_material, "albedo_color", Color(burst_color.r, burst_color.g, burst_color.b, 0.0), 0.38)
+		if shard_index == 5:
+			shard_tween.tween_callback(burst.queue_free)
 
 func _add(mesh: Mesh, pos: Vector3, color: Color) -> void:
 	var mi := MeshInstance3D.new(); mi.mesh = mesh; mi.position = pos
@@ -290,6 +353,17 @@ func _create_attack_telegraph() -> void:
 	attack_telegraph.material_override = attack_telegraph_material
 	add_child(attack_telegraph)
 
+func _attack_warning_color() -> Color:
+	if enemy_kind == 6:
+		return Color("ff4d32") if boss_enraged else Color("f08a43")
+	if enemy_kind == 8:
+		return Color("62d8c8")
+	if enemy_kind == 7:
+		return Color("79c9f2")
+	if enemy_kind == 5:
+		return Color("e7c477")
+	return Color("ef765f")
+
 func _begin_attack() -> void:
 	var enraged := enemy_kind == 6 and hp <= 340
 	if enemy_kind == 6:
@@ -306,6 +380,9 @@ func _begin_attack() -> void:
 	attack_windup_timer = attack_windup_duration
 	attack_pose = attack_windup_duration
 	attack_telegraph.visible = true
+	var warning_color := _attack_warning_color()
+	attack_telegraph_material.albedo_color = Color(warning_color.r, warning_color.g, warning_color.b, 0.82)
+	attack_telegraph_material.emission = warning_color
 	var warning_radius := boss_slam_radius if boss_slam_active else (2.75 if enemy_kind == 8 else attack_range)
 	attack_telegraph.scale = Vector3(warning_radius, 1.0, warning_radius)
 	attack_timer = 1.25 if enemy_kind != 2 else 0.95
@@ -355,6 +432,7 @@ func _physics_process(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 	attack_pose = maxf(0.0, attack_pose - delta)
 	hit_flash = maxf(0.0, hit_flash - delta)
+	_update_hit_flash_materials()
 	hit_recoil = maxf(0.0, hit_recoil - delta)
 	attack_impact_flash = maxf(0.0, attack_impact_flash - delta)
 	if not is_instance_valid(target): target = get_tree().get_first_node_in_group("player")
@@ -367,6 +445,7 @@ func _physics_process(delta: float) -> void:
 		var warning_radius := boss_slam_radius if boss_slam_active else (2.75 if enemy_kind == 8 else attack_range)
 		attack_telegraph.scale = Vector3(warning_radius, 1.0, warning_radius) * (pulse * (1.0 + windup_progress * 0.16))
 		attack_telegraph_material.albedo_color.a = 0.42 + windup_progress * 0.48
+		attack_telegraph_material.emission_energy_multiplier = 1.1 + absf(sin(idle_time * 20.0)) * 0.75 + windup_progress * 1.2
 		velocity.x = move_toward(velocity.x, 0.0, 16.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, 16.0 * delta)
 		if attack_windup_timer <= 0.0:
@@ -375,8 +454,21 @@ func _physics_process(delta: float) -> void:
 		var d := target.global_position - global_position
 		d.y = 0.0
 		if d.length() < 15.0 and d.length() > attack_range:
-			velocity.x = move_toward(velocity.x, d.normalized().x * move_speed, 8.0 * delta)
-			velocity.z = move_toward(velocity.z, d.normalized().z * move_speed, 8.0 * delta)
+			var chase_direction := d.normalized()
+			var desired_direction := chase_direction
+			if enemy_kind == 2 or enemy_kind == 7:
+				# Batedores e espectros circulam o jogador em vez de correr sempre em linha reta.
+				strafe_timer -= delta
+				if strafe_timer <= 0.0:
+					strafe_timer = randf_range(1.1, 2.0) if enemy_kind == 2 else randf_range(1.7, 2.8)
+					strafe_direction = -strafe_direction if randf() < 0.72 else strafe_direction
+				var tangent := Vector3(-chase_direction.z, 0.0, chase_direction.x) * strafe_direction
+				var preferred_distance := 4.8 if enemy_kind == 2 else 5.8
+				var radial_weight := clampf((d.length() - preferred_distance) / 3.0, -0.65, 0.8)
+				var orbit_weight := 0.82 if enemy_kind == 2 else 0.68
+				desired_direction = (chase_direction * radial_weight + tangent * orbit_weight).normalized()
+			velocity.x = move_toward(velocity.x, desired_direction.x * move_speed, 8.0 * delta)
+			velocity.z = move_toward(velocity.z, desired_direction.z * move_speed, 8.0 * delta)
 			look_at(Vector3(target.global_position.x, global_position.y, target.global_position.z))
 		elif d.length() <= attack_range:
 			velocity.x = move_toward(velocity.x, 0.0, 12.0 * delta)
@@ -386,6 +478,12 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
 			velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
+	# O núcleo do Leviatã carrega energia durante o aviso do golpe.
+	if enemy_kind == 6 and is_instance_valid(boss_core_material):
+		var charge_progress := clampf(1.0 - attack_windup_timer / maxf(attack_windup_duration, 0.01), 0.0, 1.0) if attack_windup_timer > 0.0 else 0.0
+		var core_base_energy := 2.8 if boss_enraged else 1.7
+		var core_pulse := absf(sin(idle_time * 10.0)) * 0.35
+		boss_core_material.emission_energy_multiplier = core_base_energy + charge_progress * 2.4 + core_pulse * charge_progress
 	if crab_lunge_timer > 0.0:
 		crab_lunge_timer = maxf(0.0, crab_lunge_timer - delta)
 		velocity.x = crab_lunge_velocity.x
@@ -437,6 +535,24 @@ func _physics_process(delta: float) -> void:
 		head_pivot.rotation.x = -0.18
 	visual.scale = visual.scale.lerp(base_visual_scale * (Vector3(1.12, 0.88, 1.12) if hit_recoil > 0.0 else Vector3.ONE), minf(1.0, delta * 12.0))
 
+func _spawn_damage_number(amount: int) -> void:
+	if not is_instance_valid(visual):
+		return
+	var number_label := Label3D.new()
+	number_label.name = "DamageNumber"
+	number_label.text = str(amount)
+	number_label.font_size = 42 if enemy_kind >= 3 else 34
+	number_label.outline_size = 8
+	number_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number_label.no_depth_test = true
+	number_label.position = Vector3(randf_range(-0.22, 0.22), 1.75, 0.12)
+	number_label.modulate = Color("ffb36b") if enemy_kind >= 3 else Color("fff0d0")
+	visual.add_child(number_label)
+	var rise_tween := create_tween().set_parallel(true)
+	rise_tween.tween_property(number_label, "position:y", number_label.position.y + 0.72, 0.58).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	rise_tween.tween_property(number_label, "modulate:a", 0.0, 0.58).set_delay(0.12)
+	rise_tween.tween_callback(number_label.queue_free).set_delay(0.72)
+
 func take_damage(amount: int) -> void:
 	if dead: return
 	if enemy_kind == 3 and int(get_parent().get("quest_stage")) < 3: return
@@ -446,15 +562,18 @@ func take_damage(amount: int) -> void:
 	if enemy_kind == 7 and int(get_parent().get("quest_stage")) < 9: return
 	if enemy_kind == 8 and int(get_parent().get("quest_stage")) < 9: return
 	hp -= amount
+	_spawn_damage_number(amount)
 	if enemy_kind == 6:
 		if hp <= 340:
 			_enter_boss_enrage()
 		if get_parent().has_method("boss_health_changed"):
 			get_parent().boss_health_changed(maxi(0, hp), 680)
 	hit_recoil = 0.16
+	hit_flash = 0.14
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
 		dead = true
+		_spawn_death_burst()
 		attack_pose = 0.0
 		attack_windup_timer = 0.0
 		attack_telegraph.visible = false
