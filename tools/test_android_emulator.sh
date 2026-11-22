@@ -9,7 +9,7 @@ APK_PATH="$PROJECT_PATH/build/TobiEBreu.apk"
 LOG_PATH="$RUNNER_TEMP/android-launch.log"
 CRASH_LOG_PATH="$RUNNER_TEMP/android-crash-buffer.log"
 FAILURE_LOG_PATH="$RUNNER_TEMP/android-launch-failure.log"
-STARTUP_WAIT="${TOBI_TEST_SLEEP_SECONDS:-18}"
+STARTUP_WAIT="${TOBI_TEST_SLEEP_SECONDS:-75}"
 INTERACTION_WAIT="${TOBI_TEST_POST_TAP_SECONDS:-3}"
 
 if [[ ! -s "$APK_PATH" ]]; then
@@ -30,6 +30,14 @@ if [[ -z "$APP_PID" ]]; then
   adb logcat -d -t 3000 > "$FAILURE_LOG_PATH"
   cat "$FAILURE_LOG_PATH"
   echo "ERRO: o jogo fechou antes de permanecer aberto no Android"
+  exit 1
+fi
+
+# A fresh emulator install must fetch and mount the PCK published earlier in this workflow.
+adb logcat -d -v threadtime -t 8000 > "$LOG_PATH"
+if ! grep -Fq "Atualização aplicada automaticamente!" "$LOG_PATH"; then
+  cat "$LOG_PATH"
+  echo "ERRO: o jogo abriu, mas não confirmou a aplicação da atualização PCK automática"
   exit 1
 fi
 
