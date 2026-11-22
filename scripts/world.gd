@@ -6,6 +6,7 @@ const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
 const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
+const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -95,6 +96,7 @@ func _ready() -> void:
 	_build_region_landmarks()
 	_build_plugin_world_expansion()
 	_build_imported_plugin_models()
+	DARK_FANTASY_PROP_PACK.build_all(self)
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	await get_tree().process_frame
 	_build_swamp_region()
