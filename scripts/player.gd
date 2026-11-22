@@ -207,6 +207,8 @@ func _physics_process(delta: float) -> void:
 	_update_shadow_pulse_visual(delta)
 	if Input.is_action_just_pressed("dodge"):
 		do_dodge()
+	if Input.is_action_just_pressed("shadow"):
+		do_shadow_pulse()
 	dodge_cooldown = maxf(0.0, dodge_cooldown-delta)
 	dodge_time = maxf(0.0, dodge_time-delta)
 	stamina = minf(100.0, stamina + 16.0 * delta)
@@ -320,8 +322,6 @@ func _physics_process(delta: float) -> void:
 		attack_visual.rotation.y = 0.0
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_K:
-		do_shadow_pulse()
 	if event is InputEventScreenDrag:
 		# Drag on the right half of the screen to orbit the camera.
 		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
