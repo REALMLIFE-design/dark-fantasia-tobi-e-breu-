@@ -863,3 +863,17 @@ class RootWardenContracts(unittest.TestCase):
         self.assertIn('Color("a6d77b")', enemy)
         self.assertIn('if kind == 9:', world)
         self.assertIn('+35 XP', world)
+
+
+class GlacialRavenContracts(unittest.TestCase):
+    def test_glacial_ravens_are_optional_mountain_encounters_with_custom_wings(self):
+        root = Path(__file__).resolve().parents[1]
+        world = (root / "scripts/world.gd").read_text(encoding="utf-8")
+        enemy = (root / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertIn('ice_raven.name = "Corvo_Glacial_%d" % i', world)
+        self.assertIn('ice_raven.set("enemy_kind", 10)', world)
+        self.assertIn('label.text = "CORVO GLACIAL"', enemy)
+        self.assertIn('wing_pivot.name = "GlacialWing_%s"', enemy)
+        self.assertIn('ice_wings[wing_index].rotation.z', enemy)
+        self.assertIn('if kind == 10:', world)
+        self.assertIn('+25 XP', world)
