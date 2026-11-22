@@ -36,6 +36,8 @@ var shadow_pulse_cooldown := 0.0
 var pulse_ring: MeshInstance3D
 var pulse_material: StandardMaterial3D
 var pulse_visual_timer := 0.0
+var parry_window := 0.0
+var parry_cooldown := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -204,6 +206,10 @@ func _physics_process(delta: float) -> void:
 		combo_step = 0
 		if world and world.has_method("combat_combo_changed"): world.combat_combo_changed(0)
 	shadow_pulse_cooldown = maxf(0.0, shadow_pulse_cooldown - delta)
+	parry_window = maxf(0.0, parry_window - delta)
+	parry_cooldown = maxf(0.0, parry_cooldown - delta)
+	if Input.is_action_just_pressed("guard"):
+		do_guard()
 	_update_shadow_pulse_visual(delta)
 	if Input.is_action_just_pressed("dodge"):
 		do_dodge()
@@ -421,6 +427,15 @@ func do_dodge() -> void:
 	invulnerable = maxf(invulnerable, 0.28)
 	velocity.y = 1.2
 
+func do_guard() -> void:
+	if hp <= 0 or parry_cooldown > 0.0 or stamina < 12.0:
+		return
+	stamina -= 12.0
+	parry_window = 0.38
+	parry_cooldown = 1.05
+	attack_flash = maxf(attack_flash, 0.12)
+
+
 func get_stamina() -> float:
 	return stamina
 
@@ -437,6 +452,19 @@ func apply_boss_slam_knockback(direction: Vector3, strength: float) -> void:
 
 func take_damage(amount: int) -> void:
 	if hp <= 0: return
+	if parry_window > 0.0:
+		parry_window = 0.0
+		invulnerable = maxf(invulnerable, 0.42)
+		stamina = minf(100.0, stamina + 22.0)
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(enemy) or enemy.get("dead") == true:
+				continue
+			var offset: Vector3 = enemy.global_position - global_position
+			if Vector2(offset.x, offset.z).length() <= 3.4:
+				enemy.take_damage(22)
+		if world and world.has_method("player_parry_success"):
+			world.player_parry_success()
+		return
 	if invulnerable > 0.0:
 		if dodge_time > 0.0 and not dodge_perfect_used:
 			dodge_perfect_used = true
