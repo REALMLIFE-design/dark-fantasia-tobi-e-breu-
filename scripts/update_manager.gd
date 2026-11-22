@@ -16,8 +16,8 @@ var status_message := "Atualizações: verificando..."
 func _enter_tree() -> void:
 	_apply_pending_patch()
 
-func _ready() -> void:
-	call_deferred("_check_for_updates")
+func check_for_updates() -> void:
+	await _check_for_updates()
 
 func get_status() -> String:
 	return status_message
@@ -95,7 +95,11 @@ func _check_for_updates() -> void:
 	if not _write_text(PENDING_VERSION_PATH, remote_version):
 		_set_status("A atualização foi baixada, mas não consegui registrar sua versão.")
 		return
-	_set_status("Atualização baixada! Feche e abra o jogo para aplicar. Seu progresso será preservado.")
+	if not ProjectSettings.load_resource_pack(PENDING_PACK_PATH, true):
+		_set_status("Atualização baixada, mas não foi possível montá-la. Vou tentar novamente na próxima abertura.")
+		return
+	_write_text(INSTALLED_VERSION_PATH, remote_version)
+	_set_status("Atualização aplicada automaticamente! Seu progresso foi preservado.")
 
 func _get_installed_version() -> String:
 	if not FileAccess.file_exists(INSTALLED_VERSION_PATH):
