@@ -145,3 +145,15 @@
 - Suíte automatizada: 72 testes aprovados.
 - Validação estrutural do projeto: aprovada.
 - Ainda falta executar/importar no Godot e testar a cena e os controles no Android; portanto, esta correção não certifica por si só que o jogo inteiro já está jogável.
+
+
+## Integração de assets existentes dos plugins (21/11/2026)
+- Inventário confirmado no Thrixel: projeto **Tobi e Breu — Dark World 3D**, com 15 assets; os modelos já existentes foram reutilizados, sem iniciar novas gerações.
+- Thrixel: Guardião Cervo rigado, Caranguejo do Rio Prateado rigado, Espectro Afogado texturizado, Árvore Anciã texturizada, Obelisco Rúnico otimizado e Santuário de Pedra.
+- Meshy: personagem Tobi em 3D com textura PBR concluída (task `01a20058-ae2b-72a1-b2e6-52a6120cc2cf`); ainda precisa ser transferido para o pacote local e conectado ao rig/controle do jogador.
+- Aqueduct: grafo PBR **Tobi e Breu — Materiais PBR Dark Fantasy** localizado e lido; define base color, normal, roughness, AO e height. A exportação dos mapas ainda não foi empacotada no repositório.
+- Criado catálogo de seis assets Thrixel com IDs de origem e URLs GLB a 1024 px; adicionado download sob demanda, cache em `user://plugin_assets/thrixel` e carregamento por `GLTFDocument`.
+- Os seis modelos são instanciados em pontos do mundo 3D; o cache evita baixar novamente nas próximas sessões. O download inicial exige conexão com internet.
+- O dock Asset Bridge do editor agora lista os seis assets Thrixel.
+- Não foram consumidos novos créditos de geração; Thrixel está sem cubes no momento. Nenhum asset existente foi apagado.
+- A compilação/execução Godot ainda precisa validar o carregamento GLB no Android. A permissão `permissions/internet=true` já está habilitada no preset Android.
