@@ -922,6 +922,8 @@ class GlacialRavenContracts(unittest.TestCase):
         self.assertNotIn("right_leg.visible", bird_block)
         leg_setup = enemy.split("var left_leg := _make_enemy_limb", 1)[1].split("if enemy_kind < 3:", 1)[0]
         self.assertIn("if enemy_kind == 8 or enemy_kind == 10:", leg_setup)
+        self.assertIn("left_leg.visible = false", leg_setup)
+        self.assertIn("right_leg.visible = false", leg_setup)
 
     def test_glacial_ravens_are_optional_mountain_encounters_with_custom_wings(self):
         root = Path(__file__).resolve().parents[1]
