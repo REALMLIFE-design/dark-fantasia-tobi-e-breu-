@@ -148,19 +148,49 @@ func _ready() -> void:
 
 
 func _build_downloaded_nature_models() -> void:
-	# Modelos externos CC0; o mundo continua funcional se o pack ainda não existir.
+	# Packs CC0 entram como vegetação e cenário distante; nenhum conteúdo existente é substituído.
 	var models := EXTERNAL_ASSET_LOADER.list_models("quaternius_stylized_nature")
-	if models.is_empty(): return
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 20261121
-	for index in range(mini(30, models.size())):
-		var row := index / 6
-		var column := index % 6
-		var x := -190.0 + float(column) * 18.0 + rng.randf_range(-5.0, 5.0)
-		var z := -205.0 + float(row) * 18.0 + rng.randf_range(-5.0, 5.0)
-		var scale_factor := rng.randf_range(0.85, 1.45)
-		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, models[index], Vector3(x, 0.0, z), Vector3.ONE * scale_factor)
-		if instance != null: instance.rotation.y = rng.randf_range(0.0, TAU)
+	if not models.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20261121
+		var placed := 0
+		for model_path in models:
+			var file_name := model_path.get_file().to_lower()
+			# Apenas árvores, arbustos, plantas, flores e rochas combinam com esta área.
+			if not ("tree" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "grass" in file_name):
+				continue
+			var row := placed / 6
+			var column := placed % 6
+			var x := -190.0 + float(column) * 18.0 + rng.randf_range(-5.0, 5.0)
+			var z := -205.0 + float(row) * 18.0 + rng.randf_range(-5.0, 5.0)
+			var scale_factor := rng.randf_range(0.85, 1.35)
+			var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3(x, 0.0, z), Vector3.ONE * scale_factor)
+			if instance != null:
+				instance.rotation.y = rng.randf_range(0.0, TAU)
+				placed += 1
+			if placed >= 24:
+				break
+
+	# LazyTextures: selecionar apenas modelos de natureza/pedra e posicioná-los
+	# como detalhes adicionais, sem tocar nos marcos, NPCs ou construções existentes.
+	var community_models := EXTERNAL_ASSET_LOADER.list_models("lazytextures")
+	var community_rng := RandomNumberGenerator.new()
+	community_rng.seed = 20261122
+	var community_placed := 0
+	for model_path in community_models:
+		if not "/models/" in model_path:
+			continue
+		var file_name := model_path.get_file().to_lower()
+		if not ("tree" in file_name or "forest" in file_name or "rock" in file_name or "mushroom" in file_name or "stone" in file_name or "ruin" in file_name):
+			continue
+		var x := -150.0 + float(community_placed % 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
+		var z := -155.0 - float(community_placed / 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3(x, 0.0, z), Vector3.ONE * community_rng.randf_range(0.8, 1.2))
+		if instance != null:
+			instance.rotation.y = community_rng.randf_range(0.0, TAU)
+			community_placed += 1
+		if community_placed >= 12:
+			break
 
 func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
