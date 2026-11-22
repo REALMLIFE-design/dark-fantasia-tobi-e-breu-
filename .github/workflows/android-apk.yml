@@ -104,6 +104,34 @@ jobs:
           fetch_model stone_way_shrine 3ec3e3e0-e234-4ee1-942a-13391b648107 &
           wait
 
+      - name: Normalizar GLBs para compatibilidade com Godot 4.3
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          mapfile -d '' MODELS < <(find "$PROJECT_PATH/assets/external_packs/3dassets_dev" "$PROJECT_PATH/assets/plugin_imports/thrixel" -type f -name '*.glb' -print0 2>/dev/null || true)
+          if [ "${#MODELS[@]}" -eq 0 ]; then
+            echo "Nenhum GLB externo para normalizar."
+            exit 0
+          fi
+          if ! command -v gltf-transform >/dev/null 2>&1; then
+            npm install --global @gltf-transform/cli
+          fi
+          for model in "${MODELS[@]}"; do
+            if ! grep -a -q "KHR_mesh_quantization" "$model"; then
+              continue
+            fi
+            temporary="${model%.glb}.godot43.tmp.glb"
+            if gltf-transform dequantize "$model" "$temporary"; then
+              if [ -s "$temporary" ]; then
+                mv "$temporary" "$model"
+                echo "GLB compatibilizado com Godot 4.3: $(basename "$model")"
+              fi
+            else
+              rm -f "$temporary"
+              echo "::warning::Não foi possível dequantizar $(basename "$model"); o fallback procedural será mantido."
+            fi
+          done
+
       - name: Baixar Godot e templates
         run: |
           set -euo pipefail

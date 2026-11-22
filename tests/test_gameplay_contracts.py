@@ -190,7 +190,9 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func _add_stag_antler_segment', self.world)
         self.assertNotIn('ancient_stag_guardian.glb', self.world)
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
-        self.assertNotIn("api.thrixel.com", workflow)
+        self.assertIn("Baixar modelos Thrixel já existentes (opcional)", workflow)
+        self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec", workflow)
+        self.assertIn("fallback procedural será mantido", workflow)
 
 
     def test_main_menu_copy_and_close_target_are_mobile_friendly(self):
@@ -865,6 +867,16 @@ class RootWardenContracts(unittest.TestCase):
         self.assertIn('+35 XP', world)
 
 
+
+
+class GltfGodotCompatibilityContracts(unittest.TestCase):
+    def test_android_build_dequantizes_optional_glbs_before_godot_import(self):
+        root = Path(__file__).resolve().parents[1]
+        workflow = (root / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        self.assertIn("Normalizar GLBs para compatibilidade com Godot 4.3", workflow)
+        self.assertIn("KHR_mesh_quantization", workflow)
+        self.assertIn("gltf-transform dequantize", workflow)
+        self.assertIn("fallback procedural será mantido", workflow)
 
 
 class ThrixelBuildImportContracts(unittest.TestCase):
