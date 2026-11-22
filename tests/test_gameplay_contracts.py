@@ -836,3 +836,14 @@ class CompleteWorldAssetPackContracts(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         self.assertTrue((root / "assets/textures/surface_albedo_atlas.png").exists())
         self.assertTrue((root / "assets/textures/surface_roughness_atlas.png").exists())
+
+
+class NewDarkFantasyModelContracts(unittest.TestCase):
+    def test_four_new_low_poly_models_are_built_into_the_world_prop_pack(self):
+        props = (ROOT / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        for builder in ("_build_bone_cart", "_build_rune_circle", "_build_cursed_well", "_build_fallen_guardian"):
+            self.assertIn("func " + builder + "(", props)
+        for model in ("BoneCollectorCart", "WhisperingRuneCircle", "CursedStoneWell", "FallenGuardianStatue"):
+            self.assertIn(model, props)
+        self.assertIn("Color(\"70cbbd\")", props)
+        self.assertIn("build_all(parent)", props)
