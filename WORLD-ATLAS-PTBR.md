@@ -52,3 +52,10 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - Pântano dos Ratos: Caldeirão da Bruxa do Pântano, próximo à região central (9, -94).
 - Rio Prateado: Marco do Sino Afogado, próximo ao curso do rio (61, -132).
 - Ambos são elementos ambientais de exploração; não substituem nem alteram os objetivos das missões existentes.
+
+
+## Modelos ambientais desta expansão
+- Planície Dourada: moinho de pedra e madeira, aproximadamente (18, 238).
+- Bosque dos Sussurros: pequeno bosque de cogumelos luminosos, aproximadamente (105, -151).
+- Caverna do Eco: agrupamento de cristais azulados emissivos, aproximadamente (-228, -248).
+- Os modelos são cenografia procedural otimizada para mobile; não alteram missões, recompensas ou colisões de combate.
