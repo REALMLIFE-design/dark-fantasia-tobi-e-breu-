@@ -9,6 +9,9 @@ config/icon="res://assets/icons/tobi_breu_icon.svg"
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
+[autoload]
+UpdateManager="*res://scripts/update_manager.gd"
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
