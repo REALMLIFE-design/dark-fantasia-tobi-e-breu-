@@ -192,6 +192,34 @@ func _build_downloaded_nature_models() -> void:
 		if community_placed >= 12:
 			break
 
+	# 3DAssets.dev: GLBs CC0 autocontidos, filtrados por natureza e cenário medieval.
+	var curated_models := EXTERNAL_ASSET_LOADER.list_models("3dassets_dev")
+	var curated_rng := RandomNumberGenerator.new()
+	curated_rng.seed = 20261123
+	var nature_count := 0
+	var ruin_count := 0
+	for model_path in curated_models:
+		var file_name := model_path.get_file().to_lower()
+		var is_nature := "tree" in file_name or "forest" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "mushroom" in file_name or "crystal" in file_name
+		var is_ruin_prop := "stone" in file_name or "ruin" in file_name or "gate" in file_name or "shrine" in file_name or "obelisk" in file_name or "lantern" in file_name or "torch" in file_name or "altar" in file_name or "tomb" in file_name or "grave" in file_name or "skull" in file_name or "banner" in file_name or "well" in file_name or "barrel" in file_name or "crate" in file_name or "anvil" in file_name
+		if not is_nature and not is_ruin_prop:
+			continue
+		var position := Vector3.ZERO
+		var scale_factor := curated_rng.randf_range(0.8, 1.2)
+		if is_nature and nature_count < 12:
+			position = Vector3(-235.0 + float(nature_count % 4) * 12.0, 0.0, -225.0 + float(nature_count / 4) * 12.0)
+		elif is_ruin_prop and ruin_count < 8:
+			position = Vector3(35.0 + float(ruin_count % 4) * 11.0, 0.0, -92.0 - float(ruin_count / 4) * 11.0)
+		else:
+			continue
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, position, Vector3.ONE * scale_factor)
+		if instance != null:
+			instance.rotation.y = curated_rng.randf_range(0.0, TAU)
+			if is_nature:
+				nature_count += 1
+			else:
+				ruin_count += 1
+
 func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
 	# Os modelos mantem materiais/texturas PBR incorporados ao GLB.
