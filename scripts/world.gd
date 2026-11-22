@@ -2910,6 +2910,35 @@ func _build_ancient_waystones() -> void:
 		_box(stone, "WaystoneBase", Vector3(0.0, 0.25, 0.0), Vector3(2.2, 0.5, 1.5), Color("454e49"))
 		var rune := _sphere(stone, "WaystoneRune", Vector3(0.0, 1.8, 0.46), 0.28, Color("779b8a"), 1.6)
 		rune.scale = Vector3(0.7, 1.4, 0.35)
+
+		# Escultura modular: pedestal, molduras talhadas e fragmentos flutuantes.
+		var theme_colors := [Color("739b78"), Color("8fc4d1"), Color("c66b53")]
+		var accent_color: Color = theme_colors[i]
+		var dais := _sphere(stone, "WaystoneDais", Vector3(0.0, 0.12, 0.0), 1.0, Color("343d38"), 0.28)
+		dais.scale = Vector3(1.55, 0.42, 1.18)
+		var crown := _box(stone, "WaystoneCrown", Vector3(0.0, 3.42, 0.0), Vector3(1.72, 0.34, 1.08), Color("777b70"))
+		crown.rotation.y = 0.12 if i == 1 else -0.08
+		_box(stone, "WaystoneLowerCarving", Vector3(0.0, 0.72, 0.43), Vector3(1.52, 0.16, 0.12), Color("303b36"))
+		_box(stone, "WaystoneUpperCarving", Vector3(0.0, 2.92, 0.43), Vector3(1.42, 0.13, 0.12), Color("303b36"))
+		for glyph_index in range(3):
+			var glyph := _box(stone, "WaystoneGlyph_%d" % glyph_index, Vector3(-0.34 + float(glyph_index) * 0.34, 1.25 + float(glyph_index) * 0.34, 0.49), Vector3(0.10, 0.24, 0.07), accent_color)
+			glyph.rotation.z = -0.42 if glyph_index == 1 else 0.38
+			glyph.material_override = _painter_mat(accent_color, 8.0, 0.22)
+		for shard_index in range(2):
+			var shard := _sphere(stone, "WaystoneShard_%d" % shard_index, Vector3(-0.92 + float(shard_index) * 1.84, 1.0 + float(shard_index % 2) * 0.38, 0.0), 0.22, accent_color, 0.72)
+			shard.scale = Vector3(0.48, 1.55, 0.48)
+			shard.rotation.z = -0.24 if shard_index == 0 else 0.24
+			shard.material_override = _painter_mat(accent_color, 7.0, 0.18)
+		for corner in [-1.0, 1.0]:
+			var brace := _box(stone, "WaystoneBrace", Vector3(corner * 0.78, 0.52, 0.0), Vector3(0.34, 0.9, 0.92), Color("4a514b"))
+			brace.rotation.z = corner * -0.12
+		var rune_light := OmniLight3D.new()
+		rune_light.name = "WaystoneAccentLight"
+		rune_light.position = Vector3(0.0, 2.0, 1.1)
+		rune_light.light_color = accent_color
+		rune_light.light_energy = 0.32 if not ancient_waystone_ids.has(i) else 0.85
+		rune_light.omni_range = 4.0
+		stone.add_child(rune_light)
 		_add_region_title("PEDRA-ÂNCORA: " + labels[i].to_upper(), stone.position + Vector3(0.0, 4.2, 0.0), Color("b9d8c1"))
 		if ancient_waystone_ids.has(i):
 			rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
