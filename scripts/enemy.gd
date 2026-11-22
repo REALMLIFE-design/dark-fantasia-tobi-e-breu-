@@ -353,6 +353,9 @@ func _resolve_attack() -> void:
 	else:
 		if flat.length() <= reach:
 			target.take_damage(attack_damage)
+			if slam_resolved and target.has_method("apply_boss_slam_knockback"):
+				var push_direction := flat.normalized() if flat.length() > 0.01 else Vector3.FORWARD
+				target.apply_boss_slam_knockback(push_direction, 11.5 if boss_enraged else 9.0)
 
 func _physics_process(delta: float) -> void:
 	if dead:
