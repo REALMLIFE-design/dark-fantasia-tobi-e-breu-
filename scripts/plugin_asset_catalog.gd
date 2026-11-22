@@ -36,7 +36,28 @@ const ASSETS := {
 	"pinoc_walk_backwards": "res://assets/plugin_imports/pinoc/animations/walk_backwards.glb",
 	"pinoc_strafe_left": "res://assets/plugin_imports/pinoc/animations/strafe_left.glb",
 	"pinoc_forest_splat": "res://assets/plugin_imports/pinoc/forest_scarlet.spz",
+	"thrixel_stag_guardian": "user://plugin_assets/thrixel/ancient_stag_guardian.glb",
+	"thrixel_river_crab": "user://plugin_assets/thrixel/silver_river_crab.glb",
+	"thrixel_drowned_wraith": "user://plugin_assets/thrixel/drowned_wraith.glb",
+	"thrixel_ancient_tree": "user://plugin_assets/thrixel/ancient_tree.glb",
+	"thrixel_rune_obelisk": "user://plugin_assets/thrixel/rune_obelisk.glb",
+	"thrixel_way_shrine": "user://plugin_assets/thrixel/stone_way_shrine.glb",
+
 }
+
+
+const DOWNLOAD_URLS := {
+	"thrixel_stag_guardian": "https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024",
+	"thrixel_river_crab": "https://api.thrixel.com/api/v1/4592675e-0e7e-491d-9d1e-a4a15eee7304/download?format=glb&quality=full&texture_size=1024",
+	"thrixel_drowned_wraith": "https://api.thrixel.com/api/v1/f4d8f433-7cd2-45b1-80dd-a157ba5ce26e/download?format=glb&quality=full&texture_size=1024",
+	"thrixel_ancient_tree": "https://api.thrixel.com/api/v1/584d17cf-92ff-4fde-ba50-19037a88d832/download?format=glb&quality=full&texture_size=1024",
+	"thrixel_rune_obelisk": "https://api.thrixel.com/api/v1/07af580b-8b0e-4511-b2bd-c0164d113fc9/download?format=glb&quality=full&texture_size=1024",
+	"thrixel_way_shrine": "https://api.thrixel.com/api/v1/cc8391a0-5058-4279-b452-36749452ab08/download?format=glb&quality=full&texture_size=1024"
+}
+
+
+static func get_download_url(asset_key: String) -> String:
+	return str(DOWNLOAD_URLS.get(asset_key, ""))
 
 
 static func is_available(asset_key: String) -> bool:
