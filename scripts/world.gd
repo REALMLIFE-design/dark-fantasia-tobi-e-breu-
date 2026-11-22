@@ -317,6 +317,8 @@ func _build_outer_regions() -> void:
 		var a := TAU * float(i) / 19.0
 		var r := 25.0 + float(i % 4) * 5.0
 		_build_tree(Vector3(-158.0 + cos(a) * r, 0.0, -104.0 + sin(a) * r), randf_range(1.1, 1.8))
+	# Monumental centerpiece: load the authored GLB when imported, otherwise keep the procedural fallback.
+	_build_ancient_tree_landmark(Vector3(-158.0, 0.0, -104.0))
 	var ancient_stone := Node3D.new()
 	ancient_stone.name = "AncientForestStandingStone"
 	ancient_stone.position = Vector3(-158.0, 0.0, -104.0)
@@ -588,6 +590,49 @@ func _build_tree(pos: Vector3, scale_factor := 1.0) -> void:
 	for i in range(3):
 		var crown := _sphere(tree, "PaintedCanopy", Vector3(randf_range(-0.8,0.8), 4.0 + i*0.9, randf_range(-0.6,0.6)), 2.5 - i*0.25, [Color("405d49"),Color("526e50"),Color("344b42")][i], 3.5)
 		crown.material_override = _painter_mat([Color("405d49"),Color("526e50"),Color("344b42")][i], 4.0, 0.13)
+		crown.scale = Vector3(1.2, 0.9, 1.0)
+
+
+func _build_ancient_tree_landmark(pos: Vector3) -> void:
+	var landmark := Node3D.new()
+	landmark.name = "AncientTreeLandmark"
+	landmark.position = pos
+	add_child(landmark)
+	var model_path := "res://assets/plugin_imports/meshy/ancient_tree.glb"
+	if ResourceLoader.exists(model_path):
+		var packed_model := load(model_path) as PackedScene
+		if packed_model != null:
+			var model_instance := packed_model.instantiate()
+			model_instance.name = "GeneratedAncientTree"
+			model_instance.scale = Vector3.ONE * 2.8
+			landmark.add_child(model_instance)
+			return
+	# Safe fallback keeps the region playable until the generated GLB is imported.
+	var fallback := Node3D.new()
+	fallback.position = Vector3.ZERO
+	landmark.add_child(fallback)
+	_build_tree_at_parent(fallback, Vector3.ZERO, 2.8)
+
+func _build_tree_at_parent(parent: Node3D, pos: Vector3, scale_factor: float) -> void:
+	var tree := Node3D.new()
+	tree.position = pos
+	tree.scale = Vector3.ONE * scale_factor
+	parent.add_child(tree)
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.24
+	trunk_mesh.bottom_radius = 0.48
+	trunk_mesh.height = 4.2
+	trunk_mesh.radial_segments = 7
+	var trunk := MeshInstance3D.new()
+	trunk.name = "PaintedBark"
+	trunk.mesh = trunk_mesh
+	trunk.position = Vector3(0.0, 2.1, 0.0)
+	trunk.material_override = _painter_mat(Color("49372d"), 5.0, 0.12)
+	tree.add_child(trunk)
+	for i in range(3):
+		var crown_color: Color = [Color("405d49"), Color("526e50"), Color("344b42")][i]
+		var crown := _sphere(tree, "PaintedCanopy", Vector3(randf_range(-0.8, 0.8), 4.0 + i * 0.9, randf_range(-0.6, 0.6)), 2.5 - i * 0.25, crown_color, 3.5)
+		crown.material_override = _painter_mat(crown_color, 4.0, 0.13)
 		crown.scale = Vector3(1.2, 0.9, 1.0)
 
 func _build_ruins_and_props() -> void:
