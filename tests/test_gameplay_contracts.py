@@ -200,7 +200,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('pulse_visual_timer = 0.72', self.player)
 
     def test_shadow_pulse_touch_and_keyboard_controls_exist(self):
-        self.assertIn('KEY_K', self.player)
+        self.assertIn('Input.is_action_just_pressed("shadow")', self.player)
+        self.assertIn('shadow={"deadzone":0.5', self.project)
         self.assertIn('{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}', self.world)
         self.assertIn('elif data.a == "shadow":', self.world)
         self.assertIn('action_btn.pressed.connect(_touch_action.bind(data.a))', self.world)
