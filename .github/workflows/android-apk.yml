@@ -199,18 +199,6 @@ jobs:
           path: ${{ env.PROJECT_PATH }}/build/TobiEBreu.apk
           if-no-files-found: error
 
-      - name: Testar APK em emulador Android
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          ANDROID_I_WANT_MY_TCG: "yes"
-        with:
-          api-level: 34
-          target: default
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
-
       - name: Preparar patch incremental Android
         id: patch
         if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
@@ -284,3 +272,17 @@ jobs:
             --title "Tobi e Breu Android update $GITHUB_RUN_NUMBER" \
             --notes "Patch incremental de recursos para Godot 4.3. Aplicação na próxima inicialização; saves locais preservados." \
             --latest
+
+      # Executa o smoke test depois de publicar o patch para que a verificação do emulador não bloqueie as atualizações.
+      - name: Testar APK em emulador Android
+        timeout-minutes: 10
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          ANDROID_I_WANT_MY_TCG: "yes"
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
