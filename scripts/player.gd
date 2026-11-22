@@ -424,6 +424,17 @@ func do_dodge() -> void:
 func get_stamina() -> float:
 	return stamina
 
+
+func apply_boss_slam_knockback(direction: Vector3, strength: float) -> void:
+	if hp <= 0 or invulnerable > 0.0:
+		return
+	var push := Vector3(direction.x, 0.0, direction.z).normalized()
+	if push.length() < 0.01:
+		push = -global_basis.z
+	velocity.x = push.x * strength
+	velocity.z = push.z * strength
+	velocity.y = maxf(velocity.y, 3.6 if strength >= 11.0 else 2.8)
+
 func take_damage(amount: int) -> void:
 	if hp <= 0: return
 	if invulnerable > 0.0:
