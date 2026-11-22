@@ -261,7 +261,7 @@ jobs:
           }
           (pck.parent / "update-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
-              env_file.write("UPDATE_RELEASE_TAG=" + tag + "\\n")
+              env_file.write("UPDATE_RELEASE_TAG=" + tag + "\n")
           PY
 
       - name: Publicar atualização incremental no GitHub Releases
