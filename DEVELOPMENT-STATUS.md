@@ -157,3 +157,15 @@
 - O dock Asset Bridge do editor agora lista os seis assets Thrixel.
 - Não foram consumidos novos créditos de geração; Thrixel está sem cubes no momento. Nenhum asset existente foi apagado.
 - A compilação/execução Godot ainda precisa validar o carregamento GLB no Android. A permissão `permissions/internet=true` já está habilitada no preset Android.
+
+
+## Integração dos modelos Meshy existentes — 21/11/2026
+
+Foram identificados quatro assets próprios do projeto no Meshy e ligados aos pontos de importação do Godot:
+
+- **Tobi (herói texturizado):** task `01a20058-ae2b-72a1-b2e6-52a6120cc2cf`, destino `res://assets/plugin_imports/meshy/tobi_hero.glb`. O player tenta instanciar esse GLB automaticamente e mantém o personagem procedural como fallback.
+- **Portal gótico:** task `01a1ff12-3dd2-707a-8c0e-016625d9d9d5`, destino `res://assets/plugin_imports/meshy/gothic_gate.glb`.
+- **Obelisco rúnico:** task `01a20014-fcbc-770c-b0e4-a7c027e9d5e6`, destino `res://assets/plugin_imports/meshy/rune_obelisk.glb`.
+- **Santuário de pedra:** task `01a1ffc1-4452-7384-9c4c-4a81ece4fc4a`, destino `res://assets/plugin_imports/meshy/stone_way_shrine.glb`.
+
+O carregador e o mundo agora chamam esses três props Meshy, e o player reconhece o GLB do Tobi quando ele existir. **Os arquivos GLB ainda não estão versionados no repositório:** a API Meshy bloqueou o download solicitando upgrade de plano. Nenhum modelo foi recriado e nenhum crédito de geração foi consumido nesta etapa. Até a importação dos arquivos, o jogo continua usando o herói procedural e os props existentes do cenário.
