@@ -235,3 +235,10 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Meshy: saldos e histórico consultados. O modelo da Árvore Ancestral continua sem formatos de download disponíveis nesta conexão; nenhuma geração adicional foi cobrada.
 - Luma: saldo de créditos da equipe conectada está zerado; nenhuma geração submetida.
 - A validação Godot identificou referências às pernas do Corvo Glacial antes da declaração local. A ordem foi corrigida no commit seguinte; aguardar novo workflow para confirmar o parser.
+
+
+## Marcos ambientais adicionais — Montanha Gelada e Desfiladeiro Rubro (22/11/2026)
+- Adicionado o Altar da Memória Glacial, com base de pedra fria, anel emissivo, cristal central e seis fragmentos de gelo.
+- Adicionado o Portal da Fenda Rubra, com pilares, lintel, pedra-chave emissiva e cinco runas.
+- Os dois modelos são malhas low-poly procedurais e entram no construtor central do pacote de props; não dependem de downloads nem créditos externos.
+- Testes de contrato adicionados. Aguardando validação pelo workflow Android/Godot.
