@@ -41,3 +41,8 @@ O contrato e os selos são persistentes no save v12.
 ## Limites desta versão
 
 As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não têm interiores exploráveis, lojas ou NPCs com rotinas. A caverna, a masmorra e o castelo têm composição visual e pontos de exploração, mas ainda precisam de encontros dedicados, portas/chaves, navegação interna e chefes próprios. Os locais são protótipos de conteúdo jogável em expansão, não uma alegação de mundo AAA concluído.
+
+
+## Encontro opcional — Montanha Gelada
+- Dois Corvos Glaciais patrulham a região dos cristais, aproximadamente em (-179, -267) e (-153, -279).
+- São inimigos opcionais e não alteram os objetivos das missões principais.
