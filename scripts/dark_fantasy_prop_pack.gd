@@ -81,8 +81,8 @@ static func _sphere(parent: Node3D, node_name: String, pos: Vector3, radius: flo
 	var mesh := SphereMesh.new()
 	mesh.radius = radius
 	mesh.height = radius * 2.0
-	mesh.radial_segments = 10
-	mesh.rings = 6
+	mesh.radial_segments = 24
+	mesh.rings = 16
 	var instance := _mesh(parent, node_name, mesh, pos, color, mode, glow)
 	instance.scale = scale
 	return instance
@@ -92,7 +92,7 @@ static func _cylinder(parent: Node3D, node_name: String, pos: Vector3, radius: f
 	mesh.top_radius = radius
 	mesh.bottom_radius = radius
 	mesh.height = height
-	mesh.radial_segments = sides
+	mesh.radial_segments = maxi(sides, 18)
 	return _mesh(parent, node_name, mesh, pos, color, mode)
 
 static func _cone(parent: Node3D, node_name: String, pos: Vector3, radius: float, height: float, color: Color, mode := 8) -> MeshInstance3D:
@@ -100,7 +100,7 @@ static func _cone(parent: Node3D, node_name: String, pos: Vector3, radius: float
 	mesh.top_radius = 0.0
 	mesh.bottom_radius = radius
 	mesh.height = height
-	mesh.radial_segments = 7
+	mesh.radial_segments = 16
 	return _mesh(parent, node_name, mesh, pos, color, mode)
 
 static func _barrel(parent: Node3D, pos: Vector3) -> void:
@@ -396,6 +396,20 @@ static func _build_tobi_cat(parent: Node3D, position: Vector3) -> void:
 	for i in range(5):
 		var tail_pos := Vector3(0.0 + sin(float(i) * 0.48) * 0.38, 0.72 + float(i) * 0.19, -0.82 - float(i) * 0.22)
 		_sphere(root, "CatTailSegment_%d" % i, tail_pos, 0.19 - float(i) * 0.018, Color("343b3c"), Vector3(0.92, 1.0, 1.0), 8)
-	# Coleira vinho e medalhao dourado
-	_cylinder(root, "CatCrimsonCollar", Vector3(0, 1.08, 0.55), 0.34, 0.11, Color("7e3945"), 11, 10)
+	# Pelagem em tufos discretos, sobrancelhas, dedos e detalhes da coleira
+	for side in [-1.0, 1.0]:
+		_sphere(root, "CatCheekFur", Vector3(side * 0.42, 1.34, 0.57), 0.19, Color("4c5554"), Vector3(0.75, 0.8, 0.75), 8)
+		var brow := _box(root, "CatBrow", Vector3(side * 0.22, 1.68, 0.88), Vector3(0.22, 0.045, 0.055), Color("272e30"), 8)
+		brow.rotation.z = side * -0.12
+		for toe in range(3):
+			_sphere(root, "CatToe", Vector3(side * 0.27 + (float(toe) - 1.0) * 0.085, 0.105, 0.59), 0.055, Color("c7baa2"), Vector3(0.72, 0.65, 1.0), 8)
+	# Tufo de peito e pequenas mechas da silhueta
+	for i in range(5):
+		var tuft := _cone(root, "ChestFurTuft_%d" % i, Vector3(-0.28 + float(i) * 0.14, 0.58, 0.48), 0.10, 0.30, Color("c4baa7"), 8)
+		tuft.rotation.z = PI
+	# Coleira vinho com rebites e medalhão em camadas
+	_cylinder(root, "CatCrimsonCollar", Vector3(0, 1.08, 0.55), 0.34, 0.11, Color("7e3945"), 11, 18)
+	for side in [-1.0, 1.0]:
+		_sphere(root, "CollarGoldStud", Vector3(side * 0.25, 1.08, 0.79), 0.045, Color("e1c17b"), Vector3.ONE, 13, true)
 	_sphere(root, "CatGoldenCharm", Vector3(0, 0.98, 0.88), 0.105, Color("d2ad69"), Vector3(0.85, 1.1, 0.55), 13, true)
+	_sphere(root, "CatCharmInset", Vector3(0, 0.98, 0.94), 0.045, Color("7ac9bd"), Vector3(0.8, 1.0, 0.4), 13, true)
