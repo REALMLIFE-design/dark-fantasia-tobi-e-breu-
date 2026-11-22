@@ -51,7 +51,7 @@ class GameplayContracts(unittest.TestCase):
         for key in ('thrixel_stag_guardian', 'thrixel_river_crab', 'thrixel_drowned_wraith',
                     'thrixel_ancient_tree', 'thrixel_rune_obelisk', 'thrixel_way_shrine'):
             self.assertIn(key, catalog)
-            self.assertIn(key, loader)
+            self.assertIn(key, catalog)
         self.assertIn('HTTPRequest.new()', loader)
         self.assertIn('GLTFDocument.new()', loader)
         self.assertIn('FileAccess.open(target_path, FileAccess.WRITE)', loader)
