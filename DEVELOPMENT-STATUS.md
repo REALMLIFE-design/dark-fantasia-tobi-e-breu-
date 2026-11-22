@@ -187,3 +187,15 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Os modelos externos (GLB/FBX) ainda dependem de download e importação dos arquivos originais. O Ultimate Dungeon Pack tem 1,1 GiB; os demais links e licenças estão catalogados em assets/external_packs/README.md. Não afirmar que os binários externos estão dentro do APK.
 - Nenhum crédito de geração foi gasto. A nova decoração usa geometria local do Godot e os atlases PBR já versionados.
 - Testes de contrato foram adicionados. A execução Godot/Android ainda precisa terminar no GitHub Actions antes de declarar build validado.
+
+
+## Importação de modelos externos e PBR CC0 — 22/11/2026
+
+- Importados e versionados **20 modelos GLB** da 3DAssets.dev em `assets/external_packs/3dassets_dev/`, com catálogo de origem/licença. A biblioteca declara CC0 1.0 e os GLBs são autocontidos.
+- Importados **9 mapas PBR** da Poly Haven (albedo, normal e roughness para pedra musgosa, terra com pedras e lama) em `assets/textures/polyhaven/`.
+- Os modelos foram adicionados ao carregador do mundo com filtros por nome: apenas peças compatíveis com a natureza e as ruínas do Rio Prateado entram no cenário. Corais e outros elementos exclusivamente submersos ficam guardados no pack, mas não são espalhados em terra.
+- Os mapas PBR são aplicados em seis pequenas manchas de transição no Pântano dos Ratos e nas margens do Rio Prateado. O terreno painterly original, trilhas, construções, missões e colisões não são substituídos.
+- O carregador externo agora aceita OBJ, FBX, GLB e glTF. A integração Meshy prioriza os GLBs reais quando já existem e mantém o forge procedural como fallback; o Tobi Meshy continua opcional no player. Os assets Thrixel e demais plugins permanecem no catálogo e nas chamadas existentes.
+- A API da LazyTextures já baixou modelos e materiais CC0; o commit automático para o repositório ainda está em andamento nesta atualização. Não contar esses arquivos como versionados até confirmar o push.
+- A tentativa de baixar o pack Quaternius pelo Google Drive foi bloqueada pelo limite de downloads do próprio Drive. Nenhum arquivo parcial foi tratado como integrado; foi mantido o caminho alternativo de fontes com API/CDN pública.
+- O workflow Android foi acionado para validar os contratos e importar o projeto, mas a compilação Godot/APK ainda não está confirmada. Não declarar APK pronto nem runtime validado até o workflow concluir com sucesso.
