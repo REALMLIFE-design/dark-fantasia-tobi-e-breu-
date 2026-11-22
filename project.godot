@@ -39,6 +39,7 @@ jump={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":32),Objec
 dodge={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":81),Object(InputEventJoypadButton,"button_index":1)]}
 potion={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":72),Object(InputEventJoypadButton,"button_index":4)]}
 upgrade={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":85),Object(InputEventJoypadButton,"button_index":5)]}
+shadow={"deadzone":0.5,"events":[Object(InputEventKey,"physical_keycode":75),Object(InputEventJoypadButton,"button_index":9)]}
 
 [editor_plugins]
 enabled=PackedStringArray("res://addons/dark_fantasy_asset_bridge/plugin.cfg")
