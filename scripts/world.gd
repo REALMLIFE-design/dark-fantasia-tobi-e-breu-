@@ -3579,6 +3579,15 @@ func enemy_defeated(kind: int = 0) -> void:
 		_update_inventory()
 		_save_game()
 		return
+	if kind == 9:
+		_grant_xp(35)
+		dark_essence += 2
+		swamp_herbs += 1
+		if randf() < 0.35: shards += 1
+		toast_label.text = "VIGIA DAS RAÍZES DERROTADO • +35 XP • 2 Essências Sombrias"
+		_update_inventory()
+		_save_game()
+		return
 	# Every enemy grants basic rewards, but the first contract specifically
 	# requires three corrupted goblins (kind 0), not any enemy archetype.
 	if kind == 4:
