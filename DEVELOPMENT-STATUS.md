@@ -216,3 +216,12 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Não altera etapas, contadores ou recompensas das missões principais. O inimigo é recriado como encontro opcional ao iniciar uma nova sessão.
 - Adicionado teste de contrato para spawn, identidade visual e recompensa.
 - GDScript ainda precisa ser validado pelo Godot e testado no Android; testes de contrato não substituem execução no motor.
+
+
+## Criatura da Montanha Gelada — Corvo Glacial (22/11/2026)
+- Adicionados dois Corvos Glaciais como encontros opcionais perto dos cristais da Montanha Gelada.
+- Modelo procedural com corpo e cabeça aviários, bico, olhos emissivos, cauda, garras e asas articuladas com penas facetadas.
+- As asas batem e o corpo paira visualmente; o inimigo mantém o sistema de perseguição, telegráfico e ataque já existente.
+- Parâmetros: 125 HP, velocidade 2,75, dano 12 e alcance 1,75. Recompensa opcional: +25 XP, 1 Fragmento Rubro e 1 Essência Sombria.
+- Adicionado teste de contrato para spawn, modelo e animação das asas.
+- Ainda depende da validação Godot/Android no workflow.
