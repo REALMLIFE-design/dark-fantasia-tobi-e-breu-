@@ -55,9 +55,13 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('GLTFDocument.new()', loader)
         self.assertIn('FileAccess.open(target_path, FileAccess.WRITE)', loader)
         world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
         self.assertIn('func _build_imported_plugin_models() -> void:', world)
-        self.assertIn('thrixel_stag_guardian', world)
-        self.assertIn('thrixel_river_crab', world)
+        self.assertIn('thrixel_stag_guardian', enemy)
+        self.assertIn('thrixel_river_crab', enemy)
+        self.assertIn('thrixel_drowned_wraith', enemy)
+        self.assertNotIn('load_or_create_asset(self, "thrixel_stag_guardian"', world)
+        self.assertNotIn('load_or_create_asset(self, "thrixel_river_crab"', world)
 
     def test_meshy_tobi_hero_and_existing_props_are_wired_into_game(self):
         player = self.player
@@ -1157,3 +1161,19 @@ class ProfessionWorkshopContracts(unittest.TestCase):
         self.assertIn("_build_alchemist_workshop(parent, Vector3(188, 0, 100))", build_all)
         for detail in ("ForgeStoneFoundation", "AnvilFace", "DisplayBlade_", "PotionBottleBody_", "MixingCauldron", "FocusCrystalGlow"):
             self.assertIn(detail, props)
+
+
+class EnemyModelImportContracts(unittest.TestCase):
+    def test_generated_enemy_glbs_attach_to_their_real_enemy_instances(self):
+        enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertIn('asset_key = "thrixel_drowned_wraith"', enemy)
+        self.assertIn('asset_key = "thrixel_river_crab"', enemy)
+        self.assertIn('asset_key = "thrixel_stag_guardian"', enemy)
+        self.assertIn('packed_scene.instantiate() as Node3D', enemy)
+        self.assertIn('visual.add_child(imported_model)', enemy)
+        self.assertIn('_set_enemy_fallback_meshes_visible(child, false)', enemy)
+
+    def test_procedural_enemy_models_remain_as_fallback_when_glb_is_missing(self):
+        enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertIn('if packed_scene == null:', enemy)
+        self.assertIn('_cache_hit_flash_materials(visual)', enemy)
