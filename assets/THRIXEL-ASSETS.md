@@ -62,3 +62,17 @@ Ao transferir o GLB, colocar neste diretório e instanciar como `GLTFDocument`/`
 - GLB rigged disponível no Thrixel; transferência/importação no Godot pendente.
 - O projeto já tem um protótipo procedural de combate com 6 pernas, duas pinças, núcleo mineral, telegráfico de ataque, desbloqueio no Capítulo II e recompensas. O modelo externo ainda não substitui esse protótipo.
 - Download: https://api.thrixel.com/api/v1/4592675e-0e7e-491d-9d1e-a4a15eee7304/download?format=glb
+
+
+## Integração automática dos modelos existentes no APK
+
+O workflow Android tenta baixar, validar a assinatura GLB e importar seis modelos já gerados no projeto Thrixel, sem consumir novos créditos de geração:
+
+- Guardião Cervo: `10f1f722-53d8-4ca0-b99b-e0e687bc8fec`
+- Caranguejo do Rio Prateado: `4592675e-0e7e-491d-9d1e-a4a15eee7304`
+- Espectro Afogado rigado: `c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1`
+- Árvore Anciã texturizada: `584d17cf-92ff-4fde-ba50-19037a88d832`
+- Obelisco Rúnico: `07af580b-8b0e-4511-b2bd-c0164d113fc9`
+- Santuário do Rio texturizado: `3ec3e3e0-e234-4ee1-942a-13391b648107`
+
+Os arquivos são colocados em `assets/plugin_imports/thrixel/` antes da importação do Godot. Se um download falhar ou não for um GLB válido, a execução continua com os modelos procedurais já existentes; nenhum mapa, missão ou personagem é removido.

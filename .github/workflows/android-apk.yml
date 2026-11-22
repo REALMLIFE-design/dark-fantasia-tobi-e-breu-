@@ -71,6 +71,39 @@ jobs:
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v
           python3 "$PROJECT_PATH/tools/validate_project.py"
 
+      - name: Baixar modelos Thrixel já existentes (opcional)
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          DEST="$PROJECT_PATH/assets/plugin_imports/thrixel"
+          mkdir -p "$DEST"
+          fetch_model() {
+            local name="$1"
+            local submission="$2"
+            local target="$DEST/$name.glb"
+            local temporary="$target.part"
+            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=1024"
+            if curl --fail --location --silent --show-error --connect-timeout 15 --max-time 120 "$url" -o "$temporary"; then
+              if [ "$(head -c 4 "$temporary")" = "glTF" ] && [ "$(stat -c%s "$temporary")" -gt 1024 ]; then
+                mv "$temporary" "$target"
+                echo "Modelo Thrixel integrado ao APK: $name"
+              else
+                rm -f "$temporary"
+                echo "::warning::O GLB Thrixel $name não passou na validação; o fallback procedural será mantido."
+              fi
+            else
+              rm -f "$temporary"
+              echo "::warning::Download Thrixel indisponível para $name; o fallback procedural será mantido."
+            fi
+          }
+          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec &
+          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 &
+          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 &
+          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 &
+          fetch_model rune_obelisk 07af580b-8b0e-4511-b2bd-c0164d113fc9 &
+          fetch_model stone_way_shrine 3ec3e3e0-e234-4ee1-942a-13391b648107 &
+          wait
+
       - name: Baixar Godot e templates
         run: |
           set -euo pipefail

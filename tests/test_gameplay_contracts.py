@@ -865,6 +865,38 @@ class RootWardenContracts(unittest.TestCase):
         self.assertIn('+35 XP', world)
 
 
+
+
+class ThrixelBuildImportContracts(unittest.TestCase):
+    def test_android_build_imports_existing_thrixel_models_without_removing_fallbacks(self):
+        root = Path(__file__).resolve().parents[1]
+        catalog = (root / "scripts/plugin_asset_catalog.gd").read_text(encoding="utf-8")
+        loader = (root / "scripts/plugin_asset_loader.gd").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        expected = {
+            "thrixel_stag_guardian": "ancient_stag_guardian",
+            "thrixel_river_crab": "silver_river_crab",
+            "thrixel_drowned_wraith": "drowned_wraith",
+            "thrixel_ancient_tree": "ancient_tree",
+            "thrixel_rune_obelisk": "rune_obelisk",
+            "thrixel_way_shrine": "stone_way_shrine",
+        }
+        for key, filename in expected.items():
+            self.assertIn(f'"{key}": "res://assets/plugin_imports/thrixel/{filename}.glb"', catalog)
+        self.assertIn("Baixar modelos Thrixel já existentes (opcional)", workflow)
+        for submission in (
+            "10f1f722-53d8-4ca0-b99b-e0e687bc8fec",
+            "4592675e-0e7e-491d-9d1e-a4a15eee7304",
+            "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1",
+            "584d17cf-92ff-4fde-ba50-19037a88d832",
+            "07af580b-8b0e-4511-b2bd-c0164d113fc9",
+            "3ec3e3e0-e234-4ee1-942a-13391b648107",
+        ):
+            self.assertIn(submission, workflow)
+        self.assertIn("PROCEDURAL_FORGE.create_asset(asset_key)", loader)
+        self.assertIn("cancel-in-progress: false", workflow)
+
+
 class GlacialRavenContracts(unittest.TestCase):
     def test_glacial_ravens_are_optional_mountain_encounters_with_custom_wings(self):
         root = Path(__file__).resolve().parents[1]
