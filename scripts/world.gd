@@ -94,6 +94,7 @@ func _ready() -> void:
 	_build_ruins_and_props()
 	_build_region_landmarks()
 	_build_plugin_world_expansion()
+	_build_imported_plugin_models()
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	await get_tree().process_frame
 	_build_swamp_region()
@@ -139,6 +140,18 @@ func _ready() -> void:
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
 	print("TOBI_BREU_BOOT_READY")
+
+
+
+func _build_imported_plugin_models() -> void:
+	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
+	# Os modelos mantem materiais/texturas PBR incorporados ao GLB.
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_stag_guardian", Vector3(-158.0, 0.0, -104.0), Vector3.ONE)
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_river_crab", Vector3(55.0, 0.0, -143.0), Vector3.ONE * 0.85)
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_drowned_wraith", Vector3(67.0, 0.0, -157.0), Vector3.ONE)
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
+	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
 
 
 func _create_loading_screen() -> void:
