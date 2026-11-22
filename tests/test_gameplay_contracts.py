@@ -963,8 +963,8 @@ class RegionalLandmarkContracts(unittest.TestCase):
 class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
     def test_hud_is_visible_above_world_but_below_menus(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
-        self.assertIn("hud.layer = 20", world)
-        self.assertIn('menu_layer.layer = 40', world)
+        self.assertIn("hud.layer = 90", world)
+        self.assertIn("menu_layer.layer = 100", world)
         self.assertIn('ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE', world)
 
     def test_menu_panel_is_responsive_and_scrollable(self):
@@ -975,14 +975,14 @@ class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
 
     def test_ui_buttons_use_lightweight_states(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
-        self.assertIn('style.shadow_size = 2', world)
+        self.assertIn("panel_style.shadow_size = 3", world)
         self.assertIn('button.add_theme_stylebox_override("focus"', world)
         self.assertIn('button.add_theme_stylebox_override("disabled"', world)
 
     def test_boot_menu_buttons_fit_small_screens(self):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
-        self.assertIn('minf(560.0, viewport_width * 0.90)', menu)
-        self.assertIn('minf(520.0, available_width * 0.84)', menu)
+        self.assertIn('minf(560.0, viewport_width * (0.94 if mobile_ui else 0.90))', menu)
+        self.assertIn('minf(520.0, available_width * (0.90 if mobile_ui else 0.84))', menu)
 
 
 class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
@@ -1005,3 +1005,22 @@ class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
         self.assertIn("panel_style.shadow_size = 3", world)
         self.assertIn("menu_frame_style.shadow_size = 8", world)
         self.assertIn("card_style.shadow_size = 2", world)
+
+
+class MobileFirstAllScreensContracts(unittest.TestCase):
+    def test_boot_menu_has_touch_sized_buttons_and_vertical_scroll(self):
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        self.assertIn('scroll.name = "BootMenuScroll"', menu)
+        self.assertIn('76 if mobile_ui else 68', menu)
+        self.assertIn('viewport_width * (0.94 if mobile_ui else 0.90)', menu)
+
+    def test_all_in_game_menu_pages_use_mobile_touch_targets(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('78 if primary else 72', world)
+        self.assertIn('func _on_game_menu_viewport_resized()', world)
+        self.assertIn('menu_viewport.size_changed.connect(_on_game_menu_viewport_resized)', world)
+
+    def test_mobile_hud_controls_keep_comfortable_touch_scale(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('var compact_scale := 0.90 if portrait else 1.0', world)
+        self.assertIn('button.mouse_filter = Control.MOUSE_FILTER_STOP', world)

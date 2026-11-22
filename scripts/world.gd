@@ -2270,7 +2270,7 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 	if not mobile:
 		return
 	var portrait := viewport_size.y > viewport_size.x
-	var compact_scale := 0.82 if portrait else 1.0
+	var compact_scale := 0.90 if portrait else 1.0
 	var move_layout: Dictionary
 	if portrait:
 		# Portrait D-pad: three columns with enough spacing for separate fingers.
@@ -2384,7 +2384,8 @@ func _build_menus() -> void:
 	menu_panel.name = "MenuFrame"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.86))
+	var is_mobile_ui := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var panel_size := Vector2(minf(680.0, viewport_size.x * (0.96 if is_mobile_ui else 0.92)), minf(600.0, viewport_size.y * (0.94 if is_mobile_ui else 0.86)))
 	menu_panel.position = -panel_size * 0.5
 	menu_panel.size = panel_size
 	menu_panel.custom_minimum_size = panel_size
@@ -2394,10 +2395,10 @@ func _build_menus() -> void:
 	menu_frame_style.shadow_color = Color(0.0, 0.0, 0.0, 0.82)
 	menu_frame_style.shadow_size = 8
 	menu_frame_style.shadow_offset = Vector2(0, 3)
-	menu_frame_style.content_margin_left = 22.0
-	menu_frame_style.content_margin_right = 22.0
-	menu_frame_style.content_margin_top = 18.0
-	menu_frame_style.content_margin_bottom = 18.0
+	menu_frame_style.content_margin_left = 14.0 if is_mobile_ui else 22.0
+	menu_frame_style.content_margin_right = 14.0 if is_mobile_ui else 22.0
+	menu_frame_style.content_margin_top = 12.0 if is_mobile_ui else 18.0
+	menu_frame_style.content_margin_bottom = 12.0 if is_mobile_ui else 18.0
 	menu_panel.add_theme_stylebox_override("panel", menu_frame_style)
 	menu_layer.add_child(menu_panel)
 	var shell := VBoxContainer.new()
@@ -2448,7 +2449,21 @@ func _build_menus() -> void:
 	shell.add_child(menu_feedback)
 	menu_layer.visible = true
 	_show_menu_page("main")
+	var menu_viewport := get_viewport()
+	if not menu_viewport.size_changed.is_connected(_on_game_menu_viewport_resized):
+		menu_viewport.size_changed.connect(_on_game_menu_viewport_resized)
 	get_tree().paused = true
+
+
+func _on_game_menu_viewport_resized() -> void:
+	if not is_instance_valid(menu_panel):
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var mobile_ui := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var panel_size := Vector2(minf(680.0, viewport_size.x * (0.96 if mobile_ui else 0.92)), minf(600.0, viewport_size.y * (0.94 if mobile_ui else 0.86)))
+	menu_panel.position = -panel_size * 0.5
+	menu_panel.size = panel_size
+	menu_panel.custom_minimum_size = panel_size
 
 
 func _show_menu_page(page: String) -> void:
@@ -2824,9 +2839,9 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	var button := Button.new()
 	button.text = ("✦  " if primary else "◇  ") + caption + "     ›"
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.custom_minimum_size = Vector2(0, 62 if primary else 56)
+	button.custom_minimum_size = Vector2(0, 78 if primary else 72)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 14 if primary else 12)
+	button.add_theme_font_size_override("font_size", 16 if primary else 14)
 	button.add_theme_color_override("font_color", Color("f0dfbf") if primary else Color("c5cfc2"))
 	button.add_theme_color_override("font_hover_color", Color("fff0cf"))
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)

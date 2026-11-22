@@ -27,13 +27,22 @@ func _build_menu() -> void:
 	glow.anchor_bottom = 1.0
 	background.add_child(glow)
 
+	var scroll := ScrollContainer.new()
+	scroll.name = "BootMenuScroll"
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	add_child(scroll)
 	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	center.custom_minimum_size.y = get_viewport_rect().size.y
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 
 	var layout := VBoxContainer.new()
-	var viewport_width := get_viewport_rect().size.x
-	layout.custom_minimum_size = Vector2(minf(560.0, viewport_width * 0.90), 0)
+	var viewport_size := get_viewport_rect().size
+	var viewport_width := viewport_size.x
+	var mobile_ui := OS.has_feature("mobile") or viewport_width < 900.0
+	layout.custom_minimum_size = Vector2(minf(560.0, viewport_width * (0.94 if mobile_ui else 0.90)), 0)
 	layout.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	layout.add_theme_constant_override("separation", 12)
 	center.add_child(layout)
@@ -49,7 +58,7 @@ func _build_menu() -> void:
 	title.text = "TOBI  &  BREU"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Color("f0e9d7"))
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", 38 if viewport_width < 600.0 else 48)
 	layout.add_child(title)
 
 	var subtitle := Label.new()
@@ -95,11 +104,12 @@ func _build_menu() -> void:
 func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, action: Callable, primary := false) -> void:
 	var button := Button.new()
 	var available_width := get_viewport_rect().size.x
-	button.custom_minimum_size = Vector2(minf(520.0, available_width * 0.84), 62)
+	var mobile_ui := OS.has_feature("mobile") or available_width < 900.0
+	button.custom_minimum_size = Vector2(minf(520.0, available_width * (0.90 if mobile_ui else 0.84)), 76 if mobile_ui else 68)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = heading + "\n" + detail
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_font_size_override("font_size", 17 if primary else 15)
+	button.add_theme_font_size_override("font_size", 16 if primary else 14)
 	button.add_theme_color_override("font_color", Color("f4eddb"))
 	button.add_theme_color_override("font_hover_color", Color("fff8e8"))
 	var normal := StyleBoxTexture.new()
