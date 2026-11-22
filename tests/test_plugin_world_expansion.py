@@ -15,6 +15,11 @@ class PluginWorldExpansionContracts(unittest.TestCase):
         for landmark in ["MoonwellSanctuary", "FallenWatchOutpost", "AncientTrailMarker_", "AncientTrailTorch_", "CinderHollow", "WardenStoneBridge", "EchoingBellTower"]:
             self.assertIn(landmark, world)
 
+    def test_ancient_waystones_have_sculpted_3d_details(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        for detail in ["WaystoneDais", "WaystoneCrown", "WaystoneGlyph_", "WaystoneShard_", "WaystoneAccentLight"]:
+            self.assertIn(detail, world)
+
     def test_expansion_keeps_mobile_friendly_instancing(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("moon_light.omni_range = 10.0", world)
