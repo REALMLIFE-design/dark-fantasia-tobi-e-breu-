@@ -6,7 +6,7 @@ Esta pasta recebe modelos 3D baixados de bibliotecas externas. O jogo usa Godot 
 
 Extraia os modelos para pastas separadas, preservando os arquivos de textura que acompanham cada modelo:
 
-- `assets/external_packs/ashen_marches/`
+- `assets/external_packs/medieval_collection/`
 - `assets/external_packs/dungeon_remastered/`
 - `assets/external_packs/ultimate_dungeon/`
 
@@ -14,11 +14,11 @@ Não coloque arquivos ZIP dentro dessas pastas. Extraia primeiro e mantenha as l
 
 ## Packs selecionados
 
-### Ashen Marches — 100 modelos
+### Free Low-Poly Medieval Collection — 203 modelos
 
-Página oficial: https://chilllands.itch.io/ashen-marches-free
+Página oficial: https://avramania.itch.io/free-collection
 
-A edição gratuita anuncia 100 modelos, 20 personagens/animais/criaturas animados e 124 clipes. Inclui uma edição Godot e arquivos GLB/FBX. A página informa uso pessoal e comercial gratuito. É o melhor candidato para começar porque combina fantasia sombria estilizada e já oferece projeto Godot.
+203 modelos low-poly medievais de nove conjuntos: natureza, terreno, vilarejo, castelo, interiores, armas, mercado e ruínas. GLB e FBX, compatível com Godot 4. Licença CC0, sem necessidade de atribuição. Download de 9,1 MB por preço livre (pode baixar por zero).
 
 ### Dungeon Remastered (KayKit) — 203 modelos
 
@@ -44,8 +44,15 @@ O loader não baixa arquivos sozinho e não contorna logins/licenças. Os modelo
 
 ## Créditos e licenças
 
-- Ashen Marches: seguir a licença incluída no pacote e manter os créditos solicitados pelo autor.
+- Free Low-Poly Medieval Collection: CC0, sem atribuição obrigatória.
 - Dungeon Remastered: CC0 1.0 conforme a página de distribuição.
 - Ultimate Dungeon Pack: CC BY 4.0; manter atribuição.
+- Stylized Fantasy Free Sampler: uso pessoal e comercial permitido; crédito apreciado, não obrigatório; não revender os modelos.
 
 Os arquivos originais permanecem sob as licenças dos respectivos autores. Não redistribua os ZIPs fora dos termos de cada licença.
+
+### Extra — Stylized Fantasy Free Sampler (16 modelos)
+
+Página oficial: https://soresa-assets.itch.io/free-stylized-fantasy
+
+16 modelos GLB/FBX para Godot 4, com LODs e colisores: casas, barraca, poço, árvore, cerca, carrinho, barril, arco de pedra, pilar, tocha, baú, espada e escudo. Download de 11 MB por preço livre (pode baixar por zero).
