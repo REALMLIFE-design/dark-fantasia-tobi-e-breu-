@@ -58,6 +58,8 @@ func _build_candidate() -> void:
 
 	for piece_data: Dictionary in PIECES:
 		_attach_piece(piece_data)
+	set_meta("tobi_quaternius_ready", true)
+	print("TOBI_QUATERNIUS_SCENE_READY")
 
 
 func _attach_piece(piece_data: Dictionary) -> void:
