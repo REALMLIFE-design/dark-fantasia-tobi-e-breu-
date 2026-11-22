@@ -849,3 +849,17 @@ class NewDarkFantasyModelContracts(unittest.TestCase):
         self.assertIn("static func build_all(parent: Node3D)", props)
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("DARK_FANTASY_PROP_PACK.build_all(self)", world)
+
+
+class RootWardenContracts(unittest.TestCase):
+    def test_root_warden_is_spawned_and_has_a_distinct_enemy_archetype(self):
+        root = Path(__file__).resolve().parents[1]
+        world = (root / "scripts/world.gd").read_text(encoding="utf-8")
+        enemy = (root / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertIn('root_warden.name = "Vigia_das_Raizes"', world)
+        self.assertIn('root_warden.set("enemy_kind", 9)', world)
+        self.assertIn('elif enemy_kind == 9:', enemy)
+        self.assertIn('label.text = "VIGIA DAS RAÍZES"', enemy)
+        self.assertIn('Color("a6d77b")', enemy)
+        self.assertIn('if kind == 9:', world)
+        self.assertIn('+35 XP', world)
