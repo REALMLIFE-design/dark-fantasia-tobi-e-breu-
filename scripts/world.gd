@@ -2260,23 +2260,18 @@ func _on_hud_viewport_resized() -> void:
 
 
 func _apply_mobile_hud_layout(ui_root: Control) -> void:
-	# Landscape-first touch layout: generous hit targets, clear left/right hand zones.
+	# Layout responsivo: joystick analógico à esquerda e ações à direita.
 	var viewport_size := get_viewport().get_visible_rect().size
 	var mobile := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
 	if not mobile:
-		return
-	var portrait := viewport_size.y > viewport_size.x
-	var compact_scale := 0.90 if portrait else 1.0
-	if not mobile:
-		var desktop_joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
-		if desktop_joystick:
-			desktop_joystick.visible = false
+		if joystick:
+			joystick.visible = false
 		return
 	var portrait := viewport_size.y > viewport_size.x
 	var compact_scale := 0.90 if portrait else 1.0
 	# Mantém o joystick na zona inferior esquerda; no retrato ele fica mais para dentro
 	# para não encostar na borda nem invadir os botões de ação do lado direito.
-	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
 	if joystick:
 		var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0
 		var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)
