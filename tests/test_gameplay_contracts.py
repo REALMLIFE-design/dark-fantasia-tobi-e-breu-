@@ -790,3 +790,16 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn('gh release create', workflow)
         self.assertIn('TobiEBreu-update.pck', workflow)
         self.assertIn('integration/definitive-all-versions', workflow)
+
+
+class TokenFreeAssetForgeContracts(unittest.TestCase):
+    def test_local_forge_builds_all_plugin_asset_fallbacks_without_generation(self):
+        root = Path(__file__).resolve().parents[1]
+        forge = (root / "scripts/procedural_asset_forge.gd").read_text(encoding="utf-8")
+        loader = (root / "scripts/plugin_asset_loader.gd").read_text(encoding="utf-8")
+        world = (root / "scripts/world.gd").read_text(encoding="utf-8")
+        for key in ("thrixel_stag_guardian", "thrixel_river_crab", "thrixel_drowned_wraith", "thrixel_ancient_tree", "thrixel_rune_obelisk", "thrixel_way_shrine", "meshy_gate"):
+            self.assertIn('"%s"' % key, forge)
+            self.assertIn('load_or_create_asset(self, "%s"' % key, world)
+        self.assertIn('PROCEDURAL_FORGE.create_asset(asset_key)', loader)
+        self.assertIn('sem IA, tokens ou downloads', forge)
