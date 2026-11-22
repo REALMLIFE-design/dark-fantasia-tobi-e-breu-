@@ -72,3 +72,11 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - A geometria esférica procedural foi refinada para 24 segmentos radiais e 16 anéis; cilindros e cones também receberam maior resolução.
 - O gato de Tobi recebeu detalhes adicionais de pelagem, focinho, sobrancelhas, dedos, rebites e medalhão em camadas.
 - Os modelos GLB externos já gerados continuam no catálogo de importação e são carregados pelo mundo quando os binários estão disponíveis; os fallbacks procedurais permanecem ativos quando a transferência falha.
+
+
+## Novos pontos de interesse regionais — 22/11/2026
+- **Santuário do Marco Antigo**: portal de pedra, pedestal e cristal de orientação próximo à Vila do Carvalho.
+- **Acampamento dos Caçadores**: tenda, fogueira, baú de suprimentos e tochas na trilha da floresta.
+- **Ponte de Pedra do Rio Prateado**: tabuleiro de lajes, balaústres e corrimãos para marcar a travessia do rio.
+- **Torre de Vigia Caída**: torre de madeira e pedra com plataforma, parapeitos, telhado e estandarte junto à Cidade de Pedra.
+- Os quatro modelos entram automaticamente no pacote de cenário; são marcos visuais, ainda sem interação, loot ou colisão dedicada.
