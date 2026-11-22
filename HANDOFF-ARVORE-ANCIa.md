@@ -25,7 +25,7 @@ Concluir a importação do modelo 3D da Árvore Anciã na Floresta Ancestral do 
 2. Se o usuário fornecer um GLB exportado/licenciado, validar que é um arquivo GLB válido e adicionar em `assets/plugin_imports/meshy/ancient_tree.glb`.
 3. Conferir escala, orientação, materiais PBR e tamanho de textura no Godot.
 4. Abrir a cena e validar visualmente a árvore no local; manter fallback procedural caso o GLB falhe.
-5. Atualizar o manifesto e `DEVELOPMENT-STATUS.md) somente após confirmar a transferência binária e os testes.
+5. Atualizar o manifesto e `DEVELOPMENT-STATUS.md` somente após confirmar a transferência binária e os testes.
 6. Não tentar contornar o bloqueio de plano; não comprar nem atualizar plano sem autorização explícita do usuário.
 
 ## Prompt visual de referência
