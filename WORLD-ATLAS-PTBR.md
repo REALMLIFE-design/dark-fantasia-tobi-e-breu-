@@ -80,3 +80,9 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - **Ponte de Pedra do Rio Prateado**: tabuleiro de lajes, balaústres e corrimãos para marcar a travessia do rio.
 - **Torre de Vigia Caída**: torre de madeira e pedra com plataforma, parapeitos, telhado e estandarte junto à Cidade de Pedra.
 - Os quatro modelos entram automaticamente no pacote de cenário; são marcos visuais, ainda sem interação, loot ou colisão dedicada.
+
+
+## Oficinas de profissão — 22/11/2026
+- **Forja do Ferreiro**, na Vila do Carvalho: lareira de pedra, bigorna, martelo, lâminas expostas, carvão e chaminé.
+- **Oficina do Alquimista**, na Cidade de Pedra: bancada, frascos com líquidos coloridos, caldeirão, ingredientes, grimório e cristal de foco.
+- São cenários visuais registrados no carregamento central. Não adicionam NPCs, lojas, receitas, inventário ou economia nesta etapa.
