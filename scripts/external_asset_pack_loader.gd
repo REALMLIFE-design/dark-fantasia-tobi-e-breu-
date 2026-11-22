@@ -1,6 +1,6 @@
 extends RefCounted
 class_name ExternalAssetPackLoader
-## Loader for third-party GLB/GLTF packs copied into res://assets/external_packs/.
+## Loader for third-party GLB/GLTF/FBX/OBJ packs copied into res://assets/external_packs/.
 
 const PACK_ROOT := "res://assets/external_packs"
 
@@ -22,13 +22,25 @@ static func instantiate_model(parent: Node3D, model_path: String, position: Vect
 	if parent == null or not model_path.begins_with(PACK_ROOT + "/"):
 		return null
 	var extension := model_path.get_extension().to_lower()
+	if extension == "obj":
+		var mesh := load(model_path) as Mesh
+		if mesh == null:
+			push_warning("Malha OBJ não importada: " + model_path)
+			return null
+		var mesh_node := MeshInstance3D.new()
+		mesh_node.name = model_path.get_file().get_basename().to_pascal_case()
+		mesh_node.mesh = mesh
+		mesh_node.position = position
+		mesh_node.scale = scale
+		parent.add_child(mesh_node)
+		return mesh_node
 	if extension != "glb" and extension != "gltf" and extension != "fbx":
 		return null
 	if not ResourceLoader.exists(model_path):
 		return null
 	var packed_scene := load(model_path) as PackedScene
 	if packed_scene == null:
-		push_warning("Modelo GLB/GLTF não importado como PackedScene: " + model_path)
+		push_warning("Modelo 3D não importado como PackedScene: " + model_path)
 		return null
 	var instance := packed_scene.instantiate() as Node3D
 	if instance == null:
@@ -57,7 +69,7 @@ static func _collect_models(folder_path: String, output: PackedStringArray) -> v
 		return
 	for file_name in directory.get_files():
 		var extension := file_name.get_extension().to_lower()
-		if extension == "glb" or extension == "gltf" or extension == "fbx":
+		if extension == "glb" or extension == "gltf" or extension == "fbx" or extension == "obj":
 			output.append(folder_path.path_join(file_name))
 	for child_folder in directory.get_directories():
 		_collect_models(folder_path.path_join(child_folder), output)
