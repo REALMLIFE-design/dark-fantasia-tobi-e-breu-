@@ -17,6 +17,10 @@ static func build_all(parent: Node3D) -> void:
 	_build_dungeon(parent, Vector3(226, 0, 94))
 	_build_castle(parent, Vector3(250, 0, -300))
 	_build_ruins(parent, Vector3(164, 0, -65))
+	_build_bone_cart(parent, Vector3(-130, 0, 112))
+	_build_rune_circle(parent, Vector3(-177, 0, -119))
+	_build_cursed_well(parent, Vector3(145, 0, -72))
+	_build_fallen_guardian(parent, Vector3(246, 0, -315))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -192,3 +196,61 @@ static func _build_ruins(parent: Node3D, center: Vector3) -> void:
 		column.rotation.z = -0.18 + float(i) * 0.07
 	for i in range(3):
 		_cone(root, "RunicMarker", Vector3(-4 + i * 4, 1.2, -12), 0.8, 2.4, Color("6a4245"), 11)
+
+
+# Novos modelos 3D locais: malhas low-poly compostas, sem downloads ou créditos.
+static func _build_bone_cart(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "BoneCollectorCart", position)
+	_box(root, "CartBed", Vector3(0, 0.95, 0), Vector3(2.7, 0.24, 1.65), Color("49382f"), 4)
+	for x in [-1.05, 1.05]:
+		var wheel := _cylinder(root, "IronBoundWheel", Vector3(x, 0.78, 0), 0.72, 0.16, Color("30383a"), 12, 10)
+		wheel.rotation.z = PI * 0.5
+		var hub := _cylinder(root, "WheelHub", Vector3(x * 1.08, 0.78, 0), 0.22, 0.2, Color("8b7658"), 4, 8)
+		hub.rotation.z = PI * 0.5
+	for z in [-0.72, 0.72]:
+		_box(root, "CartSideRail", Vector3(0, 1.45, z), Vector3(2.8, 0.9, 0.16), Color("5a4030"), 4)
+	for i in range(4):
+		var bone := _cylinder(root, "CargoBone_%d" % i, Vector3(-0.75 + i * 0.5, 1.9 + (i % 2) * 0.12, 0), 0.12, 1.45, Color("c5b99d"), 8, 7)
+		bone.rotation.z = 0.3 if i % 2 == 0 else -0.3
+	_box(root, "CartHandleLeft", Vector3(1.65, 0.7, -0.42), Vector3(1.8, 0.12, 0.12), Color("49382f"), 4)
+	_box(root, "CartHandleRight", Vector3(1.65, 0.7, 0.42), Vector3(1.8, 0.12, 0.12), Color("49382f"), 4)
+
+
+static func _build_rune_circle(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "WhisperingRuneCircle", position)
+	for i in range(7):
+		var angle := TAU * float(i) / 7.0
+		var stone := _box(root, "StandingRuneStone_%d" % i, Vector3(cos(angle) * 3.2, 1.25, sin(angle) * 3.2), Vector3(0.85, 2.5 + float(i % 3) * 0.35, 0.42), Color("626d66"), 10)
+		stone.rotation.y = -angle
+		stone.rotation.z = -0.08 if i % 2 == 0 else 0.08
+		_box(root, "StoneGlyph_%d" % i, Vector3(cos(angle) * 3.2, 1.35, sin(angle) * 3.2 + 0.24), Vector3(0.12, 0.65, 0.06), Color("75c9bb"), 13, true)
+	_cylinder(root, "CircleFoundation", Vector3(0, 0.12, 0), 2.35, 0.22, Color("454e49"), 10, 12)
+	_cone(root, "HeartCrystal", Vector3(0, 1.35, 0), 0.52, 2.2, Color("70cbbd"), 13)
+	_sphere(root, "CrystalCore", Vector3(0, 2.15, 0), 0.22, Color("a1f2df"), Vector3.ONE, 13, true)
+
+
+static func _build_cursed_well(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "CursedStoneWell", position)
+	_cylinder(root, "WellBase", Vector3(0, 0.25, 0), 2.0, 0.5, Color("505a56"), 10, 12)
+	_cylinder(root, "WellWall", Vector3(0, 0.95, 0), 1.65, 1.0, Color("74786c"), 10, 12)
+	_cylinder(root, "WellDarkOpening", Vector3(0, 1.48, 0), 1.18, 0.08, Color("171e20"), 9, 12)
+	for x in [-1.72, 1.72]:
+		_cylinder(root, "WellSupport", Vector3(x, 2.15, 0), 0.13, 2.2, Color("49382f"), 4, 7)
+	_box(root, "WellCrossBeam", Vector3(0, 3.15, 0), Vector3(3.8, 0.18, 0.18), Color("49382f"), 4)
+	_cylinder(root, "WellWinch", Vector3(0, 2.65, 0), 0.18, 0.65, Color("7e8580"), 12, 8)
+	_box(root, "WellBucket", Vector3(0, 1.8, 0.55), Vector3(0.55, 0.62, 0.48), Color("5a4030"), 4)
+	for i in range(5):
+		_box(root, "WellRune_%d" % i, Vector3(-0.9 + i * 0.45, 0.98, 1.55), Vector3(0.12, 0.28, 0.05), Color("8b4b52"), 11, true)
+
+
+static func _build_fallen_guardian(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "FallenGuardianStatue", position)
+	_box(root, "StatuePedestal", Vector3(0, 0.35, 0), Vector3(4.6, 0.7, 3.6), Color("555e59"), 10)
+	_box(root, "GuardianTorso", Vector3(0, 2.25, 0), Vector3(1.45, 2.6, 0.9), Color("73786f"), 10)
+	_sphere(root, "GuardianHelm", Vector3(0, 3.95, 0), 0.72, Color("858579"), Vector3(0.9, 1.1, 0.85), 10)
+	_box(root, "GuardianShoulderLeft", Vector3(-1.05, 3.0, 0), Vector3(0.8, 0.75, 0.9), Color("626d66"), 10)
+	_box(root, "GuardianShoulderRight", Vector3(1.05, 3.0, 0), Vector3(0.8, 0.75, 0.9), Color("626d66"), 10)
+	var fallen_blade := _box(root, "FallenStoneBlade", Vector3(1.65, 1.0, 0.25), Vector3(0.34, 2.7, 0.18), Color("858d88"), 12)
+	fallen_blade.rotation.z = -0.72
+	_box(root, "BladeGuard", Vector3(1.35, 1.55, 0.25), Vector3(1.1, 0.16, 0.28), Color("a88a58"), 12)
+	_sphere(root, "GuardianChestRune", Vector3(0, 2.45, 0.5), 0.2, Color("a04e55"), Vector3.ONE, 11, true)
