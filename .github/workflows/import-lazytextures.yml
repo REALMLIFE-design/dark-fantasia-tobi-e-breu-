@@ -66,15 +66,19 @@ jobs:
                   else: break
               return current if isinstance(current,dict) else {}
           def archives(detail):
-              groups=detail.get('archiveFiles',{})
               found=[]
-              if isinstance(groups,dict):
-                  for group in groups.values():
-                      if isinstance(group,list): found.extend(group)
-                      elif isinstance(group,dict):
-                          for value in group.values():
-                              if isinstance(value,list): found.extend(value)
-              return [item for item in found if isinstance(item,dict) and item.get('path')]
+              def walk(value):
+                  if isinstance(value,dict):
+                      if value.get('path') and (value.get('name') or value.get('filename')):
+                          found.append(value)
+                      for nested in value.values(): walk(nested)
+                  elif isinstance(value,list):
+                      for nested in value: walk(nested)
+              for key in ('archiveFiles','archives','models','textures','otherFiles'):
+                  if key in detail: walk(detail[key])
+              unique={}
+              for item in found: unique[item['path']]=item
+              return list(unique.values())
           def download_assets(kind, queries, target, maximum):
               seen=set(); count=0
               for query in queries:
