@@ -169,3 +169,10 @@ Foram identificados quatro assets próprios do projeto no Meshy e ligados aos po
 - **Santuário de pedra:** task `01a1ffc1-4452-7384-9c4c-4a81ece4fc4a`, destino `res://assets/plugin_imports/meshy/stone_way_shrine.glb`.
 
 O carregador e o mundo agora chamam esses três props Meshy, e o player reconhece o GLB do Tobi quando ele existir. **Os arquivos GLB ainda não estão versionados no repositório:** a API Meshy bloqueou o download solicitando upgrade de plano. Nenhum modelo foi recriado e nenhum crédito de geração foi consumido nesta etapa. Até a importação dos arquivos, o jogo continua usando o herói procedural e os props existentes do cenário.
+
+
+## Forge 3D local sem créditos — 21/11/2026
+
+Como o download do Meshy exige upgrade e o usuário pediu para não gastar tokens, foi criado `scripts/procedural_asset_forge.gd`: um gerador local de malhas primitivas compostas, executado pelo próprio Godot. O carregador usa GLB importado quando existir e, na ausência dele, constrói versões locais do guardião cervo, caranguejo do rio, espectro afogado, árvore ancestral, obelisco rúnico, santuário e portão gótico. O mundo chama esses fallbacks sem requisições externas. O Tobi continua com o modelo procedural já presente como fallback. Nenhum crédito/token de geração foi consumido.
+
+A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para jogo custa 4; não foi usada por respeitar o pedido de não gastar tokens. O Spline conectado está no plano Free e tem limite diário de chamadas; ele permite modelagem procedural, mas o caminho mais direto para colocar assets no projeto Godot sem depender de exportação manual é o forge local.
