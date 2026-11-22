@@ -1900,7 +1900,7 @@ func _build_hud() -> void:
 	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
 	hud.name = "GameHUD"
-	hud.layer = 50
+	hud.layer = 20
 	add_child(hud)
 
 	# A consistent dark-fantasy UI skin: warm parchment text, muted stone panels
@@ -1918,6 +1918,8 @@ func _build_hud() -> void:
 	ui_root.name = "HUDRoot"
 	ui_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_root.theme = ui_theme
+	ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.z_index = 1
 	hud.add_child(ui_root)
 
 	var panel_style := StyleBoxFlat.new()
@@ -2368,7 +2370,7 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 func _build_menus() -> void:
 	menu_layer = CanvasLayer.new()
 	menu_layer.name = "GameMenus"
-	menu_layer.layer = 30
+	menu_layer.layer = 40
 	menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(menu_layer)
 	var dimmer := ColorRect.new()
@@ -2381,10 +2383,11 @@ func _build_menus() -> void:
 	menu_panel.name = "MenuFrame"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.90))
+	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.86))
 	menu_panel.position = -panel_size * 0.5
 	menu_panel.size = panel_size
-	menu_panel.custom_minimum_size = Vector2(0, 0)
+	menu_panel.custom_minimum_size = panel_size
+	menu_panel.clip_contents = true
 	var menu_frame_style := _hud_button_style(Color("111916"), Color("a98752"), 18)
 	menu_frame_style.set_border_width_all(2)
 	menu_frame_style.shadow_color = Color(0.0, 0.0, 0.0, 0.82)
@@ -2398,6 +2401,8 @@ func _build_menus() -> void:
 	menu_layer.add_child(menu_panel)
 	var shell := VBoxContainer.new()
 	shell.name = "MenuShell"
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	shell.add_theme_constant_override("separation", 10)
 	menu_panel.add_child(shell)
 	var top_rule := HBoxContainer.new()
@@ -2430,6 +2435,7 @@ func _build_menus() -> void:
 	shell.add_child(rule)
 	menu_body = VBoxContainer.new()
 	menu_body.name = "MenuPageContent"
+	menu_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	menu_body.add_theme_constant_override("separation", 14)
 	shell.add_child(menu_body)
@@ -2491,6 +2497,7 @@ func _show_menu_page(page: String) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	menu_body.add_child(scroll)
 	var content := VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2824,12 +2831,14 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
 	var normal_style := _hud_button_style(fill, edge, 13)
-	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.52)
-	normal_style.shadow_size = 7
-	normal_style.shadow_offset = Vector2(0, 3)
+	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.22)
+	normal_style.shadow_size = 2
+	normal_style.shadow_offset = Vector2(0, 1)
 	button.add_theme_stylebox_override("normal", normal_style)
 	button.add_theme_stylebox_override("hover", _hud_button_style(fill.lightened(0.18), edge.lightened(0.2), 13))
 	button.add_theme_stylebox_override("pressed", _hud_button_style(fill.lightened(0.3), Color("f0d49b"), 13))
+	button.add_theme_stylebox_override("focus", _hud_button_style(fill.lightened(0.12), Color("e8c987"), 13))
+	button.add_theme_stylebox_override("disabled", _hud_button_style(Color("202722"), Color("51594f"), 13))
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -2979,12 +2988,13 @@ func _hud_button_style(fill: Color, accent: Color, radius: int = 16) -> StyleBox
 	style.bg_color = fill
 	style.border_color = accent
 	style.set_border_width_all(2)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
-	style.shadow_size = 5
-	style.shadow_offset = Vector2(0, 2)
+	# Sombras menores reduzem o custo de renderização em telas móveis.
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.24)
+	style.shadow_size = 2
+	style.shadow_offset = Vector2(0, 1)
 	style.set_corner_radius_all(radius)
-	style.corner_detail = 6
-	style.anti_aliasing = true
+	style.corner_detail = 4
+	style.anti_aliasing = false
 	style.content_margin_left = 8.0
 	style.content_margin_right = 8.0
 	style.content_margin_top = 6.0

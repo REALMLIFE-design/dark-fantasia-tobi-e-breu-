@@ -958,3 +958,28 @@ class RegionalLandmarkContracts(unittest.TestCase):
         self.assertIn('_build_drowned_bell_marker(parent, Vector3(61, 0, -132))', pack)
         self.assertIn('BubblingToxicBrew', pack)
         self.assertIn('DrownedBell', pack)
+
+    
+class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
+    def test_hud_is_visible_above_world_but_below_menus(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("hud.layer = 20", world)
+        self.assertIn('menu_layer.layer = 40', world)
+        self.assertIn('ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE', world)
+
+    def test_menu_panel_is_responsive_and_scrollable(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('minf(680.0, viewport_size.x * 0.92)', world)
+        self.assertIn('minf(600.0, viewport_size.y * 0.86)', world)
+        self.assertIn('scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO', world)
+
+    def test_ui_buttons_use_lightweight_states(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('style.shadow_size = 2', world)
+        self.assertIn('button.add_theme_stylebox_override("focus"', world)
+        self.assertIn('button.add_theme_stylebox_override("disabled"', world)
+
+    def test_boot_menu_buttons_fit_small_screens(self):
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        self.assertIn('minf(560.0, viewport_width * 0.90)', menu)
+        self.assertIn('minf(520.0, available_width * 0.84)', menu)

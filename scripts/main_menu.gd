@@ -31,8 +31,10 @@ func _build_menu() -> void:
 	add_child(center)
 
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(560, 0)
-	layout.add_theme_constant_override("separation", 14)
+	var viewport_width := get_viewport_rect().size.x
+	layout.custom_minimum_size = Vector2(minf(560.0, viewport_width * 0.90), 0)
+	layout.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	layout.add_theme_constant_override("separation", 12)
 	center.add_child(layout)
 
 	var eyebrow := Label.new()
@@ -91,8 +93,9 @@ func _build_menu() -> void:
 
 func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, action: Callable, primary := false) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(520, 62)
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var available_width := get_viewport_rect().size.x
+	button.custom_minimum_size = Vector2(minf(520.0, available_width * 0.84), 62)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text = heading + "\n" + detail
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_font_size_override("font_size", 17 if primary else 15)
