@@ -369,7 +369,6 @@ func _try_attach_imported_enemy_model() -> void:
 	visual.add_child(imported_model)
 	visual.set_meta("imported_enemy_model", imported_model)
 	visual.set_meta("imported_enemy_asset_key", asset_key)
-	_cache_hit_flash_materials(imported_model)
 
 
 func _set_enemy_fallback_meshes_visible(node: Node, should_be_visible: bool) -> void:
