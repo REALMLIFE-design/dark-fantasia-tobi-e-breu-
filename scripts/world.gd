@@ -1311,6 +1311,28 @@ func _spawn_whisper_stag_guardian() -> void:
 	var rune := _sphere(guardian, "StagPedestalRune", Vector3(0.0, 0.67, 1.02), 0.12, Color("72cfc0"))
 	rune.material_override = eye_material
 
+	# Peitoral ritual, placas de musgo e veios luminosos esculpidos na pedra.
+	var chest_medallion := _sphere(guardian, "StagChestMedallion", Vector3(0.0, 1.78, 0.79), 0.19, Color("b39a68"), 0.075)
+	chest_medallion.scale = Vector3(1.0, 1.0, 0.42)
+	chest_medallion.material_override = eye_material
+	for side in [-1.0, 1.0]:
+		var shoulder_plate := _sphere(guardian, "StagShoulderPlate", Vector3(side * 0.53, 1.91, 0.18), 0.25, Color("737b6b"), 0.32)
+		shoulder_plate.scale = Vector3(1.0, 0.72, 0.82)
+		var shoulder_moss := _sphere(guardian, "StagShoulderMoss", Vector3(side * 0.57, 2.08, 0.18), 0.16, Color("536f59"), 0.18)
+		shoulder_moss.scale = Vector3(1.25, 0.45, 0.9)
+		var antler_band := _sphere(guardian, "StagAntlerBand", Vector3(side * 0.31, 3.12, 0.72), 0.085, Color("7bcbbb"), 0.12)
+		antler_band.scale = Vector3(1.0, 1.0, 0.65)
+		antler_band.material_override = eye_material
+	# Thin inlays read as old cracks filled with spirit light, not extra armor.
+	for crack_index in range(3):
+		var crack := _box(guardian, "StagStoneInlay_%d" % crack_index, Vector3(-0.22 + float(crack_index) * 0.22, 1.55 + float(crack_index % 2) * 0.16, 0.56), Vector3(0.035, 0.28, 0.035), Color("72cfc0"))
+		crack.rotation.z = -0.35 if crack_index % 2 == 0 else 0.42
+		crack.material_override = eye_material
+	var neck_collar := _sphere(guardian, "StagAncientCollar", Vector3(0.0, 2.17, 0.58), 0.34, Color("887553"), 0.11)
+		neck_collar.scale = Vector3(1.08, 0.48, 0.88)
+	var collar_gem := _sphere(guardian, "StagCollarGem", Vector3(0.0, 2.18, 0.91), 0.09, Color("a1ead6"), 0.16)
+	collar_gem.material_override = eye_material
+
 	var eye_glow := OmniLight3D.new()
 	eye_glow.name = "StagSpiritGlow"
 	eye_glow.position = Vector3(0.0, 2.72, 1.12)
