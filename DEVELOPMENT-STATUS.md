@@ -291,3 +291,13 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Ambos os construtores foram registrados em `DarkFantasyPropPack.build_all`; não alteram missões, combate, inventário ou economia.
 - Incluído teste de contrato para o registro e os principais componentes dos dois modelos.
 - A execução do workflow Android/Godot ainda precisa confirmar a compilação e os testes; não declarar validação de runtime até o término.
+
+
+## Integração dos modelos 3D de inimigos — 22/11/2026
+- Ligados os assets Thrixel do Espectro Afogado, Caranguejo de Prata e Guardião Cervo diretamente aos inimigos reais dos tipos 7, 8 e 9 em `scripts/enemy.gd`.
+- Quando o GLB existe em `res://assets/plugin_imports/thrixel/`, a cena é instanciada dentro do nó visual do inimigo e a malha procedural é ocultada; quando o arquivo está ausente ou inválido, o modelo procedural continua como fallback.
+- Removida a criação desses três modelos como objetos estáticos de decoração em `_build_imported_plugin_models`, evitando duplicatas fora dos encontros.
+- O cache de materiais de hit-flash foi movido para depois da construção visual completa, incluindo o modelo importado.
+- Incluído teste de contrato para o mapeamento dos GLBs e para a preservação do fallback procedural.
+- Importante: os GLBs externos continuam pendentes de transferência binária para o repositório. A integração de carregamento está pronta, mas não afirmar que os modelos externos já aparecem até os arquivos serem importados.
+- Compilação Godot e CI devem ser confirmados após os commits.
