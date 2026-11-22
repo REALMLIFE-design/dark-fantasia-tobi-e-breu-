@@ -181,7 +181,7 @@ func _build_downloaded_nature_models() -> void:
 		if not "/models/" in model_path:
 			continue
 		var file_name := model_path.get_file().to_lower()
-		if not ("tree" in file_name or "forest" in file_name or "rock" in file_name or "mushroom" in file_name or "stone" in file_name or "ruin" in file_name):
+		if not ("tree" in file_name or "forest" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "mushroom" in file_name or "stone" in file_name or "ruin" in file_name):
 			continue
 		var x := -150.0 + float(community_placed % 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
 		var z := -155.0 - float(community_placed / 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
