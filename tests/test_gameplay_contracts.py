@@ -803,3 +803,16 @@ class TokenFreeAssetForgeContracts(unittest.TestCase):
             self.assertIn('load_or_create_asset(self, "%s"' % key, world)
         self.assertIn('PROCEDURAL_FORGE.create_asset(asset_key)', loader)
         self.assertIn('sem IA, tokens ou downloads', forge)
+
+
+class ExternalAssetPackLoaderContracts(unittest.TestCase):
+    def test_external_pack_loader_supports_glb_and_gltf_without_remote_downloads(self):
+        root = Path(__file__).resolve().parents[1]
+        loader = (root / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
+        readme = (root / "assets/external_packs/README.md").read_text(encoding="utf-8")
+        self.assertIn('class_name ExternalAssetPackLoader', loader)
+        self.assertIn('static func list_models', loader)
+        self.assertIn('static func instantiate_model', loader)
+        self.assertIn('extension == "glb" or extension == "gltf"', loader)
+        self.assertIn('assets/external_packs/ashen_marches', readme)
+        self.assertIn('CC BY 4.0', readme)
