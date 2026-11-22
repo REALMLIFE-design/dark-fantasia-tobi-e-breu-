@@ -90,6 +90,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_build_environment()
 	_build_landscape()
+	_build_downloaded_pbr_surface_patches()
 	_set_loading_progress(24.0, "Erguendo as terras esquecidas...")
 	await get_tree().process_frame
 	_build_open_world_expansion()
@@ -145,6 +146,44 @@ func _ready() -> void:
 	await _hide_loading_screen()
 	print("TOBI_BREU_BOOT_READY")
 
+
+
+
+func _build_downloaded_pbr_surface_patches() -> void:
+	# Mapas PBR CC0 em pequenas áreas de transição: o terreno painterly original permanece intacto.
+	var patches := [
+		{"folder": "lama", "position": Vector3(-27.0, 0.012, -111.0), "size": Vector2(9.0, 12.0)},
+		{"folder": "lama", "position": Vector3(27.0, 0.012, -111.0), "size": Vector2(9.0, 12.0)},
+		{"folder": "pedra_musgo", "position": Vector3(40.0, 0.012, -148.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "pedra_musgo", "position": Vector3(70.0, 0.012, -148.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "terra_pedras", "position": Vector3(40.0, 0.012, -108.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "terra_pedras", "position": Vector3(70.0, 0.012, -108.0), "size": Vector2(6.0, 8.0)}
+	]
+	for patch_data in patches:
+		var folder: String = patch_data["folder"]
+		var base_path := "res://assets/textures/polyhaven/" + folder + "/"
+		var albedo := load(base_path + "albedo.jpg") as Texture2D
+		if albedo == null:
+			continue
+		var material := StandardMaterial3D.new()
+		material.albedo_texture = albedo
+		material.roughness = 0.92
+		material.uv1_scale = Vector3(2.5, 2.5, 1.0)
+		var normal := load(base_path + "normal.jpg") as Texture2D
+		if normal != null:
+			material.normal_enabled = true
+			material.normal_texture = normal
+		var roughness_map := load(base_path + "roughness.jpg") as Texture2D
+		if roughness_map != null:
+			material.roughness_texture = roughness_map
+		var patch_mesh := PlaneMesh.new()
+		patch_mesh.size = patch_data["size"]
+		var patch := MeshInstance3D.new()
+		patch.name = "CC0_PBR_" + folder
+		patch.mesh = patch_mesh
+		patch.position = patch_data["position"]
+		patch.material_override = material
+		add_child(patch)
 
 
 func _build_downloaded_nature_models() -> void:
