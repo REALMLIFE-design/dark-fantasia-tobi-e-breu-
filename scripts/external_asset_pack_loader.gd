@@ -22,7 +22,7 @@ static func instantiate_model(parent: Node3D, model_path: String, position: Vect
 	if parent == null or not model_path.begins_with(PACK_ROOT + "/"):
 		return null
 	var extension := model_path.get_extension().to_lower()
-	if extension != "glb" and extension != "gltf":
+	if extension != "glb" and extension != "gltf" and extension != "fbx":
 		return null
 	if not ResourceLoader.exists(model_path):
 		return null
@@ -57,7 +57,7 @@ static func _collect_models(folder_path: String, output: PackedStringArray) -> v
 		return
 	for file_name in directory.get_files():
 		var extension := file_name.get_extension().to_lower()
-		if extension == "glb" or extension == "gltf":
+		if extension == "glb" or extension == "gltf" or extension == "fbx":
 			output.append(folder_path.path_join(file_name))
 	for child_folder in directory.get_directories():
 		_collect_models(folder_path.path_join(child_folder), output)
