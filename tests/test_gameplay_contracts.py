@@ -51,7 +51,6 @@ class GameplayContracts(unittest.TestCase):
         for key in ('thrixel_stag_guardian', 'thrixel_river_crab', 'thrixel_drowned_wraith',
                     'thrixel_ancient_tree', 'thrixel_rune_obelisk', 'thrixel_way_shrine'):
             self.assertIn(key, catalog)
-            self.assertIn(key, catalog)
         self.assertIn('HTTPRequest.new()', loader)
         self.assertIn('GLTFDocument.new()', loader)
         self.assertIn('FileAccess.open(target_path, FileAccess.WRITE)', loader)
@@ -59,6 +58,19 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func _build_imported_plugin_models() -> void:', world)
         self.assertIn('thrixel_stag_guardian', world)
         self.assertIn('thrixel_river_crab', world)
+
+    def test_meshy_tobi_hero_and_existing_props_are_wired_into_game(self):
+        player = self.player
+        world = self.world
+        catalog = (ROOT / 'scripts/plugin_asset_catalog.gd').read_text(encoding='utf-8')
+        self.assertIn('"meshy_tobi_hero": "res://assets/plugin_imports/meshy/tobi_hero.glb"', catalog)
+        self.assertIn('func _try_attach_meshy_hero() -> void:', player)
+        self.assertIn('load_optional_scene("meshy_tobi_hero")', player)
+        self.assertIn('TobiMeshyHero', player)
+        self.assertIn('if hero_scene == null:', player)
+        self.assertIn('func _hide_procedural_hero_parts(parent_node: Node)', player)
+        for key in ('meshy_gate', 'meshy_rune_obelisk', 'meshy_way_shrine'):
+            self.assertIn('load_meshy_asset(self, "%s"' % key, world)
 
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
