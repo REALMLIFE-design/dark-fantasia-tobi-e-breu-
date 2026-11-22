@@ -59,3 +59,9 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - Bosque dos Sussurros: pequeno bosque de cogumelos luminosos, aproximadamente (105, -151).
 - Caverna do Eco: agrupamento de cristais azulados emissivos, aproximadamente (-228, -248).
 - Os modelos são cenografia procedural otimizada para mobile; não alteram missões, recompensas ou colisões de combate.
+
+
+## Companheiro — Gato de Tobi
+- Um gato low-poly cinza-escuro em pose sentada foi colocado perto da clareira inicial, aproximadamente em (4, 3.5).
+- O modelo tem olhos âmbar, focinho claro, orelhas rosadas, cauda segmentada e coleira vinho com medalhão dourado.
+- É um modelo procedural leve integrado ao carregamento do pacote de cenografia; nesta etapa é visual, sem IA, animação ou interação.
