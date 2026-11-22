@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/update_bootstrap.gd" id="1"]
+
+[node name="UpdateBootstrap" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.031, 0.043, 0.051, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Content" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="CenterContainer/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.91, 0.84, 1)
+theme_override_font_sizes/font_size = 32
+text = "TOBI & BREU"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="CenterContainer/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.65, 0.48, 1)
+theme_override_font_sizes/font_size = 14
+text = "Verificando atualizações..."
+horizontal_alignment = 1
