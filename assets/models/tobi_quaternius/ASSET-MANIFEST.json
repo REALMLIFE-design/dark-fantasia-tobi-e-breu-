@@ -1,0 +1,177 @@
+[
+  {
+    "group": "base",
+    "file": "Regular_Male_OnlyHead.gltf",
+    "bytes": 30135,
+    "sha256": "8c3e53d7c3a01c64414daf9f9cd79ca4b8f27631bb4e9b876946e75ffbdf93fe",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/Regular_Male_OnlyHead.gltf"
+  },
+  {
+    "group": "base",
+    "file": "Regular_Male_OnlyHead.bin",
+    "bytes": 131,
+    "sha256": "66ef9b286d73bb2f984d702ad1601eeca2bc51ae2ee4dfca6f61455ffe45efce",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/Regular_Male_OnlyHead.bin"
+  },
+  {
+    "group": "base",
+    "file": "T_Hair_1_Normal.png",
+    "bytes": 132,
+    "sha256": "9f632ef7c5a7ec8a3f7bcaef9d4581bae4dc62957fd210e921164ea06334c17a",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Hair_1_Normal.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Hair_1_BaseColor.png",
+    "bytes": 132,
+    "sha256": "54761c59ebad623c6ee97c1d67efa1279c0df219e254ec4fdc8af96380a550f5",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Hair_1_BaseColor.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Eye_Normal.png",
+    "bytes": 130,
+    "sha256": "f606c9f250a7d8cfb150ee2d7d0d530c2c6b506ff5427294a9265628a4349fbf",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Eye_Normal.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Eye_Brown.png",
+    "bytes": 130,
+    "sha256": "850329a3359f1b5ed27018cc7d02123e0964cec9145e3d07d3e6f2e142f0fd82",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Eye_Brown.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Regular_Male_Normal.png",
+    "bytes": 132,
+    "sha256": "896efd0640dc2fcfbd31f7079be37b3b7a513cca670202b497647a6eca2ffe8c",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Regular_Male_Normal.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Regular_Male_Dark_BaseColor.png",
+    "bytes": 132,
+    "sha256": "5f55fe26090a47652fa1b5d3d3c2009bc2b090437e76fe7fd96a54b293a030ff",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Regular_Male_Dark_BaseColor.png"
+  },
+  {
+    "group": "base",
+    "file": "T_Regular_Male_Roughness.png",
+    "bytes": 132,
+    "sha256": "36e689d606aec5589279e608c5b9d3f77289df32662e92c5bf69b9afe97233e1",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/universal-base-characters/T_Regular_Male_Roughness.png"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Body.gltf",
+    "bytes": 26865,
+    "sha256": "c5bb520006116222bad30533bd39e0f215abbf8d44e3fa1769ebad12043eac57",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Body.gltf"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Body.bin",
+    "bytes": 131,
+    "sha256": "9362b8ad7a9b80d1015d7b25149ad0d9354453e5b11c662e9e7eee225045db2a",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Body.bin"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Arms.gltf",
+    "bytes": 26704,
+    "sha256": "437d71553d79dbf4583351718b5cb5c6d342f5e0682b287a7cd806630ed2b349",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Arms.gltf"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Arms.bin",
+    "bytes": 131,
+    "sha256": "c387097f6db8904ed158363dcc012a3c6e6613fc938f1cf185de972fff352f35",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Arms.bin"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Legs.gltf",
+    "bytes": 23712,
+    "sha256": "c415a01384d34b77a98ff4b0d01d42453dfe98bee259e58a328a803d36ac9df2",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Legs.gltf"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Legs.bin",
+    "bytes": 130,
+    "sha256": "c4d96d9aaca1b105ca4f30d9aa2fb661b2fd9b8abe97ae0c26f10192ea14e873",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Legs.bin"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Feet_Boots.gltf",
+    "bytes": 23762,
+    "sha256": "e71cd92792aeabca0dd1621556c54945dd97d154147790a5cb1afd75415a4e02",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Feet_Boots.gltf"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Feet_Boots.bin",
+    "bytes": 131,
+    "sha256": "bd7ceed228b37714f6eeee262ee3882505a74e46ebd9d6f93c91372e89bb1fb3",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Feet_Boots.bin"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Head_Hood.gltf",
+    "bytes": 23737,
+    "sha256": "57affa34c145d2c1a02a3d9b17066e22b84eb4ce2bb79c6c7b90588af00846b6",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Head_Hood.gltf"
+  },
+  {
+    "group": "ranger",
+    "file": "Male_Ranger_Head_Hood.bin",
+    "bytes": 130,
+    "sha256": "e4957fa0ba3be98917bb347c4eb4b575e25df87c60931c2e190e2a4d1ff1462f",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Head_Hood.bin"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Ranger_Normal.png",
+    "bytes": 133,
+    "sha256": "d54c953976abc1655554eaf7e55fbadb946932fd075b53857added77e336d842",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Ranger_Normal.png"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Ranger_BaseColor.png",
+    "bytes": 132,
+    "sha256": "5747cf441d85c6f9485cbd83adf6a90afc45aa289af4ca56ce50915055941f3e",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Ranger_BaseColor.png"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Ranger_ORM.png",
+    "bytes": 133,
+    "sha256": "3aa0e43963614ddecd48832aa73d5946c4813936008cf6e6ae92ff7db59e9707",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Ranger_ORM.png"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Regular_Male_Normal.png",
+    "bytes": 132,
+    "sha256": "896efd0640dc2fcfbd31f7079be37b3b7a513cca670202b497647a6eca2ffe8c",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Normal.png"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Regular_Male_Dark_BaseColor.png",
+    "bytes": 132,
+    "sha256": "5f55fe26090a47652fa1b5d3d3c2009bc2b090437e76fe7fd96a54b293a030ff",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Dark_BaseColor.png"
+  },
+  {
+    "group": "ranger",
+    "file": "T_Regular_Male_Roughness.png",
+    "bytes": 132,
+    "sha256": "36e689d606aec5589279e608c5b9d3f77289df32662e92c5bf69b9afe97233e1",
+    "source": "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Roughness.png"
+  }
+]
