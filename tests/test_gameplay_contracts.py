@@ -35,6 +35,16 @@ class GameplayContracts(unittest.TestCase):
         knockback = self.player.split('func apply_boss_slam_knockback', 1)[1].split('func take_damage', 1)[0]
         self.assertNotIn('invulnerable > 0.0', knockback)
 
+    def test_guard_parry_window_and_touch_controller_mapping(self):
+        self.assertIn('guard={"deadzone":0.5', self.project)
+        self.assertIn('Object(InputEventJoypadButton,"button_index":6)', self.project)
+        self.assertIn('func do_guard() -> void:', self.player)
+        self.assertIn('parry_window = 0.38', self.player)
+        self.assertIn('enemy.take_damage(22)', self.player)
+        world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('"a":"guard"', world)
+        self.assertIn('func player_parry_success() -> void:', world)
+
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
         self.assertIn('func do_dodge()', self.player)
