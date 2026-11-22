@@ -72,21 +72,31 @@ func _ready() -> void:
 
 
 func _try_attach_meshy_hero() -> void:
-	# Usa o Tobi texturizado do Meshy quando o GLB estiver importado no projeto.
-	# Se o arquivo nao estiver disponivel, o heroi procedural atual continua ativo.
+	# Prioriza o Tobi original do Meshy quando ele estiver no projeto.
+	# Enquanto esse GLB não foi entregue, usa o personagem 3D CC0 já versionado
+	# no repositório (cavaleiro low-poly com espada), sem depender de download.
 	var hero_scene := PLUGIN_ASSET_LOADER.load_optional_scene("meshy_tobi_hero")
+	var hero_name := "TobiMeshyHero"
 	if hero_scene == null:
+		const FALLBACK_TOBI_MODEL := "res://assets/external_packs/3dassets_dev/low-poly-character-figures-knight-sword-raised-5e8b7e11.glb"
+		if ResourceLoader.exists(FALLBACK_TOBI_MODEL):
+			hero_scene = load(FALLBACK_TOBI_MODEL) as PackedScene
+			hero_name = "Tobi3DCC0Fallback"
+	if hero_scene == null:
+		push_warning("Modelo 3D externo de Tobi indisponível; mantendo o herói procedural.")
 		return
 	var hero := hero_scene.instantiate() as Node3D
 	if hero == null:
-		push_warning("O modelo Tobi do Meshy nao tem raiz Node3D.")
+		push_warning("O modelo 3D de Tobi não tem raiz Node3D.")
 		return
-	hero.name = "TobiMeshyHero"
+	hero.name = hero_name
 	hero.position = Vector3(0.0, 0.0, 0.0)
-	hero.scale = Vector3.ONE * 1.8
+	hero.rotation.y = PI
+	hero.scale = Vector3.ONE * (1.8 if hero_name == "TobiMeshyHero" else 1.65)
 	visual.add_child(hero)
+	visual.set_meta("external_tobi_model", hero)
 	_hide_procedural_hero_parts(visual)
-	# Breu e os efeitos de combate permanecem visiveis.
+	# Breu e os efeitos de combate permanecem visíveis junto do novo Tobi.
 	if visual.has_node("Breu"):
 		visual.get_node("Breu").visible = true
 	if visual.has_node("AttackMotion"):
