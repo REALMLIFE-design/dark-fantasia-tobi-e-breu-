@@ -282,3 +282,12 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Adicionado teste de contrato para confirmar o registro dos quatro modelos.
 - São marcos de cenário; não foram adicionadas interações, recompensas ou colisões dedicadas nesta etapa.
 - Validação do Godot/Android permanece pendente do workflow.
+
+
+## Expansão de cenografia — oficinas de profissão (22/11/2026)
+- Adicionadas a Forja do Ferreiro na Vila do Carvalho e a Oficina do Alquimista na Cidade de Pedra.
+- A forja contém lareira, bigorna em peças, martelo, lâminas expostas, carvão e detalhes emissivos.
+- A oficina contém bancada, quatro frascos com líquidos, caldeirão, prateleira de ingredientes, grimório e cristal de foco.
+- Ambos os construtores foram registrados em `DarkFantasyPropPack.build_all`; não alteram missões, combate, inventário ou economia.
+- Incluído teste de contrato para o registro e os principais componentes dos dois modelos.
+- A execução do workflow Android/Godot ainda precisa confirmar a compilação e os testes; não declarar validação de runtime até o término.
