@@ -74,7 +74,7 @@ func _build_menu() -> void:
 	layout.add_child(footer)
 
 	update_status_label = Label.new()
-	update_status_label.text = "Atualizações: verificando..."
+	update_status_label.text = "AUTO • Atualizações: verificando..."
 	update_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	update_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	update_status_label.add_theme_color_override("font_color", Color("b7a77a"))
@@ -138,4 +138,4 @@ func _show_notice(dialog_title: String, message: String) -> void:
 
 func _on_update_status_changed(message: String) -> void:
 	if is_instance_valid(update_status_label):
-		update_status_label.text = message
+		update_status_label.text = "AUTO • " + message
