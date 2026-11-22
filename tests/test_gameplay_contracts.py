@@ -701,6 +701,16 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn("cape_hem", player)
 
 
+    def test_whisper_stag_uses_cached_thrixel_model_with_offline_fallback(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download", world)
+        self.assertIn('user://cache/whisper_stag.glb', world)
+        self.assertIn('HTTPRequest.RESULT_SUCCESS', world)
+        self.assertIn('GLTFDocument.new()', world)
+        self.assertIn('gltf.append_from_buffer(data, "", state)', world)
+        self.assertIn('child.name not in ["StagPedestal", "StagPedestalTrim"]', world)
+        self.assertIn('mantendo o modelo local', world)
+
 class BellTowerSideQuestContracts(unittest.TestCase):
     def test_echoing_bell_tower_side_quest_is_interactive_and_persistent(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
