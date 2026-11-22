@@ -698,11 +698,12 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
 
     def test_touch_hud_has_responsive_left_and_right_hand_controls(self):
         self.assertIn("func _apply_mobile_hud_layout(ui_root: Control) -> void:", self.world)
-        self.assertIn('move_btn.name = "TouchMove_" + data.a', self.world)
+        self.assertIn('joystick.name = "VirtualJoystick"', self.world)
+        self.assertIn('joystick.set_script(load("res://scripts/virtual_joystick.gd"))', self.world)
         self.assertIn('action_btn.name = "TouchAction_" + data.a', self.world)
         self.assertIn('var touch_labels := {"attack":"⚔\\nATACAR"', self.world)
         self.assertIn('"attack": [Vector2(0.91, 0.855), 82.0]', self.world)
-        self.assertIn('"move_left": Vector2(0.045, 0.85)', self.world)
+        self.assertIn('"attack": [Vector2(0.91, 0.855), 82.0]', self.world)
         self.assertIn("OS.has_feature(\"mobile\")", self.world)
 
     def test_mobile_hud_reflows_when_viewport_resizes(self):
@@ -717,8 +718,8 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn('"MoonlitWildflowers"', self.world)
 
     def test_portrait_hud_uses_separated_touch_zones(self):
-        self.assertIn('"move_forward": Vector2(0.27, 0.74)', self.world)
-        self.assertIn('"move_right": Vector2(0.42, 0.84)', self.world)
+        self.assertIn('var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0', self.world)
+        self.assertIn('var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)', self.world)
         self.assertIn('"attack": [Vector2(0.92, 0.72), 82.0]', self.world)
         self.assertIn('"inventory": [Vector2(0.92, 0.96), 54.0]', self.world)
         self.assertIn('maxf(54.0, float(data[1]) * compact_scale)', self.world)
@@ -1030,13 +1031,15 @@ class MobileFirstAllScreensContracts(unittest.TestCase):
 class TouchInputDeliveryContracts(unittest.TestCase):
     def test_hud_touch_buttons_explicitly_receive_input_even_when_tree_is_paused(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
-        self.assertIn("move_btn.mouse_filter = Control.MOUSE_FILTER_STOP", world)
-        self.assertIn("move_btn.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+        joystick = (ROOT / "scripts/virtual_joystick.gd").read_text(encoding="utf-8")
+        self.assertIn("mouse_filter = Control.MOUSE_FILTER_STOP", joystick)
+        self.assertIn("joystick.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+        self.assertIn("func _gui_input(event: InputEvent)", joystick)
         self.assertIn("action_btn.mouse_filter = Control.MOUSE_FILTER_STOP", world)
         self.assertIn("action_btn.process_mode = Node.PROCESS_MODE_ALWAYS", world)
         self.assertIn("action_btn.pressed.connect(_touch_action.bind(data.a))", world)
-        self.assertIn("move_btn.button_down.connect(Input.action_press.bind(data.a))", world)
-        self.assertIn("move_btn.button_up.connect(Input.action_release.bind(data.a))", world)
+        self.assertIn("Input.action_press(action, strength)", joystick)
+        self.assertIn("Input.action_release(action)", joystick)
 
     def test_game_menu_buttons_receive_touch_while_game_is_paused(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
