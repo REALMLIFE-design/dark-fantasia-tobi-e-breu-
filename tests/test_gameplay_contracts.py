@@ -25,7 +25,7 @@ class GameplayContracts(unittest.TestCase):
 
     def test_save_is_versioned_and_old_saves_supported(self):
         self.assertIn('"save_version", 15', self.world)
-        self.assertIn('save_version > 14', self.world)
+        self.assertIn('save_version > 15', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -235,8 +235,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 13', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('"save_version", 15', self.world)
+        self.assertIn('save_version > 15', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
 
