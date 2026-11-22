@@ -726,9 +726,9 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn('joystick.name = "VirtualJoystick"', self.world)
         self.assertIn('joystick.set_script(load("res://scripts/virtual_joystick.gd"))', self.world)
         self.assertIn('action_btn.name = "TouchAction_" + data.a', self.world)
-        self.assertIn('var touch_labels := {"attack":"⚔\\nATACAR"', self.world)
-        self.assertIn('"attack": [Vector2(0.91, 0.855), 82.0]', self.world)
-        self.assertIn('"attack": [Vector2(0.91, 0.855), 82.0]', self.world)
+        self.assertIn('"attack":"⚔\\nATACAR"', self.world)
+        self.assertIn('"attack": [Vector2(0.91, 0.855), 78.0]', self.world)
+        self.assertIn('"guard": [Vector2(0.75, 0.60), 54.0]', self.world)
         self.assertIn("OS.has_feature(\"mobile\")", self.world)
 
     def test_mobile_hud_reflows_when_viewport_resizes(self):
@@ -745,9 +745,9 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
     def test_portrait_hud_uses_separated_touch_zones(self):
         self.assertIn('var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0', self.world)
         self.assertIn('var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)', self.world)
-        self.assertIn('"attack": [Vector2(0.92, 0.72), 82.0]', self.world)
-        self.assertIn('"inventory": [Vector2(0.92, 0.96), 54.0]', self.world)
-        self.assertIn('maxf(54.0, float(data[1]) * compact_scale)', self.world)
+        self.assertIn('"attack": [Vector2(0.88, 0.72), 76.0]', self.world)
+        self.assertIn('"inventory": [Vector2(0.88, 0.96), 50.0]', self.world)
+        self.assertIn('maxf(48.0, float(data[1]) * compact_scale)', self.world)
 
     def test_tobi_has_hero_crest_and_travel_gear(self):
         player = (ROOT / "scripts/player.gd").read_text(encoding="utf-8")
