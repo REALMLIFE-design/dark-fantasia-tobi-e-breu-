@@ -86,3 +86,9 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - **Forja do Ferreiro**, na Vila do Carvalho: lareira de pedra, bigorna, martelo, lâminas expostas, carvão e chaminé.
 - **Oficina do Alquimista**, na Cidade de Pedra: bancada, frascos com líquidos coloridos, caldeirão, ingredientes, grimório e cristal de foco.
 - São cenários visuais registrados no carregamento central. Não adicionam NPCs, lojas, receitas, inventário ou economia nesta etapa.
+
+
+## Modelos 3D de inimigos — integração (22/11/2026)
+- As famílias procedurais dos tipos 0 a 10 continuam disponíveis: goblins, Guardião do Silêncio, Bruxa do Pântano, Cavaleiros Afogados, Leviatã do Lodo, Espectros Afogados, Caranguejos de Prata, Vigia das Raízes e Corvos Glaciais.
+- Os GLBs externos já gerados do Espectro Afogado, Caranguejo de Prata e Guardião Cervo têm pontos de encaixe nas instâncias reais dos inimigos (tipos 7, 8 e 9). Quando o GLB existe no projeto, substitui a malha visual procedural; se estiver ausente, o fallback permanece.
+- Os GLBs ainda dependem de transferência/importação binária para `assets/plugin_imports/thrixel/`; o código de encaixe não significa que esses arquivos já estejam presentes.
