@@ -1234,17 +1234,18 @@ func _build_hud() -> void:
 	toast_label.position = Vector2(22,308)
 	toast_label.add_theme_color_override("font_color",Color("f1d5a5"))
 	hud.add_child(toast_label)
-	# touch movement pad: press-and-hold buttons map to the same input actions as keyboard
-	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
-		var move_btn := Button.new()
-		move_btn.text = data.t
-		move_btn.anchor_left = data.p.x; move_btn.anchor_right = data.p.x
-		move_btn.anchor_top = data.p.y; move_btn.anchor_bottom = data.p.y
-		move_btn.position = Vector2(-28,-25); move_btn.size = Vector2(56,50)
-		move_btn.modulate = Color(0.82,0.84,0.78,0.72)
-		move_btn.button_down.connect(Input.action_press.bind(data.a))
-		move_btn.button_up.connect(Input.action_release.bind(data.a))
-		hud.add_child(move_btn)
+	# Analog virtual joystick: continuous 360-degree movement on touch screens.
+	var joystick := Control.new()
+	joystick.name = "VirtualJoystick"
+	joystick.set_script(load("res://scripts/virtual_joystick.gd"))
+	joystick.anchor_left = 0.12
+	joystick.anchor_right = 0.12
+	joystick.anchor_top = 0.84
+	joystick.anchor_bottom = 0.84
+	joystick.position = Vector2(-78, -78)
+	joystick.size = Vector2(156, 156)
+	joystick.z_index = 20
+	hud.add_child(joystick)
 	# touch action buttons
 	for data in [{"t":"ATACAR","a":"attack","p":Vector2(0.83,0.82)},{"t":"PULAR","a":"jump","p":Vector2(0.91,0.68)},{"t":"INTERAGIR","a":"interact","p":Vector2(0.72,0.9)},{"t":"ESQUIVAR","a":"dodge","p":Vector2(0.84,0.94)},{"t":"POÇÃO","a":"potion","p":Vector2(0.94,0.84)},{"t":"FORJAR","a":"upgrade","p":Vector2(0.70,0.70)},{"t":"MOCHILA","a":"inventory","p":Vector2(0.70,0.61)},{"t":"BREU","a":"shadow","p":Vector2(0.93,0.72)}]:
 		var b := Button.new()
