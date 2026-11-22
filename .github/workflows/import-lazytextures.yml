@@ -85,6 +85,11 @@ jobs:
                   for item in search(kind,query):
                       name=item.get('name')
                       if not name or name in seen: continue
+                      tags=item.get('tags',[])
+                      metadata=' '.join([str(name),str(item.get('category','')),str(item.get('subCategory','')),' '.join(map(str,tags))]).lower()
+                      relevant = ('tree','forest','bush','plant','flower','rock','mushroom','stone','ruin','nature','vegetation','shrub') if kind=='models' else ('moss','stone','wood','mud','dirt','rock','grass','forest','metal','rust','snow','bark','soil','concrete')
+                      if not any(term in metadata for term in relevant):
+                          continue
                       seen.add(name)
                       payload=get_json(f'{base}/Asset/{kind}/{requests.utils.quote(name,safe="")}')
                       detail=unwrap_detail(payload)
@@ -99,22 +104,29 @@ jobs:
                       folder=target/safe(name); folder.mkdir(parents=True,exist_ok=True)
                       allowed={'.fbx','.gltf','.glb','.obj','.mtl','.png','.jpg','.jpeg','.tif','.tiff','.exr','.txt'}
                       extracted=0
-                      if response.content.startswith(b'PK'):
-                          archive=zipfile.ZipFile(io.BytesIO(response.content))
-                          for member in archive.infolist():
-                              if member.is_dir(): continue
-                              suffix=pathlib.Path(member.filename).suffix.lower()
-                              if suffix not in allowed: continue
-                              destination=folder/pathlib.Path(member.filename).name
-                              destination.write_bytes(archive.read(member)); extracted+=1
-                      else:
-                          filename=chosen.get('name') or pathlib.Path(chosen['path']).name
-                          suffix=pathlib.Path(filename).suffix.lower()
+                      filename=chosen.get('name') or pathlib.Path(chosen['path']).name
+                      suffix=pathlib.Path(filename).suffix.lower()
+                      def save_direct():
+                          nonlocal extracted
                           if suffix in allowed and 'text/html' not in response.headers.get('Content-Type','').lower():
                               (folder/pathlib.Path(filename).name).write_bytes(response.content)
                               extracted=1
                           else:
                               print(f'Arquivo remoto não compatível para {kind}/{name}: {filename} ({response.headers.get("Content-Type")})')
+                      if response.content.startswith(b'PK'):
+                          try:
+                              archive=zipfile.ZipFile(io.BytesIO(response.content))
+                          except zipfile.BadZipFile:
+                              save_direct()
+                          else:
+                              for member in archive.infolist():
+                                  if member.is_dir(): continue
+                                  suffix_member=pathlib.Path(member.filename).suffix.lower()
+                                  if suffix_member not in allowed: continue
+                                  destination=folder/pathlib.Path(member.filename).name
+                                  destination.write_bytes(archive.read(member)); extracted+=1
+                      else:
+                          save_direct()
                       if extracted:
                           count+=1
                           print(f'IMPORTADO {kind}: {name} ({extracted} arquivos)')
