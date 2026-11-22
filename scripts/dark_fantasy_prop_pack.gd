@@ -21,6 +21,8 @@ static func build_all(parent: Node3D) -> void:
 	_build_rune_circle(parent, Vector3(-177, 0, -119))
 	_build_cursed_well(parent, Vector3(145, 0, -72))
 	_build_fallen_guardian(parent, Vector3(246, 0, -315))
+	_build_glacial_altar(parent, Vector3(-166, 0, -260))
+	_build_crimson_rift_gate(parent, Vector3(165, 0, -330))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -254,3 +256,30 @@ static func _build_fallen_guardian(parent: Node3D, position: Vector3) -> void:
 	fallen_blade.rotation.z = -0.72
 	_box(root, "BladeGuard", Vector3(1.35, 1.55, 0.25), Vector3(1.1, 0.16, 0.28), Color("a88a58"), 12)
 	_sphere(root, "GuardianChestRune", Vector3(0, 2.45, 0.5), 0.2, Color("a04e55"), Vector3.ONE, 11, true)
+
+
+static func _build_glacial_altar(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "GlacialMemoryAltar", position)
+	_cylinder(root, "IceAltarBase", Vector3(0, 0.28, 0), 3.2, 0.56, Color("596d76"), 8, 12)
+	_cylinder(root, "FrostRing", Vector3(0, 0.62, 0), 2.55, 0.16, Color("9bbec8"), 8, 13, true)
+	_box(root, "AltarPedestal", Vector3(0, 1.15, 0), Vector3(1.9, 1.1, 1.9), Color("718b94"), 10)
+	_cone(root, "MemoryCrystal", Vector3(0, 2.55, 0), 0.82, 2.7, Color("a9e7f0"), 13, true)
+	for i in range(6):
+		var angle := TAU * float(i) / 6.0
+		var shard := _cone(root, "FrostShard_%d" % i, Vector3(cos(angle) * 2.25, 1.35, sin(angle) * 2.25), 0.34, 1.55 + float(i % 2) * 0.45, Color("8bb7c3"), 13)
+		shard.rotation.z = -0.12 if i % 2 == 0 else 0.12
+		_box(root, "AltarGlyph_%d" % i, Vector3(cos(angle) * 2.62, 0.78, sin(angle) * 2.62), Vector3(0.16, 0.42, 0.08), Color("b8f0f2"), 13, true)
+
+
+static func _build_crimson_rift_gate(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "CrimsonRiftGate", position)
+	for side in [-1.0, 1.0]:
+		var pillar := _box(root, "RiftPillar", Vector3(side * 3.0, 3.0, 0), Vector3(0.9, 6.0, 1.0), Color("57454a"), 11)
+		pillar.rotation.z = side * -0.08
+		_cone(root, "PillarCap", Vector3(side * 3.0, 6.25, 0), 0.82, 1.0, Color("80616a"), 11)
+	_box(root, "RiftLintel", Vector3(0, 6.1, 0), Vector3(6.8, 0.85, 1.15), Color("665057"), 11)
+	_box(root, "RiftKeystone", Vector3(0, 6.15, 0.66), Vector3(0.8, 1.05, 0.18), Color("b34d58"), 11, true)
+	_box(root, "RiftThreshold", Vector3(0, 0.16, 0), Vector3(7.2, 0.32, 2.0), Color("463b40"), 11)
+	for i in range(5):
+		var rune := _sphere(root, "RiftRune_%d" % i, Vector3(-1.6 + float(i) * 0.8, 3.0 + float(i % 2) * 0.8, 0.68), 0.16, Color("d56b70"), Vector3(1.0, 1.0, 0.55), 11, true)
+		rune.scale = Vector3.ONE
