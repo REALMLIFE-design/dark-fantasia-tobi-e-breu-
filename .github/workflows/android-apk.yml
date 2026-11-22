@@ -4,7 +4,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: tobi-breu-android-apk-${{ github.event_name }}-${{ github.ref }}
+  group: tobi-breu-android-apk-v2-${{ github.ref }}
   cancel-in-progress: false
 
 on:
@@ -22,6 +22,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
