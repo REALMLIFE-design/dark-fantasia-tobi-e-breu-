@@ -1814,6 +1814,14 @@ func _build_enemies() -> void:
 		if quest_stage >= 11:
 			river_knight.visible = false
 			river_knight.set_physics_process(false)
+	# Vigia opcional da Floresta Ancestral: criatura original, sem alterar as missões principais.
+	var root_warden := CharacterBody3D.new()
+	root_warden.set_script(ENEMY_SCRIPT)
+	root_warden.name = "Vigia_das_Raizes"
+	root_warden.position = Vector3(-169.0, 0.0, -137.0)
+	root_warden.set("enemy_kind", 9)
+	add_child(root_warden)
+	enemies.append(root_warden)
 	# Espectros opcionais guardam as margens do Rio Prateado; não contam para a missão dos cavaleiros.
 	for i in range(2):
 		var wraith := CharacterBody3D.new()
