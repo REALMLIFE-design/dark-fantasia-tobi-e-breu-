@@ -207,3 +207,12 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Os quatro objetos são instanciados automaticamente em pontos das regiões já existentes por `scripts/dark_fantasy_prop_pack.gd`; nenhum mapa, missão, save, HUD ou sistema de combate foi substituído.
 - Adicionado teste de contrato para os quatro construtores e seus nomes de cena.
 - Ainda falta o workflow executar os testes e validar a cena no Godot/Android. Até essa execução, não declarar compilação ou desempenho mobile confirmados.
+
+
+## Criatura original — Vigia das Raízes (22/11/2026)
+- Adicionado o inimigo opcional Vigia das Raízes à Floresta Ancestral, usando o arquétipo enemy_kind 9 e o sistema de movimento/combate existente.
+- Silhueta própria com placas de casca, espinhos de raiz, olhos e núcleo verde emissivo; indicador de ataque usa tom verde para comunicar o golpe.
+- Parâmetros: 230 HP, velocidade 2,3, dano 18 e alcance 2,2. Recompensa opcional: +35 XP, +2 Essências Sombrias, +1 Erva do Pântano e chance de Fragmento Rubro.
+- Não altera etapas, contadores ou recompensas das missões principais. O inimigo é recriado como encontro opcional ao iniciar uma nova sessão.
+- Adicionado teste de contrato para spawn, identidade visual e recompensa.
+- GDScript ainda precisa ser validado pelo Godot e testado no Android; testes de contrato não substituem execução no motor.
