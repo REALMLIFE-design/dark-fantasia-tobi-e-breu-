@@ -426,7 +426,7 @@ func get_stamina() -> float:
 
 
 func apply_boss_slam_knockback(direction: Vector3, strength: float) -> void:
-	if hp <= 0 or invulnerable > 0.0:
+	if hp <= 0:
 		return
 	var push := Vector3(direction.x, 0.0, direction.z).normalized()
 	if push.length() < 0.01:
