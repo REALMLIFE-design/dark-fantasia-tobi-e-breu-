@@ -511,3 +511,22 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('fract(world_uv * max(brush_scale, 0.5)', shader)
         self.assertIn('atlas_uv_for(world_pos.xz, tile_index)', shader)
 
+
+
+class MobileControlContracts(unittest.TestCase):
+    def test_analog_virtual_joystick_is_integrated(self):
+        root = Path(__file__).resolve().parents[1]
+        joystick = (root / 'scripts/virtual_joystick.gd').read_text(encoding='utf-8')
+        world = (root / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('res://scripts/virtual_joystick.gd', world)
+        self.assertIn('InputEventScreenTouch', joystick)
+        self.assertIn('InputEventScreenDrag', joystick)
+        self.assertIn('Input.action_press(action, strength)', joystick)
+        self.assertIn('move_forward', joystick)
+        self.assertIn('move_back', joystick)
+
+    def test_fullscreen_and_physical_controller_bindings_exist(self):
+        project = (Path(__file__).resolve().parents[1] / 'project.godot').read_text(encoding='utf-8')
+        self.assertIn('window/size/mode=3', project)
+        for action in ('move_forward', 'move_back', 'move_left', 'move_right', 'attack', 'jump', 'interact', 'dodge', 'potion', 'upgrade', 'shadow'):
+            self.assertIn('Object(InputEventJoypad', project[project.index('[input]'):])
