@@ -145,3 +145,11 @@
 - Suíte automatizada: 72 testes aprovados.
 - Validação estrutural do projeto: aprovada.
 - Ainda falta executar/importar no Godot e testar a cena e os controles no Android; portanto, esta correção não certifica por si só que o jogo inteiro já está jogável.
+
+
+## Integração preparada — Árvore Anciã (21/11/2026)
+- Geração Meshy concluída: modelo low-poly com alvo de 4.000 triângulos e textura painterly PBR em 2K.
+- `scripts/world.gd` agora prepara o ponto central da Floresta Ancestral para carregar `assets/plugin_imports/meshy/ancient_tree.glb` quando o arquivo existir; caso contrário, mantém uma árvore procedural de fallback e não quebra a região.
+- O manifesto `assets/plugin_imports/plugin_asset_sources.json` registra as tarefas de geometria/textura e o estado real da exportação.
+- **Bloqueio:** a exportação GLB foi recusada pelo Meshy com a mensagem de que o plano conectado precisa de upgrade. Nenhum GLB foi transferido ou commitado; portanto, o modelo gerado ainda não aparece no jogo. Não foi feita compra nem upgrade.
+- A cena Godot não foi executada nesta sessão. A integração real do modelo depende de obter o GLB e validar sua escala/orientação no Godot.
