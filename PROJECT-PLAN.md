@@ -93,3 +93,22 @@ Function: aprovar mapa, escala, câmera e orçamento. Form: validar modelos, mat
 - Raio do esmagamento: 5,4 m na fase normal e 6,0 m na fase enfurecida.
 - Janela de reação ajustada para o golpe especial; sem alteração do formato do save.
 - Espectro Afogado gerado no Thrixel com 9.000 triângulos e textura 1024; arquivo ainda não foi incorporado ao projeto Godot.
+
+
+### Incremento 0.13 — marcos ambientais e criaturas regionais
+- [x] Vigia das Raízes: arquétipo procedural opcional da Floresta Ancestral.
+- [x] Corvos Glaciais: dois encontros opcionais com asas articuladas na Montanha Gelada.
+- [x] Altar da Memória Glacial e Portal da Fenda Rubra.
+- [x] Caldeirão da Bruxa do Pântano e Marco do Sino Afogado.
+- [x] Carroça do Coletor de Ossos, Círculo de Runas Sussurrantes, Poço Amaldiçoado e Estátua do Guardião Caído.
+- [x] Testes de contrato para os novos modelos e encontros.
+- [ ] Validar importação e inicialização no Godot 4.3+ após a última alteração.
+- [ ] Confirmar o APK mais recente, testar controles e desempenho em Android físico e fechar o gate Runtime.
+
+### Pendências reais de produção
+- [ ] Confirmar a transferência dos seis GLBs Thrixel no pacote final do APK; o workflow tenta baixá-los, mas usa fallback procedural quando uma origem falha.
+- [ ] Importar a Árvore Anciã e o Espectro Afogado como arquivos versionados no repositório quando o download binário estiver acessível.
+- [ ] Construir interiores exploráveis para as casas da Vila do Carvalho e da Cidade de Pedra.
+- [ ] Adicionar portas, chaves, navegação interna e encontros próprios à Caverna do Eco, Masmorra das Cinzas e Castelo do Silêncio.
+- [ ] Fazer testes de FPS, memória, aquecimento, tamanho do APK e controles em aparelho Android físico de entrada.
+- [ ] Revisar câmera, colisões, escala de personagens e legibilidade de HUD em tela pequena.
