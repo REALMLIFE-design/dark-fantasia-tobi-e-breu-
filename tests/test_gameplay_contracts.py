@@ -632,6 +632,11 @@ class MobileHudAndWorldArtContracts(unittest.TestCase):
         self.assertIn('"move_left": Vector2(0.045, 0.85)', self.world)
         self.assertIn("OS.has_feature(\"mobile\")", self.world)
 
+    def test_mobile_hud_reflows_when_viewport_resizes(self):
+        self.assertIn("hud_viewport.size_changed.connect(_on_hud_viewport_resized)", self.world)
+        self.assertIn("func _on_hud_viewport_resized() -> void:", self.world)
+        self.assertIn("_apply_mobile_hud_layout(ui_root)", self.world)
+
     def test_starting_forest_uses_batched_grass_and_wildflowers(self):
         self.assertIn("grass_batch.instance_count = 132", self.world)
         self.assertIn("flower_batch.instance_count = 38", self.world)
