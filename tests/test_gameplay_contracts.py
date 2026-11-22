@@ -25,6 +25,14 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('shadow={"deadzone":0.5', project)
         self.assertIn('Input.is_action_just_pressed("shadow")', self.player)
 
+
+    def test_river_boss_slam_has_phase_scaled_player_knockback(self):
+        enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+        self.assertIn('target.apply_boss_slam_knockback(push_direction, 11.5 if boss_enraged else 9.0)', enemy)
+        self.assertIn('func apply_boss_slam_knockback(direction: Vector3, strength: float)', self.player)
+        self.assertIn('velocity.x = push.x * strength', self.player)
+        self.assertIn('velocity.y = maxf(velocity.y, 3.6 if strength >= 11.0 else 2.8)', self.player)
+
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
         self.assertIn('func do_dodge()', self.player)
