@@ -37,7 +37,7 @@ Página oficial: https://sotudios.com/Assets/Ultimate-DungeonPack/
 1. Baixe o pack no site oficial e confira o arquivo de licença.
 2. Extraia os arquivos para a pasta correspondente acima.
 3. Abra o projeto no Godot e aguarde a importação dos modelos.
-4. Use `ExternalAssetPackLoader.list_models("ashen_marches")` para listar os GLB/GLTF disponíveis.
+4. Use `ExternalAssetPackLoader.list_models("medieval_collection")` para listar os GLB/GLTF disponíveis.
 5. Use `ExternalAssetPackLoader.instantiate_by_name(...)` ou `instantiate_model(...)` para colocar um modelo numa cena.
 
 O loader não baixa arquivos sozinho e não contorna logins/licenças. Os modelos só aparecem no jogo depois de baixados e colocados nas pastas do projeto.
