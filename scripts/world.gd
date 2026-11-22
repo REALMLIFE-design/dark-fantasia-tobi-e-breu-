@@ -201,7 +201,8 @@ func _build_downloaded_nature_models() -> void:
 	for model_path in curated_models:
 		var file_name := model_path.get_file().to_lower()
 		var is_nature := "tree" in file_name or "forest" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "mushroom" in file_name or "crystal" in file_name
-		var is_ruin_prop := "stone" in file_name or "ruin" in file_name or "gate" in file_name or "shrine" in file_name or "obelisk" in file_name or "lantern" in file_name or "torch" in file_name or "altar" in file_name or "tomb" in file_name or "grave" in file_name or "skull" in file_name or "banner" in file_name or "well" in file_name or "barrel" in file_name or "crate" in file_name or "anvil" in file_name
+		# O pack inclui peças submersas; só usar estruturas e props que também funcionem no Rio Prateado.
+		var is_ruin_prop := "doorway-frame" in file_name or "standing-column" in file_name or "fountain-basin" in file_name or "glowing-crystal-clust" in file_name or "cargo-crate" in file_name or "shipwreck-hull" in file_name or "wreck-on-the-sand" in file_name
 		if not is_nature and not is_ruin_prop:
 			continue
 		var position := Vector3.ZERO
@@ -209,7 +210,7 @@ func _build_downloaded_nature_models() -> void:
 		if is_nature and nature_count < 12:
 			position = Vector3(-235.0 + float(nature_count % 4) * 12.0, 0.0, -225.0 + float(nature_count / 4) * 12.0)
 		elif is_ruin_prop and ruin_count < 8:
-			position = Vector3(35.0 + float(ruin_count % 4) * 11.0, 0.0, -92.0 - float(ruin_count / 4) * 11.0)
+			position = Vector3(72.0 + float(ruin_count % 4) * 9.0, 0.0, -142.0 - float(ruin_count / 4) * 9.0)
 		else:
 			continue
 		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, position, Vector3.ONE * scale_factor)
