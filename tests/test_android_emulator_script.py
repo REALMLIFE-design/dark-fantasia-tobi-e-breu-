@@ -31,6 +31,7 @@ if args[:2] == ['shell', 'dumpsys'] and args[2:4] == ['activity', 'activities']:
     print('mResumedActivity: ActivityRecord{abc com.tobiebreu.darkworld3d/.MainActivity}')
 if args[:2] == ['logcat', '-d']:
     print('TOBI_BREU_GAME_STARTED')
+    print('Atualização aplicada automaticamente! Seu progresso foi preservado.')
 """)
             adb.chmod(0o755)
             project = temp_path / "project"
