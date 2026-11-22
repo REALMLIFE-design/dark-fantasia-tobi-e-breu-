@@ -28,6 +28,7 @@ static func build_all(parent: Node3D) -> void:
 	_build_golden_plain_windmill(parent, Vector3(18, 0, 238))
 	_build_whispercap_grove(parent, Vector3(105, 0, -151))
 	_build_echo_cave_crystals(parent, Vector3(-228, 0, -248))
+	_build_tobi_cat(parent, Vector3(4.0, 0.0, 3.5))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -359,3 +360,41 @@ static func _build_echo_cave_crystals(parent: Node3D, position: Vector3) -> void
 		crystal.rotation.x = angle * 0.08
 		_box(root, "CrystalLight_%d" % i, Vector3(cos(angle) * radius, height * 0.45, sin(angle) * radius + 0.28), Vector3(0.09, height * 0.48, 0.08), Color("a9e4ee"), 13, true)
 	_sphere(root, "EchoCore", Vector3(0, 0.6, 0), 0.32, Color("b8f0ef"), Vector3.ONE, 13, true)
+
+
+static func _build_tobi_cat(parent: Node3D, position: Vector3) -> void:
+	# Gato companheiro de Tobi: pose sentada, silhueta legivel e poucas pecas para mobile.
+	var root := _root(parent, "TobiCatCompanion", position)
+	root.rotation.y = -0.35
+	# Corpo e peito
+	_sphere(root, "CatBody", Vector3(0, 0.78, -0.28), 0.62, Color("343b3c"), Vector3(0.88, 0.82, 1.18), 10)
+	_sphere(root, "CatChest", Vector3(0, 0.78, 0.24), 0.43, Color("b7ad98"), Vector3(0.78, 1.05, 0.62), 8)
+	# Cabeca, bochechas e focinho
+	_sphere(root, "CatHead", Vector3(0, 1.48, 0.48), 0.53, Color("42494a"), Vector3(1.0, 0.94, 0.9), 10)
+	_sphere(root, "CatMuzzleLeft", Vector3(-0.16, 1.32, 0.88), 0.19, Color("d0c5ad"), Vector3(1.0, 0.72, 0.72), 8)
+	_sphere(root, "CatMuzzleRight", Vector3(0.16, 1.32, 0.88), 0.19, Color("d0c5ad"), Vector3(1.0, 0.72, 0.72), 8)
+	_sphere(root, "CatNose", Vector3(0, 1.39, 1.04), 0.075, Color("9c6665"), Vector3(1.0, 0.75, 0.7), 8)
+	# Orelhas triangulares
+	for side in [-1.0, 1.0]:
+		var ear := _cone(root, "CatEar", Vector3(side * 0.36, 1.99, 0.42), 0.22, 0.62, Color("42494a"), 8)
+		ear.rotation.z = side * -0.18
+		_cone(root, "CatInnerEar", Vector3(side * 0.36, 1.98, 0.56), 0.105, 0.38, Color("a97878"), 8)
+		_sphere(root, "CatEye", Vector3(side * 0.22, 1.54, 0.91), 0.085, Color("e8c66f"), Vector3(0.82, 1.0, 0.48), 13, true)
+		_sphere(root, "CatPupil", Vector3(side * 0.22, 1.54, 0.96), 0.035, Color("171b1b"), Vector3(0.7, 1.2, 0.45), 8)
+		# Bigodes discretos
+		for whisker in range(2):
+			var line := _box(root, "CatWhisker", Vector3(side * 0.36, 1.31 - float(whisker) * 0.09, 0.91), Vector3(0.34, 0.018, 0.018), Color("d6d0bd"), 8)
+			line.rotation.y = side * 0.12
+	# Patas dianteiras e traseiras em pose sentada
+	for side in [-1.0, 1.0]:
+		_cylinder(root, "CatFrontLeg", Vector3(side * 0.27, 0.39, 0.36), 0.14, 0.62, Color("343b3c"), 8, 7)
+		_sphere(root, "CatFrontPaw", Vector3(side * 0.27, 0.12, 0.48), 0.19, Color("b7ad98"), Vector3(1.0, 0.58, 1.25), 8)
+		_sphere(root, "CatHindLeg", Vector3(side * 0.38, 0.34, -0.55), 0.31, Color("343b3c"), Vector3(1.0, 0.86, 1.1), 8)
+		_sphere(root, "CatHindPaw", Vector3(side * 0.38, 0.12, -0.38), 0.2, Color("b7ad98"), Vector3(1.0, 0.55, 1.2), 8)
+	# Cauda curva, feita de segmentos leves
+	for i in range(5):
+		var tail_pos := Vector3(0.0 + sin(float(i) * 0.48) * 0.38, 0.72 + float(i) * 0.19, -0.82 - float(i) * 0.22)
+		_sphere(root, "CatTailSegment_%d" % i, tail_pos, 0.19 - float(i) * 0.018, Color("343b3c"), Vector3(0.92, 1.0, 1.0), 8)
+	# Coleira vinho e medalhao dourado
+	_cylinder(root, "CatCrimsonCollar", Vector3(0, 1.08, 0.55), 0.34, 0.11, Color("7e3945"), 11, 10)
+	_sphere(root, "CatGoldenCharm", Vector3(0, 0.98, 0.88), 0.105, Color("d2ad69"), Vector3(0.85, 1.1, 0.55), 13, true)
