@@ -687,3 +687,26 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn('cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)', world)
         self.assertIn('cfg.get_value("progress", "ancient_waystone_ids", [])', world)
         self.assertIn('cfg.set_value("meta", "save_version", 15)', world)
+
+
+    def test_android_auto_update_bootstrap_is_registered(self):
+        updater = (ROOT / 'scripts/update_manager.gd').read_text(encoding='utf-8')
+        export = (ROOT / 'export_presets.cfg').read_text(encoding='utf-8')
+        self.assertIn('UpdateManager="*res://scripts/update_manager.gd"', self.project)
+        self.assertIn('permissions/internet=true', export)
+        self.assertIn('ProjectSettings.load_resource_pack', updater)
+        self.assertIn('HashingContext.HASH_SHA256', updater)
+        self.assertIn('user://tobi_breu_save.cfg', self.world)
+
+    def test_auto_update_download_is_staged_for_safe_restart(self):
+        updater = (ROOT / 'scripts/update_manager.gd').read_text(encoding='utf-8')
+        self.assertIn('user://updates/pending.pck', updater)
+        self.assertIn('user://updates/pending_version.txt', updater)
+        self.assertIn('Feche e abra o jogo', updater)
+
+    def test_incremental_android_patch_is_published_by_github_actions(self):
+        workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
+        self.assertIn('--export-pack "Android"', workflow)
+        self.assertIn('gh release create', workflow)
+        self.assertIn('TobiEBreu-update.pck', workflow)
+        self.assertIn('integration/definitive-all-versions', workflow)
