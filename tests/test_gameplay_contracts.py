@@ -1082,3 +1082,10 @@ class SaveRecoveryContracts(unittest.TestCase):
         self.assertIn('backup_cfg.load(backup_path)', load_block)
         self.assertIn('cfg = backup_cfg', load_block)
         self.assertIn('Save principal e backup estão inválidos; nenhum progresso foi sobrescrito.', load_block)
+
+    def test_tobi_cat_companion_model_is_added_to_world(self):
+        props = (ROOT / 'scripts/dark_fantasy_prop_pack.gd').read_text(encoding='utf-8')
+        self.assertIn('_build_tobi_cat(parent, Vector3(4.0, 0.0, 3.5))', props)
+        self.assertIn('static func _build_tobi_cat(parent: Node3D, position: Vector3)', props)
+        for part in ('CatHead', 'CatBody', 'CatTailSegment_', 'CatCrimsonCollar', 'CatGoldenCharm'):
+            self.assertIn(part, props)
