@@ -4,7 +4,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: tobi-breu-android-apk
+  group: tobi-breu-android-apk-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 on:
