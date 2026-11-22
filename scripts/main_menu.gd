@@ -5,6 +5,7 @@ const MAX_ADVENTURE_PLAYERS := 4
 
 var status_label: Label
 var notice_dialog: AcceptDialog
+var update_status_label: Label
 
 func _ready() -> void:
 	_build_menu()
@@ -72,6 +73,18 @@ func _build_menu() -> void:
 	footer.add_theme_font_size_override("font_size", 12)
 	layout.add_child(footer)
 
+	update_status_label = Label.new()
+	update_status_label.text = "Atualizações: verificando..."
+	update_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	update_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	update_status_label.add_theme_color_override("font_color", Color("b7a77a"))
+	update_status_label.add_theme_font_size_override("font_size", 12)
+	layout.add_child(update_status_label)
+	if has_node("/root/UpdateManager"):
+		var updater := get_node("/root/UpdateManager")
+		update_status_label.text = updater.get_status()
+		updater.status_changed.connect(_on_update_status_changed)
+
 	notice_dialog = AcceptDialog.new()
 	notice_dialog.title = "TOBI & BREU ONLINE"
 	add_child(notice_dialog)
@@ -121,3 +134,8 @@ func _show_notice(dialog_title: String, message: String) -> void:
 	notice_dialog.title = dialog_title
 	notice_dialog.dialog_text = message
 	notice_dialog.popup_centered()
+
+
+func _on_update_status_changed(message: String) -> void:
+	if is_instance_valid(update_status_label):
+		update_status_label.text = message
