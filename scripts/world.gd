@@ -2832,9 +2832,6 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
 	var normal_style := _ui_button_texture_style(edge)
-	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.22)
-	normal_style.shadow_size = 2
-	normal_style.shadow_offset = Vector2(0, 1)
 	button.add_theme_stylebox_override("normal", normal_style)
 	button.add_theme_stylebox_override("hover", _ui_button_texture_style(edge.lightened(1.22)))
 	button.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
