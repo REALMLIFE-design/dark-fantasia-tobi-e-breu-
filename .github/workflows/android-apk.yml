@@ -220,6 +220,14 @@ jobs:
           git cat-file -e "$BASE_SHA^{commit}"
           echo "Patch baseline: $BASE_SHA"
           # This baseline is the APK containing the updater; each PCK remains cumulative from that APK.
+          if ! git diff --quiet "$BASE_SHA" "$GITHUB_SHA" -- project.godot export_presets.cfg scripts/update_manager.gd scripts/update_bootstrap.gd scenes/update_bootstrap.tscn; then
+            echo "Mudança estrutural detectada: esta versão precisa de um APK novo; patch PCK cancelado."
+            exit 0
+          fi
+          if git diff --name-status "$BASE_SHA" "$GITHUB_SHA" -- scripts scenes assets addons | grep -Eq '^D'; then
+            echo "Exclusão de recurso detectada: é necessário um APK novo para evitar arquivos antigos residuais."
+            exit 0
+          fi
           git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
           python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
           import json, pathlib, re, sys
