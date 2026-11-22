@@ -21,6 +21,9 @@ class AndroidEmulatorScriptTests(unittest.TestCase):
 import os, pathlib, sys
 args = sys.argv[1:]
 state = pathlib.Path(os.environ['FAKE_ADB_STATE'])
+if args[:3] == ['shell', 'getprop', 'sys.boot_completed']:
+    print('1')
+    raise SystemExit(0)
 if args[:2] == ['shell', 'pidof']:
     if state.exists() and state.read_text() == 'yes':
         print('4321')
