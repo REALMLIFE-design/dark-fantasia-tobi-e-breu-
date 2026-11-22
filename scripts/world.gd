@@ -1329,7 +1329,7 @@ func _spawn_whisper_stag_guardian() -> void:
 		crack.rotation.z = -0.35 if crack_index % 2 == 0 else 0.42
 		crack.material_override = eye_material
 	var neck_collar := _sphere(guardian, "StagAncientCollar", Vector3(0.0, 2.17, 0.58), 0.34, Color("887553"), 0.11)
-		neck_collar.scale = Vector3(1.08, 0.48, 0.88)
+	neck_collar.scale = Vector3(1.08, 0.48, 0.88)
 	var collar_gem := _sphere(guardian, "StagCollarGem", Vector3(0.0, 2.18, 0.91), 0.09, Color("a1ead6"), 0.16)
 	collar_gem.material_override = eye_material
 
