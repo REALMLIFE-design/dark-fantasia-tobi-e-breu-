@@ -45,6 +45,17 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"a":"guard"', world)
         self.assertIn('func player_parry_success() -> void:', world)
 
+    def test_existing_plugin_models_have_cached_runtime_import_paths(self):
+        catalog = (ROOT / 'scripts/plugin_asset_catalog.gd').read_text(encoding='utf-8')
+        loader = (ROOT / 'scripts/plugin_asset_loader.gd').read_text(encoding='utf-8')
+        for key in ('thrixel_stag_guardian', 'thrixel_river_crab', 'thrixel_drowned_wraith',
+                    'thrixel_ancient_tree', 'thrixel_rune_obelisk', 'thrixel_way_shrine'):
+            self.assertIn(key, catalog)
+            self.assertIn(key, loader)
+        self.assertIn('HTTPRequest.new()', loader)
+        self.assertIn('GLTFDocument.new()', loader)
+        self.assertIn('FileAccess.open(target_path, FileAccess.WRITE)', loader)
+
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
         self.assertIn('func do_dodge()', self.player)
