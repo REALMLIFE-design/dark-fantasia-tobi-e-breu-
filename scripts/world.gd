@@ -276,7 +276,7 @@ func _build_visible_3dassets_showcase() -> void:
 	]
 	var placed := 0
 	for item in showcase:
-		var model_path := "res://assets/external_packs/3dassets_dev/" + item.file
+		var model_path: String = "res://assets/external_packs/3dassets_dev/" + str(item.file)
 		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, item.position, Vector3.ONE * item.scale)
 		if instance != null:
 			instance.rotation.y = 0.35 if placed % 2 == 0 else -0.25
