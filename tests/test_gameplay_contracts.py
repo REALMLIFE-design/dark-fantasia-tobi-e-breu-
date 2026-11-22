@@ -846,4 +846,6 @@ class NewDarkFantasyModelContracts(unittest.TestCase):
         for model in ("BoneCollectorCart", "WhisperingRuneCircle", "CursedStoneWell", "FallenGuardianStatue"):
             self.assertIn(model, props)
         self.assertIn("Color(\"70cbbd\")", props)
-        self.assertIn("build_all(parent)", props)
+        self.assertIn("static func build_all(parent: Node3D)", props)
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("DARK_FANTASY_PROP_PACK.build_all(self)", world)
