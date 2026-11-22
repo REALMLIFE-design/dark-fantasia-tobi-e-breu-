@@ -13,7 +13,7 @@ const TRUSTED_DOWNLOAD_PREFIX := "https://github.com/REALMLIFE-design/dark-fanta
 
 var status_message := "Atualizações: verificando..."
 
-func _enter_tree() -> void:
+func _init() -> void:
 	_apply_pending_patch()
 
 func check_for_updates() -> void:
