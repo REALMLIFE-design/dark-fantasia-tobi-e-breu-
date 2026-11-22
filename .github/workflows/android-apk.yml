@@ -218,6 +218,7 @@ jobs:
           set -euo pipefail
           BASE_SHA="$(tr -d '[:space:]' < "$PROJECT_PATH/tools/android_update_base_sha.txt")"
           git cat-file -e "$BASE_SHA^{commit}"
+          echo "Patch baseline: $BASE_SHA"
           # This baseline is the APK containing the updater; each PCK remains cumulative from that APK.
           git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
           python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
