@@ -1,4 +1,6 @@
 extends CharacterBody3D
+
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 var world: Node3D
 var speed := 6.2
 var jump_velocity := 7.0
@@ -56,6 +58,7 @@ func _ready() -> void:
 	visual.add_child(attack_visual)
 	_create_shadow_pulse_visual()
 	_make_character()
+	_try_attach_meshy_hero()
 	_cache_damage_flash_materials(visual)
 	camera_pivot = Node3D.new()
 	camera_pivot.position.y = 1.45
@@ -66,6 +69,37 @@ func _ready() -> void:
 	camera.current = true
 	camera.fov = 72
 	camera_pivot.add_child(camera)
+
+
+func _try_attach_meshy_hero() -> void:
+	# Usa o Tobi texturizado do Meshy quando o GLB estiver importado no projeto.
+	# Se o arquivo nao estiver disponivel, o heroi procedural atual continua ativo.
+	var hero_scene := PLUGIN_ASSET_LOADER.load_optional_scene("meshy_tobi_hero")
+	if hero_scene == null:
+		return
+	var hero := hero_scene.instantiate() as Node3D
+	if hero == null:
+		push_warning("O modelo Tobi do Meshy nao tem raiz Node3D.")
+		return
+	hero.name = "TobiMeshyHero"
+	hero.position = Vector3(0.0, 0.0, 0.0)
+	hero.scale = Vector3.ONE * 1.8
+	visual.add_child(hero)
+	_hide_procedural_hero_parts(visual)
+	# Breu e os efeitos de combate permanecem visiveis.
+	if visual.has_node("Breu"):
+		visual.get_node("Breu").visible = true
+	if visual.has_node("AttackMotion"):
+		visual.get_node("AttackMotion").visible = true
+
+
+func _hide_procedural_hero_parts(parent_node: Node) -> void:
+	for child in parent_node.get_children():
+		if child.name == "Breu" or child.name == "AttackMotion" or child.name == "TobiMeshyHero":
+			continue
+		if child is MeshInstance3D:
+			child.visible = false
+		_hide_procedural_hero_parts(child)
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
