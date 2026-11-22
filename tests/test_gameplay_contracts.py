@@ -1104,3 +1104,18 @@ class SaveRecoveryContracts(unittest.TestCase):
             self.assertIn(builder, build_all)
         self.assertIn('mesh.radial_segments = 24', props)
         self.assertIn('mesh.rings = 16', props)
+
+
+class ExpandedLandmarkContracts(unittest.TestCase):
+    def test_four_new_regional_landmarks_are_registered(self):
+        props = (ROOT / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        build_all = props.split("static func build_all", 1)[1].split("static func _root", 1)[0]
+        expected = (
+            ("_build_waystone_shrine(parent, Vector3(-92, 0, 130))", "WaystoneShrine"),
+            ("_build_hunters_camp(parent, Vector3(-142, 0, 62))", "HuntersRestCamp"),
+            ("_build_river_bridge(parent, Vector3(61, 0, -156))", "SilverRiverStoneBridge"),
+            ("_build_watchtower(parent, Vector3(200, 0, 68))", "FallenWatchWatchtower"),
+        )
+        for registration, scene_name in expected:
+            self.assertIn(registration, build_all)
+            self.assertIn(scene_name, props)
