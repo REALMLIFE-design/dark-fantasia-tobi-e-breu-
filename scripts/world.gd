@@ -7,6 +7,7 @@ const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
 const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd")
+const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -97,6 +98,7 @@ func _ready() -> void:
 	_build_plugin_world_expansion()
 	_build_imported_plugin_models()
 	DARK_FANTASY_PROP_PACK.build_all(self)
+	_build_downloaded_nature_models()
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	await get_tree().process_frame
 	_build_swamp_region()
@@ -144,6 +146,21 @@ func _ready() -> void:
 	print("TOBI_BREU_BOOT_READY")
 
 
+
+func _build_downloaded_nature_models() -> void:
+	# Modelos externos CC0; o mundo continua funcional se o pack ainda não existir.
+	var models := EXTERNAL_ASSET_LOADER.list_models("quaternius_stylized_nature")
+	if models.is_empty(): return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261121
+	for index in range(mini(30, models.size())):
+		var row := index / 6
+		var column := index % 6
+		var x := -190.0 + float(column) * 18.0 + rng.randf_range(-5.0, 5.0)
+		var z := -205.0 + float(row) * 18.0 + rng.randf_range(-5.0, 5.0)
+		var scale_factor := rng.randf_range(0.85, 1.45)
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, models[index], Vector3(x, 0.0, z), Vector3.ONE * scale_factor)
+		if instance != null: instance.rotation.y = rng.randf_range(0.0, TAU)
 
 func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
