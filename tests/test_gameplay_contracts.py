@@ -11,6 +11,18 @@ class GameplayContracts(unittest.TestCase):
         cls.project = (ROOT / 'project.godot').read_text(encoding='utf-8')
         cls.enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
 
+
+    def test_bluetooth_and_usb_controller_has_full_gameplay_mapping(self):
+        project = self.project
+        for action in ("move_forward", "move_back", "move_left", "move_right"):
+            self.assertIn('Object(InputEventJoypadMotion', project)
+        for button in ('"button_index":2', '"button_index":0', '"button_index":3',
+                       '"button_index":1', '"button_index":4', '"button_index":5'):
+            self.assertIn(button, project)
+        self.assertIn("Input.get_connected_joypads()", self.player)
+        self.assertIn("JOY_AXIS_RIGHT_X", self.player)
+        self.assertIn("JOY_AXIS_RIGHT_Y", self.player)
+
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
         self.assertIn('func do_dodge()', self.player)
