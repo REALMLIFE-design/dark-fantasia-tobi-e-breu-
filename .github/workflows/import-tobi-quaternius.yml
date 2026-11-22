@@ -1,0 +1,135 @@
+name: Importar personagem Tobi modular — Quaternius CC0
+
+on:
+  push:
+    branches: [integration/definitive-all-versions]
+    paths:
+      - '.github/workflows/import-tobi-quaternius.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tobi-quaternius-import
+  cancel-in-progress: false
+
+jobs:
+  import-character:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+
+      - name: Baixar peças Quaternius CC0 e validar dependências
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, requests
+
+          # Snapshot fixo do repositório público que contém os arquivos Quaternius.
+          source = "https://raw.githubusercontent.com/slopwarefactory/terra/602906d2e4e3e93d0bb0ade63b23b68b37c57bd5/art/characters/quaternius"
+          root = pathlib.Path("assets/models/tobi_quaternius")
+          groups = {
+              "base": (
+                  "universal-base-characters",
+                  [
+                      "Regular_Male_OnlyHead.gltf",
+                      "Regular_Male_OnlyHead.bin",
+                      "T_Hair_1_Normal.png",
+                      "T_Hair_1_BaseColor.png",
+                      "T_Eye_Normal.png",
+                      "T_Eye_Brown.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
+              ),
+              "ranger": (
+                  "modular-outfits-fantasy",
+                  [
+                      "Male_Ranger_Body.gltf",
+                      "Male_Ranger_Body.bin",
+                      "Male_Ranger_Arms.gltf",
+                      "Male_Ranger_Arms.bin",
+                      "Male_Ranger_Legs.gltf",
+                      "Male_Ranger_Legs.bin",
+                      "Male_Ranger_Feet_Boots.gltf",
+                      "Male_Ranger_Feet_Boots.bin",
+                      "Male_Ranger_Head_Hood.gltf",
+                      "Male_Ranger_Head_Hood.bin",
+                      "T_Ranger_Normal.png",
+                      "T_Ranger_BaseColor.png",
+                      "T_Ranger_ORM.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
+              ),
+          }
+          session = requests.Session()
+          session.headers.update({"User-Agent": "TobiEBreuDarkWorld3D/1.0"})
+          manifest = []
+          for group, (source_folder, filenames) in groups.items():
+              target = root / group
+              target.mkdir(parents=True, exist_ok=True)
+              for filename in filenames:
+                  url = f"{source}/{source_folder}/{filename}"
+                  response = session.get(url, timeout=90)
+                  response.raise_for_status()
+                  data = response.content
+                  if not data:
+                      raise RuntimeError(f"Arquivo vazio: {filename}")
+                  (target / filename).write_bytes(data)
+                  manifest.append({
+                      "group": group,
+                      "file": filename,
+                      "bytes": len(data),
+                      "sha256": hashlib.sha256(data).hexdigest(),
+                      "source": url,
+                  })
+                  print(f"OK {group}/{filename}: {len(data)} bytes")
+
+          # Confere se cada GLTF encontra todos os .bin e mapas de textura locais.
+          for gltf in root.rglob("*.gltf"):
+              doc = json.loads(gltf.read_text(encoding="utf-8"))
+              refs = []
+              refs += [b.get("uri") for b in doc.get("buffers", []) if b.get("uri")]
+              refs += [i.get("uri") for i in doc.get("images", []) if i.get("uri")]
+              missing = [ref for ref in refs if not (gltf.parent / ref).is_file()]
+              if missing:
+                  raise RuntimeError(f"Dependências ausentes em {gltf}: {missing}")
+              print(f"GLTF validado: {gltf} ({len(refs)} dependências)")
+
+          (root / "ASSET-MANIFEST.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
+          (root / "SOURCES-LICENSE.md").write_text("""# Fontes e licenças do Tobi modular
+
+          - **Universal Base Characters** — Quaternius: https://quaternius.com/packs/universalbasecharacters.html
+          - **Modular Character Outfits - Fantasy** — Quaternius: https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+          - Ambos os pacotes declaram **CC0 1.0** nas páginas oficiais; uso e modificação permitidos, inclusive em jogos comerciais, sem atribuição obrigatória.
+          - Os arquivos foram obtidos do snapshot público slopwarefactory/terra no commit 602906d2e4e3e93d0bb0ade63b23b68b37c57bd5, que identifica os arquivos como assets originais Quaternius.
+          - Peças usadas: cabeça base Regular Male OnlyHead + Ranger Body, Arms, Legs, Boots e Hood.
+          - Os arquivos de origem são mantidos em formato glTF com seus buffers e texturas correspondentes; não foram convertidos nem substituídos por placeholders.
+          """, encoding="utf-8")
+          print(f"Total de arquivos baixados e validados: {len(manifest)}")
+          PY
+
+      - name: Commitar somente os novos arquivos do Tobi
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/models/tobi_quaternius
+          if git diff --cached --quiet; then
+            echo 'Nenhum arquivo novo para importar.'
+            exit 0
+          fi
+          git commit -m 'Importa peças 3D CC0 para Tobi modular'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions
