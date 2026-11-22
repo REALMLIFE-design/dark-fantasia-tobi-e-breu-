@@ -304,12 +304,27 @@ func _painter_mat(color: Color, brush_scale := 3.0, brush_strength := 0.08, patt
 		6: bump_strength = 0.075 # snow and ice
 		7: bump_strength = 0.18 # roof tiles
 		8: bump_strength = 0.22 # cut stone
+		9: bump_strength = 0.28 # obsidian
+		10: bump_strength = 0.19 # mossy stone
+		11: bump_strength = 0.16 # blood-stained stone
+		12: bump_strength = 0.12 # worn metal
+		13: bump_strength = 0.08 # magical crystal
 	material.set_shader_parameter("bump_strength", bump_strength)
 	return material
 
 
 func _material_for_surface(surface_name: String, color: Color) -> ShaderMaterial:
 	var key := surface_name.to_lower()
+	if "obsidian" in key or "blackglass" in key:
+		return _painter_mat(color, 3.8, 0.12, 9, Color("541f2a"))
+	if "moss" in key or "lichen" in key:
+		return _painter_mat(color, 3.2, 0.13, 10, Color("465d3b"))
+	if "blood" in key or "crimson" in key:
+		return _painter_mat(color, 3.6, 0.11, 11, Color("702b36"))
+	if "metal" in key or "iron" in key or "steel" in key or "chain" in key:
+		return _painter_mat(color, 4.2, 0.08, 12, Color("41494b"))
+	if "crystal" in key or "rune" in key or "arcane" in key:
+		return _painter_mat(color, 3.0, 0.08, 13, Color("397e82"))
 	if "grass" in key or "forest" in key or "meadow" in key or "brush" in key or "canopy" in key:
 		return _painter_mat(color, 2.8, 0.12, 1, color.darkened(0.28))
 	if "road" in key or "trail" in key or "dirt" in key or "path" in key:
