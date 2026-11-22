@@ -898,6 +898,19 @@ class ThrixelBuildImportContracts(unittest.TestCase):
 
 
 class GlacialRavenContracts(unittest.TestCase):
+    def test_glacial_raven_uses_godot_43_meshes_and_hides_limbs_after_creation(self):
+        root = Path(__file__).resolve().parents[1]
+        enemy = (root / "scripts/enemy.gd").read_text(encoding="utf-8")
+        self.assertNotIn("ConeMesh", enemy)
+        self.assertIn("var tail_feather: CylinderMesh = CylinderMesh.new()", enemy)
+        bird_start = enemy.index("# Corvo Glacial: silhueta aviária")
+        bird_end = enemy.index("# Distinct silhouettes", bird_start)
+        bird_block = enemy[bird_start:bird_end]
+        self.assertNotIn("left_leg.visible", bird_block)
+        self.assertNotIn("right_leg.visible", bird_block)
+        leg_setup = enemy.split("var left_leg := _make_enemy_limb", 1)[1].split("if enemy_kind < 3:", 1)[0]
+        self.assertIn("if enemy_kind == 8 or enemy_kind == 10:", leg_setup)
+
     def test_glacial_ravens_are_optional_mountain_encounters_with_custom_wings(self):
         root = Path(__file__).resolve().parents[1]
         world = (root / "scripts/world.gd").read_text(encoding="utf-8")

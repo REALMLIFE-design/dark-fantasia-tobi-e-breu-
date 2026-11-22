@@ -123,8 +123,6 @@ func _ready() -> void:
 		# Corvo Glacial: silhueta aviária, asas articuladas e plumagem facetada.
 		left_arm.visible = false
 		right_arm.visible = false
-		left_leg.visible = false
-		right_leg.visible = false
 		weapon_pivot.visible = false
 		head_pivot.visible = false
 		var bird_body := SphereMesh.new(); bird_body.radius = 0.43; bird_body.height = 0.78
@@ -157,9 +155,13 @@ func _ready() -> void:
 				var feather := BoxMesh.new(); feather.size = Vector3(0.34, 0.075, 0.13)
 				var feather_node := _add_to(wing_pivot, feather, Vector3(side * (0.58 + float(feather_index) * 0.10), -0.015, -0.16 - float(feather_index) * 0.08), Color("c0dbe0"))
 				feather_node.rotation.y = side * -0.12
-			var tail_feather := ConeMesh.new(); tail_feather.bottom_radius = 0.11; tail_feather.height = 0.48
-			var tail_node := _add_to(visual, tail_feather, Vector3(0.0, 0.78, -0.48), Color("a8c4cc"))
-			tail_node.rotation.x = -PI * 0.5
+		var tail_feather: CylinderMesh = CylinderMesh.new()
+		tail_feather.top_radius = 0.0
+		tail_feather.bottom_radius = 0.11
+		tail_feather.height = 0.48
+		tail_feather.radial_segments = 6
+		var tail_node := _add_to(visual, tail_feather, Vector3(0.0, 0.78, -0.48), Color("a8c4cc"))
+		tail_node.rotation.x = -PI * 0.5
 		var talon := CylinderMesh.new(); talon.top_radius = 0.0; talon.bottom_radius = 0.075; talon.height = 0.32
 		for side in [-1.0, 1.0]:
 			var talon_node := _add_to(visual, talon, Vector3(side * 0.17, 0.56, 0.12), Color("7b6a58"))
@@ -302,7 +304,7 @@ func _ready() -> void:
 			back_node.rotation.x = -0.42
 	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
-	if enemy_kind == 8:
+	if enemy_kind == 8 or enemy_kind == 10:
 		left_leg.visible = false
 		right_leg.visible = false
 	if enemy_kind < 3:
