@@ -20,6 +20,12 @@ Página oficial: https://avramania.itch.io/free-collection
 
 203 modelos low-poly medievais de nove conjuntos: natureza, terreno, vilarejo, castelo, interiores, armas, mercado e ruínas. GLB e FBX, compatível com Godot 4. Licença CC0, sem necessidade de atribuição. Download de 9,1 MB por preço livre (pode baixar por zero).
 
+### Low Poly Fantasy Village Props — 20 modelos
+
+Página oficial: https://luzbilliardsgames.itch.io/low-poly-fantasy-village-props
+
+20 props de vila medieval, incluindo barraca, poço, barril, caixas, bigorna, feno, placas, lanternas, carroça, banco, fogueira, baú, cerca e ponte de pedra. GLB com materiais PBR embutidos. Licença CC0. Download de 49 MB.
+
 ### Dungeon Remastered (KayKit) — 203 modelos
 
 Página de download: https://www.tyrbo.ai/free-game-assets/kaykit-dungeon-remastered
@@ -45,6 +51,7 @@ O loader não baixa arquivos sozinho e não contorna logins/licenças. Os modelo
 ## Créditos e licenças
 
 - Free Low-Poly Medieval Collection: CC0, sem atribuição obrigatória.
+- Low Poly Fantasy Village Props: CC0, sem atribuição obrigatória.
 - Dungeon Remastered: CC0 1.0 conforme a página de distribuição.
 - Ultimate Dungeon Pack: CC BY 4.0; manter atribuição.
 - Stylized Fantasy Free Sampler: uso pessoal e comercial permitido; crédito apreciado, não obrigatório; não revender os modelos.
