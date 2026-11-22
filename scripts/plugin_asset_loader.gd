@@ -2,6 +2,7 @@ extends RefCounted
 class_name PluginAssetLoader
 
 const AQUEDUCT_SHADER := preload("res://scripts/aqueduct_stone.gdshader")
+const PROCEDURAL_FORGE = preload("res://scripts/procedural_asset_forge.gd")
 const BASE_COLOR_PATH := "res://assets/plugin_imports/aqueduct/base_color.png"
 const NORMAL_PATH := "res://assets/plugin_imports/aqueduct/normal.png"
 const ROUGHNESS_PATH := "res://assets/plugin_imports/aqueduct/roughness.png"
@@ -113,3 +114,22 @@ static func _load_downloaded_glb(parent: Node3D, asset_key: String, path: String
 
 static func load_meshy_gate(parent: Node3D, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
 	return load_meshy_asset(parent, "meshy_gate", position, scale)
+
+
+static func load_or_create_asset(parent: Node3D, asset_key: String, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
+	if parent == null:
+		return null
+	var packed_scene := load_optional_scene(asset_key)
+	var instance: Node3D
+	if packed_scene != null:
+		instance = packed_scene.instantiate() as Node3D
+	else:
+		instance = PROCEDURAL_FORGE.create_asset(asset_key)
+	if instance == null:
+		push_warning("Não foi possível criar asset local: " + asset_key)
+		return null
+	instance.name = asset_key
+	instance.position = position
+	instance.scale = scale
+	parent.add_child(instance)
+	return instance
