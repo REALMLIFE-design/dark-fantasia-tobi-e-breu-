@@ -216,16 +216,17 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
         run: |
           set -euo pipefail
-          git fetch origin fix/android-ci-validation
-          # Compare with the PR base so a canceled earlier build cannot lose its changes.
-          git diff --name-only --diff-filter=ACMRT origin/fix/android-ci-validation...$GITHUB_SHA > "$RUNNER_TEMP/changed-files.txt"
+          BASE_SHA="$(tr -d '[:space:]' < "$PROJECT_PATH/tools/android_update_base_sha.txt")"
+          git cat-file -e "$BASE_SHA^{commit}"
+          # This baseline is the APK containing the updater; each PCK remains cumulative from that APK.
+          git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
           python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
           import json, pathlib, re, sys
           preset = pathlib.Path(sys.argv[1])
           changed = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
           allowed_ext = {".gd", ".tscn", ".tres", ".res", ".gdshader", ".shader", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".wav", ".ogg", ".mp3", ".glb", ".gltf", ".json"}
           allowed_roots = ("scripts/", "scenes/", "assets/", "addons/")
-          selected = sorted({p for p in changed if p.startswith(allowed_roots) and pathlib.Path(p).suffix.lower() in allowed_ext and pathlib.Path(p).is_file()})
+          selected = sorted({p for p in changed if p.startswith(allowed_roots) and p not in {"scripts/update_manager.gd", "scripts/update_bootstrap.gd", "scenes/update_bootstrap.tscn"} and pathlib.Path(p).suffix.lower() in allowed_ext and pathlib.Path(p).is_file()})
           if not selected:
               print("Nenhum recurso compatível mudou; não há patch incremental para publicar.")
               raise SystemExit(0)
