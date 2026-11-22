@@ -273,3 +273,12 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Todos os conjuntos ambientais e marcos procedurais existentes permanecem registrados no build_all; os modelos GLB do catálogo Thrixel/Meshy e os pacotes externos são carregados quando seus binários estão disponíveis.
 - Corrigido erro de GDScript na criação do anel emissivo do Altar Glacial: o material emissivo agora é aplicado após criar o cilindro, respeitando a assinatura do helper.
 - A validação do Godot anterior detectou esse erro de argumentos; nova execução do workflow está em andamento após a correção. Não marcar APK como concluído até o CI terminar.
+
+
+## Expansão regional de modelos 3D — 22/11/2026
+- Adicionados quatro novos marcos ao construtor central: Santuário do Marco Antigo, Acampamento dos Caçadores, Ponte de Pedra do Rio Prateado e Torre de Vigia Caída.
+- Os modelos incluem estruturas compostas de pedra e madeira, suportes, corrimãos, estandartes, fogueira, cristal emissivo e detalhes de acabamento.
+- Posições registradas: (-92, 0, 130), (-142, 0, 62), (61, 0, -156) e (200, 0, 68).
+- Adicionado teste de contrato para confirmar o registro dos quatro modelos.
+- São marcos de cenário; não foram adicionadas interações, recompensas ou colisões dedicadas nesta etapa.
+- Validação do Godot/Android permanece pendente do workflow.
