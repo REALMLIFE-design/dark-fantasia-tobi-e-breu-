@@ -225,3 +225,13 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Parâmetros: 125 HP, velocidade 2,75, dano 12 e alcance 1,75. Recompensa opcional: +25 XP, 1 Fragmento Rubro e 1 Essência Sombria.
 - Adicionado teste de contrato para spawn, modelo e animação das asas.
 - Ainda depende da validação Godot/Android no workflow.
+
+
+## Ferramentas externas de criação — Corvo Glacial (22/11/2026)
+- Spline: criada a cena editável "Tobi e Breu - Corvo Glacial" com o grupo 3D "Corvo Glacial", 19 objetos geométricos, piso shadow-catcher e duas luzes de preenchimento.
+- A cena do Spline é uma referência visual independente. Nenhum GLB foi exportado dela e ela ainda não é carregada pelo Godot.
+- A primeira verificação visual do Spline apontou exposição muito escura. Foram adicionadas luzes de preenchimento, mas o limite de capturas desta sessão foi atingido antes de uma nova verificação; a exposição final permanece não confirmada.
+- Krea: catálogo de geração 3D consultado e modelo Hunyuan3D 3.1 Rapid validado por schema. Nenhuma geração submetida nesta etapa.
+- Meshy: saldos e histórico consultados. O modelo da Árvore Ancestral continua sem formatos de download disponíveis nesta conexão; nenhuma geração adicional foi cobrada.
+- Luma: saldo de créditos da equipe conectada está zerado; nenhuma geração submetida.
+- A validação Godot identificou referências às pernas do Corvo Glacial antes da declaração local. A ordem foi corrigida no commit seguinte; aguardar novo workflow para confirmar o parser.
