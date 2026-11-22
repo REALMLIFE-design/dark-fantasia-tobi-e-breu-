@@ -32,6 +32,7 @@ var boss_core_material: StandardMaterial3D
 var crab_lunge_velocity := Vector3.ZERO
 var crab_lunge_timer := 0.0
 var crab_claws: Array[Node3D] = []
+var ice_wings: Array[Node3D] = []
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -80,6 +81,11 @@ func _ready() -> void:
 		move_speed = 2.3
 		attack_damage = 18
 		attack_range = 2.2
+	elif enemy_kind == 10:
+		hp = 125
+		move_speed = 2.75
+		attack_damage = 12
+		attack_range = 1.75
 	var capsule := CapsuleShape3D.new(); capsule.radius = 0.42; capsule.height = 1.5
 	var col := CollisionShape3D.new(); col.shape = capsule; col.position.y = 0.75; add_child(col)
 	visual = Node3D.new(); add_child(visual)
@@ -88,6 +94,7 @@ func _ready() -> void:
 	var body := CapsuleMesh.new(); body.radius = 0.36; body.height = 0.88
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
 	if enemy_kind == 9: body_color = Color("4b5d3c")
+	elif enemy_kind == 10: body_color = Color("7c9da8")
 	_add(body, Vector3(0, 0.78, 0), body_color)
 	var chest := SphereMesh.new(); chest.radius = 0.39; chest.height = 0.52
 	_add(chest, Vector3(0, 1.02, 0), body_color.lightened(0.12))
@@ -97,6 +104,7 @@ func _ready() -> void:
 	elif enemy_kind == 6: visual.scale = Vector3(2.15, 2.0, 2.15)
 	elif enemy_kind == 7: visual.scale = Vector3(1.18, 1.55, 1.18)
 	elif enemy_kind == 8: visual.scale = Vector3(1.38, 0.92, 1.38)
+	elif enemy_kind == 10: visual.scale = Vector3(1.12, 1.0, 1.12)
 	base_visual_scale = visual.scale
 	var head_pivot := Node3D.new(); head_pivot.name = "HeadPivot"; head_pivot.position = Vector3(0, 1.34, 0); visual.add_child(head_pivot)
 	var head := SphereMesh.new(); head.radius = 0.29 if enemy_kind < 3 else 0.34; head.height = 0.58; head.radial_segments = 12
@@ -111,6 +119,51 @@ func _ready() -> void:
 	weapon_pivot_ref = weapon_pivot
 	var weapon := BoxMesh.new(); weapon.size = Vector3(0.13, 0.78, 0.13)
 	_add_to(weapon_pivot, weapon, Vector3(0.02, -0.43, 0.04), Color("7e5b3c"))
+	if enemy_kind == 10:
+		# Corvo Glacial: silhueta aviária, asas articuladas e plumagem facetada.
+		left_arm.visible = false
+		right_arm.visible = false
+		left_leg.visible = false
+		right_leg.visible = false
+		weapon_pivot.visible = false
+		head_pivot.visible = false
+		var bird_body := SphereMesh.new(); bird_body.radius = 0.43; bird_body.height = 0.78
+		_add(bird_body, Vector3(0.0, 0.96, 0.04), Color("536d7c"))
+		var bird_head := SphereMesh.new(); bird_head.radius = 0.27; bird_head.height = 0.48
+		_add(bird_head, Vector3(0.0, 1.43, 0.27), Color("8baab5"))
+		var beak := CylinderMesh.new(); beak.top_radius = 0.0; beak.bottom_radius = 0.12; beak.height = 0.34
+		var beak_node := _add_to(visual, beak, Vector3(0.0, 1.38, 0.57), Color("c9a66c"))
+		beak_node.rotation.x = PI * 0.5
+		var eye_material := StandardMaterial3D.new()
+		eye_material.albedo_color = Color("a9edff")
+		eye_material.emission_enabled = true
+		eye_material.emission = Color("66c9e8")
+		eye_material.emission_energy_multiplier = 1.4
+		for side in [-1.0, 1.0]:
+			var eye_mesh := SphereMesh.new(); eye_mesh.radius = 0.055; eye_mesh.height = 0.11
+			var eye_node := MeshInstance3D.new(); eye_node.mesh = eye_mesh
+			eye_node.position = Vector3(side * 0.16, 1.47, 0.48)
+			eye_node.material_override = eye_material
+			visual.add_child(eye_node)
+			var wing_pivot := Node3D.new()
+			wing_pivot.name = "GlacialWing_%s" % ("L" if side < 0.0 else "R")
+			wing_pivot.position = Vector3(side * 0.28, 1.16, -0.02)
+			visual.add_child(wing_pivot)
+			ice_wings.append(wing_pivot)
+			var wing_mesh := BoxMesh.new(); wing_mesh.size = Vector3(0.82, 0.11, 0.34)
+			var wing_node := _add_to(wing_pivot, wing_mesh, Vector3(side * 0.42, 0.0, 0.0), Color("91b6c3"))
+			wing_node.rotation.z = side * -0.12
+			for feather_index in range(3):
+				var feather := BoxMesh.new(); feather.size = Vector3(0.34, 0.075, 0.13)
+				var feather_node := _add_to(wing_pivot, feather, Vector3(side * (0.58 + float(feather_index) * 0.10), -0.015, -0.16 - float(feather_index) * 0.08), Color("c0dbe0"))
+				feather_node.rotation.y = side * -0.12
+			var tail_feather := ConeMesh.new(); tail_feather.bottom_radius = 0.11; tail_feather.height = 0.48
+			var tail_node := _add_to(visual, tail_feather, Vector3(0.0, 0.78, -0.48), Color("a8c4cc"))
+			tail_node.rotation.x = -PI * 0.5
+		var talon := CylinderMesh.new(); talon.top_radius = 0.0; talon.bottom_radius = 0.075; talon.height = 0.32
+		for side in [-1.0, 1.0]:
+			var talon_node := _add_to(visual, talon, Vector3(side * 0.17, 0.56, 0.12), Color("7b6a58"))
+			talon_node.rotation.x = PI
 	# Distinct silhouettes for elite enemies and the swamp witch.
 	if enemy_kind == 1 or enemy_kind == 3:
 		for side in [-1.0, 1.0]:
@@ -269,6 +322,7 @@ func _ready() -> void:
 	elif enemy_kind == 7: label.text = "ESPECTRO AFOGADO"
 	elif enemy_kind == 8: label.text = "CARANGUEJO DE PRATA"
 	elif enemy_kind == 9: label.text = "VIGIA DAS RAÍZES"
+	elif enemy_kind == 10: label.text = "CORVO GLACIAL"
 	elif enemy_kind == 1: label.text = "GOBLIN BRUTO"
 	elif enemy_kind == 2: label.text = "GOBLIN BATEDOR"
 	else: label.text = "GOBLIN CORROMPIDO"
@@ -346,6 +400,8 @@ func _attack_warning_color() -> Color:
 		return Color("62d8c8")
 	if enemy_kind == 9:
 		return Color("a0cf70")
+	if enemy_kind == 10:
+		return Color("9deaff")
 	if enemy_kind == 7:
 		return Color("79c9f2")
 	if enemy_kind == 5:
@@ -364,7 +420,7 @@ func _begin_attack() -> void:
 		else:
 			attack_windup_duration = 0.82 if enraged else 1.05
 	else:
-		attack_windup_duration = 0.92 if enemy_kind == 8 else (0.78 if enemy_kind >= 3 else (0.38 if enemy_kind == 2 else (0.68 if enemy_kind == 5 else 0.56)))
+		attack_windup_duration = 0.92 if enemy_kind == 8 else (0.62 if enemy_kind == 10 else (0.78 if enemy_kind >= 3 else (0.38 if enemy_kind == 2 else (0.68 if enemy_kind == 5 else 0.56))))
 	attack_windup_timer = attack_windup_duration
 	attack_pose = attack_windup_duration
 	attack_telegraph.visible = true
@@ -466,13 +522,17 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	var moving := Vector2(velocity.x, velocity.z).length() > 0.25 and not winding_up
 	var gait := sin(idle_time * (9.0 if moving else 1.8) + phase) if moving else 0.0
-	visual.position.y = (sin(idle_time * 2.4 + phase) * 0.13 if enemy_kind == 7 else absf(gait) * (0.055 if moving else 0.012) + sin(idle_time * 2.0 + phase) * 0.012)
+	visual.position.y = (sin(idle_time * 2.4 + phase) * 0.13 if enemy_kind == 7 else (sin(idle_time * 3.1 + phase) * 0.16 if enemy_kind == 10 else absf(gait) * (0.055 if moving else 0.012) + sin(idle_time * 2.0 + phase) * 0.012))
 	visual.rotation.z = lerpf(visual.rotation.z, -0.045 if moving else 0.0, delta * 5.0)
 	var left_arm: Node3D = visual.get_meta("left_arm")
 	var right_arm: Node3D = visual.get_meta("right_arm")
 	var left_leg: Node3D = visual.get_meta("left_leg")
 	var right_leg: Node3D = visual.get_meta("right_leg")
 	var head_pivot: Node3D = visual.get_meta("head")
+	if enemy_kind == 10:
+		for wing_index in range(ice_wings.size()):
+			var wing_side := -1.0 if wing_index == 0 else 1.0
+			ice_wings[wing_index].rotation.z = wing_side * (0.08 + sin(idle_time * 8.5 + phase) * 0.34)
 	if enemy_kind == 8:
 		var crab_legs: Array = visual.get_meta("crab_legs", [])
 		for i in range(crab_legs.size()):
@@ -581,6 +641,7 @@ func _spawn_death_burst() -> void:
 	elif enemy_kind == 7: burst_color = Color("79c9f2")
 	elif enemy_kind == 8: burst_color = Color("62d8c8")
 	elif enemy_kind == 9: burst_color = Color("8dc86a")
+	elif enemy_kind == 10: burst_color = Color("a9eaff")
 	elif enemy_kind >= 3: burst_color = Color("e7c477")
 	for shard_index in range(6):
 		var shard := MeshInstance3D.new()
