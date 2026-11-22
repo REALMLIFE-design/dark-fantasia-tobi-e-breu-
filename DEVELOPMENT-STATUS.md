@@ -249,3 +249,11 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Adicionado o Marco do Sino Afogado no Rio Prateado, com base de pedra, pilares, viga, sino suspenso e runa.
 - Ambos são modelos procedurais leves integrados ao pacote de construção do mundo.
 - Testes de contrato adicionados; validação Godot/Android pendente no workflow mais recente.
+
+
+## Modelos ambientais adicionais — Planície, Bosque e Caverna (22/11/2026)
+- Integrado o Moinho da Planície Dourada com torre, porta, eixo e quatro pás.
+- Integrado o Bosque de Cogumelos Sussurrantes com cinco cogumelos e partículas luminosas estáticas leves.
+- Integrado o Agrupamento de Cristais da Caverna do Eco com sete cristais e núcleo emissivo.
+- Atualizado teste antigo de contrato do workflow Android para refletir a busca atual por project.godot na raiz ou subpastas. O teste anterior exigia um trecho de shell que já havia sido substituído por uma busca mais abrangente; a falha era do teste desatualizado, não da etapa de localização do projeto.
+- Testes de contrato adicionados para os três novos conjuntos; aguardando execução no CI.
