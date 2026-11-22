@@ -75,6 +75,11 @@ func _ready() -> void:
 		move_speed = 2.05
 		attack_damage = 15
 		attack_range = 2.0
+	elif enemy_kind == 9:
+		hp = 230
+		move_speed = 2.3
+		attack_damage = 18
+		attack_range = 2.2
 	var capsule := CapsuleShape3D.new(); capsule.radius = 0.42; capsule.height = 1.5
 	var col := CollisionShape3D.new(); col.shape = capsule; col.position.y = 0.75; add_child(col)
 	visual = Node3D.new(); add_child(visual)
@@ -82,6 +87,7 @@ func _ready() -> void:
 	_cache_hit_flash_materials(visual)
 	var body := CapsuleMesh.new(); body.radius = 0.36; body.height = 0.88
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
+	if enemy_kind == 9: body_color = Color("4b5d3c")
 	_add(body, Vector3(0, 0.78, 0), body_color)
 	var chest := SphereMesh.new(); chest.radius = 0.39; chest.height = 0.52
 	_add(chest, Vector3(0, 1.02, 0), body_color.lightened(0.12))
@@ -203,6 +209,44 @@ func _ready() -> void:
 		for side in [-1.0, 1.0]:
 			var wrist := SphereMesh.new(); wrist.radius = 0.13; wrist.height = 0.16
 			_add_to(left_arm if side < 0.0 else right_arm, wrist, Vector3(0, -0.42, 0.02), Color("8c7959"))
+	if enemy_kind == 9:
+		# Armadura de casca, espinhos de raiz e núcleo verde: silhueta exclusiva do Vigia.
+		var bark_plate := SphereMesh.new(); bark_plate.radius = 0.48; bark_plate.height = 0.72
+		_add(bark_plate, Vector3(0.0, 1.16, -0.12), Color("344638"))
+		var chest_core := SphereMesh.new(); chest_core.radius = 0.19; chest_core.height = 0.32
+		var core_material := StandardMaterial3D.new()
+		core_material.albedo_color = Color("a6d77b")
+		core_material.emission_enabled = true
+		core_material.emission = Color("5c9d49")
+		core_material.emission_energy_multiplier = 1.35
+		var core_instance := MeshInstance3D.new()
+		core_instance.mesh = chest_core
+		core_instance.position = Vector3(0.0, 1.12, 0.39)
+		core_instance.material_override = core_material
+		visual.add_child(core_instance)
+		for side in [-1.0, 1.0]:
+			var shoulder_spine := CylinderMesh.new()
+			shoulder_spine.top_radius = 0.0
+			shoulder_spine.bottom_radius = 0.19
+			shoulder_spine.height = 0.82
+			var spine := _add_to(visual, shoulder_spine, Vector3(side * 0.52, 1.45, -0.12), Color("78875a"))
+			spine.rotation.z = side * -0.62
+			var brow_thorn := CylinderMesh.new()
+			brow_thorn.top_radius = 0.0
+			brow_thorn.bottom_radius = 0.10
+			brow_thorn.height = 0.48
+			var thorn := _add_to(head_pivot, brow_thorn, Vector3(side * 0.25, 0.34, 0.0), Color("a18a58"))
+			thorn.rotation.z = side * -0.52
+			var eye := SphereMesh.new(); eye.radius = 0.065; eye.height = 0.13
+			var eye_node := _add_to(head_pivot, eye, Vector3(side * 0.15, 0.08, 0.285), Color("b5e98a"))
+			eye_node.material_override = core_material
+		for spine_index in range(5):
+			var back_spine := CylinderMesh.new()
+			back_spine.top_radius = 0.0
+			back_spine.bottom_radius = 0.105
+			back_spine.height = 0.55
+			var back_node := _add_to(visual, back_spine, Vector3(-0.32 + float(spine_index) * 0.16, 1.55, -0.38), Color("65764e"))
+			back_node.rotation.x = -0.42
 	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	if enemy_kind == 8:
@@ -224,6 +268,7 @@ func _ready() -> void:
 	elif enemy_kind == 5: label.text = "CAVALEIRO AFOGADO"
 	elif enemy_kind == 7: label.text = "ESPECTRO AFOGADO"
 	elif enemy_kind == 8: label.text = "CARANGUEJO DE PRATA"
+	elif enemy_kind == 9: label.text = "VIGIA DAS RAÍZES"
 	elif enemy_kind == 1: label.text = "GOBLIN BRUTO"
 	elif enemy_kind == 2: label.text = "GOBLIN BATEDOR"
 	else: label.text = "GOBLIN CORROMPIDO"
@@ -299,6 +344,8 @@ func _attack_warning_color() -> Color:
 		return Color("ff4d32") if boss_enraged else Color("f08a43")
 	if enemy_kind == 8:
 		return Color("62d8c8")
+	if enemy_kind == 9:
+		return Color("a0cf70")
 	if enemy_kind == 7:
 		return Color("79c9f2")
 	if enemy_kind == 5:
@@ -533,6 +580,7 @@ func _spawn_death_burst() -> void:
 	if enemy_kind == 6: burst_color = Color("d85a4d")
 	elif enemy_kind == 7: burst_color = Color("79c9f2")
 	elif enemy_kind == 8: burst_color = Color("62d8c8")
+	elif enemy_kind == 9: burst_color = Color("8dc86a")
 	elif enemy_kind >= 3: burst_color = Color("e7c477")
 	for shard_index in range(6):
 		var shard := MeshInstance3D.new()
