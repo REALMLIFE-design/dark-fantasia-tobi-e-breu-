@@ -72,12 +72,29 @@ func _ready() -> void:
 
 
 func _try_attach_meshy_hero() -> void:
-	# O modelo autoral do Tobi já é montado em _make_character(), com capuz,
-	# cachecol, espada, capa, armadura leve e pivôs animados.
-	# Só substitui esse visual quando o GLB final do Meshy estiver instalado.
+	# Primeiro usa o Tobi montado com os modelos Quaternius já importados no projeto.
+	# O Tobi procedural continua como fallback caso a cena externa não carregue.
+	var quaternius_scene := load("res://scenes/characters/tobi_quaternius_candidate.tscn") as PackedScene
+	if quaternius_scene != null:
+		var quaternius_hero := quaternius_scene.instantiate() as Node3D
+		if quaternius_hero != null:
+			quaternius_hero.name = "TobiQuaterniusHero"
+			quaternius_hero.position = Vector3.ZERO
+			quaternius_hero.rotation.y = PI
+			quaternius_hero.scale = Vector3.ONE
+			visual.add_child(quaternius_hero)
+			if quaternius_hero.has_meta("tobi_quaternius_ready"):
+				visual.set_meta("external_tobi_model", quaternius_hero)
+				_hide_procedural_hero_parts(visual)
+				print("TOBI_QUATERNIUS_ACTIVE")
+				return
+			quaternius_hero.queue_free()
+			push_warning("Cena Quaternius sem confirmação de montagem; mantendo o Tobi original.")
+
+	# Compatibilidade com o GLB Meshy opcional já suportado pelo projeto.
 	var hero_scene := PLUGIN_ASSET_LOADER.load_optional_scene("meshy_tobi_hero")
 	if hero_scene == null:
-		push_warning("GLB final do Tobi ainda não instalado; mantendo o Tobi autoral animado.")
+		push_warning("Modelo externo do Tobi indisponível; mantendo o Tobi autoral animado.")
 		return
 	var hero := hero_scene.instantiate() as Node3D
 	if hero == null:
@@ -90,20 +107,24 @@ func _try_attach_meshy_hero() -> void:
 	visual.add_child(hero)
 	visual.set_meta("external_tobi_model", hero)
 	_hide_procedural_hero_parts(visual)
-	# Breu e os efeitos de combate permanecem visíveis junto do novo Tobi.
-	if visual.has_node("Breu"):
-		visual.get_node("Breu").visible = true
-	if visual.has_node("AttackMotion"):
-		visual.get_node("AttackMotion").visible = true
 
 
 func _hide_procedural_hero_parts(parent_node: Node) -> void:
 	for child in parent_node.get_children():
-		if child.name == "Breu" or child.name == "AttackMotion" or child.name == "TobiMeshyHero":
+		if child.name == "Breu" or child.name == "AttackMotion" or child.name == "TobiQuaterniusHero" or child.name == "TobiMeshyHero":
 			continue
-		if child is MeshInstance3D:
+		if child is MeshInstance3D and not _is_inside_sword_pivot(child):
 			child.visible = false
 		_hide_procedural_hero_parts(child)
+
+
+func _is_inside_sword_pivot(node: Node) -> bool:
+	var current := node.get_parent()
+	while current != null and current != visual:
+		if current.name == "SwordPivot":
+			return true
+		current = current.get_parent()
+	return false
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
