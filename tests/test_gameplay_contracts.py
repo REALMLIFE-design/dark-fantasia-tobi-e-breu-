@@ -55,6 +55,10 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('HTTPRequest.new()', loader)
         self.assertIn('GLTFDocument.new()', loader)
         self.assertIn('FileAccess.open(target_path, FileAccess.WRITE)', loader)
+        world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('func _build_imported_plugin_models() -> void:', world)
+        self.assertIn('thrixel_stag_guardian', world)
+        self.assertIn('thrixel_river_crab', world)
 
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
