@@ -1119,3 +1119,13 @@ class ExpandedLandmarkContracts(unittest.TestCase):
         for registration, scene_name in expected:
             self.assertIn(registration, build_all)
             self.assertIn(scene_name, props)
+
+
+class ProfessionWorkshopContracts(unittest.TestCase):
+    def test_blacksmith_and_alchemist_workshops_are_registered(self):
+        props = (ROOT / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        build_all = props.split("static func build_all", 1)[1].split("static func _root", 1)[0]
+        self.assertIn("_build_blacksmith_forge(parent, Vector3(-121, 0, 96))", build_all)
+        self.assertIn("_build_alchemist_workshop(parent, Vector3(188, 0, 100))", build_all)
+        for detail in ("ForgeStoneFoundation", "AnvilFace", "DisplayBlade_", "PotionBottleBody_", "MixingCauldron", "FocusCrystalGlow"):
+            self.assertIn(detail, props)
