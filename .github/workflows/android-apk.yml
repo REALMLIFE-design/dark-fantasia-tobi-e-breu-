@@ -54,18 +54,21 @@ jobs:
       - name: Locate Godot project (repository root or subfolder)
         run: |
           set -euo pipefail
-          if [ -f "$GITHUB_WORKSPACE/project.godot" ]; then
-            PROJECT_PATH="$GITHUB_WORKSPACE"
+          PROJECT_FILE="$(find "$GITHUB_WORKSPACE" -maxdepth 5 -type f -name project.godot -not -path '*/.git/*' -print -quit)"
+          if [ -n "$PROJECT_FILE" ]; then
+            PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           else
             mkdir -p extracted
             unzip -q "TobiEBreu-PBR-Ajustes-Biomas-v0.18(1).zip" -d extracted
-            PROJECT_FILE="$(find extracted -name project.godot -print -quit)"
+            PROJECT_FILE="$(find extracted -maxdepth 6 -type f -name project.godot -print -quit)"
             if [ -z "$PROJECT_FILE" ]; then
-              echo "ERRO: project.godot não encontrado"
+              echo "ERRO: project.godot não encontrado no código-fonte nem no pacote de fallback"
               exit 1
             fi
             PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           fi
+          echo "Projeto Godot selecionado: $PROJECT_PATH"
+          test -f "$PROJECT_PATH/project.godot"
           echo "PROJECT_PATH=$PROJECT_PATH" >> "$GITHUB_ENV"
           python3 -m pip install --disable-pip-version-check Pillow
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v

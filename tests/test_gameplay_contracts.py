@@ -969,8 +969,8 @@ class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
 
     def test_menu_panel_is_responsive_and_scrollable(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
-        self.assertIn('minf(680.0, viewport_size.x * 0.92)', world)
-        self.assertIn('minf(600.0, viewport_size.y * 0.86)', world)
+        self.assertIn('minf(680.0, viewport_size.x * (0.96 if is_mobile_ui else 0.92))', world)
+        self.assertIn('minf(600.0, viewport_size.y * (0.94 if is_mobile_ui else 0.86))', world)
         self.assertIn('scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO', world)
 
     def test_ui_buttons_use_lightweight_states(self):
@@ -1024,3 +1024,30 @@ class MobileFirstAllScreensContracts(unittest.TestCase):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn('var compact_scale := 0.90 if portrait else 1.0', world)
         self.assertIn('button.mouse_filter = Control.MOUSE_FILTER_STOP', world)
+
+
+class TouchInputDeliveryContracts(unittest.TestCase):
+    def test_hud_touch_buttons_explicitly_receive_input_even_when_tree_is_paused(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("move_btn.mouse_filter = Control.MOUSE_FILTER_STOP", world)
+        self.assertIn("move_btn.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+        self.assertIn("action_btn.mouse_filter = Control.MOUSE_FILTER_STOP", world)
+        self.assertIn("action_btn.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+        self.assertIn("action_btn.pressed.connect(_touch_action.bind(data.a))", world)
+        self.assertIn("move_btn.button_down.connect(Input.action_press.bind(data.a))", world)
+        self.assertIn("move_btn.button_up.connect(Input.action_release.bind(data.a))", world)
+
+    def test_game_menu_buttons_receive_touch_while_game_is_paused(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("button.mouse_filter = Control.MOUSE_FILTER_STOP", world)
+        self.assertIn("button.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+        self.assertIn("button.pressed.connect(callback)", world)
+        self.assertIn("close_btn.process_mode = Node.PROCESS_MODE_ALWAYS", world)
+
+    def test_boot_menu_background_cannot_eat_touch_events(self):
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        project = (ROOT / "project.godot").read_text(encoding="utf-8")
+        self.assertIn("background.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("glow.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("button.mouse_filter = Control.MOUSE_FILTER_STOP", menu)
+        self.assertIn("pointing/emulate_mouse_from_touch=true", project)

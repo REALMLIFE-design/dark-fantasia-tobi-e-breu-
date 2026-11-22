@@ -9,6 +9,7 @@ var notice_dialog: AcceptDialog
 var update_status_label: Label
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_menu()
 	print("TOBI_BREU_BOOT_READY")
 
@@ -16,11 +17,13 @@ func _build_menu() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var background := ColorRect.new()
 	background.color = Color("101a1b")
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 
 	var glow := ColorRect.new()
 	glow.color = Color(0.12, 0.20, 0.18, 0.32)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	glow.anchor_left = 0.0
 	glow.anchor_top = 0.0
 	glow.anchor_right = 0.48
@@ -32,6 +35,8 @@ func _build_menu() -> void:
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	scroll.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(scroll)
 	var center := CenterContainer.new()
 	center.custom_minimum_size.y = get_viewport_rect().size.y
@@ -107,6 +112,8 @@ func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, ac
 	var mobile_ui := OS.has_feature("mobile") or available_width < 900.0
 	button.custom_minimum_size = Vector2(minf(520.0, available_width * (0.90 if mobile_ui else 0.84)), 76 if mobile_ui else 68)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.process_mode = Node.PROCESS_MODE_ALWAYS
 	button.text = heading + "\n" + detail
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_font_size_override("font_size", 16 if primary else 14)

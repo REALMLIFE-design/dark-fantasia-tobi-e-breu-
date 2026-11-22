@@ -2191,6 +2191,8 @@ func _build_hud() -> void:
 		move_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("b5d6bd")))
 		move_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("e0c58a")))
 		move_btn.modulate = Color(1, 1, 1, 0.96)
+		move_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		move_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 		move_btn.button_down.connect(Input.action_press.bind(data.a))
 		move_btn.button_up.connect(Input.action_release.bind(data.a))
 		ui_root.add_child(move_btn)
@@ -2228,6 +2230,8 @@ func _build_hud() -> void:
 		action_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(action_accent))
 		action_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(action_accent.lightened(1.22)))
 		action_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
+		action_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		action_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 		action_btn.pressed.connect(_touch_action.bind(data.a))
 		ui_root.add_child(action_btn)
 
@@ -2244,6 +2248,8 @@ func _build_hud() -> void:
 	pause_btn.add_theme_font_size_override("font_size", 19)
 	pause_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(Color("c6a46b")))
 	pause_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("f0d49b")))
+	pause_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_btn.pressed.connect(_open_menu.bind("pause"))
 	ui_root.add_child(pause_btn)
 
@@ -2429,6 +2435,8 @@ func _build_menus() -> void:
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(44, 44)
 	close_btn.add_theme_font_size_override("font_size", 24)
+	close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(_menu_back)
 	top_rule.add_child(close_btn)
 	var rule := ColorRect.new()
@@ -2852,6 +2860,8 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	button.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
 	button.add_theme_stylebox_override("focus", _ui_button_texture_style(Color("e8c987")))
 	button.add_theme_stylebox_override("disabled", _ui_button_texture_style(Color("59645b")))
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.process_mode = Node.PROCESS_MODE_ALWAYS
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
