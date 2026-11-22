@@ -152,7 +152,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"MOCHILA"', self.world)
 
     def test_project_display_name_matches_archive_version(self):
-        self.assertIn('Dark World 3D 0.12.0', self.project)
+        self.assertIn('Dark World 3D 0.12.2', self.project)
 
 
     def test_three_step_combo_scales_damage_and_expires(self):
@@ -570,7 +570,9 @@ class ProceduralTextureContracts(unittest.TestCase):
         project = (ROOT / 'project.godot').read_text(encoding='utf-8')
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         menu_scene = (ROOT / 'scenes/menu.tscn').read_text(encoding='utf-8')
-        self.assertIn('run/main_scene="res://scenes/menu.tscn"', project)
+        self.assertIn('run/main_scene="res://scenes/update_bootstrap.tscn"', project)
+        bootstrap = (ROOT / 'scripts/update_bootstrap.gd').read_text(encoding='utf-8')
+        self.assertIn('res://scenes/menu.tscn', bootstrap)
         self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
         self.assertIn('func _start_story()', menu)
         self.assertIn('MODO HISTÓRIA', menu)
@@ -692,15 +694,17 @@ class AncientWaystoneContracts(unittest.TestCase):
     def test_android_auto_update_bootstrap_is_registered(self):
         updater = (ROOT / 'scripts/update_manager.gd').read_text(encoding='utf-8')
         export = (ROOT / 'export_presets.cfg').read_text(encoding='utf-8')
-        self.assertIn('UpdateManager="*res://scripts/update_manager.gd"', self.project)
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('UpdateManager="*res://scripts/update_manager.gd"', project)
         self.assertIn('permissions/internet=true', export)
-        self.assertIn('run/main_scene="res://scenes/update_bootstrap.tscn"', self.project)
+        self.assertIn('run/main_scene="res://scenes/update_bootstrap.tscn"', project)
         bootstrap = (ROOT / 'scripts/update_bootstrap.gd').read_text(encoding='utf-8')
         self.assertIn('await UpdateManager.check_for_updates()', bootstrap)
         self.assertIn('res://scenes/menu.tscn', bootstrap)
         self.assertIn('ProjectSettings.load_resource_pack', updater)
         self.assertIn('HashingContext.HASH_SHA256', updater)
-        self.assertIn('user://tobi_breu_save.cfg', self.world)
+        self.assertIn('user://tobi_breu_save.cfg', world)
 
     def test_auto_update_download_is_staged_for_safe_restart(self):
         updater = (ROOT / 'scripts/update_manager.gd').read_text(encoding='utf-8')
