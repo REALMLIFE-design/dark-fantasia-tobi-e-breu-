@@ -267,7 +267,8 @@ static func _build_fallen_guardian(parent: Node3D, position: Vector3) -> void:
 static func _build_glacial_altar(parent: Node3D, position: Vector3) -> void:
 	var root := _root(parent, "GlacialMemoryAltar", position)
 	_cylinder(root, "IceAltarBase", Vector3(0, 0.28, 0), 3.2, 0.56, Color("596d76"), 8, 12)
-	_cylinder(root, "FrostRing", Vector3(0, 0.62, 0), 2.55, 0.16, Color("9bbec8"), 8, 13, true)
+	var frost_ring := _cylinder(root, "FrostRing", Vector3(0, 0.62, 0), 2.55, 0.16, Color("9bbec8"), 8, 13)
+	frost_ring.material_override = _material(Color("9bbec8"), 13, true)
 	_box(root, "AltarPedestal", Vector3(0, 1.15, 0), Vector3(1.9, 1.1, 1.9), Color("718b94"), 10)
 	_cone(root, "MemoryCrystal", Vector3(0, 2.55, 0), 0.82, 2.7, Color("a9e7f0"), 13)
 	for i in range(6):
