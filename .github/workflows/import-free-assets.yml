@@ -36,12 +36,14 @@ jobs:
             mkdir -p "${archive%.zip}"
             unzip -oq "$archive" -d "${archive%.zip}"
           done
-          find /tmp/quaternius -type f \( -iname '*.glb' -o -iname '*.gltf' -o -iname '*.fbx' \) -print0 | while IFS= read -r -d '' model; do
-            cp "$model" "assets/external_packs/quaternius_stylized_nature/$(basename "$model")"
+          # Quaternius disponibiliza este pack como OBJ + MTL + PNG; preservar
+          # os arquivos auxiliares mantém materiais e texturas vinculados.
+          find /tmp/quaternius -type f \( -iname '*.obj' -o -iname '*.mtl' -o -iname '*.png' -o -iname '*.jpg' \) -print0 | while IFS= read -r -d '' asset; do
+            cp "$asset" "assets/external_packs/quaternius_stylized_nature/$(basename "$asset")"
           done
-          MODEL_COUNT=$(find assets/external_packs/quaternius_stylized_nature -type f \( -iname '*.glb' -o -iname '*.gltf' -o -iname '*.fbx' \) | wc -l)
-          echo "Modelos 3D copiados: $MODEL_COUNT"
-          if [ "$MODEL_COUNT" -eq 0 ]; then echo '::error::O download não trouxe arquivos GLB, GLTF ou FBX.'; exit 1; fi
+          MODEL_COUNT=$(find assets/external_packs/quaternius_stylized_nature -type f -iname '*.obj' | wc -l)
+          echo "Modelos OBJ copiados: $MODEL_COUNT"
+          if [ "$MODEL_COUNT" -eq 0 ]; then echo '::error::O download não trouxe modelos OBJ.'; exit 1; fi
       - name: Baixar materiais PBR CC0 do Poly Haven
         run: |
           set -euo pipefail
@@ -67,10 +69,10 @@ jobs:
         run: |
           cat > assets/external_packs/QUATERNIUS-POLYHAVEN-LICENSES.md <<'EOF'
           # Fontes dos assets importados automaticamente
-          ## Quaternius — Ultimate Stylized Nature (60+)
+          ## Quaternius — Ultimate Stylized Nature
           - Origem: https://www.patreon.com/quaternius/posts/ultimate-nature-67157089
           - Licença declarada pelo autor: CC0; uso pessoal e comercial permitido.
-          - Modelos copiados para assets/external_packs/quaternius_stylized_nature/.
+          - Modelos OBJ, materiais MTL e texturas preservados em assets/external_packs/quaternius_stylized_nature/.
           ## Poly Haven
           - API: https://api.polyhaven.com
           - Materiais: Aerial Grass Rock, Aerial Ground Rock e Aerial Mud 1.
@@ -84,5 +86,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/external_packs/quaternius_stylized_nature assets/textures/polyhaven assets/external_packs/QUATERNIUS-POLYHAVEN-LICENSES.md
           if git diff --cached --quiet; then echo 'Nenhum asset novo.'; exit 0; fi
-          git commit -m 'Importa modelos 3D Quaternius e materiais PBR Poly Haven'
+          git commit -m 'Importa modelos OBJ Quaternius e materiais PBR Poly Haven'
+          git pull --rebase origin integration/definitive-all-versions
           git push origin HEAD:integration/definitive-all-versions
