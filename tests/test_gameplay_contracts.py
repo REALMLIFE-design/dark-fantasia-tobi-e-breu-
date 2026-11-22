@@ -32,6 +32,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func apply_boss_slam_knockback(direction: Vector3, strength: float)', self.player)
         self.assertIn('velocity.x = push.x * strength', self.player)
         self.assertIn('velocity.y = maxf(velocity.y, 3.6 if strength >= 11.0 else 2.8)', self.player)
+        knockback = self.player.split('func apply_boss_slam_knockback', 1)[1].split('func take_damage', 1)[0]
+        self.assertNotIn('invulnerable > 0.0', knockback)
 
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
