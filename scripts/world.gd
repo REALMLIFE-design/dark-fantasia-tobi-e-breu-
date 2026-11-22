@@ -316,13 +316,8 @@ func _build_visible_3dassets_showcase() -> void:
 func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
 	# Os modelos mantem materiais/texturas PBR incorporados ao GLB.
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_stag_guardian", Vector3(-158.0, 0.0, -104.0), Vector3.ONE)
-	await get_tree().process_frame
+	# GLBs de inimigos são anexados às instâncias reais em enemy.gd, nunca como decoração estática.
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
-	await get_tree().process_frame
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_river_crab", Vector3(55.0, 0.0, -143.0), Vector3.ONE * 0.85)
-	await get_tree().process_frame
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_drowned_wraith", Vector3(67.0, 0.0, -157.0), Vector3.ONE)
 	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
 	await get_tree().process_frame
