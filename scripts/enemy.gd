@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const ConeMesh = preload("res://scripts/cone_mesh.gd")
 var hp := 70
 var dead := false
 var attack_timer := 0.0
@@ -187,8 +188,6 @@ func _ready() -> void:
 				crab_legs.append(leg_pivot)
 		visual.get_meta("left_arm_node", left_arm).visible = false
 		visual.get_meta("right_arm_node", right_arm).visible = false
-		visual.get_meta("left_leg_node", left_leg).visible = false
-		visual.get_meta("right_leg_node", right_leg).visible = false
 		head_pivot.visible = false
 		visual.set_meta("crab_legs", crab_legs)
 	elif enemy_kind == 5:
@@ -212,6 +211,9 @@ func _ready() -> void:
 	visual.set_meta("left_arm_node", left_arm); visual.set_meta("right_arm_node", right_arm)
 	visual.set_meta("left_leg", left_leg); visual.set_meta("right_leg", right_leg)
 	visual.set_meta("left_leg_node", left_leg); visual.set_meta("right_leg_node", right_leg)
+	if enemy_kind == 8:
+		left_leg.visible = false
+		right_leg.visible = false
 	visual.set_meta("head", head_pivot)
 	var label := Label3D.new()
 	if enemy_kind == 6: label.text = "LEVIATÃ DO LODO"

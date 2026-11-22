@@ -1,5 +1,14 @@
 # Tobi e Breu — Dark World 3D
 
+## Redesenho do HUD e da UI — 22/11/2026
+- Novo `scripts/hud_style.gd` concentra paleta (ouro envelhecido sobre pedra escura), painéis, barras e botões; textos ganharam contorno para ler sobre o cenário 3D.
+- Placa de status única no canto superior esquerdo: vida (com números), estamina, nível/XP (a barra de XP agora existe de fato) e recursos.
+- Missão e objetivo viraram um cartão no topo direito, com MOCHILA e FORJAR como atalhos de menu logo acima.
+- Botões de ação em arco sob o polegar direito: ATACAR grande ao centro; ESQUIVAR, PULAR, BREU e POÇÃO ao redor. BREU mostra a recarga no próprio botão e POÇÃO mostra a quantidade. INTERAGIR só aparece quando há algo para interagir.
+- Mensagens (toast) ficam em um painel no topo central e somem sozinhas; a dica de controles some depois de 20 s; a barra de ações some enquanto a mochila está aberta.
+- Corrigidos erros de GDScript que impediam o Godot 4.3 de carregar o projeto: `ConeMesh` (não existe no Godot; criado `scripts/cone_mesh.gd`), pernas do Caranguejo usadas antes de serem declaradas, e três inferências de tipo em `world.gd`. Removido também um bloco morto em `_build_hud` que usava variáveis inexistentes.
+- Verificação: Godot 4.3 headless carrega os scripts sem erro, o jogo roda e o HUD foi renderizado e inspecionado em capturas. Os 72 testes de contrato passam; 2 testes do workflow do GitHub Actions (APK) já falhavam antes e não foram tocados. Não testado em Android real.
+
 ## Estado interno em 2026-11-20
 
 ### Parte concluída nesta rodada — encontro do Leviatã do Lodo

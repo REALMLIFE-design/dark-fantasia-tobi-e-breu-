@@ -5,6 +5,7 @@ const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
+const HUD_STYLE = preload("res://scripts/hud_style.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -42,6 +43,15 @@ var dark_essence := 0
 var save_toast_timer := 0.0
 var shadow_skill_label: Label
 var whisper_grove_label: Label
+var toast_panel: PanelContainer
+var prompt_panel: PanelContainer
+var action_root: Control
+var interact_button: Button
+var potion_button: Button
+var breu_button: Button
+var hud_time := 0.0
+var toast_age := 0.0
+var toast_last := ""
 var saved_shrine_used := false
 var saved_player_hp := 100
 var checkpoint_position := Vector3(0, 0, 15)
@@ -287,7 +297,7 @@ func _build_open_world_expansion() -> void:
 		clearing.scale = Vector3(18.0, 0.08, 15.0)
 		for j in range(7):
 			var angle := TAU * float(j) / 7.0
-			var tree_pos := clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
+			var tree_pos: Vector3 = clearings[i] + Vector3(cos(angle) * 20.0, 0.0, sin(angle) * 17.0)
 			_build_tree(tree_pos, randf_range(0.8, 1.25))
 	# Distant mountain wall makes the larger map read as a continuous landmass.
 	for i in range(32):
@@ -724,7 +734,7 @@ func _build_swamp_region() -> void:
 			var limb := _box(self, "DeadBranch", Vector3(x + branch * 0.75, 3.2, z), Vector3(1.8, 0.22, 0.24), Color("4b4439"))
 			limb.rotation.z = branch * -0.42
 	for i in range(3):
-		var x := [-13.0, 0.0, 13.0][i]
+		var x: float = [-13.0, 0.0, 13.0][i]
 		var totem := Node3D.new()
 		totem.name = "SwampTotem_%d" % i
 		totem.position = Vector3(x, 0.0, -91.0 - (i % 2) * 9.0)
@@ -1155,155 +1165,261 @@ func _build_player() -> void:
 func _build_hud() -> void:
 	hud = CanvasLayer.new()
 	add_child(hud)
-	var panel := PanelContainer.new()
-	panel.position = Vector2(22,20)
-	panel.custom_minimum_size = Vector2(350,94)
-	hud.add_child(panel)
-	var v := VBoxContainer.new()
-	panel.add_child(v)
-	var title := Label.new()
-	title.text = "TOBI E BREU  •  DARK WORLD"
-	title.add_theme_font_size_override("font_size",18)
-	v.add_child(title)
+	var root := Control.new()
+	root.name = "HudRoot"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(root)
+
+	# --- Placa de status do Tobi (canto superior esquerdo): vida, estamina, XP e recursos.
+	var status := PanelContainer.new()
+	status.name = "StatusPlate"
+	status.position = Vector2(14, 12)
+	status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status.add_theme_stylebox_override("panel", HUD_STYLE.panel_box())
+	root.add_child(status)
+	var sv := VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 4)
+	status.add_child(sv)
+	health_label = Label.new()
+	health_label.text = "TOBI  •  VIDA"
+	HUD_STYLE.style_label(health_label, 16, HUD_STYLE.GOLD_BRIGHT)
+	sv.add_child(health_label)
+	health_bar = ProgressBar.new()
+	health_bar.max_value = 100
+	health_bar.value = 100
+	HUD_STYLE.style_bar(health_bar, HUD_STYLE.HEALTH, 20, 270)
+	sv.add_child(health_bar)
+	stamina_bar = ProgressBar.new()
+	stamina_bar.max_value = 100
+	stamina_bar.value = 100
+	HUD_STYLE.style_bar(stamina_bar, HUD_STYLE.STAMINA, 9, 270, 4)
+	sv.add_child(stamina_bar)
+	xp_label = Label.new()
+	xp_label.text = "NÍVEL 1  •  0 XP"
+	HUD_STYLE.style_label(xp_label, 13, HUD_STYLE.CREAM)
+	sv.add_child(xp_label)
+	xp_bar = ProgressBar.new()
+	xp_bar.max_value = 100
+	xp_bar.value = 0
+	HUD_STYLE.style_bar(xp_bar, HUD_STYLE.XP, 6, 270, 3)
+	sv.add_child(xp_bar)
+	inventory_label = Label.new()
+	inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
+	HUD_STYLE.style_label(inventory_label, 12, HUD_STYLE.GOLD)
+	sv.add_child(inventory_label)
+	combo_label = Label.new()
+	combo_label.text = "COMBO  •  pronto"
+	HUD_STYLE.style_label(combo_label, 12, HUD_STYLE.CREAM)
+	sv.add_child(combo_label)
+	# O estado do Pulso Sombrio agora aparece no próprio botão BREU; o rótulo segue
+	# existindo (o código de combate o atualiza) mas fica oculto para não poluir a tela.
+	shadow_skill_label = Label.new()
+	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
+	shadow_skill_label.visible = false
+	root.add_child(shadow_skill_label)
+
+	# --- Atalhos de menu (topo direito) e cartão de missão logo abaixo.
+	for menu in [{"t": "MOCHILA", "a": "inventory", "x": -66.0}, {"t": "FORJAR", "a": "upgrade", "x": -178.0}]:
+		var mb := Button.new()
+		mb.text = menu.t
+		HUD_STYLE.style_button(mb, HUD_STYLE.GOLD, 12, 14)
+		HUD_STYLE.place_corner(mb, Vector2(1, 0), Vector2(menu.x, 34), Vector2(104, 44))
+		mb.pressed.connect(_touch_action.bind(menu.a))
+		root.add_child(mb)
+	var tracker := PanelContainer.new()
+	tracker.name = "QuestTracker"
+	tracker.anchor_left = 1.0
+	tracker.anchor_right = 1.0
+	tracker.offset_left = -324
+	tracker.offset_right = -14
+	tracker.offset_top = 64
+	tracker.offset_bottom = 64
+	tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tracker.add_theme_stylebox_override("panel", HUD_STYLE.panel_box(0.78))
+	root.add_child(tracker)
+	var tv := VBoxContainer.new()
+	tv.add_theme_constant_override("separation", 3)
+	tracker.add_child(tv)
 	quest_label = Label.new()
 	quest_label.text = quest_text
 	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(quest_label)
+	quest_label.custom_minimum_size = Vector2(286, 0)
+	HUD_STYLE.style_label(quest_label, 13, HUD_STYLE.CREAM)
+	tv.add_child(quest_label)
 	objective_label = Label.new()
 	objective_label.text = "Objetivo: encontre Mestre Azulan"
-	objective_label.add_theme_font_size_override("font_size", 13)
-	v.add_child(objective_label)
-	health_label = Label.new()
-	health_label.text = "TOBI  •  VIDA"
-	health_label.position = Vector2(22,126)
-	health_label.add_theme_font_size_override("font_size",15)
-	hud.add_child(health_label)
-	health_bar = ProgressBar.new()
-	health_bar.position = Vector2(22,151)
-	health_bar.size = Vector2(230,18)
-	health_bar.max_value = 100
-	health_bar.value = 100
-	health_bar.show_percentage = false
-	hud.add_child(health_bar)
-	stamina_bar = ProgressBar.new()
-	stamina_bar.position = Vector2(22, 174)
-	stamina_bar.size = Vector2(190, 10)
-	stamina_bar.max_value = 100
-	stamina_bar.value = 100
-	stamina_bar.show_percentage = false
-	hud.add_child(stamina_bar)
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective_label.custom_minimum_size = Vector2(286, 0)
+	HUD_STYLE.style_label(objective_label, 14, HUD_STYLE.GOLD_BRIGHT)
+	tv.add_child(objective_label)
+
+	# --- Barra do chefe (topo central).
 	boss_hud_panel = PanelContainer.new()
 	boss_hud_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	boss_hud_panel.position = Vector2(-170, 16)
-	boss_hud_panel.custom_minimum_size = Vector2(340, 48)
+	boss_hud_panel.offset_left = -190
+	boss_hud_panel.offset_right = 190
+	boss_hud_panel.offset_top = 14
+	boss_hud_panel.offset_bottom = 14
+	boss_hud_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	boss_hud_panel.add_theme_stylebox_override("panel", HUD_STYLE.panel_box(0.9, 10, 2))
 	boss_hud_panel.visible = false
-	hud.add_child(boss_hud_panel)
+	root.add_child(boss_hud_panel)
 	var boss_box := VBoxContainer.new()
-	boss_box.add_theme_constant_override("separation", 2)
+	boss_box.add_theme_constant_override("separation", 4)
 	boss_hud_panel.add_child(boss_box)
 	boss_health_label = Label.new()
 	boss_health_label.text = "LEVIATÃ DO LODO"
 	boss_health_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	boss_health_label.add_theme_font_size_override("font_size", 13)
+	HUD_STYLE.style_label(boss_health_label, 14, HUD_STYLE.GOLD_BRIGHT)
 	boss_box.add_child(boss_health_label)
 	boss_health_bar = ProgressBar.new()
 	boss_health_bar.max_value = 680
 	boss_health_bar.value = 680
-	boss_health_bar.custom_minimum_size = Vector2(320, 12)
-	boss_health_bar.show_percentage = false
+	HUD_STYLE.style_bar(boss_health_bar, HUD_STYLE.BOSS, 14, 350)
 	boss_box.add_child(boss_health_bar)
-	combo_label = Label.new()
-	combo_label.position = Vector2(22, 224)
-	combo_label.text = "COMBO  •  pronto"
-	combo_label.add_theme_font_size_override("font_size", 12)
-	hud.add_child(combo_label)
+
+	# --- Aviso de região (só aparece perto do Bosque dos Sussurros).
 	whisper_grove_label = Label.new()
-	whisper_grove_label.position = Vector2(22, 300)
 	whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  0/3"
-	whisper_grove_label.add_theme_font_size_override("font_size", 12)
-	whisper_grove_label.add_theme_color_override("font_color", Color("9acfc2"))
+	whisper_grove_label.anchor_left = 0.5
+	whisper_grove_label.anchor_right = 0.5
+	whisper_grove_label.offset_left = -200
+	whisper_grove_label.offset_right = 200
+	whisper_grove_label.offset_top = 16
+	whisper_grove_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	HUD_STYLE.style_label(whisper_grove_label, 15, HUD_STYLE.TEAL)
 	whisper_grove_label.visible = false
-	hud.add_child(whisper_grove_label)
-	shadow_skill_label = Label.new()
-	shadow_skill_label.position = Vector2(22, 242)
-	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
-	shadow_skill_label.add_theme_font_size_override("font_size", 12)
-	hud.add_child(shadow_skill_label)
-	xp_label = Label.new()
-	xp_label.position = Vector2(22, 260)
-	xp_label.text = "NÍVEL 1  •  0 XP"
-	xp_label.add_theme_font_size_override("font_size", 13)
-	hud.add_child(xp_label)
-	inventory_label = Label.new()
-	inventory_label.position = Vector2(22, 280)
-	inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
-	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
-	inventory_label.add_theme_font_size_override("font_size", 12)
-	hud.add_child(inventory_label)
-	# Full backpack panel: compact, touch-friendly and hidden during exploration.
+	root.add_child(whisper_grove_label)
+
+	# --- Mensagens (toast): aparecem sob o topo central e somem sozinhas.
+	toast_panel = PanelContainer.new()
+	toast_panel.anchor_left = 0.5
+	toast_panel.anchor_right = 0.5
+	toast_panel.offset_left = -300
+	toast_panel.offset_right = 300
+	toast_panel.offset_top = 76
+	toast_panel.offset_bottom = 76
+	toast_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast_panel.add_theme_stylebox_override("panel", HUD_STYLE.panel_box(0.88, 12, 1))
+	toast_panel.visible = false
+	root.add_child(toast_panel)
+	toast_label = Label.new()
+	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	toast_label.custom_minimum_size = Vector2(560, 0)
+	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	HUD_STYLE.style_label(toast_label, 15, HUD_STYLE.GOLD_BRIGHT)
+	toast_panel.add_child(toast_label)
+
+	# --- Dica de interação (parte inferior central).
+	prompt_panel = PanelContainer.new()
+	prompt_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prompt_panel.add_theme_stylebox_override("panel", HUD_STYLE.panel_box(0.82, 20, 1))
+	HUD_STYLE.place_corner(prompt_panel, Vector2(0.5, 1), Vector2(-60, -64), Vector2(380, 44))
+	root.add_child(prompt_panel)
+	prompt_label = Label.new()
+	prompt_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	prompt_label.custom_minimum_size = Vector2(350, 0)
+	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	HUD_STYLE.style_label(prompt_label, 14, HUD_STYLE.CREAM)
+	prompt_panel.add_child(prompt_label)
+
+	# --- Mochila completa: painel largo, escondido durante a exploração.
 	inventory_panel = PanelContainer.new()
-	inventory_panel.position = Vector2(0.12, 0.20)
 	inventory_panel.anchor_left = 0.12
 	inventory_panel.anchor_right = 0.88
-	inventory_panel.anchor_top = 0.20
-	inventory_panel.anchor_bottom = 0.20
+	inventory_panel.anchor_top = 0.14
+	inventory_panel.anchor_bottom = 0.14
 	inventory_panel.custom_minimum_size = Vector2(0, 250)
+	inventory_panel.add_theme_stylebox_override("panel", HUD_STYLE.panel_box(0.96, 14, 2))
 	inventory_panel.visible = false
-	hud.add_child(inventory_panel)
+	root.add_child(inventory_panel)
 	var inventory_box := VBoxContainer.new()
 	inventory_box.add_theme_constant_override("separation", 10)
 	inventory_panel.add_child(inventory_box)
 	var inventory_title := Label.new()
 	inventory_title.text = "MOCHILA DE TOBI"
 	inventory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	inventory_title.add_theme_font_size_override("font_size", 20)
+	HUD_STYLE.style_label(inventory_title, 22, HUD_STYLE.GOLD_BRIGHT)
 	inventory_box.add_child(inventory_title)
 	inventory_details = Label.new()
 	inventory_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	HUD_STYLE.style_label(inventory_details, 15, HUD_STYLE.CREAM)
 	inventory_box.add_child(inventory_details)
 	var inventory_close := Button.new()
 	inventory_close.text = "FECHAR MOCHILA"
-	inventory_close.custom_minimum_size = Vector2(0, 44)
+	inventory_close.custom_minimum_size = Vector2(0, 48)
+	HUD_STYLE.style_button(inventory_close, HUD_STYLE.GOLD, 12, 16)
 	inventory_close.pressed.connect(_toggle_inventory)
 	inventory_box.add_child(inventory_close)
-	prompt_label = Label.new()
-	prompt_label.anchor_left = 0.5
-	prompt_label.anchor_right = 0.5
-	prompt_label.anchor_top = 0.78
-	prompt_label.position = Vector2(-210,0)
-	prompt_label.size = Vector2(420,48)
-	prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud.add_child(prompt_label)
-	toast_label = Label.new()
-	toast_label.position = Vector2(22,308)
-	toast_label.add_theme_color_override("font_color",Color("f1d5a5"))
-	hud.add_child(toast_label)
-	# Analog virtual joystick: continuous 360-degree movement on touch screens.
+
+	# --- Joystick analógico (canto inferior esquerdo).
 	var joystick := Control.new()
 	joystick.name = "VirtualJoystick"
 	joystick.set_script(load("res://scripts/virtual_joystick.gd"))
-	joystick.anchor_left = 0.12
-	joystick.anchor_right = 0.12
-	joystick.anchor_top = 0.84
-	joystick.anchor_bottom = 0.84
-	joystick.position = Vector2(-78, -78)
-	joystick.size = Vector2(156, 156)
+	HUD_STYLE.place_corner(joystick, Vector2(0, 1), Vector2(150, -120), Vector2(156, 156))
 	joystick.z_index = 20
-	hud.add_child(joystick)
-	# touch action buttons
-	for data in [{"t":"ATACAR","a":"attack","p":Vector2(0.83,0.82)},{"t":"PULAR","a":"jump","p":Vector2(0.91,0.68)},{"t":"INTERAGIR","a":"interact","p":Vector2(0.72,0.9)},{"t":"ESQUIVAR","a":"dodge","p":Vector2(0.84,0.94)},{"t":"POÇÃO","a":"potion","p":Vector2(0.94,0.84)},{"t":"FORJAR","a":"upgrade","p":Vector2(0.70,0.70)},{"t":"MOCHILA","a":"inventory","p":Vector2(0.70,0.61)},{"t":"BREU","a":"shadow","p":Vector2(0.93,0.72)}]:
+	root.add_child(joystick)
+
+	# --- Botões de ação sob o polegar direito: ATACAR grande no centro e as demais
+	# ações em arco ao redor dele; INTERAGIR só aparece quando há algo para interagir.
+	action_root = Control.new()
+	action_root.name = "ActionCluster"
+	action_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	action_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(action_root)
+	var actions := [
+		{"t": "ATACAR", "a": "attack", "c": Vector2(-135, -125), "s": 118.0, "f": 19, "col": Color("d0603f")},
+		{"t": "ESQUIVAR", "a": "dodge", "c": Vector2(-258, -120), "s": 80.0, "f": 12, "col": HUD_STYLE.TEAL},
+		{"t": "PULAR", "a": "jump", "c": Vector2(-222, -212), "s": 80.0, "f": 14, "col": HUD_STYLE.GOLD},
+		{"t":"BREU","a":"shadow","c": Vector2(-135, -248), "s": 80.0, "f": 14, "col": HUD_STYLE.XP},
+		{"t": "POÇÃO", "a": "potion", "c": Vector2(-48, -212), "s": 80.0, "f": 13, "col": HUD_STYLE.HEALTH},
+	]
+	for data in actions:
 		var b := Button.new()
 		b.text = data.t
-		b.anchor_left = data.p.x
-		b.anchor_right = data.p.x
-		b.anchor_top = data.p.y
-		b.anchor_bottom = data.p.y
-		b.position = Vector2(-54,-26)
-		b.size = Vector2(108,52)
-		b.modulate = Color(0.86,0.82,0.73,0.9)
+		HUD_STYLE.style_button(b, data.col, int(data.s * 0.5) - 1, data.f)
+		HUD_STYLE.place_corner(b, Vector2(1, 1), data.c, Vector2(data.s, data.s))
 		b.pressed.connect(_touch_action.bind(data.a))
-		hud.add_child(b)
+		action_root.add_child(b)
+		if data.a == "potion": potion_button = b
+		elif data.a == "shadow": breu_button = b
+	interact_button = Button.new()
+	interact_button.text = "INTERAGIR"
+	HUD_STYLE.style_button(interact_button, HUD_STYLE.GOLD_BRIGHT, 16, 16)
+	HUD_STYLE.place_corner(interact_button, Vector2(1, 1), Vector2(-415, -70), Vector2(138, 58))
+	interact_button.visible = false
+	interact_button.pressed.connect(_touch_action.bind("interact"))
+	action_root.add_child(interact_button)
+	_update_inventory()
+
+# Atualiza as partes dinâmicas do HUD a cada frame: visibilidade contextual,
+# mensagens que somem sozinhas, contagem de poções e recarga do Pulso Sombrio.
+func _update_hud_dynamic(delta: float) -> void:
+	hud_time += delta
+	var prompt := prompt_label.text if prompt_label else ""
+	if prompt_panel:
+		var is_default_hint := prompt.begins_with("Arraste")
+		prompt_panel.visible = not prompt.is_empty() and not (is_default_hint and hud_time > 20.0)
+	if interact_button:
+		interact_button.visible = prompt.begins_with("E:") or prompt.begins_with("INTERAGIR")
+	if toast_label and toast_panel:
+		if toast_label.text != toast_last:
+			toast_last = toast_label.text
+			toast_age = 0.0
+		elif not toast_last.is_empty():
+			toast_age += delta
+			if toast_age > clampf(4.0 + float(toast_last.length()) * 0.06, 4.0, 12.0):
+				toast_label.text = ""
+				toast_last = ""
+		toast_panel.visible = not toast_label.text.is_empty() and not (inventory_panel and inventory_panel.visible)
+	if potion_button:
+		potion_button.text = "POÇÃO\nx%d" % potions
+		potion_button.modulate = Color(1, 1, 1, 1) if potions > 0 else Color(1, 1, 1, 0.5)
+	if breu_button and is_instance_valid(player):
+		var cooldown: float = player.shadow_pulse_cooldown
+		breu_button.text = ("BREU\n%.1fs" % cooldown) if cooldown > 0.0 else "BREU"
+		breu_button.disabled = cooldown > 0.0
 
 func _touch_action(action: String) -> void:
 	if action == "attack": player.do_attack()
@@ -1322,6 +1438,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _toggle_inventory() -> void:
 	if not inventory_panel: return
 	inventory_panel.visible = not inventory_panel.visible
+	if action_root: action_root.visible = not inventory_panel.visible
 	_update_inventory()
 
 func _process(delta: float) -> void:
@@ -1378,6 +1495,7 @@ func _process(delta: float) -> void:
 	elif shrine_distance < 3.8: prompt_label.text = "INTERAGIR — Santuário Esquecido"
 	elif quest_stage == 5 and _nearest_swamp_totem_distance() < 3.5: prompt_label.text = "INTERAGIR — Purificar Totem"
 	else: prompt_label.text = "Arraste o lado direito para mover a câmera"
+	_update_hud_dynamic(delta)
 	if stamina_bar and player.has_method("get_stamina"):
 		stamina_bar.value = player.get_stamina()
 	if shadow_skill_label and player.shadow_pulse_cooldown > 0.0:
@@ -1472,7 +1590,7 @@ func _open_river_chest(chest_id: int) -> void:
 	if glow: glow.visible = false
 	var light := chest.get_node_or_null("ChestGlowLight")
 	if light: light.light_energy = 0.0
-	var xp_reward := [35, 45, 55][chest_id]
+	var xp_reward: int = [35, 45, 55][chest_id]
 	var essence_reward := 1 if chest_id < 2 else 2
 	var shard_reward := 1 if chest_id == 2 else 0
 	_grant_xp(xp_reward)

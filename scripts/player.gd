@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const ConeMesh = preload("res://scripts/cone_mesh.gd")
 var world: Node3D
 var speed := 6.2
 var jump_velocity := 7.0
