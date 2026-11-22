@@ -202,6 +202,17 @@ jobs:
           path: ${{ env.PROJECT_PATH }}/build/TobiEBreu.apk
           if-no-files-found: error
 
+      - name: Publicar APK no GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK_TAG="android-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$APK_TAG" "$PROJECT_PATH/build/TobiEBreu.apk" \
+            --title "Tobi e Breu Android APK ${GITHUB_RUN_NUMBER}" \
+            --notes "APK Android assinado e validado pelo workflow. Pacote: com.tobiebreu.darkworld3d. Commit: ${GITHUB_SHA}."
+          echo "APK_RELEASE_URL=https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/tag/$APK_TAG" >> "$GITHUB_ENV"
+
       - name: Preparar patch incremental Android
         id: patch
         if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
