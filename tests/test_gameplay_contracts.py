@@ -706,7 +706,7 @@ class AncientWaystoneContracts(unittest.TestCase):
         updater = (ROOT / 'scripts/update_manager.gd').read_text(encoding='utf-8')
         self.assertIn('user://updates/pending.pck', updater)
         self.assertIn('user://updates/pending_version.txt', updater)
-        self.assertIn('Feche e abra o jogo', updater)
+        self.assertIn('Atualização aplicada automaticamente', updater)
 
     def test_incremental_android_patch_is_published_by_github_actions(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
