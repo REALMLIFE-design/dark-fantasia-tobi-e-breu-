@@ -55,10 +55,23 @@
       "target_polycount": 4000,
       "texture_resolution": "2k",
       "expected_import_path": "assets/plugin_imports/meshy/ancient_tree.glb",
-      "status": "generated_download_blocked_by_plan",
+      "status": "generated_textured_glb_export_blocked_by_plan",
       "binary_transferred_to_repository": false,
       "integration_hook": "scripts/world.gd::_build_ancient_tree_landmark",
-      "note": "Texture generation succeeded; Meshy download_model rejected GLB export because the connected plan requires an upgrade. The Godot loader uses a procedural fallback until the GLB is imported."
+      "note": "Two successful Meshy generations exist (original Primary and recreation Higor). The Higor recreation is textured PBR 2K and has a Godot loader hook, but GLB export is blocked by the connected Meshy plan. No binary is in the repository; procedural fallback remains active.",
+      "recreation": {
+        "account": "Higor",
+        "geometry_task_id": "01a200e5-fa54-73a9-aa3e-c6c30633a674",
+        "texture_task_id": "01a200e6-38d1-7255-a9f0-fc1422778b06",
+        "geometry_model": "meshy-t2",
+        "texture_model": "meshy-6-lite",
+        "target_polycount": 4000,
+        "texture_resolution": "2k",
+        "generation_status": "succeeded",
+        "export_status": "blocked_by_plan_upgrade_required",
+        "binary_transferred_to_repository": false,
+        "note": "Recreated after the Primary-account export limitation. Geometry and PBR texturing succeeded in Higor account; GLB download was again rejected by Meshy because the connected plan requires an upgrade. No upgrade/purchase was made."
+      }
     }
   ]
 }
