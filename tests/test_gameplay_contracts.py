@@ -816,3 +816,23 @@ class ExternalAssetPackLoaderContracts(unittest.TestCase):
         self.assertIn('extension == "glb" or extension == "gltf"', loader)
         self.assertIn('assets/external_packs/medieval_collection', readme)
         self.assertIn('CC BY 4.0', readme)
+
+
+class CompleteWorldAssetPackContracts(unittest.TestCase):
+    def test_existing_world_has_full_regions_and_new_prop_pack_hook(self):
+        root = Path(__file__).resolve().parents[1]
+        world = (root / "scripts/world.gd").read_text(encoding="utf-8")
+        atlas = (root / "scripts/painter_material.gdshader").read_text(encoding="utf-8")
+        props = (root / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        for region in ("_build_world_civilization()", "_build_outer_regions()", "_build_swamp_region()", "_build_river_region()", "_build_whisper_grove()"):
+            self.assertIn(region, world)
+        self.assertIn("DARK_FANTASY_PROP_PACK.build_all(self)", world)
+        for material_mode in ("pattern_mode == 9", "pattern_mode == 10", "pattern_mode == 11", "pattern_mode == 12", "pattern_mode == 13"):
+            self.assertIn(material_mode, atlas)
+        for prop_group in ("_build_village", "_build_city", "_build_forest", "_build_cave", "_build_dungeon", "_build_castle", "_build_ruins"):
+            self.assertIn(prop_group, props)
+
+    def test_existing_pbr_texture_atlases_are_reused(self):
+        root = Path(__file__).resolve().parents[1]
+        self.assertTrue((root / "assets/textures/surface_albedo_atlas.png").exists())
+        self.assertTrue((root / "assets/textures/surface_roughness_atlas.png").exists())

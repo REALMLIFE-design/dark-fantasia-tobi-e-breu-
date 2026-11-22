@@ -176,3 +176,14 @@ O carregador e o mundo agora chamam esses três props Meshy, e o player reconhec
 Como o download do Meshy exige upgrade e o usuário pediu para não gastar tokens, foi criado `scripts/procedural_asset_forge.gd`: um gerador local de malhas primitivas compostas, executado pelo próprio Godot. O carregador usa GLB importado quando existir e, na ausência dele, constrói versões locais do guardião cervo, caranguejo do rio, espectro afogado, árvore ancestral, obelisco rúnico, santuário e portão gótico. O mundo chama esses fallbacks sem requisições externas. O Tobi continua com o modelo procedural já presente como fallback. Nenhum crédito/token de geração foi consumido.
 
 A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para jogo custa 4; não foi usada por respeitar o pedido de não gastar tokens. O Spline conectado está no plano Free e tem limite diário de chamadas; ele permite modelagem procedural, mas o caminho mais direto para colocar assets no projeto Godot sem depender de exportação manual é o forge local.
+
+
+## Expansão completa de arte e cenário — 22/11/2026
+
+- O mundo já existente foi preservado: terreno de 700 × 700, clareira inicial, Pântano dos Ratos, Rio Prateado, Bosque dos Sussurros, Floresta Ancestral, Montanha Gelada, Desfiladeiro Rubro, Ruínas Antigas, Planície Dourada, Cume das Nuvens, Templo do Coração, Vila do Carvalho, Cidade de Pedra, Guilda, Caverna do Eco, Masmorra das Cinzas e Castelo do Silêncio.
+- Os dois atlases de textura existentes (surface_albedo_atlas.png e surface_roughness_atlas.png) continuam sendo usados pelo shader painterly triplanar. O shader agora também tem cinco variações procedurais adicionais: obsidiana, pedra musgosa, pedra manchada de sangue, metal gasto e cristal arcano.
+- Criado scripts/dark_fantasy_prop_pack.gd, um pack local sem créditos com props 3D decorativos para vila, cidade, floresta, caverna, masmorra, castelo e ruínas: barracas, poço, barris, caixas, lampiões, placas, bancos, bigorna, troncos, cogumelos, lápides, cristais, braseiros, altar e estandartes.
+- O pack é carregado durante a construção do mundo principal; não cria um mapa paralelo nem substitui missões, checkpoints, saves, inimigos ou HUD.
+- Os modelos externos (GLB/FBX) ainda dependem de download e importação dos arquivos originais. O Ultimate Dungeon Pack tem 1,1 GiB; os demais links e licenças estão catalogados em assets/external_packs/README.md. Não afirmar que os binários externos estão dentro do APK.
+- Nenhum crédito de geração foi gasto. A nova decoração usa geometria local do Godot e os atlases PBR já versionados.
+- Testes de contrato foram adicionados. A execução Godot/Android ainda precisa terminar no GitHub Actions antes de declarar build validado.

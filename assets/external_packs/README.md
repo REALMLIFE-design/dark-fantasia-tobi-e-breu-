@@ -56,3 +56,9 @@ Os arquivos originais permanecem sob as licenças dos respectivos autores. Não 
 Página oficial: https://soresa-assets.itch.io/free-stylized-fantasy
 
 16 modelos GLB/FBX para Godot 4, com LODs e colisores: casas, barraca, poço, árvore, cerca, carrinho, barril, arco de pedra, pilar, tocha, baú, espada e escudo. Download de 11 MB por preço livre (pode baixar por zero).
+
+### Texturas PBR gratuitas
+
+- Poly Haven: https://polyhaven.com/textures — biblioteca de texturas PBR CC0.
+- ambientCG: https://ambientcg.com/ — materiais PBR CC0.
+- Os atlases locais de albedo e roughness já estão no projeto e são usados no shader painterly triplanar. As texturas externas são complementos opcionais; ainda não foram baixadas para o repositório.
