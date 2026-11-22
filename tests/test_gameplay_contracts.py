@@ -197,7 +197,7 @@ class GameplayContracts(unittest.TestCase):
 
     def test_main_menu_copy_and_close_target_are_mobile_friendly(self):
         self.assertIn('title.text = "A lenda desperta"', self.world)
-        self.assertIn('_menu_add_button(content, "Jogar", _start_game, true)', self.world)
+        self.assertIn('_menu_add_button(content, "JOGAR", _start_game, true)', self.world)
         self.assertIn('close_btn.custom_minimum_size = Vector2(44, 44)', self.world)
 
     def test_quest_journal_tracks_whisper_grove_side_quest(self):

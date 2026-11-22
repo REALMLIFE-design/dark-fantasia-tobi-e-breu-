@@ -896,6 +896,8 @@ func _poll_itch_dungeon_streaming() -> void:
 			push_warning("Falha ao importar modelo do itch.io: " + model_path)
 	if not all_finished:
 		return
+	# Bloqueia reentrada do _process enquanto as três cenas são instanciadas.
+	itch_dungeon_assets_loaded = true
 	var dungeon := get_node_or_null("MasmorraDasCinzas") as Node3D
 	if not is_instance_valid(dungeon):
 		return
@@ -915,8 +917,6 @@ func _poll_itch_dungeon_streaming() -> void:
 		instance.position = placement.position
 		instance.scale = Vector3.ONE * float(placement.scale)
 		dungeon.add_child(instance)
-		await get_tree().process_frame
-	itch_dungeon_assets_loaded = true
 	print("ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED: ", ITCH_DUNGEON_MODEL_PATHS.size())
 
 
