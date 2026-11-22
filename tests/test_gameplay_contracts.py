@@ -936,3 +936,15 @@ class GlacialRavenContracts(unittest.TestCase):
         self.assertIn('ice_wings[wing_index].rotation.z', enemy)
         self.assertIn('if kind == 10:', world)
         self.assertIn('+25 XP', world)
+
+
+class WorldLandmarkExpansionContracts(unittest.TestCase):
+    def test_glacial_and_crimson_landmarks_are_in_the_prop_pack(self):
+        root = Path(__file__).resolve().parents[1]
+        pack = (root / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        self.assertIn('_build_glacial_altar(parent, Vector3(-166, 0, -260))', pack)
+        self.assertIn('_build_crimson_rift_gate(parent, Vector3(165, 0, -330))', pack)
+        self.assertIn('static func _build_glacial_altar', pack)
+        self.assertIn('static func _build_crimson_rift_gate', pack)
+        self.assertIn('MemoryCrystal', pack)
+        self.assertIn('RiftKeystone', pack)
