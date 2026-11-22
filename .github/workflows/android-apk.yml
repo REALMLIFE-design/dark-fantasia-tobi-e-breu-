@@ -91,6 +91,11 @@ jobs:
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
 
       - name: Configurar exportação Android sem Gradle
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           PRESET="$PROJECT_PATH/export_presets.cfg"
@@ -101,17 +106,26 @@ jobs:
             echo "ERRO: SDK overrides incompatíveis com exportação sem Gradle"
             exit 1
           fi
-          # Godot 4.3 validates the debug keystore even for a debug APK export.
+          # Prefer a persistent signing key from GitHub Actions secrets. The fallback is only for CI smoke builds.
           mkdir -p "$HOME/.android" "$HOME/.config/godot"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          STORE_PASS="${ANDROID_KEYSTORE_PASSWORD:-android}"
+          KEY_ALIAS="${ANDROID_KEY_ALIAS:-androiddebugkey}"
+          KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+            keytool -list -keystore "$HOME/.android/debug.keystore" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 não configurado; este APK usa uma chave temporária e pode não atualizar uma instalação anterior."
+            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass "$STORE_PASS" -keypass "$KEY_PASS" -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          fi
           cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
           [resource]
           export/android/android_sdk_path = "$ANDROID_HOME"
           export/android/java_sdk_path = "$JAVA_HOME"
           export/android/debug_keystore = "$HOME/.android/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
+          export/android/debug_keystore_user = "$KEY_ALIAS"
+          export/android/debug_keystore_pass = "$STORE_PASS"
           EOF
           test -s "$HOME/.android/debug.keystore"
           test -x "$ANDROID_HOME/platform-tools/adb"
@@ -153,6 +167,10 @@ jobs:
           test -s "$PROJECT_PATH/build/TobiEBreu.apk"
 
       - name: Assinar e validar APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
@@ -160,11 +178,14 @@ jobs:
           ALIGNED="$PROJECT_PATH/build/TobiEBreu-aligned.apk"
           SIGNED="$PROJECT_PATH/build/TobiEBreu-signed.apk"
           "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$ALIGNED"
+          STORE_PASS="${ANDROID_KEYSTORE_PASSWORD:-android}"
+          KEY_ALIAS="${ANDROID_KEY_ALIAS:-androiddebugkey}"
+          KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
           "$BUILD_TOOLS/apksigner" sign \
             --ks "$HOME/.android/debug.keystore" \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "pass:$STORE_PASS" \
+            --key-pass "pass:$KEY_PASS" \
             --out "$SIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED"
           mv "$SIGNED" "$APK"
@@ -238,7 +259,7 @@ jobs:
               "version": os.environ["GITHUB_SHA"],
               "sha256": hashlib.sha256(pck.read_bytes()).hexdigest(),
               "download_url": "https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/download/" + tag + "/TobiEBreu-update.pck",
-              "minimum_app_version": "0.12.1",
+              "minimum_app_version": "0.12.2",
               "format": 1
           }
           (pck.parent / "update-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
