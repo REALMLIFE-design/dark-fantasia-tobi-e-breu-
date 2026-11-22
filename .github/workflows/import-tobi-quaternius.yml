@@ -17,7 +17,7 @@ concurrency:
 jobs:
   import-character:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - name: Baixar projeto
         uses: actions/checkout@v4
@@ -25,136 +25,122 @@ jobs:
           ref: integration/definitive-all-versions
           fetch-depth: 0
 
-      - name: Baixar ZIPs oficiais gratuitos e extrair apenas as peças do Tobi
+      - name: Obter snapshot público das peças Quaternius
+        uses: actions/checkout@v4
+        with:
+          repository: slopwarefactory/terra
+          ref: 602906d2e4e3e93d0bb0ade63b23b68b37c57bd5
+          path: quaternius-source
+          lfs: false
+          fetch-depth: 1
+
+      - name: Baixar somente os objetos Git LFS necessários
+        run: |
+          set -euo pipefail
+          git -C quaternius-source lfs install --local
+          git -C quaternius-source lfs pull --include="art/characters/quaternius/universal-base-characters/Regular_Male_OnlyHead.bin,art/characters/quaternius/universal-base-characters/T_Hair_1_Normal.png,art/characters/quaternius/universal-base-characters/T_Hair_1_BaseColor.png,art/characters/quaternius/universal-base-characters/T_Eye_Normal.png,art/characters/quaternius/universal-base-characters/T_Eye_Brown.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Normal.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Dark_BaseColor.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Roughness.png,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Body.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Arms.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Legs.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Feet_Boots.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Head_Hood.bin,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_Normal.png,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_BaseColor.png,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_ORM.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Normal.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Dark_BaseColor.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Roughness.png" --exclude=""
+
+      - name: Copiar e validar glTF, buffers e texturas reais
         run: |
           set -euo pipefail
           python - <<'PY'
-          import concurrent.futures, hashlib, json, pathlib, requests, zipfile
-          from urllib.parse import unquote
+          import hashlib, json, pathlib, shutil
 
-          # Links temporários gerados pelo download gratuito Standard no itch.io.
-          archives = {
+          source = pathlib.Path("quaternius-source/art/characters/quaternius")
+          output = pathlib.Path("assets/models/tobi_quaternius")
+          groups = {
               "base": (
-                  "https://quaternius.itch.io/universal-base-characters/download/eyJleHBpcmVzIjoxNzk1Mzc2MzY1LCJpZCI6MzgyMjI1OX0%3D.C6eJM0ikIwKzbG%2FtqeKX2kDKWYY%3D",
-                  "/tmp/Universal-Base-Characters-Standard.zip",
+                  "universal-base-characters",
+                  [
+                      "Regular_Male_OnlyHead.gltf",
+                      "Regular_Male_OnlyHead.bin",
+                      "T_Hair_1_Normal.png",
+                      "T_Hair_1_BaseColor.png",
+                      "T_Eye_Normal.png",
+                      "T_Eye_Brown.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
               ),
               "ranger": (
-                  "https://quaternius.itch.io/modular-character-outfits-fantasy/download/eyJleHBpcmVzIjoxNzk1Mzc2MzY4LCJpZCI6NDA0MDM3OH0%3D.2NfwGJtVpt4OJ7s5CXQvGR4Z8%2FQ%3D",
-                  "/tmp/Modular-Character-Outfits-Fantasy-Standard.zip",
+                  "modular-outfits-fantasy",
+                  [
+                      "Male_Ranger_Body.gltf",
+                      "Male_Ranger_Body.bin",
+                      "Male_Ranger_Arms.gltf",
+                      "Male_Ranger_Arms.bin",
+                      "Male_Ranger_Legs.gltf",
+                      "Male_Ranger_Legs.bin",
+                      "Male_Ranger_Feet_Boots.gltf",
+                      "Male_Ranger_Feet_Boots.bin",
+                      "Male_Ranger_Head_Hood.gltf",
+                      "Male_Ranger_Head_Hood.bin",
+                      "T_Ranger_Normal.png",
+                      "T_Ranger_BaseColor.png",
+                      "T_Ranger_ORM.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
               ),
           }
-          wanted = {
-              "base": ["Regular_Male_OnlyHead.gltf"],
-              "ranger": [
-                  "Male_Ranger_Body.gltf",
-                  "Male_Ranger_Arms.gltf",
-                  "Male_Ranger_Legs.gltf",
-                  "Male_Ranger_Feet_Boots.gltf",
-                  "Male_Ranger_Head_Hood.gltf",
-              ],
-          }
-          output = pathlib.Path("assets/models/tobi_quaternius")
-          output.mkdir(parents=True, exist_ok=True)
-          session = requests.Session()
-          session.headers.update({"User-Agent": "TobiEBreuDarkWorld3D/1.0"})
-
-          def download(item):
-              group, (url, path) = item
-              target = pathlib.Path(path)
-              with session.get(url, stream=True, allow_redirects=True, timeout=(30, 300)) as response:
-                  response.raise_for_status()
-                  with target.open("wb") as f:
-                      for chunk in response.iter_content(chunk_size=1024 * 1024):
-                          if chunk:
-                              f.write(chunk)
-              if not zipfile.is_zipfile(target):
-                  raise RuntimeError(f"Download não é ZIP válido: {group}; final URL={response.url}")
-              print(f"ZIP oficial baixado: {group}, {target.stat().st_size} bytes")
-              return group, target
-
-          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-              downloaded = dict(pool.map(download, archives.items()))
-
           manifest = []
-          for group, model_names in wanted.items():
-              archive_path = downloaded[group]
-              target_dir = output / group
-              target_dir.mkdir(parents=True, exist_ok=True)
-              with zipfile.ZipFile(archive_path) as z:
-                  names = z.namelist()
-                  for model_name in model_names:
-                      candidates = [n for n in names if pathlib.PurePosixPath(n).name == model_name]
-                      if not candidates:
-                          raise RuntimeError(f"Modelo ausente no ZIP {group}: {model_name}")
-                      def score(path):
-                          p = path.lower()
-                          return (10 if "godot-unreal" in p else 0) + (5 if "godot" in p else 0) - (20 if "source" in p else 0) - (2 if "blender" in p else 0)
-                      gltf_path = sorted(candidates, key=score, reverse=True)[0]
-                      doc = json.loads(z.read(gltf_path).decode("utf-8"))
-                      (target_dir / model_name).write_bytes(z.read(gltf_path))
-                      dependencies = []
-                      for entry in doc.get("buffers", []) + doc.get("images", []):
-                          uri = entry.get("uri")
-                          if not uri or uri.startswith("data:"):
-                              continue
-                          uri_path = unquote(uri.split("?")[0])
-                          expected = pathlib.PurePosixPath(gltf_path).parent / uri_path
-                          if expected.as_posix() in names:
-                              dep_path = expected.as_posix()
-                          else:
-                              matches = [n for n in names if pathlib.PurePosixPath(n).name == pathlib.PurePosixPath(uri_path).name]
-                              if not matches:
-                                  raise RuntimeError(f"Dependência {uri} ausente para {gltf_path}")
-                              dep_path = matches[0]
-                          dep_name = pathlib.PurePosixPath(uri_path).name
-                          data = z.read(dep_path)
-                          dest = target_dir / dep_name
-                          if dest.exists() and dest.read_bytes() != data:
-                              raise RuntimeError(f"Conflito de textura com mesmo nome: {dep_name}")
-                          dest.write_bytes(data)
-                          dependencies.append((dep_name, data))
-                      # Confere o tamanho real de cada buffer, não apenas sua existência.
-                      for buffer in doc.get("buffers", []):
-                          uri = buffer.get("uri")
-                          if uri and not uri.startswith("data:"):
-                              actual = (target_dir / pathlib.PurePosixPath(unquote(uri)).name).stat().st_size
-                              if actual != buffer["byteLength"]:
-                                  raise RuntimeError(f"Buffer incompleto em {model_name}: {actual} != {buffer['byteLength']}")
-                      print(f"Extraído {group}/{model_name} de {gltf_path}; {len(dependencies)} dependências")
-              for file in sorted(target_dir.iterdir()):
-                  if file.is_file() and file.name not in ("README.md",):
-                      data = file.read_bytes()
-                      if file.suffix == ".bin" and data.startswith(b"version https://git-lfs.github.com/spec/v1"):
-                          raise RuntimeError(f"Foi encontrado ponteiro Git LFS no lugar de binário: {file}")
-                      if file.suffix == ".png" and not data.startswith(b"\x89PNG\r\n\x1a\n"):
-                          raise RuntimeError(f"Textura PNG inválida: {file}")
-                      manifest.append({
-                          "group": group,
-                          "file": file.name,
-                          "bytes": len(data),
-                          "sha256": hashlib.sha256(data).hexdigest(),
-                      })
+          for group, (folder, filenames) in groups.items():
+              src_dir = source / folder
+              dst_dir = output / group
+              dst_dir.mkdir(parents=True, exist_ok=True)
+              for filename in filenames:
+                  src = src_dir / filename
+                  if not src.is_file():
+                      raise RuntimeError(f"Arquivo ausente no snapshot Quaternius: {src}")
+                  data = src.read_bytes()
+                  if not data or data.startswith(b"version https://git-lfs.github.com/spec/v1"):
+                      raise RuntimeError(f"Objeto Git LFS não foi baixado: {src}")
+                  if filename.endswith(".png") and not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                      raise RuntimeError(f"PNG inválido: {src}")
+                  dst = dst_dir / filename
+                  shutil.copyfile(src, dst)
+                  manifest.append({
+                      "group": group,
+                      "file": filename,
+                      "bytes": len(data),
+                      "sha256": hashlib.sha256(data).hexdigest(),
+                  })
 
-          # Verifica todas as referências dos glTFs no destino final.
+          # Verifica que todos os buffers têm o tamanho declarado no glTF e que
+          # todas as imagens existem no mesmo diretório de cada modelo.
           for gltf in output.rglob("*.gltf"):
               doc = json.loads(gltf.read_text(encoding="utf-8"))
-              refs = [x.get("uri") for x in doc.get("buffers", []) + doc.get("images", []) if x.get("uri") and not x["uri"].startswith("data:")]
-              missing = [r for r in refs if not (gltf.parent / pathlib.PurePosixPath(unquote(r)).name).is_file()]
-              if missing:
-                  raise RuntimeError(f"Dependências ausentes em {gltf}: {missing}")
+              for buffer in doc.get("buffers", []):
+                  uri = buffer.get("uri")
+                  if uri:
+                      path = gltf.parent / pathlib.PurePosixPath(uri).name
+                      if not path.is_file() or path.stat().st_size != buffer["byteLength"]:
+                          raise RuntimeError(f"Buffer incompleto: {path}")
+              for image in doc.get("images", []):
+                  uri = image.get("uri")
+                  if uri:
+                      path = gltf.parent / pathlib.PurePosixPath(uri).name
+                      if not path.is_file():
+                          raise RuntimeError(f"Textura ausente: {path}")
+              print(f"GLTF e dependências validados: {gltf}")
+
           if len(list(output.rglob("*.gltf"))) != 6:
               raise RuntimeError("A montagem deve conter exatamente 6 modelos glTF.")
-
-          (output / "ASSET-MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+          (output / "ASSET-MANIFEST.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
           (output / "SOURCES-LICENSE.md").write_text("""# Fontes e licenças do Tobi modular
 
-          - Universal Base Characters — Quaternius: https://quaternius.itch.io/universal-base-characters
-          - Modular Character Outfits - Fantasy — Quaternius: https://quaternius.itch.io/modular-character-outfits-fantasy
-          - Ambos os pacotes Standard declaram CC0 1.0 nas páginas oficiais; uso e modificação permitidos, inclusive em jogos comerciais.
-          - Os ZIPs oficiais gratuitos foram baixados diretamente do itch.io; somente os arquivos glTF, buffers e texturas necessários ao Tobi foram extraídos.
+          - Universal Base Characters — Quaternius: https://quaternius.com/packs/universalbasecharacters.html
+          - Modular Character Outfits - Fantasy — Quaternius: https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+          - Ambos os pacotes declaram CC0 1.0 nas páginas oficiais; uso e modificação permitidos, inclusive em jogos comerciais.
+          - Os arquivos foram obtidos do snapshot público slopwarefactory/terra no commit 602906d2e4e3e93d0bb0ade63b23b68b37c57bd5, que mantém os arquivos originais Quaternius sob Git LFS.
           - Peças usadas: cabeça base Regular Male OnlyHead + Ranger Body, Arms, Legs, Boots e Hood.
+          - Buffers e texturas foram validados por assinatura de arquivo e tamanho real declarado no glTF.
           """, encoding="utf-8")
-          print(f"Extração validada: {len(manifest)} arquivos, {sum(x['bytes'] for x in manifest)} bytes.")
+          print(f"Importação validada: {len(manifest)} arquivos, {sum(x['bytes'] for x in manifest)} bytes.")
           PY
 
       - name: Commitar somente os arquivos reais do Tobi
@@ -167,6 +153,6 @@ jobs:
             echo 'Nenhum arquivo novo para importar.'
             exit 0
           fi
-          git commit -m 'Substitui ponteiros por modelos e texturas Quaternius reais'
+          git commit -m 'Importa malhas e texturas Quaternius reais para Tobi'
           git pull --rebase origin integration/definitive-all-versions
           git push origin HEAD:integration/definitive-all-versions
