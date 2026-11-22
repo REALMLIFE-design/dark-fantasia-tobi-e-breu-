@@ -1971,6 +1971,18 @@ func _build_hud() -> void:
 
 	_update_inventory()
 	_apply_mobile_hud_layout(ui_root)
+	# Recalcula as zonas de toque sempre que o Android muda entre retrato e paisagem.
+	var hud_viewport := get_viewport()
+	if not hud_viewport.size_changed.is_connected(_on_hud_viewport_resized):
+		hud_viewport.size_changed.connect(_on_hud_viewport_resized)
+
+
+func _on_hud_viewport_resized() -> void:
+	if not is_instance_valid(hud):
+		return
+	var ui_root := hud.get_node_or_null("HUDRoot") as Control
+	if is_instance_valid(ui_root):
+		_apply_mobile_hud_layout(ui_root)
 
 
 func _apply_mobile_hud_layout(ui_root: Control) -> void:
