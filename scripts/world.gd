@@ -8,6 +8,7 @@ const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness
 const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd")
 const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
+const HUD_STYLE = preload("res://scripts/hud_style.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -2175,27 +2176,16 @@ func _build_hud() -> void:
 	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
 	ui_root.add_child(toast_label)
 
-	# Mobile movement pad — same input actions, but with unified circular-feel styling.
-	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
-		var move_btn := Button.new()
-		move_btn.name = "TouchMove_" + data.a
-		move_btn.text = data.t
-		move_btn.anchor_left = data.p.x
-		move_btn.anchor_right = data.p.x
-		move_btn.anchor_top = data.p.y
-		move_btn.anchor_bottom = data.p.y
-		move_btn.position = Vector2(-27, -27)
-		move_btn.size = Vector2(54, 54)
-		move_btn.add_theme_font_size_override("font_size", 19)
-		move_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(Color("8eb5a1")))
-		move_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("b5d6bd")))
-		move_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("e0c58a")))
-		move_btn.modulate = Color(1, 1, 1, 0.96)
-		move_btn.mouse_filter = Control.MOUSE_FILTER_STOP
-		move_btn.process_mode = Node.PROCESS_MODE_ALWAYS
-		move_btn.button_down.connect(Input.action_press.bind(data.a))
-		move_btn.button_up.connect(Input.action_release.bind(data.a))
-		ui_root.add_child(move_btn)
+	# Joystick analógico do HUD criado por Claude; usa as mesmas ações de movimento.
+	# O D-pad anterior é substituído pelo analógico, sem alterar os controles de teclado/controle.
+	var joystick := Control.new()
+	joystick.name = "VirtualJoystick"
+	joystick.set_script(load("res://scripts/virtual_joystick.gd"))
+	joystick.process_mode = Node.PROCESS_MODE_ALWAYS
+	HUD_STYLE.place_corner(joystick, Vector2(0, 1), Vector2(150, -120), Vector2(156, 156))
+	joystick.z_index = 20
+	joystick.visible = OS.has_feature("mobile") or hud_viewport_size.x < 900.0
+	ui_root.add_child(joystick)
 
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
 	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)},{"t":"◉","a":"guard","p":Vector2(0.76,0.86)}]:
@@ -2277,34 +2267,21 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		return
 	var portrait := viewport_size.y > viewport_size.x
 	var compact_scale := 0.90 if portrait else 1.0
-	var move_layout: Dictionary
-	if portrait:
-		# Portrait D-pad: three columns with enough spacing for separate fingers.
-		move_layout = {
-			"move_forward": Vector2(0.27, 0.74),
-			"move_back": Vector2(0.27, 0.94),
-			"move_left": Vector2(0.12, 0.84),
-			"move_right": Vector2(0.42, 0.84)
-		}
-	else:
-		move_layout = {
-			"move_forward": Vector2(0.125, 0.765),
-			"move_back": Vector2(0.125, 0.935),
-			"move_left": Vector2(0.045, 0.85),
-			"move_right": Vector2(0.205, 0.85)
-		}
-	for action in move_layout:
-		var button := ui_root.get_node_or_null("TouchMove_" + action) as Button
-		if button:
-			var move_size := Vector2(68.0, 68.0) * compact_scale
-			button.anchor_left = move_layout[action].x
-			button.anchor_right = move_layout[action].x
-			button.anchor_top = move_layout[action].y
-			button.anchor_bottom = move_layout[action].y
-			button.position = -move_size * 0.5
-			button.size = move_size
-			button.add_theme_font_size_override("font_size", 23)
-			button.mouse_filter = Control.MOUSE_FILTER_STOP
+	if not mobile:
+		var desktop_joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
+		if desktop_joystick:
+			desktop_joystick.visible = false
+		return
+	var portrait := viewport_size.y > viewport_size.x
+	var compact_scale := 0.90 if portrait else 1.0
+	# Mantém o joystick na zona inferior esquerda; no retrato ele fica mais para dentro
+	# para não encostar na borda nem invadir os botões de ação do lado direito.
+	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
+	if joystick:
+		var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0
+		var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)
+		HUD_STYLE.place_corner(joystick, Vector2(0, 1), Vector2(center_x, -120.0), joystick_size)
+		joystick.visible = true
 	var action_layout: Dictionary
 	if portrait:
 		# Two clean columns on the right; four rows keep all eight actions tappable.
