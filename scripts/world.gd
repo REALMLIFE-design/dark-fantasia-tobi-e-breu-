@@ -1940,7 +1940,7 @@ func _build_hud() -> void:
 		ui_root.add_child(move_btn)
 
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
-	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}]:
+	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)},{"t":"◉","a":"guard","p":Vector2(0.76,0.86)}]:
 		var action_btn := Button.new()
 		action_btn.name = "TouchAction_" + data.a
 		action_btn.text = data.t
@@ -1951,7 +1951,7 @@ func _build_hud() -> void:
 		action_btn.position = Vector2(-25, -25)
 		action_btn.size = Vector2(50, 50)
 		action_btn.add_theme_font_size_override("font_size", 19)
-		action_btn.tooltip_text = {"attack":"Ataque","jump":"Pular","interact":"Interagir","dodge":"Esquivar","potion":"Poção","upgrade":"Forjar","inventory":"Mochila","shadow":"Pulso sombrio"}[data.a]
+		action_btn.tooltip_text = {"attack":"Ataque","jump":"Pular","interact":"Interagir","dodge":"Esquivar","potion":"Poção","upgrade":"Forjar","inventory":"Mochila","shadow":"Pulso sombrio","guard":"Aparar (janela de 0,38 s)"}[data.a]
 		var action_fill := Color(0.055, 0.071, 0.064, 0.97)
 		var action_accent := Color("9a8058")
 		if data.a == "attack":
@@ -2748,6 +2748,7 @@ func _touch_action(action: String) -> void:
 	elif action == "upgrade": _upgrade_weapon()
 	elif action == "inventory": _toggle_inventory()
 	elif action == "shadow": player.do_shadow_pulse()
+	elif action == "guard": player.do_guard()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -3405,6 +3406,11 @@ func combat_combo_changed(step: int) -> void:
 		combo_label.text = "COMBO  •  pronto"
 	else:
 		combo_label.text = "COMBO %d/3  •  %s" % [step, ["Corte", "Corte duplo", "Golpe final"][step - 1]]
+
+func player_parry_success() -> void:
+	if is_instance_valid(toast_label):
+		toast_label.text = "APARO PERFEITO! Contra-ataque • +22 de vigor"
+
 
 func player_perfect_dodge() -> void:
 	if is_instance_valid(toast_label):
