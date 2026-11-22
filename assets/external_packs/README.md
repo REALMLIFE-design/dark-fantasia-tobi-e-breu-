@@ -62,3 +62,5 @@ Página oficial: https://soresa-assets.itch.io/free-stylized-fantasy
 - Poly Haven: https://polyhaven.com/textures — biblioteca de texturas PBR CC0.
 - ambientCG: https://ambientcg.com/ — materiais PBR CC0.
 - Os atlases locais de albedo e roughness já estão no projeto e são usados no shader painterly triplanar. As texturas externas são complementos opcionais; ainda não foram baixadas para o repositório.
+
+A coleção procedural Dark Fantasy Prop Pack já é carregada automaticamente no mundo principal; os packs externos listados acima são complementos opcionais e ainda precisam ser baixados manualmente.
