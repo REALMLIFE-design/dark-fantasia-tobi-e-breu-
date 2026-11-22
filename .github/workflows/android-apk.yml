@@ -1,5 +1,8 @@
 name: Build Tobi e Breu APK
 
+permissions:
+  contents: write
+
 concurrency:
   group: tobi-breu-android-apk
   cancel-in-progress: false
@@ -26,6 +29,8 @@ jobs:
     steps:
       - name: Baixar projeto
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar Java 17
         uses: actions/setup-java@v5
@@ -184,3 +189,71 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
+
+      - name: Preparar patch incremental Android
+        id: patch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+            git diff --name-only --diff-filter=ACMRT "$PUSH_BEFORE" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
+          else
+            git diff --name-only --diff-filter=ACMRT HEAD^ HEAD > "$RUNNER_TEMP/changed-files.txt"
+          fi
+          python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
+          import json, pathlib, re, sys
+          preset = pathlib.Path(sys.argv[1])
+          changed = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+          allowed_ext = {".gd", ".tscn", ".tres", ".res", ".gdshader", ".shader", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".wav", ".ogg", ".mp3", ".glb", ".gltf", ".json"}
+          allowed_roots = ("scripts/", "scenes/", "assets/", "addons/")
+          selected = sorted({p for p in changed if p.startswith(allowed_roots) and pathlib.Path(p).suffix.lower() in allowed_ext and pathlib.Path(p).is_file()})
+          if not selected:
+              print("Nenhum recurso compatível mudou; não há patch incremental para publicar.")
+              raise SystemExit(0)
+          packed = 'export_filter="resources"\nexport_files=PackedStringArray(' + ",".join(json.dumps("res://" + p) for p in selected) + ")"
+          content = preset.read_text(encoding="utf-8")
+          content, count = re.subn(r'^export_filter="all_resources"$', packed, content, count=1, flags=re.M)
+          if count != 1:
+              raise SystemExit("Não foi possível configurar exportação incremental de recursos.")
+          preset.write_text(content, encoding="utf-8")
+          pathlib.Path("/tmp/has-android-patch").write_text("yes")
+          print("Recursos incluídos no patch:", *selected, sep="\\n- ")
+          PY
+          if [ -f /tmp/has-android-patch ]; then echo "has_patch=true" >> "$GITHUB_OUTPUT"; else echo "has_patch=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Exportar PCK incremental para Android
+        if: steps.patch.outputs.has_patch == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$PROJECT_PATH/build"
+          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --export-pack "Android" "$PROJECT_PATH/build/TobiEBreu-update.pck"
+          test -s "$PROJECT_PATH/build/TobiEBreu-update.pck"
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          pck = pathlib.Path(os.environ["PROJECT_PATH"]) / "build/TobiEBreu-update.pck"
+          tag = "android-update-" + os.environ["GITHUB_RUN_NUMBER"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"]
+          manifest = {
+              "version": os.environ["GITHUB_SHA"],
+              "sha256": hashlib.sha256(pck.read_bytes()).hexdigest(),
+              "download_url": "https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/download/" + tag + "/TobiEBreu-update.pck",
+              "minimum_app_version": "0.12.1",
+              "format": 1
+          }
+          (pck.parent / "update-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write("UPDATE_RELEASE_TAG=" + tag + "\\n")
+          PY
+
+      - name: Publicar atualização incremental no GitHub Releases
+        if: steps.patch.outputs.has_patch == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$UPDATE_RELEASE_TAG" \
+            "$PROJECT_PATH/build/TobiEBreu-update.pck" \
+            "$PROJECT_PATH/build/update-manifest.json" \
+            --title "Tobi e Breu Android update $GITHUB_RUN_NUMBER" \
+            --notes "Patch incremental de recursos para Godot 4.3. Aplicação na próxima inicialização; saves locais preservados." \
+            --latest
