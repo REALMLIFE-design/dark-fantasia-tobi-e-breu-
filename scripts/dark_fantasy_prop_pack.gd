@@ -25,6 +25,9 @@ static func build_all(parent: Node3D) -> void:
 	_build_crimson_rift_gate(parent, Vector3(165, 0, -330))
 	_build_swamp_witch_cauldron(parent, Vector3(9, 0, -94))
 	_build_drowned_bell_marker(parent, Vector3(61, 0, -132))
+	_build_golden_plain_windmill(parent, Vector3(18, 0, 238))
+	_build_whispercap_grove(parent, Vector3(105, 0, -151))
+	_build_echo_cave_crystals(parent, Vector3(-228, 0, -248))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -314,3 +317,45 @@ static func _build_drowned_bell_marker(parent: Node3D, position: Vector3) -> voi
 	var clapper := _cylinder(root, "BellClapper", Vector3(0, 2.2, 0), 0.12, 0.38, Color("c5b18a"), 4, 7)
 	clapper.rotation.z = PI
 	_sphere(root, "BellRune", Vector3(0, 2.8, 0.46), 0.13, Color("79c9bb"), Vector3.ONE, 13, true)
+
+
+static func _build_golden_plain_windmill(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "GoldenPlainWindmill", position)
+	var tower := _cone(root, "WindmillStoneTower", Vector3(0, 3.0, 0), 1.65, 6.0, Color("9a8b70"), 10)
+	tower.scale = Vector3(1.0, 1.0, 0.82)
+	_cylinder(root, "WindmillRoof", Vector3(0, 6.1, 0), 1.8, 0.55, Color("51463c"), 4, 8)
+	_box(root, "WindmillDoor", Vector3(0, 1.0, 1.34), Vector3(0.8, 1.8, 0.12), Color("44372e"), 4)
+	_sphere(root, "WindmillHub", Vector3(0, 4.55, 1.52), 0.32, Color("b18b55"), Vector3.ONE, 10)
+	for i in range(4):
+		var blade := _box(root, "WindmillBlade_%d" % i, Vector3(0, 4.55, 1.55), Vector3(0.28, 3.0, 0.16), Color("c8b995"), 10)
+		blade.rotation.z = float(i) * PI * 0.5
+	_box(root, "WindmillTail", Vector3(0, 6.0, -1.3), Vector3(0.22, 0.22, 2.5), Color("75634c"), 4)
+
+
+static func _build_whispercap_grove(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "WhispercapGrove", position)
+	for i in range(5):
+		var angle := TAU * float(i) / 5.0
+		var radius := 1.8 + float(i % 2) * 1.0
+		var x := cos(angle) * radius
+		var z := sin(angle) * radius
+		var stem_height := 0.9 + float(i % 3) * 0.28
+		_cylinder(root, "WhispercapStem_%d" % i, Vector3(x, stem_height * 0.5, z), 0.18, stem_height, Color("d0c5a9"), 10, 7)
+		var cap := _sphere(root, "WhispercapTop_%d" % i, Vector3(x, stem_height + 0.12, z), 0.62 + float(i % 2) * 0.12, Color("70536e"), Vector3(1.0, 0.52, 1.0), 11)
+		cap.rotation.y = angle
+		_sphere(root, "WhispercapGlow_%d" % i, Vector3(x, stem_height + 0.08, z + 0.34), 0.12, Color("b8e7bb"), Vector3.ONE, 13, true)
+	for i in range(3):
+		_sphere(root, "ForestGlowMote_%d" % i, Vector3(-2.0 + float(i) * 2.0, 2.2 + float(i % 2) * 0.45, -1.0), 0.1, Color("9de6c4"), Vector3.ONE, 13, true)
+
+
+static func _build_echo_cave_crystals(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "EchoCaveCrystalCluster", position)
+	for i in range(7):
+		var angle := TAU * float(i) / 7.0
+		var radius := 1.1 + float(i % 3) * 0.55
+		var height := 1.7 + float(i % 4) * 0.65
+		var crystal := _cone(root, "EchoCrystal_%d" % i, Vector3(cos(angle) * radius, height * 0.5, sin(angle) * radius), 0.42 + float(i % 2) * 0.12, height, Color("7a9db4"), 13)
+		crystal.rotation.z = -0.12 if i % 2 == 0 else 0.12
+		crystal.rotation.x = angle * 0.08
+		_box(root, "CrystalLight_%d" % i, Vector3(cos(angle) * radius, height * 0.45, sin(angle) * radius + 0.28), Vector3(0.09, height * 0.48, 0.08), Color("a9e4ee"), 13, true)
+	_sphere(root, "EchoCore", Vector3(0, 0.6, 0), 0.32, Color("b8f0ef"), Vector3.ONE, 13, true)
