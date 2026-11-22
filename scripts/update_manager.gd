@@ -2,7 +2,7 @@ extends Node
 
 signal status_changed(message: String)
 
-const GAME_VERSION := "0.12.1"
+const GAME_VERSION := "0.12.2"
 const MANIFEST_URL := "https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/latest/download/update-manifest.json"
 const PENDING_PACK_PATH := "user://updates/pending.pck"
 const TEMP_PACK_PATH := "user://updates/pending.download"
@@ -49,7 +49,8 @@ func _check_for_updates() -> void:
 	if not manifest_response.get("ok", false):
 		_set_status("Atualizações indisponíveis no momento; você pode jogar normalmente.")
 		return
-	var parsed: Variant = JSON.parse_string((manifest_response["body"] as PackedByteArray).get_string_from_utf8())
+	var manifest_body: PackedByteArray = manifest_response["body"]
+	var parsed: Variant = JSON.parse_string(manifest_body.get_string_from_utf8())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_set_status("Manifesto de atualização inválido; nenhuma alteração foi aplicada.")
 		return
