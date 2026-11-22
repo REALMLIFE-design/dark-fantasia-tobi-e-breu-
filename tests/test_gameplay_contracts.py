@@ -948,3 +948,13 @@ class WorldLandmarkExpansionContracts(unittest.TestCase):
         self.assertIn('static func _build_crimson_rift_gate', pack)
         self.assertIn('MemoryCrystal', pack)
         self.assertIn('RiftKeystone', pack)
+
+
+class RegionalLandmarkContracts(unittest.TestCase):
+    def test_swamp_and_silver_river_receive_distinct_landmarks(self):
+        root = Path(__file__).resolve().parents[1]
+        pack = (root / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        self.assertIn('_build_swamp_witch_cauldron(parent, Vector3(9, 0, -94))', pack)
+        self.assertIn('_build_drowned_bell_marker(parent, Vector3(61, 0, -132))', pack)
+        self.assertIn('BubblingToxicBrew', pack)
+        self.assertIn('DrownedBell', pack)
