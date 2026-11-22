@@ -152,6 +152,10 @@ func _build_imported_plugin_models() -> void:
 	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_drowned_wraith", Vector3(67.0, 0.0, -157.0), Vector3.ONE)
 	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
 	PLUGIN_ASSET_LOADER.download_and_load_plugin_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
+	# Assets Meshy ja existentes: carregam quando os GLBs forem importados em res://assets/plugin_imports/meshy/.
+	PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
+	PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_rune_obelisk", Vector3(36.0, 0.0, -58.0), Vector3.ONE * 1.2)
+	PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
 
 
 func _create_loading_screen() -> void:
