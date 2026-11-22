@@ -100,6 +100,7 @@ func _ready() -> void:
 	_build_imported_plugin_models()
 	DARK_FANTASY_PROP_PACK.build_all(self)
 	_build_downloaded_nature_models()
+	_build_visible_3dassets_showcase()
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	await get_tree().process_frame
 	_build_swamp_region()
@@ -259,6 +260,30 @@ func _build_downloaded_nature_models() -> void:
 				nature_count += 1
 			else:
 				ruin_count += 1
+
+
+func _build_visible_3dassets_showcase() -> void:
+	# Mostra os GLBs CC0 perto do início da aventura; antes eles ficavam
+	# apenas em regiões distantes e o jogador podia terminar o jogo sem vê-los.
+	var showcase := [
+		{"file": "low-poly-character-figures-knight-sword-raised-5e8b7e11.glb", "position": Vector3(-6.5, 0.0, -8.0), "scale": 1.25},
+		{"file": "low-poly-character-figures-villager-man-bfcdf400.glb", "position": Vector3(7.0, 0.0, -8.5), "scale": 1.25},
+		{"file": "sunken-city-and-underwater-ruins-doorway-frame-1292bfb7.glb", "position": Vector3(-10.0, 0.0, -18.0), "scale": 1.35},
+		{"file": "sunken-city-and-underwater-ruins-standing-column-96caec95.glb", "position": Vector3(10.0, 0.0, -17.0), "scale": 1.8},
+		{"file": "sunken-city-and-underwater-ruins-cargo-crate-waterlogg-8761132f.glb", "position": Vector3(5.5, 0.0, -13.0), "scale": 1.5},
+		{"file": "sunken-city-and-underwater-ruins-glowing-crystal-clust-897febc9.glb", "position": Vector3(-5.5, 0.0, -14.0), "scale": 1.8},
+		{"file": "sunken-city-and-underwater-ruins-fountain-basin-0149d19f.glb", "position": Vector3(0.0, 0.0, -23.0), "scale": 1.2}
+	]
+	var placed := 0
+	for item in showcase:
+		var model_path := "res://assets/external_packs/3dassets_dev/" + item.file
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, item.position, Vector3.ONE * item.scale)
+		if instance != null:
+			instance.rotation.y = 0.35 if placed % 2 == 0 else -0.25
+			placed += 1
+	if placed == 0:
+		push_warning("Nenhum GLB do pacote 3DAssets.dev foi carregado no cenário inicial.")
+	print("3DASSETS_SHOWCASE_LOADED: ", placed, "/", showcase.size())
 
 func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
@@ -1858,7 +1883,7 @@ func _build_hud() -> void:
 	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
 	hud.name = "GameHUD"
-	hud.layer = 10
+	hud.layer = 50
 	add_child(hud)
 
 	# A consistent dark-fantasy UI skin: warm parchment text, muted stone panels
