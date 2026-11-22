@@ -3852,14 +3852,55 @@ func _save_game() -> void:
 	cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)
 	cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	# Grava em arquivo temporário e valida antes de substituir o progresso atual.
+	var temp_path := save_path + ".tmp"
+	var backup_path := save_path + ".bak"
+	var temp_error := cfg.save(temp_path)
+	if temp_error != OK:
+		push_error("Falha ao gravar save temporário: %s" % error_string(temp_error))
+		return
+	var verification := ConfigFile.new()
+	if verification.load(temp_path) != OK:
+		push_error("Save temporário inválido; o progresso anterior foi preservado.")
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+		return
+	var current_save := ConfigFile.new()
+	if FileAccess.file_exists(save_path) and current_save.load(save_path) == OK:
+		var backup_error := DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(backup_path))
+		if backup_error != OK:
+			push_warning("Não foi possível atualizar o backup do save: %s" % error_string(backup_error))
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+			return
+	if FileAccess.file_exists(save_path):
+		var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
+		if remove_error != OK:
+			push_error("Não foi possível substituir o save atual: %s" % error_string(remove_error))
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+			return
+	var rename_error := DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(save_path))
+	if rename_error != OK:
+		push_error("Falha ao finalizar save: %s" % error_string(rename_error))
+		if not FileAccess.file_exists(save_path) and FileAccess.file_exists(backup_path):
+			DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
 		save_toast_timer = 1.6
 
 func _load_save() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(save_path) != OK: return
+	var load_error := cfg.load(save_path)
+	if load_error != OK:
+		var backup_path := save_path + ".bak"
+		if not FileAccess.file_exists(backup_path):
+			return
+		var backup_cfg := ConfigFile.new()
+		if backup_cfg.load(backup_path) != OK:
+			push_warning("Save principal e backup estão inválidos; nenhum progresso foi sobrescrito.")
+			return
+		cfg = backup_cfg
+		push_warning("Save principal inválido; progresso recuperado do backup.")
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
 	if save_version > 15:

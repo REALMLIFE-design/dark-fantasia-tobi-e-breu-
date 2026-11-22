@@ -1064,3 +1064,21 @@ class AdditionalRegionalPropContracts(unittest.TestCase):
         self.assertIn('WindmillBlade_', pack)
         self.assertIn('WhispercapGlow_', pack)
         self.assertIn('EchoCrystal_', pack)
+
+
+class SaveRecoveryContracts(unittest.TestCase):
+    def test_save_is_validated_before_replacing_the_previous_file(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        save_block = world.split("func _save_game() -> void:", 1)[1].split("func _load_save() -> void:", 1)[0]
+        self.assertIn('var temp_path := save_path + ".tmp"', save_block)
+        self.assertIn('verification.load(temp_path) != OK', save_block)
+        self.assertIn('DirAccess.rename_absolute', save_block)
+        self.assertIn('var backup_path := save_path + ".bak"', save_block)
+
+    def test_save_recovery_falls_back_to_backup_without_resetting_progress(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        load_block = world.split("func _load_save() -> void:", 1)[1].split("func ", 1)[0]
+        self.assertIn('var backup_path := save_path + ".bak"', load_block)
+        self.assertIn('backup_cfg.load(backup_path)', load_block)
+        self.assertIn('cfg = backup_cfg', load_block)
+        self.assertIn('Save principal e backup estão inválidos; nenhum progresso foi sobrescrito.', load_block)
