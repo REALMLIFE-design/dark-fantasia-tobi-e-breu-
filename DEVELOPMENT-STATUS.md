@@ -153,3 +153,13 @@
 - O manifesto `assets/plugin_imports/plugin_asset_sources.json` registra as tarefas de geometria/textura e o estado real da exportação.
 - **Bloqueio:** a exportação GLB foi recusada pelo Meshy com a mensagem de que o plano conectado precisa de upgrade. Nenhum GLB foi transferido ou commitado; portanto, o modelo gerado ainda não aparece no jogo. Não foi feita compra nem upgrade.
 - A cena Godot não foi executada nesta sessão. A integração real do modelo depende de obter o GLB e validar sua escala/orientação no Godot.
+
+
+## Recriação e pacote de transferência — Árvore Anciã (22/11/2026)
+- Recriada na conta Meshy Higor: geometria `meshy-t2` (alvo 4.000 faces) e textura PBR 2K com `meshy-6-lite`; ambas as tarefas concluíram com sucesso.
+- IDs: geometria `01a200e5-fa54-73a9-aa3e-c6c30633a674`; textura `01a200e6-38d1-7255-a9f0-fc1422778b06`.
+- Tentativa de exportar GLB na conta Higor novamente bloqueada pelo Meshy: plano conectado exige upgrade. Nenhuma compra/upgrade foi realizada e nenhum arquivo binário foi transferido.
+- O fallback procedural e o carregador opcional em `scripts/world.gd::_build_ancient_tree_landmark` permanecem como estão.
+- Criado `HANDOFF-ARVORE-ANCIa.md` com IDs, prompts, caminho esperado, estado real e instruções para o próximo agente concluir a importação quando houver um GLB disponível.
+- Manifesto `assets/plugin_imports/plugin_asset_sources.json` atualizado com a recriação e a limitação de exportação.
+- **Pendente:** obter legalmente o GLB, colocá-lo em `assets/plugin_imports/meshy/ancient_tree.glb`, validar importação/escala no Godot e só então marcar a árvore como asset integrado.
