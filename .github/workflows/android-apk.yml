@@ -111,7 +111,7 @@ jobs:
         timeout-minutes: 8
         run: |
           set -euo pipefail
-          mapfile -d '' MODELS < <(find "$PROJECT_PATH/assets/external_packs/3dassets_dev" "$PROJECT_PATH/assets/plugin_imports/thrixel" -type f -name '*.glb' -print0 2>/dev/null || true)
+          mapfile -d '' MODELS < <(find "$PROJECT_PATH/assets/external_packs/3dassets_dev" "$PROJECT_PATH/assets/external_packs/itch_dark_dungeon" "$PROJECT_PATH/assets/plugin_imports/thrixel" -type f -name '*.glb' -print0 2>/dev/null || true)
           if [ "${#MODELS[@]}" -eq 0 ]; then
             echo "Nenhum GLB externo para normalizar."
             exit 0

@@ -78,6 +78,14 @@ var guild_contract_started := false
 var guild_contract_claimed := false
 var bell_tower_ring_count := 0
 var ancient_waystone_ids: Array[int] = []
+var itch_dungeon_stream_requested := false
+var itch_dungeon_assets_loaded := false
+var nature_models_stream_requested := false
+const ITCH_DUNGEON_MODEL_PATHS := [
+	"res://assets/external_packs/itch_dark_dungeon/cracked-runic-circle.glb",
+	"res://assets/external_packs/itch_dark_dungeon/crimson-obsidian-sentinel.glb",
+	"res://assets/external_packs/itch_dark_dungeon/cursed-codex.glb"
+]
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -90,30 +98,44 @@ func _ready() -> void:
 	_set_loading_progress(10.0, "Moldando o mundo...")
 	await get_tree().process_frame
 	_build_environment()
+	await get_tree().process_frame
 	_build_landscape()
+	await get_tree().process_frame
 	_build_downloaded_pbr_surface_patches()
+	await get_tree().process_frame
 	_set_loading_progress(24.0, "Erguendo as terras esquecidas...")
-	await get_tree().process_frame
 	_build_open_world_expansion()
+	await get_tree().process_frame
 	_build_ruins_and_props()
+	await get_tree().process_frame
 	_build_region_landmarks()
+	await get_tree().process_frame
 	_build_plugin_world_expansion()
-	_build_imported_plugin_models()
+	await get_tree().process_frame
+	await _build_imported_plugin_models()
+	await get_tree().process_frame
 	DARK_FANTASY_PROP_PACK.build_all(self)
-	_build_downloaded_nature_models()
-	_build_visible_3dassets_showcase()
+	await get_tree().process_frame
+	await _build_visible_3dassets_showcase()
+	await get_tree().process_frame
 	_set_loading_progress(40.0, "Despertando as regiões...")
-	await get_tree().process_frame
 	_build_swamp_region()
-	_build_river_region()
-	_build_whisper_grove()
-	_build_outer_regions()
-	_build_ancient_waystones()
-	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
+	_build_river_region()
+	await get_tree().process_frame
+	_build_whisper_grove()
+	await get_tree().process_frame
+	_build_outer_regions()
+	await get_tree().process_frame
+	_build_ancient_waystones()
+	await get_tree().process_frame
+	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
+	await get_tree().process_frame
 	_build_npcs()
+	await get_tree().process_frame
 	_build_enemies()
+	await get_tree().process_frame
 	_set_loading_progress(78.0, "Preparando Tobi e Breu...")
 	await get_tree().process_frame
 	_build_player()
@@ -189,7 +211,8 @@ func _build_downloaded_pbr_surface_patches() -> void:
 
 
 func _build_downloaded_nature_models() -> void:
-	# Packs CC0 entram como vegetação e cenário distante; nenhum conteúdo existente é substituído.
+	# Conteúdo opcional de regiões distantes é carregado em lotes, quando o jogador se aproxima.
+	# Nenhum modelo é removido; cada lote cede um frame para evitar congelar a gameplay.
 	var models := EXTERNAL_ASSET_LOADER.list_models("quaternius_stylized_nature")
 	if not models.is_empty():
 		var rng := RandomNumberGenerator.new()
@@ -209,6 +232,7 @@ func _build_downloaded_nature_models() -> void:
 			if instance != null:
 				instance.rotation.y = rng.randf_range(0.0, TAU)
 				placed += 1
+				await get_tree().process_frame
 			if placed >= 24:
 				break
 
@@ -230,6 +254,7 @@ func _build_downloaded_nature_models() -> void:
 		if instance != null:
 			instance.rotation.y = community_rng.randf_range(0.0, TAU)
 			community_placed += 1
+			await get_tree().process_frame
 		if community_placed >= 12:
 			break
 
@@ -261,6 +286,7 @@ func _build_downloaded_nature_models() -> void:
 				nature_count += 1
 			else:
 				ruin_count += 1
+			await get_tree().process_frame
 
 
 func _build_visible_3dassets_showcase() -> void:
@@ -282,6 +308,7 @@ func _build_visible_3dassets_showcase() -> void:
 		if instance != null:
 			instance.rotation.y = 0.35 if placed % 2 == 0 else -0.25
 			placed += 1
+			await get_tree().process_frame
 	if placed == 0:
 		push_warning("Nenhum GLB do pacote 3DAssets.dev foi carregado no cenário inicial.")
 	print("3DASSETS_SHOWCASE_LOADED: ", placed, "/", showcase.size())
@@ -290,11 +317,17 @@ func _build_imported_plugin_models() -> void:
 	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
 	# Os modelos mantem materiais/texturas PBR incorporados ao GLB.
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_stag_guardian", Vector3(-158.0, 0.0, -104.0), Vector3.ONE)
+	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
+	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_river_crab", Vector3(55.0, 0.0, -143.0), Vector3.ONE * 0.85)
+	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_drowned_wraith", Vector3(67.0, 0.0, -157.0), Vector3.ONE)
+	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
+	await get_tree().process_frame
 	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
+	await get_tree().process_frame
 	# Assets Meshy ja existentes: carregam quando os GLBs forem importados em res://assets/plugin_imports/meshy/.
 	var meshy_gate := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
 	if meshy_gate == null:
@@ -323,34 +356,22 @@ func _create_loading_screen() -> void:
 	loading_root.add_child(backdrop)
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
-	frame.position = Vector2(-190.0, -205.0)
-	frame.size = Vector2(380.0, 410.0)
+	frame.position = Vector2(-160.0, -112.0)
+	frame.size = Vector2(320.0, 224.0)
 	frame.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.035, 0.035, 0.98), Color("9d7546"), 20))
 	loading_root.add_child(frame)
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 12)
 	frame.add_child(stack)
-	var emblem := TextureRect.new()
-	emblem.custom_minimum_size = Vector2(112.0, 112.0)
-	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	emblem.texture = load("res://assets/icons/tobi_breu_icon.svg")
-	stack.add_child(emblem)
 	var heading := Label.new()
 	heading.text = "TOBI  &  BREU"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 26)
 	heading.add_theme_color_override("font_color", Color("e5c58c"))
 	stack.add_child(heading)
-	var subtitle := Label.new()
-	subtitle.text = "Dark fantasy  •  uma jornada nas sombras"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 10)
-	subtitle.add_theme_color_override("font_color", Color("a8a18e"))
-	stack.add_child(subtitle)
 	loading_progress = ProgressBar.new()
-	loading_progress.custom_minimum_size = Vector2(290.0, 15.0)
+	loading_progress.custom_minimum_size = Vector2(250.0, 15.0)
 	loading_progress.min_value = 0.0
 	loading_progress.max_value = 100.0
 	loading_progress.value = 0.0
@@ -364,12 +385,7 @@ func _create_loading_screen() -> void:
 	loading_status.add_theme_font_size_override("font_size", 11)
 	loading_status.add_theme_color_override("font_color", Color("c9c0aa"))
 	stack.add_child(loading_status)
-	var footer := Label.new()
-	footer.text = "Que a luz encontre o seu caminho"
-	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	footer.add_theme_font_size_override("font_size", 9)
-	footer.add_theme_color_override("font_color", Color("777d75"))
-	stack.add_child(footer)
+
 
 
 func _set_loading_progress(value: float, message: String) -> void:
@@ -855,6 +871,55 @@ func _build_cave_complex() -> void:
 		crystal.material_override = _painter_mat(Color("6b9c9b"), 7.0, 0.22)
 	_add_region_title("CAVERNA DO ECO", Vector3(-220.0, 12.0, -255.0), Color("a9c9c1"))
 
+func _start_itch_dungeon_streaming() -> void:
+	if itch_dungeon_stream_requested:
+		return
+	itch_dungeon_stream_requested = true
+	for model_path in ITCH_DUNGEON_MODEL_PATHS:
+		if not ResourceLoader.exists(model_path):
+			push_warning("Asset do itch.io ausente no pacote exportado: " + model_path)
+			continue
+		var request_error := ResourceLoader.load_threaded_request(model_path, "PackedScene", true)
+		if request_error != OK and request_error != ERR_BUSY:
+			push_warning("Não foi possível iniciar carregamento do modelo: " + model_path)
+
+
+func _poll_itch_dungeon_streaming() -> void:
+	var all_finished := true
+	for model_path in ITCH_DUNGEON_MODEL_PATHS:
+		if not ResourceLoader.exists(model_path):
+			continue
+		var status := ResourceLoader.load_threaded_get_status(model_path)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			all_finished = false
+		elif status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			push_warning("Falha ao importar modelo do itch.io: " + model_path)
+	if not all_finished:
+		return
+	var dungeon := get_node_or_null("MasmorraDasCinzas") as Node3D
+	if not is_instance_valid(dungeon):
+		return
+	var placements := [
+		{"path": ITCH_DUNGEON_MODEL_PATHS[0], "name": "ItchRunicCircle", "position": Vector3(0.0, 0.18, -20.0), "scale": 0.72},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[1], "name": "ItchObsidianSentinel", "position": Vector3(0.0, 0.0, -39.0), "scale": 0.78},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[2], "name": "ItchCursedCodex", "position": Vector3(0.0, 1.8, -58.0), "scale": 0.62}
+	]
+	for placement in placements:
+		var packed := ResourceLoader.load_threaded_get(placement.path) as PackedScene
+		if packed == null:
+			continue
+		var instance := packed.instantiate() as Node3D
+		if instance == null:
+			continue
+		instance.name = placement.name
+		instance.position = placement.position
+		instance.scale = Vector3.ONE * float(placement.scale)
+		dungeon.add_child(instance)
+		await get_tree().process_frame
+	itch_dungeon_assets_loaded = true
+	print("ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED: ", ITCH_DUNGEON_MODEL_PATHS.size())
+
+
 func _build_ancient_dungeon() -> void:
 	var dungeon := Node3D.new()
 	dungeon.name = "MasmorraDasCinzas"
@@ -876,6 +941,7 @@ func _build_ancient_dungeon() -> void:
 	var altar := _box(dungeon, "AshenAltar", Vector3(0.0, 1.0, -60.0), Vector3(5.0, 2.0, 3.0), Color("71604f"))
 	altar.material_override = _painter_mat(Color("71604f"), 5.0, 0.14)
 	_add_region_title("MASMORRA DAS CINZAS", Vector3(226.0, 12.0, 94.0), Color("d1b99c"))
+	# O pacote do itch.io é carregado sob demanda quando o jogador chega à masmorra.
 
 func _build_royal_castle() -> void:
 	var castle := Node3D.new()
@@ -2249,6 +2315,7 @@ func _build_hud() -> void:
 	var hud_viewport := get_viewport()
 	if not hud_viewport.size_changed.is_connected(_on_hud_viewport_resized):
 		hud_viewport.size_changed.connect(_on_hud_viewport_resized)
+	call_deferred("_on_hud_viewport_resized")
 
 
 func _on_hud_viewport_resized() -> void:
@@ -2260,8 +2327,11 @@ func _on_hud_viewport_resized() -> void:
 
 
 func _apply_mobile_hud_layout(ui_root: Control) -> void:
-	# Layout responsivo: joystick analógico à esquerda e ações à direita.
+	# Posicionamento por offsets ancorados aos cantos: evita os controles saltarem
+	# para (0,0) quando o Android muda resolução/orientação.
 	var viewport_size := get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
 	var mobile := OS.has_feature("mobile") or viewport_size.x < 900.0
 	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
 	if not mobile:
@@ -2270,8 +2340,6 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		return
 	var portrait := viewport_size.y > viewport_size.x
 	var compact_scale := 0.90 if portrait else 1.0
-	# Mantém o joystick na zona inferior esquerda; no retrato ele fica mais para dentro
-	# para não encostar na borda nem invadir os botões de ação do lado direito.
 	if joystick:
 		var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0
 		var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)
@@ -2279,50 +2347,50 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		joystick.visible = true
 	var action_layout: Dictionary
 	if portrait:
-		# Two clean columns on the right; four rows keep all eight actions tappable.
 		action_layout = {
-			"attack": [Vector2(0.92, 0.72), 82.0],
-			"jump": [Vector2(0.72, 0.59), 58.0],
-			"interact": [Vector2(0.72, 0.72), 56.0],
-			"dodge": [Vector2(0.72, 0.85), 56.0],
-			"potion": [Vector2(0.92, 0.85), 56.0],
-			"shadow": [Vector2(0.92, 0.59), 56.0],
-			"upgrade": [Vector2(0.72, 0.96), 54.0],
-			"inventory": [Vector2(0.92, 0.96), 54.0]
+			"attack": [Vector2(0.88, 0.72), 76.0],
+			"jump": [Vector2(0.68, 0.59), 56.0],
+			"interact": [Vector2(0.68, 0.72), 56.0],
+			"dodge": [Vector2(0.68, 0.85), 56.0],
+			"potion": [Vector2(0.88, 0.85), 54.0],
+			"shadow": [Vector2(0.88, 0.59), 54.0],
+			"upgrade": [Vector2(0.68, 0.96), 50.0],
+			"inventory": [Vector2(0.88, 0.96), 50.0],
+			"guard": [Vector2(0.78, 0.48), 52.0]
 		}
 	else:
 		action_layout = {
-			"attack": [Vector2(0.91, 0.855), 82.0],
-			"jump": [Vector2(0.96, 0.69), 66.0],
-			"interact": [Vector2(0.755, 0.79), 64.0],
-			"dodge": [Vector2(0.79, 0.94), 66.0],
-			"potion": [Vector2(0.96, 0.94), 66.0],
-			"shadow": [Vector2(0.82, 0.675), 64.0],
-			"upgrade": [Vector2(0.66, 0.68), 58.0],
-			"inventory": [Vector2(0.66, 0.82), 58.0]
+			"attack": [Vector2(0.91, 0.855), 78.0],
+			"jump": [Vector2(0.96, 0.69), 60.0],
+			"interact": [Vector2(0.755, 0.79), 58.0],
+			"dodge": [Vector2(0.79, 0.94), 58.0],
+			"potion": [Vector2(0.96, 0.94), 58.0],
+			"shadow": [Vector2(0.82, 0.675), 56.0],
+			"upgrade": [Vector2(0.66, 0.68), 52.0],
+			"inventory": [Vector2(0.66, 0.82), 52.0],
+			"guard": [Vector2(0.75, 0.60), 54.0]
 		}
 	for action in action_layout:
 		var button := ui_root.get_node_or_null("TouchAction_" + action) as Button
-		if button:
-			var data: Array = action_layout[action]
-			var action_size := Vector2.ONE * maxf(54.0, float(data[1]) * compact_scale)
-			var anchor: Vector2 = data[0]
-			button.anchor_left = anchor.x
-			button.anchor_right = anchor.x
-			button.anchor_top = anchor.y
-			button.anchor_bottom = anchor.y
-			button.position = -action_size * 0.5
-			button.size = action_size
-			button.add_theme_font_size_override("font_size", 22 if action == "attack" else 19)
-			var touch_labels := {"attack":"⚔\nATACAR", "jump":"↟\nPULAR", "interact":"E\nUSAR", "dodge":"◇\nROLAR", "potion":"✚\nCURA", "shadow":"✦\nBREU", "upgrade":"⚒\nFORJAR", "inventory":"▣\nMOCHILA"}
-			button.text = touch_labels[action]
-			button.add_theme_font_size_override("font_size", 12 if action != "attack" else 14)
-			button.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not is_instance_valid(button):
+			continue
+		var data: Array = action_layout[action]
+		var action_size := Vector2.ONE * maxf(48.0, float(data[1]) * compact_scale)
+		var anchor: Vector2 = data[0]
+		var center_offset := Vector2((anchor.x - 1.0) * viewport_size.x, (anchor.y - 1.0) * viewport_size.y)
+		HUD_STYLE.place_corner(button, Vector2(1.0, 1.0), center_offset, action_size)
+		button.add_theme_font_size_override("font_size", 12 if action != "attack" else 14)
+		var touch_labels := {
+			"attack":"⚔\nATACAR", "jump":"↟\nPULAR", "interact":"E\nUSAR",
+			"dodge":"◇\nROLAR", "potion":"✚\nCURA", "shadow":"✦\nBREU",
+			"upgrade":"⚒\nFORJAR", "inventory":"▣\nMOCHILA", "guard":"◉\nDEF"
+		}
+		button.text = touch_labels[action]
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
 	var pause := ui_root.get_node_or_null("PauseMenuButton") as Button
 	if pause:
-		pause.size = Vector2(54, 54)
-		pause.position = Vector2(-60, 12)
-		pause.add_theme_font_size_override("font_size", 22)
+		HUD_STYLE.place_corner(pause, Vector2(1.0, 0.0), Vector2(-42.0, 42.0), Vector2(48.0, 48.0))
+		pause.add_theme_font_size_override("font_size", 21)
 	var quest := ui_root.get_node_or_null("QuestCard") as PanelContainer
 	if quest:
 		quest.position = Vector2(12, 12)
@@ -2499,18 +2567,14 @@ func _show_menu_page(page: String) -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 12)
 	scroll.add_child(content)
-	if page == "main":
-		_menu_add_hero(content)
-	if page in ["main", "hub", "character"]:
+	if page in ["hub", "character"]:
 		_menu_add_stat_strip(content)
 	match page:
 		"main":
 			title.text = "A lenda desperta"
-			subtitle.text = "Explore um mundo esquecido. Proteja o vínculo entre Tobi e Breu."
-			_menu_add_card(content, "JORNADA ATUAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Encontre Mestre Azulan"))
-			_menu_add_button(content, "Jogar", _start_game, true)
+			subtitle.text = "Sua aventura começa agora."
+			_menu_add_button(content, "JOGAR", _start_game, true)
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
-			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
 		"pause":
 			title.text = "JORNADA PAUSADA"
 			subtitle.text = "O mundo espera. Retome quando estiver pronto."
@@ -2889,26 +2953,18 @@ func _open_menu(page: String = "pause") -> void:
 
 
 func _start_game() -> void:
-	if is_instance_valid(hud): hud.visible = true
+	if is_instance_valid(hud):
+		hud.visible = true
 	if game_started:
 		_close_menu()
 		return
 	if is_instance_valid(menu_layer):
 		menu_layer.visible = false
-	_create_loading_screen()
-	_set_loading_progress(28.0, "Abrindo os caminhos...")
-	get_tree().paused = false
-	await get_tree().process_frame
-	var transition := loading_layer.create_tween()
-	transition.tween_property(loading_progress, "value", 100.0, 0.72)
-	_set_loading_progress(28.0, "As sombras se afastam...")
-	await transition.finished
-	_set_loading_progress(100.0, "Bem-vindo de volta, aventureiro.")
-	await get_tree().create_timer(0.18, true).timeout
+	# O mundo já foi preparado na inicialização; não exibir uma segunda tela
+	# de carregamento artificial nem manter a árvore pausada após tocar em Jogar.
 	game_started = true
-	print("TOBI_BREU_GAME_STARTED")
-	await _hide_loading_screen()
 	get_tree().paused = false
+	print("TOBI_BREU_GAME_STARTED")
 
 
 func _close_menu() -> void:
@@ -3061,6 +3117,15 @@ func _process(delta: float) -> void:
 			if river_boss and boss_health_bar:
 				boss_health_bar.value = maxf(0.0, float(river_boss.get("hp")))
 	if not is_instance_valid(player): return
+	# Modelos opcionais entram somente quando o jogador alcança a área correspondente.
+	# A carga em thread mantém a exploração jogável enquanto GLBs e texturas são preparados.
+	if not nature_models_stream_requested and player.global_position.distance_to(Vector3(-145.0, 0.0, -145.0)) < 90.0:
+		nature_models_stream_requested = true
+		_build_downloaded_nature_models()
+	if not itch_dungeon_stream_requested and player.global_position.distance_to(Vector3(226.0, 0.0, 89.0)) < 82.0:
+		_start_itch_dungeon_streaming()
+	if itch_dungeon_stream_requested and not itch_dungeon_assets_loaded:
+		_poll_itch_dungeon_streaming()
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
 	if npc:

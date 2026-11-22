@@ -214,6 +214,25 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"EQUIPAMENTO"', self.world)
         self.assertIn('"MOCHILA"', self.world)
 
+    def test_itch_io_dungeon_models_are_streamed_into_gameplay(self):
+        for model in ('cracked-runic-circle.glb', 'crimson-obsidian-sentinel.glb', 'cursed-codex.glb'):
+            self.assertIn(model, self.world)
+        self.assertIn('func _start_itch_dungeon_streaming()', self.world)
+        self.assertIn('ResourceLoader.load_threaded_request', self.world)
+        self.assertIn('ResourceLoader.load_threaded_get', self.world)
+        self.assertIn('ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED', self.world)
+
+    def test_mobile_controls_use_corner_anchoring_and_include_guard(self):
+        self.assertIn('HUD_STYLE.place_corner(button, Vector2(1.0, 1.0), center_offset, action_size)', self.world)
+        self.assertIn('"guard": [Vector2(0.75, 0.60), 54.0]', self.world)
+        self.assertIn('call_deferred("_on_hud_viewport_resized")', self.world)
+
+    def test_start_game_skips_duplicate_loading_screen(self):
+        start = self.world.split('func _start_game() -> void:', 1)[1].split('func _close_menu()', 1)[0]
+        self.assertNotIn('_create_loading_screen()', start)
+        self.assertIn('game_started = true', start)
+        self.assertIn('get_tree().paused = false', start)
+
     def test_project_display_name_matches_archive_version(self):
         self.assertIn('Dark World 3D 0.12.2', self.project)
 
