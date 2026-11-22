@@ -5,7 +5,7 @@ permissions:
 
 concurrency:
   group: tobi-breu-android-apk-v2-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
