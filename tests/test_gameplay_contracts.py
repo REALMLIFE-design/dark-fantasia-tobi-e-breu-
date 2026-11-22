@@ -486,8 +486,9 @@ class AndroidBuildContracts(unittest.TestCase):
     def test_github_actions_detects_project_at_root_or_in_subfolder(self):
         workflow = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         self.assertIn('Locate Godot project (repository root or subfolder)', workflow)
-        self.assertIn('if [ -f "$GITHUB_WORKSPACE/project.godot" ]', workflow)
-        self.assertIn('find extracted -name project.godot', workflow)
+        self.assertIn('find "$GITHUB_WORKSPACE" -maxdepth 5 -type f -name project.godot', workflow)
+        self.assertIn('if [ -n "$PROJECT_FILE" ]; then', workflow)
+        self.assertIn('find extracted -maxdepth 6 -type f -name project.godot', workflow)
         self.assertIn('PROJECT_PATH=', workflow)
         self.assertIn('python3 -m unittest discover', workflow)
         self.assertIn('tools/validate_project.py', workflow)
@@ -1051,3 +1052,15 @@ class TouchInputDeliveryContracts(unittest.TestCase):
         self.assertIn("glow.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
         self.assertIn("button.mouse_filter = Control.MOUSE_FILTER_STOP", menu)
         self.assertIn("pointing/emulate_mouse_from_touch=true", project)
+
+
+class AdditionalRegionalPropContracts(unittest.TestCase):
+    def test_golden_plain_whisper_grove_and_echo_crystals_are_built(self):
+        root = Path(__file__).resolve().parents[1]
+        pack = (root / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        self.assertIn('_build_golden_plain_windmill(parent, Vector3(18, 0, 238))', pack)
+        self.assertIn('_build_whispercap_grove(parent, Vector3(105, 0, -151))', pack)
+        self.assertIn('_build_echo_cave_crystals(parent, Vector3(-228, 0, -248))', pack)
+        self.assertIn('WindmillBlade_', pack)
+        self.assertIn('WhispercapGlow_', pack)
+        self.assertIn('EchoCrystal_', pack)
