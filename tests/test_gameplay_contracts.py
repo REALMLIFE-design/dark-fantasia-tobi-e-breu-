@@ -1089,3 +1089,18 @@ class SaveRecoveryContracts(unittest.TestCase):
         self.assertIn('static func _build_tobi_cat(parent: Node3D, position: Vector3)', props)
         for part in ('CatHead', 'CatBody', 'CatTailSegment_', 'CatCrimsonCollar', 'CatGoldenCharm'):
             self.assertIn(part, props)
+
+    def test_full_procedural_prop_pack_is_registered(self):
+        props = (ROOT / 'scripts/dark_fantasy_prop_pack.gd').read_text(encoding='utf-8')
+        build_all = props.split('static func build_all', 1)[1].split('static func _root', 1)[0]
+        expected = (
+            '_build_bone_cart(', '_build_rune_circle(', '_build_cursed_well(',
+            '_build_fallen_guardian(', '_build_glacial_altar(', '_build_crimson_rift_gate(',
+            '_build_swamp_witch_cauldron(', '_build_drowned_bell_marker(',
+            '_build_golden_plain_windmill(', '_build_whispercap_grove(',
+            '_build_echo_cave_crystals(', '_build_tobi_cat('
+        )
+        for builder in expected:
+            self.assertIn(builder, build_all)
+        self.assertIn('mesh.radial_segments = 24', props)
+        self.assertIn('mesh.rings = 16', props)
