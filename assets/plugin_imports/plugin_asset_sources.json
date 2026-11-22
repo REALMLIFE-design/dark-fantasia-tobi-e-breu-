@@ -4,7 +4,12 @@
     "aqueduct": {
       "project_id": "0931f547-7cd7-40af-a785-d6ddf642c7ce",
       "export_job_id": "exp_6ffe739b-1ac5-4e1a-a1f5-0ff85879283e",
-      "maps": ["base_color", "normal", "roughness", "ao"],
+      "maps": [
+        "base_color",
+        "normal",
+        "roughness",
+        "ao"
+      ],
       "resolution": 1024,
       "normal_format": "opengl",
       "status": "exported"
@@ -38,5 +43,20 @@
     "meshy": "assets/plugin_imports/meshy/cursed_rune_obelisk.glb",
     "pinoc": "assets/plugin_imports/pinoc/"
   },
-  "binary_files_transferred_to_repository": false
+  "binary_files_transferred_to_repository": false,
+  "generated_assets": [
+    {
+      "asset": "ancient_tree",
+      "purpose": "mobile_game_landmark",
+      "geometry_task_id": "01a200e0-4d7b-7724-a759-26f5aaa59293",
+      "texture_task_id": "01a200e0-d746-7199-bc43-33b07546b995",
+      "geometry_model": "meshy-t2",
+      "texture_model": "meshy-6-lite",
+      "target_polycount": 4000,
+      "texture_resolution": "2k",
+      "expected_import_path": "assets/plugin_imports/meshy/ancient_tree.glb",
+      "status": "texturing_in_progress",
+      "binary_transferred_to_repository": false
+    }
+  ]
 }
