@@ -23,6 +23,8 @@ static func build_all(parent: Node3D) -> void:
 	_build_fallen_guardian(parent, Vector3(246, 0, -315))
 	_build_glacial_altar(parent, Vector3(-166, 0, -260))
 	_build_crimson_rift_gate(parent, Vector3(165, 0, -330))
+	_build_swamp_witch_cauldron(parent, Vector3(9, 0, -94))
+	_build_drowned_bell_marker(parent, Vector3(61, 0, -132))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -283,3 +285,32 @@ static func _build_crimson_rift_gate(parent: Node3D, position: Vector3) -> void:
 	for i in range(5):
 		var rune := _sphere(root, "RiftRune_%d" % i, Vector3(-1.6 + float(i) * 0.8, 3.0 + float(i % 2) * 0.8, 0.68), 0.16, Color("d56b70"), Vector3(1.0, 1.0, 0.55), 11, true)
 		rune.scale = Vector3.ONE
+
+
+static func _build_swamp_witch_cauldron(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "SwampWitchCauldron", position)
+	_cylinder(root, "CauldronBody", Vector3(0, 1.05, 0), 1.0, 1.15, Color("303b36"), 10, 9)
+	_cylinder(root, "CauldronRim", Vector3(0, 1.68, 0), 1.12, 0.18, Color("68766a"), 10, 9)
+	_cylinder(root, "BubblingToxicBrew", Vector3(0, 1.76, 0), 0.88, 0.08, Color("83b85b"), 13, 12)
+	for i in range(3):
+		var angle := TAU * float(i) / 3.0
+		var leg := _box(root, "CauldronLeg_%d" % i, Vector3(cos(angle) * 0.82, 0.42, sin(angle) * 0.82), Vector3(0.18, 0.9, 0.18), Color("51463a"), 4)
+		leg.rotation.z = cos(angle) * 0.16
+	for i in range(4):
+		_sphere(root, "BrewBubble_%d" % i, Vector3(-0.48 + float(i) * 0.32, 1.98 + float(i % 2) * 0.12, 0.12), 0.13, Color("b4e47a"), Vector3.ONE, 13, true)
+	for side in [-1.0, 1.0]:
+		_box(root, "CauldronHandleMount", Vector3(side * 1.02, 1.48, 0), Vector3(0.16, 0.42, 0.16), Color("79674c"), 4)
+
+
+static func _build_drowned_bell_marker(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "DrownedBellMarker", position)
+	_cylinder(root, "BellStoneBase", Vector3(0, 0.22, 0), 2.2, 0.44, Color("56615e"), 10, 10)
+	for side in [-1.0, 1.0]:
+		var pillar := _box(root, "BellPillar", Vector3(side * 1.35, 2.0, 0), Vector3(0.42, 3.6, 0.48), Color("68736d"), 10)
+		pillar.rotation.z = side * -0.06
+	_box(root, "BellCrossbeam", Vector3(0, 3.82, 0), Vector3(3.2, 0.42, 0.56), Color("737d74"), 10)
+	_cylinder(root, "BellHanger", Vector3(0, 3.28, 0), 0.09, 0.72, Color("8d8067"), 4, 8)
+	var bell := _sphere(root, "DrownedBell", Vector3(0, 2.76, 0), 0.52, Color("a18a61"), Vector3(1.0, 1.1, 0.85), 12)
+	var clapper := _cylinder(root, "BellClapper", Vector3(0, 2.2, 0), 0.12, 0.38, Color("c5b18a"), 4, 7)
+	clapper.rotation.z = PI
+	_sphere(root, "BellRune", Vector3(0, 2.8, 0.46), 0.13, Color("79c9bb"), Vector3.ONE, 13, true)
