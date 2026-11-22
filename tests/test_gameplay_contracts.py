@@ -814,5 +814,5 @@ class ExternalAssetPackLoaderContracts(unittest.TestCase):
         self.assertIn('static func list_models', loader)
         self.assertIn('static func instantiate_model', loader)
         self.assertIn('extension == "glb" or extension == "gltf"', loader)
-        self.assertIn('assets/external_packs/ashen_marches', readme)
+        self.assertIn('assets/external_packs/medieval_collection', readme)
         self.assertIn('CC BY 4.0', readme)
