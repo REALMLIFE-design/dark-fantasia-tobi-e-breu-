@@ -352,7 +352,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('save_version > 15', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
