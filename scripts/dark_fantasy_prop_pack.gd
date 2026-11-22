@@ -29,6 +29,10 @@ static func build_all(parent: Node3D) -> void:
 	_build_whispercap_grove(parent, Vector3(105, 0, -151))
 	_build_echo_cave_crystals(parent, Vector3(-228, 0, -248))
 	_build_tobi_cat(parent, Vector3(4.0, 0.0, 3.5))
+	_build_waystone_shrine(parent, Vector3(-92, 0, 130))
+	_build_hunters_camp(parent, Vector3(-142, 0, 62))
+	_build_river_bridge(parent, Vector3(61, 0, -156))
+	_build_watchtower(parent, Vector3(200, 0, 68))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -413,3 +417,77 @@ static func _build_tobi_cat(parent: Node3D, position: Vector3) -> void:
 		_sphere(root, "CollarGoldStud", Vector3(side * 0.25, 1.08, 0.79), 0.045, Color("e1c17b"), Vector3.ONE, 13, true)
 	_sphere(root, "CatGoldenCharm", Vector3(0, 0.98, 0.88), 0.105, Color("d2ad69"), Vector3(0.85, 1.1, 0.55), 13, true)
 	_sphere(root, "CatCharmInset", Vector3(0, 0.98, 0.94), 0.045, Color("7ac9bd"), Vector3(0.8, 1.0, 0.4), 13, true)
+
+
+# Expansao de pontos de interesse: marcos de viagem e estruturas exploraveis.
+static func _build_waystone_shrine(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "WaystoneShrine", position)
+	_cylinder(root, "ShrineFoundation", Vector3(0, 0.18, 0), 2.6, 0.36, Color("555d58"), 10, 24)
+	_box(root, "ShrineStep", Vector3(0, 0.42, 0.35), Vector3(2.8, 0.28, 1.6), Color("777a6d"), 10)
+	for side in [-1.0, 1.0]:
+		var pillar := _box(root, "ShrinePillar", Vector3(side * 1.45, 2.0, -0.15), Vector3(0.42, 3.2, 0.48), Color("77796e"), 10)
+		pillar.rotation.z = side * -0.035
+		_box(root, "PillarCapital", Vector3(side * 1.45, 3.72, -0.15), Vector3(0.72, 0.28, 0.76), Color("9a927d"), 10)
+	_box(root, "ShrineLintel", Vector3(0, 3.78, -0.15), Vector3(3.35, 0.42, 0.65), Color("77796e"), 10)
+	_cylinder(root, "WaystonePedestal", Vector3(0, 0.95, 0.65), 0.72, 0.8, Color("4c5754"), 10, 20)
+	_cone(root, "WaystoneCrystal", Vector3(0, 2.05, 0.65), 0.42, 1.55, Color("8bc8b7"), 13)
+	_sphere(root, "WaystoneCore", Vector3(0, 2.15, 0.65), 0.16, Color("b5f4dc"), Vector3.ONE, 13, true)
+	for i in range(5):
+		_box(root, "ShrineGlyph_%d" % i, Vector3(-0.8 + float(i) * 0.4, 1.35, 1.38), Vector3(0.09, 0.32, 0.05), Color("82c9b4"), 13, true)
+
+
+static func _build_hunters_camp(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "HuntersRestCamp", position)
+	for side in [-1.0, 1.0]:
+		var pole := _cylinder(root, "TentPole", Vector3(side * 1.35, 1.25, -0.25), 0.075, 2.5, Color("5b4433"), 4, 16)
+		pole.rotation.z = side * 0.18
+	var canopy := _cone(root, "WeatheredCanvasTent", Vector3(0, 2.1, -0.25), 1.85, 2.1, Color("77705c"), 7)
+	canopy.rotation.z = PI
+	_box(root, "TentGroundCloth", Vector3(0, 0.08, -0.25), Vector3(2.7, 0.08, 2.3), Color("554d40"), 4)
+	_cylinder(root, "CampfireStoneRing", Vector3(2.8, 0.22, 1.25), 0.72, 0.34, Color("77746a"), 10, 18)
+	_sphere(root, "CampfireEmbers", Vector3(2.8, 0.48, 1.25), 0.35, Color("e58a4e"), Vector3(1.0, 0.35, 1.0), 13, true)
+	for i in range(3):
+		var log := _cylinder(root, "CampfireLog", Vector3(2.8, 0.42, 1.25), 0.12, 1.1, Color("49362b"), 4, 12)
+		log.rotation.y = float(i) * PI / 3.0
+		log.rotation.z = PI * 0.5
+	_box(root, "SupplyChest", Vector3(-2.35, 0.52, 0.7), Vector3(1.0, 0.82, 0.85), Color("604631"), 4)
+	_box(root, "ChestIronBand", Vector3(-2.35, 0.58, 1.14), Vector3(1.02, 0.12, 0.08), Color("777e7c"), 12)
+	for side in [-1.0, 1.0]:
+		_cylinder(root, "CampTorchPost", Vector3(side * 3.5, 1.0, -1.8), 0.07, 2.0, Color("49382f"), 4, 12)
+		_sphere(root, "CampTorchFlame", Vector3(side * 3.5, 2.08, -1.8), 0.17, Color("e8a15e"), Vector3(0.8, 1.2, 0.8), 13, true)
+
+
+static func _build_river_bridge(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "SilverRiverStoneBridge", position)
+	_box(root, "BridgeDeck", Vector3(0, 0.55, 0), Vector3(10.0, 0.42, 4.2), Color("77796f"), 10)
+	for i in range(9):
+		var x := -4.4 + float(i) * 1.1
+		_box(root, "BridgePaving_%d" % i, Vector3(x, 0.79, 0), Vector3(0.98, 0.08, 3.95), Color("989486"), 10)
+	for side in [-1.0, 1.0]:
+		_box(root, "BridgeRailingBase", Vector3(0, 1.05, side * 1.92), Vector3(10.0, 0.28, 0.28), Color("555e59"), 10)
+		for i in range(6):
+			_box(root, "BridgeBaluster", Vector3(-4.2 + float(i) * 1.68, 1.48, side * 1.92), Vector3(0.2, 0.9, 0.22), Color("77796f"), 10)
+		_box(root, "BridgeHandrail", Vector3(0, 1.98, side * 1.92), Vector3(10.2, 0.2, 0.34), Color("696e66"), 10)
+	for side in [-1.0, 1.0]:
+		_box(root, "BridgeEndPost", Vector3(side * 4.75, 1.1, 0), Vector3(0.55, 1.1, 4.4), Color("666e67"), 10)
+	for i in range(3):
+		var keystone := _box(root, "BridgeRunestone_%d" % i, Vector3(-2.4 + float(i) * 2.4, 0.91, 0), Vector3(0.16, 0.12, 2.8), Color("86b8aa"), 13, true)
+		keystone.rotation.y = 0.0
+
+
+static func _build_watchtower(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "FallenWatchWatchtower", position)
+	_cylinder(root, "TowerStoneFoot", Vector3(0, 0.3, 0), 2.0, 0.6, Color("5b625d"), 10, 24)
+	for side in [-1.0, 1.0]:
+		for depth in [-1.0, 1.0]:
+			_box(root, "TowerTimber", Vector3(side * 1.1, 4.1, depth * 1.1), Vector3(0.22, 7.6, 0.22), Color("49372c"), 4)
+			_box(root, "TowerBrace", Vector3(side * 0.72, 2.2, depth * 1.1), Vector3(1.0, 0.18, 0.18), Color("5c4433"), 4)
+	_box(root, "TowerPlatform", Vector3(0, 4.3, 0), Vector3(3.1, 0.32, 3.1), Color("70553b"), 4)
+	_box(root, "TowerParapetNorth", Vector3(0, 5.0, -1.42), Vector3(3.1, 1.1, 0.22), Color("686d66"), 10)
+	_box(root, "TowerParapetSouth", Vector3(0, 5.0, 1.42), Vector3(3.1, 1.1, 0.22), Color("686d66"), 10)
+	for side in [-1.0, 1.0]:
+		_box(root, "TowerParapetSide", Vector3(side * 1.42, 5.0, 0), Vector3(0.22, 1.1, 2.8), Color("686d66"), 10)
+	_cylinder(root, "TowerRoofSupport", Vector3(0, 6.1, 0), 1.75, 0.22, Color("49382f"), 4, 16)
+	_cone(root, "TowerRoof", Vector3(0, 7.15, 0), 1.8, 2.0, Color("554b43"), 4)
+	_box(root, "TowerBannerPole", Vector3(0, 8.5, 0), Vector3(0.12, 2.0, 0.12), Color("4c5050"), 12)
+	_box(root, "TowerBanner", Vector3(0.65, 8.25, 0), Vector3(1.2, 1.25, 0.08), Color("733b43"), 11)
