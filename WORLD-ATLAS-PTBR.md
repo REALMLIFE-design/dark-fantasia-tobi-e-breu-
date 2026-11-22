@@ -46,3 +46,9 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 ## Encontro opcional — Montanha Gelada
 - Dois Corvos Glaciais patrulham a região dos cristais, aproximadamente em (-179, -267) e (-153, -279).
 - São inimigos opcionais e não alteram os objetivos das missões principais.
+
+
+## Novos marcos regionais
+- Pântano dos Ratos: Caldeirão da Bruxa do Pântano, próximo à região central (9, -94).
+- Rio Prateado: Marco do Sino Afogado, próximo ao curso do rio (61, -132).
+- Ambos são elementos ambientais de exploração; não substituem nem alteram os objetivos das missões existentes.
