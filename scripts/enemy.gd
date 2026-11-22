@@ -305,8 +305,6 @@ func _ready() -> void:
 	var left_leg := _make_enemy_limb("LeftLeg", Vector3(-0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	var right_leg := _make_enemy_limb("RightLeg", Vector3(0.18, 0.58, 0), Vector3(0, -0.22, 0), Vector3(0.21, 0.50, 0.21), body_color.darkened(0.18))
 	if enemy_kind == 8 or enemy_kind == 10:
-		left_leg.visible = false
-		right_leg.visible = false
 	if enemy_kind < 3:
 		for leg_node in [left_leg, right_leg]:
 			var boot := BoxMesh.new(); boot.size = Vector3(0.25, 0.16, 0.34)
