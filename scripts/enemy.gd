@@ -1,4 +1,6 @@
 extends CharacterBody3D
+
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 var hp := 70
 var dead := false
 var attack_timer := 0.0
@@ -90,7 +92,7 @@ func _ready() -> void:
 	var col := CollisionShape3D.new(); col.shape = capsule; col.position.y = 0.75; add_child(col)
 	visual = Node3D.new(); add_child(visual)
 	_create_attack_telegraph()
-	_cache_hit_flash_materials(visual)
+	# Materiais cacheados depois da montagem visual completa.
 	var body := CapsuleMesh.new(); body.radius = 0.36; body.height = 0.88
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
 	if enemy_kind == 9: body_color = Color("4b5d3c")
@@ -332,7 +334,49 @@ func _ready() -> void:
 	label.font_size = 24
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	visual.add_child(label)
+	_try_attach_imported_enemy_model()
+	_cache_hit_flash_materials(visual)
 	target = get_tree().get_first_node_in_group("player")
+
+
+func _try_attach_imported_enemy_model() -> void:
+	# GLBs externos substituem a aparência procedural somente quando o binário existe.
+	# Sem o arquivo, o modelo procedural original permanece visível como fallback.
+	var asset_key := ""
+	var imported_scale := Vector3.ONE
+	match enemy_kind:
+		7:
+			asset_key = "thrixel_drowned_wraith"
+		8:
+			asset_key = "thrixel_river_crab"
+			imported_scale = Vector3.ONE * 0.85
+		9:
+			asset_key = "thrixel_stag_guardian"
+		_:
+			return
+	var packed_scene := PLUGIN_ASSET_LOADER.load_optional_scene(asset_key)
+	if packed_scene == null:
+		return
+	var imported_model := packed_scene.instantiate() as Node3D
+	if imported_model == null:
+		push_warning("O modelo 3D do inimigo não tem raiz Node3D: " + asset_key)
+		return
+	imported_model.name = "ImportedEnemyModel_" + asset_key
+	imported_model.position = Vector3.ZERO
+	imported_model.scale = imported_scale
+	for child in visual.get_children():
+		_set_enemy_fallback_meshes_visible(child, false)
+	visual.add_child(imported_model)
+	visual.set_meta("imported_enemy_model", imported_model)
+	visual.set_meta("imported_enemy_asset_key", asset_key)
+	_cache_hit_flash_materials(imported_model)
+
+
+func _set_enemy_fallback_meshes_visible(node: Node, should_be_visible: bool) -> void:
+	if node is MeshInstance3D:
+		(node as MeshInstance3D).visible = should_be_visible
+	for child in node.get_children():
+		_set_enemy_fallback_meshes_visible(child, should_be_visible)
 
 func sync_boss_phase() -> void:
 	if enemy_kind == 6 and hp <= 340:
