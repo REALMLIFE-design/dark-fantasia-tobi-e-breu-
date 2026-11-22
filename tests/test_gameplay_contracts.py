@@ -17,11 +17,13 @@ class GameplayContracts(unittest.TestCase):
         for action in ("move_forward", "move_back", "move_left", "move_right"):
             self.assertIn('Object(InputEventJoypadMotion', project)
         for button in ('"button_index":2', '"button_index":0', '"button_index":3',
-                       '"button_index":1', '"button_index":4', '"button_index":5'):
+                       '"button_index":1', '"button_index":4', '"button_index":5', '"button_index":9'):
             self.assertIn(button, project)
         self.assertIn("Input.get_connected_joypads()", self.player)
         self.assertIn("JOY_AXIS_RIGHT_X", self.player)
         self.assertIn("JOY_AXIS_RIGHT_Y", self.player)
+        self.assertIn('shadow={"deadzone":0.5', project)
+        self.assertIn('Input.is_action_just_pressed("shadow")', self.player)
 
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
