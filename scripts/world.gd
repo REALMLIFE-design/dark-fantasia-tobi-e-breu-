@@ -1822,6 +1822,15 @@ func _build_enemies() -> void:
 	root_warden.set("enemy_kind", 9)
 	add_child(root_warden)
 	enemies.append(root_warden)
+	# Corvos Glaciais rondam os cristais da Montanha Gelada; encontro opcional.
+	for i in range(2):
+		var ice_raven := CharacterBody3D.new()
+		ice_raven.set_script(ENEMY_SCRIPT)
+		ice_raven.name = "Corvo_Glacial_%d" % i
+		ice_raven.position = Vector3(-179.0 + float(i) * 26.0, 0.0, -267.0 - float(i) * 12.0)
+		ice_raven.set("enemy_kind", 10)
+		add_child(ice_raven)
+		enemies.append(ice_raven)
 	# Espectros opcionais guardam as margens do Rio Prateado; não contam para a missão dos cavaleiros.
 	for i in range(2):
 		var wraith := CharacterBody3D.new()
@@ -3585,6 +3594,14 @@ func enemy_defeated(kind: int = 0) -> void:
 		swamp_herbs += 1
 		if randf() < 0.35: shards += 1
 		toast_label.text = "VIGIA DAS RAÍZES DERROTADO • +35 XP • 2 Essências Sombrias"
+		_update_inventory()
+		_save_game()
+		return
+	if kind == 10:
+		_grant_xp(25)
+		shards += 1
+		dark_essence += 1
+		toast_label.text = "CORVO GLACIAL DERROTADO • +25 XP • Fragmento Rubro +1"
 		_update_inventory()
 		_save_game()
 		return
