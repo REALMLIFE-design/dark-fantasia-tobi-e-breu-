@@ -62,6 +62,13 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 
 
 ## Companheiro — Gato de Tobi
-- Um gato low-poly cinza-escuro em pose sentada foi colocado perto da clareira inicial, aproximadamente em (4, 3.5).
+- Um gato procedural detalhado cinza-escuro em pose sentada foi colocado perto da clareira inicial, aproximadamente em (4, 3.5).
 - O modelo tem olhos âmbar, focinho claro, orelhas rosadas, cauda segmentada e coleira vinho com medalhão dourado.
 - É um modelo procedural leve integrado ao carregamento do pacote de cenografia; nesta etapa é visual, sem IA, animação ou interação.
+
+
+## Direção de qualidade dos modelos 3D
+- A expansão visual mantém todos os conjuntos procedurais registrados no construtor central do mundo.
+- A geometria esférica procedural foi refinada para 24 segmentos radiais e 16 anéis; cilindros e cones também receberam maior resolução.
+- O gato de Tobi recebeu detalhes adicionais de pelagem, focinho, sobrancelhas, dedos, rebites e medalhão em camadas.
+- Os modelos GLB externos já gerados continuam no catálogo de importação e são carregados pelo mundo quando os binários estão disponíveis; os fallbacks procedurais permanecem ativos quando a transferência falha.
