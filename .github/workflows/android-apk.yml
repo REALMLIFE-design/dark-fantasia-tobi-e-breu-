@@ -288,6 +288,7 @@ jobs:
             --latest
 
       # Executa o smoke test depois de publicar o patch para que a verificação do emulador não bloqueie as atualizações.
+      # The emulator script waits for sys.boot_completed before installing or launching the game.
       - name: Testar APK em emulador Android
         timeout-minutes: 10
         uses: reactivecircus/android-emulator-runner@v2
