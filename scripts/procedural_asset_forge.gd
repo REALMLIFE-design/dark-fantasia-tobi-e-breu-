@@ -8,6 +8,10 @@ const METAL := Color("8c9691")
 const RUNE := Color("70d8c6")
 const GOLD := Color("c39a5d")
 const WOOD := Color("49372f")
+const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
+const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
+const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
+static var _surface_material_cache: Dictionary = {}
 
 static func create_asset(asset_key: String) -> Node3D:
 	var root := Node3D.new()
@@ -50,7 +54,7 @@ static func _part(parent: Node3D, mesh: Mesh, part_name: String, pos: Vector3, c
 	instance.mesh = mesh
 	instance.position = pos
 	instance.scale = scale
-	instance.material_override = _mat(color, glow)
+	instance.material_override = _mat(color, true) if glow else _surface_material(part_name, color)
 	parent.add_child(instance)
 	return instance
 
@@ -77,6 +81,38 @@ static func _cylinder(parent: Node3D, part_name: String, pos: Vector3, radius: f
 	mesh.height = height
 	mesh.radial_segments = sides
 	return _part(parent, mesh, part_name, pos, color)
+
+
+static func _surface_material(part_name: String, color: Color) -> ShaderMaterial:
+	var key_name := part_name.to_lower()
+	var mode := 8
+	if "wood" in key_name or "bark" in key_name or "timber" in key_name:
+		mode = 4
+	elif "moss" in key_name:
+		mode = 10
+	elif "iron" in key_name or "metal" in key_name:
+		mode = 12
+	elif "crystal" in key_name or "rune" in key_name:
+		mode = 13
+	elif "obsidian" in key_name:
+		mode = 9
+	var cache_key := "%s:%d" % [color.to_html(false), mode]
+	if _surface_material_cache.has(cache_key):
+		return _surface_material_cache[cache_key]
+	var material := ShaderMaterial.new()
+	material.shader = PAINTER_SHADER
+	material.set_shader_parameter("surface_albedo_atlas", SURFACE_ALBEDO_ATLAS)
+	material.set_shader_parameter("surface_roughness_atlas", SURFACE_ROUGHNESS_ATLAS)
+	material.set_shader_parameter("base_tint", color)
+	material.set_shader_parameter("accent_tint", color.darkened(0.28))
+	material.set_shader_parameter("brush_scale", 3.4)
+	material.set_shader_parameter("brush_strength", 0.12)
+	material.set_shader_parameter("pattern_mode", mode)
+	material.set_shader_parameter("detail_scale", 1.0)
+	material.set_shader_parameter("triplanar_sharpness", 4.2)
+	material.set_shader_parameter("bump_strength", 0.16)
+	_surface_material_cache[cache_key] = material
+	return material
 
 
 static func _build_stag(root: Node3D) -> void:
