@@ -29,7 +29,7 @@ jobs:
           import pathlib, requests, zipfile, io, re, json
           base='https://lazytextures.net:3000'
           session=requests.Session()
-          session.headers.update({'User-Agent':'TobiEBreuGameAssetImporter/1.1'})
+          session.headers.update({'User-Agent':'TobiEBreuGameAssetImporter/1.2'})
           root=pathlib.Path('assets/external_packs/lazytextures')
           model_root=root/'models'
           material_root=pathlib.Path('assets/textures/lazytextures')
@@ -87,7 +87,7 @@ jobs:
                       if not name or name in seen: continue
                       tags=item.get('tags',[])
                       metadata=' '.join([str(name),str(item.get('category','')),str(item.get('subCategory','')),' '.join(map(str,tags))]).lower()
-                      relevant = ('tree','forest','bush','plant','flower','rock','mushroom','stone','ruin','nature','vegetation','shrub') if kind=='models' else ('moss','stone','wood','mud','dirt','rock','grass','forest','metal','rust','snow','bark','soil','concrete')
+                      relevant = ('tree','forest','bush','plant','flower','rock','mushroom','stone','ruin','nature','vegetation','shrub','dead tree','root','crystal','fantasy','medieval','gate','tomb','shrine','grave') if kind=='models' else ('moss','stone','wood','mud','dirt','rock','grass','forest','metal','rust','snow','bark','soil','concrete','slate','marble','brick','lichen')
                       if not any(term in metadata for term in relevant):
                           continue
                       seen.add(name)
@@ -132,8 +132,8 @@ jobs:
                           print(f'IMPORTADO {kind}: {name} ({extracted} arquivos)')
                       if count>=maximum: return count
               return count
-          model_count=download_assets('models',['forest tree','rock nature','fantasy tree','mushroom','stone ruin'],model_root,12)
-          material_count=download_assets('materials',['moss stone','dark wood','mud ground','old stone','rusty metal','snow ground'],material_root,12)
+          model_count=download_assets('models',['forest tree','rock nature','fantasy tree','mushroom','stone ruin','dead tree','twisted roots','ancient medieval ruins','crystal formation','graveyard stone','dark forest vegetation'],model_root,16)
+          material_count=download_assets('materials',['moss stone','dark wood','mud ground','old stone','rusty metal','snow ground','forest floor','weathered wood','dark stone','mossy bark','ancient brick','slate rock'],material_root,16)
           print(f'Modelos importados: {model_count}; materiais PBR importados: {material_count}')
           if model_count+material_count==0:
               raise SystemExit('A API não retornou arquivos compatíveis. Verifique os diagnósticos acima.')
