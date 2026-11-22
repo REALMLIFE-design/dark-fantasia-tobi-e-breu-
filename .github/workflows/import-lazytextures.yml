@@ -1,0 +1,88 @@
+name: Importar assets CC0 da LazyTextures
+
+on:
+  push:
+    branches: [integration/definitive-all-versions]
+    paths: ['.github/workflows/import-lazytextures.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-lazytextures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+      - name: Baixar modelos e materiais CC0 pela API pública
+        run: |
+          python - <<'PY'
+          import pathlib, requests, zipfile, io, re, json
+          base='https://lazytextures.net:3000'
+          headers={'User-Agent':'TobiEBreuGameAssetImporter/1.0'}
+          root=pathlib.Path('assets/external_packs/lazytextures')
+          model_root=root/'models'
+          material_root=pathlib.Path('assets/textures/lazytextures')
+          session=requests.Session(); session.headers.update(headers)
+          def get(url):
+              r=session.get(url,timeout=90); r.raise_for_status(); return r
+          def safe(s): return re.sub(r'[^A-Za-z0-9_.-]+','_',s)[:90]
+          def search(kind, query, limit=30):
+              data=get(f'{base}/{kind}/Search').json() if False else get(f'{base}/{kind}/Search?q={requests.utils.quote(query)}&sortBy=downloads&limit={limit}').json()
+              return data.get('results',data.get('data',[]))
+          def archives(detail):
+              found=[]
+              for group in detail.get('archiveFiles',{}).values():
+                  if isinstance(group,list): found.extend(group)
+                  elif isinstance(group,dict):
+                      for value in group.values():
+                          if isinstance(value,list): found.extend(value)
+              return found
+          def download_assets(kind, queries, target, max_assets):
+              seen=set(); count=0
+              for query in queries:
+                  for item in search(kind,query):
+                      name=item.get('name')
+                      if not name or name in seen: continue
+                      seen.add(name)
+                      detail=get(f'{base}/Asset/{kind}/{requests.utils.quote(name,safe="")}').json()
+                      files=archives(detail)
+                      if not files: continue
+                      files.sort(key=lambda x: (0 if '1k' in x.get('name','').lower() else 1, x.get('size',10**12)))
+                      chosen=files[0]
+                      path=chosen.get('path')
+                      if not path: continue
+                      url=path if path.startswith('http') else base+path
+                      response=get(url)
+                      folder=target/safe(name); folder.mkdir(parents=True,exist_ok=True)
+                      archive=zipfile.ZipFile(io.BytesIO(response.content))
+                      extracted=0
+                      for member in archive.infolist():
+                          if member.is_dir(): continue
+                          suffix=pathlib.Path(member.filename).suffix.lower()
+                          allowed={'.fbx','.gltf','.glb','.obj','.mtl','.png','.jpg','.jpeg','.tif','.tiff','.exr','.txt'}
+                          if suffix not in allowed: continue
+                          destination=folder/pathlib.Path(member.filename).name
+                          destination.write_bytes(archive.read(member)); extracted+=1
+                      if extracted:
+                          count+=1; print(f'{kind}: {name} ({extracted} arquivos)')
+                      if count>=max_assets: return count
+              return count
+          model_count=download_assets('models',['forest tree','rock nature','fantasy tree','mushroom','stone ruin'],model_root,12)
+          material_count=download_assets('materials',['moss stone','dark wood','mud ground','old stone','rusty metal','snow ground'],material_root,12)
+          print(f'Modelos importados: {model_count}; materiais PBR importados: {material_count}')
+          if model_count+material_count==0: raise SystemExit('A API respondeu, mas não forneceu arquivos compatíveis para download.')
+          (root/'SOURCE-LICENSE.md').write_text('# LazyTextures\nAssets obtidos pela API pública https://www.lazytextures.com/PublicAPI. A biblioteca declara licença CC0 1.0 para os assets. Consulte os metadados individuais antes de redistribuir arquivos isolados.\n',encoding='utf-8')
+          PY
+      - name: Salvar assets no GitHub
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/lazytextures assets/textures/lazytextures
+          if git diff --cached --quiet; then echo 'Nenhum arquivo novo'; exit 0; fi
+          git commit -m 'Importa modelos e materiais CC0 da LazyTextures'
+          git push origin HEAD:integration/definitive-all-versions
