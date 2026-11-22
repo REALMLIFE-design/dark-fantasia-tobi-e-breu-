@@ -1344,6 +1344,62 @@ func _spawn_whisper_stag_guardian() -> void:
 	var idle := create_tween().set_loops()
 	idle.tween_property(guardian, "rotation:y", 0.045, 2.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	idle.tween_property(guardian, "rotation:y", -0.045, 5.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_request_whisper_stag_model(guardian)
+
+
+func _request_whisper_stag_model(guardian: Node3D) -> void:
+	# Existing Thrixel model is fetched once and cached locally; the procedural
+	# guardian remains visible if the player is offline or the service is down.
+	const STAG_URL := "https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024"
+	const CACHE_PATH := "user://cache/whisper_stag.glb"
+	if FileAccess.file_exists(CACHE_PATH):
+		var cached := FileAccess.open(CACHE_PATH, FileAccess.READ)
+		if cached and _apply_whisper_stag_model(cached.get_buffer(cached.get_length()), guardian):
+			return
+	var request := HTTPRequest.new()
+	request.name = "WhisperStagModelRequest"
+	request.timeout = 30.0
+	guardian.add_child(request)
+	request.request_completed.connect(_on_whisper_stag_model_downloaded.bind(guardian, request))
+	var request_error := request.request(STAG_URL)
+	if request_error != OK:
+		push_warning("Não foi possível iniciar o download do Guardião Cervo: %s" % request_error)
+		request.queue_free()
+
+
+func _on_whisper_stag_model_downloaded(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, guardian: Node3D, request: HTTPRequest) -> void:
+	if is_instance_valid(request):
+		request.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200 or body.is_empty():
+		push_warning("O Guardião Cervo 3D não pôde ser baixado; mantendo o modelo local.")
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://cache"))
+	var cache_file := FileAccess.open("user://cache/whisper_stag.glb", FileAccess.WRITE)
+	if cache_file:
+		cache_file.store_buffer(body)
+	_apply_whisper_stag_model(body, guardian)
+
+
+func _apply_whisper_stag_model(data: PackedByteArray, guardian: Node3D) -> bool:
+	if data.is_empty() or not is_instance_valid(guardian):
+		return false
+	var gltf := GLTFDocument.new()
+	var state := GLTFState.new()
+	var parse_error := gltf.append_from_buffer(data, "", state)
+	if parse_error != OK:
+		push_warning("O modelo GLB do Guardião Cervo não pôde ser interpretado.")
+		return false
+	var imported := gltf.generate_scene(state)
+	if imported == null:
+		return false
+	imported.name = "ThrixelWhisperStag"
+	imported.position = Vector3(0.0, 0.54, 0.0)
+	guardian.add_child(imported)
+	# Keep the stone pedestal and hide only the temporary procedural animal.
+	for child in guardian.get_children():
+		if child is MeshInstance3D and child.name not in ["StagPedestal", "StagPedestalTrim"]:
+			child.visible = false
+	return true
 
 
 func _add_stag_antler_segment(parent: Node3D, segment_name: String, start: Vector3, finish: Vector3, radius: float, color: Color) -> MeshInstance3D:
