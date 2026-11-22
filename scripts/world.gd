@@ -1868,7 +1868,7 @@ func _build_hud() -> void:
 	shadow_skill_label = Label.new()
 	shadow_skill_label.name = "ShadowSkillLabel"
 	shadow_skill_label.position = Vector2(18, 328)
-	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
+	shadow_skill_label.text = "BREU  •  Pulso [K]  •  Aparar [F]"
 	shadow_skill_label.add_theme_font_size_override("font_size", 10)
 	shadow_skill_label.add_theme_color_override("font_color", Color("b6a1d6"))
 	ui_root.add_child(shadow_skill_label)
