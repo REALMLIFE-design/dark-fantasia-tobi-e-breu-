@@ -199,3 +199,11 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - A API da LazyTextures já baixou modelos e materiais CC0; o commit automático para o repositório ainda está em andamento nesta atualização. Não contar esses arquivos como versionados até confirmar o push.
 - A tentativa de baixar o pack Quaternius pelo Google Drive foi bloqueada pelo limite de downloads do próprio Drive. Nenhum arquivo parcial foi tratado como integrado; foi mantido o caminho alternativo de fontes com API/CDN pública.
 - O workflow Android foi acionado para validar os contratos e importar o projeto, mas a compilação Godot/APK ainda não está confirmada. Não declarar APK pronto nem runtime validado até o workflow concluir com sucesso.
+
+
+## Novos modelos 3D locais — 22/11/2026
+- Adicionados quatro modelos compostos low-poly ao pack procedural: Carroça do Coletor de Ossos, Círculo de Runas Sussurrantes, Poço Amaldiçoado e Estátua do Guardião Caído.
+- Os modelos são construídos com malhas nativas do Godot e reutilizam o shader painterly e os materiais/atlases existentes; não exigem Meshy, downloads ou créditos.
+- Os quatro objetos são instanciados automaticamente em pontos das regiões já existentes por `scripts/dark_fantasy_prop_pack.gd`; nenhum mapa, missão, save, HUD ou sistema de combate foi substituído.
+- Adicionado teste de contrato para os quatro construtores e seus nomes de cena.
+- Ainda falta o workflow executar os testes e validar a cena no Godot/Android. Até essa execução, não declarar compilação ou desempenho mobile confirmados.
