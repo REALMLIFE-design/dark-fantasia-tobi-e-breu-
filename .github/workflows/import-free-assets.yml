@@ -31,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/quaternius assets/external_packs/quaternius_stylized_nature
-          gdown --folder 'https://drive.google.com/drive/folders/1IV3bXHzkNvuNWFHPi4KPx-G4ghuxIuT-' -O /tmp/quaternius --remaining-ok
+          gdown --folder 'https://drive.google.com/drive/folders/1IV3bXHzkNvuNWFHPi4KPx-G4ghuxIuT-' -O /tmp/quaternius
           find /tmp/quaternius -type f -iname '*.zip' -print0 | while IFS= read -r -d '' archive; do
             mkdir -p "${archive%.zip}"
             unzip -oq "$archive" -d "${archive%.zip}"
