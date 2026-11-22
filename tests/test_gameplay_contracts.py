@@ -76,11 +76,17 @@ class GameplayContracts(unittest.TestCase):
         for key in ('meshy_gate', 'meshy_rune_obelisk', 'meshy_way_shrine'):
             self.assertIn('load_meshy_asset(self, "%s"' % key, world)
 
-    def test_gameplay_uses_versioned_3d_tobi_model_when_meshy_asset_is_missing(self):
-        self.assertIn('Tobi3DCC0Fallback', self.player)
-        self.assertIn('low-poly-character-figures-knight-sword-raised-5e8b7e11.glb', self.player)
+    def test_gameplay_keeps_authored_animated_tobi_when_meshy_asset_is_missing(self):
+        self.assertIn('func _make_character() -> void:', self.player)
+        self.assertIn('GLB final do Tobi ainda não instalado; mantendo o Tobi autoral animado.', self.player)
+        self.assertIn('load_optional_scene("meshy_tobi_hero")', self.player)
+        self.assertIn('if hero_scene == null:', self.player)
+        self.assertNotIn('Tobi3DCC0Fallback', self.player)
+        self.assertNotIn('low-poly-character-figures-knight-sword-raised-5e8b7e11.glb', self.player)
         self.assertIn('visual.set_meta("external_tobi_model", hero)', self.player)
         self.assertIn('if visual.has_node("Breu"):', self.player)
+        self.assertIn('visual.set_meta("left_arm", left_arm)', self.player)
+        self.assertIn('visual.set_meta("right_arm", right_arm)', self.player)
 
     def test_keyboard_dodge_is_wired(self):
         self.assertIn('Input.is_action_just_pressed("dodge")', self.player)
