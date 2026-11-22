@@ -214,15 +214,11 @@ jobs:
       - name: Preparar patch incremental Android
         id: patch
         if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
-        env:
-          PUSH_BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          if [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
-            git diff --name-only --diff-filter=ACMRT "$PUSH_BEFORE" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
-          else
-            git diff --name-only --diff-filter=ACMRT HEAD^ HEAD > "$RUNNER_TEMP/changed-files.txt"
-          fi
+          git fetch origin fix/android-ci-validation
+          # Compare with the PR base so a canceled earlier build cannot lose its changes.
+          git diff --name-only --diff-filter=ACMRT origin/fix/android-ci-validation...$GITHUB_SHA > "$RUNNER_TEMP/changed-files.txt"
           python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
           import json, pathlib, re, sys
           preset = pathlib.Path(sys.argv[1])
