@@ -55,8 +55,10 @@
       "target_polycount": 4000,
       "texture_resolution": "2k",
       "expected_import_path": "assets/plugin_imports/meshy/ancient_tree.glb",
-      "status": "texturing_in_progress",
-      "binary_transferred_to_repository": false
+      "status": "generated_download_blocked_by_plan",
+      "binary_transferred_to_repository": false,
+      "integration_hook": "scripts/world.gd::_build_ancient_tree_landmark",
+      "note": "Texture generation succeeded; Meshy download_model rejected GLB export because the connected plan requires an upgrade. The Godot loader uses a procedural fallback until the GLB is imported."
     }
   ]
 }
