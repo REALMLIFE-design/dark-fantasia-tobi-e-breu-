@@ -33,6 +33,8 @@ static func build_all(parent: Node3D) -> void:
 	_build_hunters_camp(parent, Vector3(-142, 0, 62))
 	_build_river_bridge(parent, Vector3(61, 0, -156))
 	_build_watchtower(parent, Vector3(200, 0, 68))
+	_build_blacksmith_forge(parent, Vector3(-121, 0, 96))
+	_build_alchemist_workshop(parent, Vector3(188, 0, 100))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -491,3 +493,68 @@ static func _build_watchtower(parent: Node3D, position: Vector3) -> void:
 	_cone(root, "TowerRoof", Vector3(0, 7.15, 0), 1.8, 2.0, Color("554b43"), 4)
 	_box(root, "TowerBannerPole", Vector3(0, 8.5, 0), Vector3(0.12, 2.0, 0.12), Color("4c5050"), 12)
 	_box(root, "TowerBanner", Vector3(0.65, 8.25, 0), Vector3(1.2, 1.25, 0.08), Color("733b43"), 11)
+
+
+# Oficinas regionais: cenografia detalhada, sem alterar economia ou interacoes.
+static func _build_blacksmith_forge(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "OakVillageBlacksmithForge", position)
+	# Base de pedra e lareira de forja
+	_box(root, "ForgeStoneFoundation", Vector3(0, 0.22, 0), Vector3(5.2, 0.44, 3.8), Color("555a54"), 10)
+	_box(root, "ForgeHearthBody", Vector3(0, 1.15, -0.75), Vector3(2.8, 1.9, 1.45), Color("4a4842"), 10)
+	_box(root, "ForgeMouthDark", Vector3(0, 0.92, 0.02), Vector3(1.45, 1.05, 0.12), Color("171b1b"), 9)
+	_box(root, "ForgeEmberBed", Vector3(0, 0.72, 0.12), Vector3(1.05, 0.18, 0.12), Color("d47743"), 13, true)
+	for side in [-1.0, 1.0]:
+		_box(root, "ForgeStonePier", Vector3(side * 1.18, 1.75, -0.7), Vector3(0.34, 2.9, 1.35), Color("686b61"), 10)
+		_box(root, "ForgeIronBracket", Vector3(side * 1.0, 2.35, 0.08), Vector3(0.18, 0.12, 0.85), Color("353b3d"), 12)
+	# Bigorna, martelo e tenazes
+	_box(root, "AnvilFoot", Vector3(1.45, 0.48, 0.78), Vector3(0.75, 0.42, 0.7), Color("493d32"), 4)
+	_cylinder(root, "AnvilWaist", Vector3(1.45, 0.88, 0.78), 0.25, 0.55, Color("51595b"), 12, 24)
+	_box(root, "AnvilFace", Vector3(1.45, 1.22, 0.78), Vector3(1.25, 0.22, 0.62), Color("788184"), 12)
+	_cone(root, "AnvilHorn", Vector3(2.12, 1.22, 0.78), 0.22, 0.72, Color("899294"), 12)
+	var hammer := _box(root, "SmithHammerHead", Vector3(-1.45, 1.28, 0.7), Vector3(0.72, 0.22, 0.25), Color("717a7b"), 12)
+	hammer.rotation.z = -0.12
+	_cylinder(root, "SmithHammerHandle", Vector3(-1.45, 0.78, 0.7), 0.07, 0.9, Color("76553a"), 4, 16)
+	# Suportes de armas e placas de metal
+	for i in range(3):
+		var blade := _box(root, "DisplayBlade_%d" % i, Vector3(-2.05 + float(i) * 0.42, 1.28, -1.45), Vector3(0.08, 1.35, 0.12), Color("9aa4a2"), 12)
+		blade.rotation.z = -0.12 + float(i) * 0.12
+		_box(root, "BladeGrip_%d" % i, Vector3(-2.05 + float(i) * 0.42, 0.58, -1.45), Vector3(0.14, 0.32, 0.16), Color("674631"), 4)
+	# Chaminé e faíscas decorativas
+	_box(root, "ForgeChimney", Vector3(0, 3.25, -1.18), Vector3(1.2, 2.2, 1.1), Color("555750"), 10)
+	_box(root, "ChimneyCap", Vector3(0, 4.42, -1.18), Vector3(1.5, 0.22, 1.4), Color("393d3b"), 10)
+	for i in range(4):
+		_sphere(root, "ForgeSpark_%d" % i, Vector3(-0.32 + float(i) * 0.2, 1.05 + float(i % 2) * 0.3, 0.24), 0.045, Color("ffb56d"), Vector3.ONE, 13, true)
+	_box(root, "CoalSack", Vector3(2.0, 0.52, -0.9), Vector3(0.72, 0.72, 0.62), Color("51463b"), 4)
+	_box(root, "CoalSackTie", Vector3(2.0, 0.88, -0.9), Vector3(0.32, 0.12, 0.34), Color("8a765c"), 4)
+
+
+static func _build_alchemist_workshop(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "StoneCityAlchemistWorkshop", position)
+	_box(root, "AlchemyFloor", Vector3(0, 0.16, 0), Vector3(5.6, 0.32, 4.2), Color("555e58"), 10)
+	_box(root, "AlchemyWorkbench", Vector3(0, 1.05, 0.2), Vector3(3.8, 0.22, 1.25), Color("604833"), 4)
+	for side in [-1.0, 1.0]:
+		for depth in [-1.0, 1.0]:
+			_box(root, "WorkbenchLeg", Vector3(side * 1.55, 0.58, 0.62 + depth * 0.22), Vector3(0.16, 1.05, 0.16), Color("49382f"), 4)
+	# Frascos de vidro com líquidos de cores distintas
+	var bottle_colors := [Color("6fc3a0"), Color("b86c91"), Color("76a9d6"), Color("d5a85f")]
+	for i in range(4):
+		var x := -1.25 + float(i) * 0.82
+		_cylinder(root, "PotionBottleBody_%d" % i, Vector3(x, 1.48, 0.12), 0.22, 0.58, Color("a9b8ad"), 13, 20)
+		_cylinder(root, "PotionLiquid_%d" % i, Vector3(x, 1.43, 0.12), 0.18, 0.34, bottle_colors[i], 13, 20)
+		_cylinder(root, "PotionNeck_%d" % i, Vector3(x, 1.88, 0.12), 0.09, 0.24, Color("9ca99f"), 13, 16)
+		_cylinder(root, "PotionCork_%d" % i, Vector3(x, 2.04, 0.12), 0.105, 0.12, Color("8a6240"), 4, 12)
+	# Caldeirao de mistura e suporte de aquecimento
+	_cylinder(root, "MixingCauldron", Vector3(1.2, 0.78, -1.25), 0.62, 0.78, Color("343d3b"), 10, 24)
+	_cylinder(root, "CauldronRim", Vector3(1.2, 1.2, -1.25), 0.69, 0.14, Color("78817a"), 12, 24)
+	_cylinder(root, "PotionSurface", Vector3(1.2, 1.27, -1.25), 0.54, 0.06, Color("74b98a"), 13, 24)
+	for i in range(3):
+		var leg := _box(root, "CauldronStandLeg_%d" % i, Vector3(1.2 + cos(TAU * float(i) / 3.0) * 0.5, 0.32, -1.25 + sin(TAU * float(i) / 3.0) * 0.5), Vector3(0.12, 0.62, 0.12), Color("51463b"), 4)
+		leg.rotation.z = 0.08
+	# Prateleira de ingredientes, livros e cristais
+	_box(root, "IngredientShelf", Vector3(-1.55, 2.05, -1.35), Vector3(1.25, 0.16, 0.5), Color("674c35"), 4)
+	for i in range(3):
+		_sphere(root, "IngredientJar_%d" % i, Vector3(-1.92 + float(i) * 0.38, 2.42, -1.35), 0.15, bottle_colors[i], Vector3(0.9, 1.25, 0.9), 13, true)
+	_box(root, "Spellbook", Vector3(-1.3, 1.28, 0.42), Vector3(0.72, 0.12, 0.55), Color("563b4b"), 11)
+	_box(root, "SpellbookClasp", Vector3(-1.3, 1.36, 0.7), Vector3(0.08, 0.08, 0.05), Color("d3b16d"), 12, true)
+	_cone(root, "FocusCrystal", Vector3(2.15, 1.72, 0.38), 0.28, 1.05, Color("8ac9c1"), 13)
+	_sphere(root, "FocusCrystalGlow", Vector3(2.15, 2.15, 0.38), 0.12, Color("b4f4dc"), Vector3.ONE, 13, true)
