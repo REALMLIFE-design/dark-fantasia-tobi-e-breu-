@@ -242,3 +242,10 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Adicionado o Portal da Fenda Rubra, com pilares, lintel, pedra-chave emissiva e cinco runas.
 - Os dois modelos são malhas low-poly procedurais e entram no construtor central do pacote de props; não dependem de downloads nem créditos externos.
 - Testes de contrato adicionados. Aguardando validação pelo workflow Android/Godot.
+
+
+## Marcos ambientais — Pântano dos Ratos e Rio Prateado (22/11/2026)
+- Adicionado o Caldeirão da Bruxa do Pântano, com estrutura metálica, pernas, mistura tóxica e bolhas emissivas.
+- Adicionado o Marco do Sino Afogado no Rio Prateado, com base de pedra, pilares, viga, sino suspenso e runa.
+- Ambos são modelos procedurais leves integrados ao pacote de construção do mundo.
+- Testes de contrato adicionados; validação Godot/Android pendente no workflow mais recente.
