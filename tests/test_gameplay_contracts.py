@@ -983,3 +983,25 @@ class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
         self.assertIn('minf(560.0, viewport_width * 0.90)', menu)
         self.assertIn('minf(520.0, available_width * 0.84)', menu)
+
+
+class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
+    def test_hud_and_menu_canvas_layers_are_explicitly_ordered(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("hud.layer = 90", world)
+        self.assertIn("hud.visible = true", world)
+        self.assertIn("menu_layer.layer = 100", world)
+
+    def test_gameplay_buttons_use_nine_slice_texture_asset(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        self.assertIn('res://assets/ui/button_frame.svg', world)
+        self.assertIn('res://assets/ui/button_frame.svg', menu)
+        self.assertIn("StyleBoxTexture.new()", world)
+        self.assertIn("StyleBoxTexture.new()", menu)
+
+    def test_ui_panel_shadows_are_reduced_for_mobile(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("panel_style.shadow_size = 3", world)
+        self.assertIn("menu_frame_style.shadow_size = 8", world)
+        self.assertIn("card_style.shadow_size = 2", world)

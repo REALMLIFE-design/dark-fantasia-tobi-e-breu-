@@ -2,6 +2,7 @@ extends Control
 
 const STORY_SCENE := "res://scenes/main.tscn"
 const MAX_ADVENTURE_PLAYERS := 4
+const UI_BUTTON_TEXTURE := preload("res://assets/ui/button_frame.svg")
 
 var status_label: Label
 var notice_dialog: AcceptDialog
@@ -101,20 +102,21 @@ func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, ac
 	button.add_theme_font_size_override("font_size", 17 if primary else 15)
 	button.add_theme_color_override("font_color", Color("f4eddb"))
 	button.add_theme_color_override("font_hover_color", Color("fff8e8"))
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color("34463f") if primary else Color("202e2d")
-	normal.border_color = Color("b79a5b") if primary else Color("52665d")
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(8)
-	normal.content_margin_left = 16
-	normal.content_margin_right = 16
-	normal.content_margin_top = 8
-	normal.content_margin_bottom = 8
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color("40584c") if primary else Color("2b3d39")
+	var normal := StyleBoxTexture.new()
+	normal.texture = UI_BUTTON_TEXTURE
+	normal.texture_margin_left = 24.0
+	normal.texture_margin_right = 24.0
+	normal.texture_margin_top = 18.0
+	normal.texture_margin_bottom = 18.0
+	normal.modulate_color = Color("b79a5b") if primary else Color("8caa98")
 	button.add_theme_stylebox_override("normal", normal)
+	var hover := normal.duplicate() as StyleBoxTexture
+	hover.modulate_color = Color("f0d49b")
 	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", hover)
+	var pressed := normal.duplicate() as StyleBoxTexture
+	pressed.modulate_color = Color("d7b06d")
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
 	button.pressed.connect(action)
 	parent.add_child(button)
 

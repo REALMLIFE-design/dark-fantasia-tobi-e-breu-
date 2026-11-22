@@ -1900,7 +1900,8 @@ func _build_hud() -> void:
 	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
 	hud.name = "GameHUD"
-	hud.layer = 20
+	hud.layer = 90
+	hud.visible = true
 	add_child(hud)
 
 	# A consistent dark-fantasy UI skin: warm parchment text, muted stone panels
@@ -1934,8 +1935,8 @@ func _build_hud() -> void:
 	panel_style.content_margin_top = 11.0
 	panel_style.content_margin_bottom = 11.0
 	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.58)
-	panel_style.shadow_size = 10
-	panel_style.shadow_offset = Vector2(0, 4)
+	panel_style.shadow_size = 3
+	panel_style.shadow_offset = Vector2(0, 1)
 	var quest_panel_style := panel_style.duplicate() as StyleBoxFlat
 	quest_panel_style.bg_color = Color(0.055, 0.047, 0.034, 0.97)
 	quest_panel_style.border_color = Color("b18a52")
@@ -2186,9 +2187,9 @@ func _build_hud() -> void:
 		move_btn.position = Vector2(-27, -27)
 		move_btn.size = Vector2(54, 54)
 		move_btn.add_theme_font_size_override("font_size", 19)
-		move_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.075, 0.067, 0.92), Color("6e9b89"), 27))
-		move_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.09, 0.15, 0.12, 0.98), Color("a0c4a9"), 27))
-		move_btn.add_theme_stylebox_override("pressed", _hud_button_style(Color(0.18, 0.23, 0.15, 1.0), Color("d5bd7e"), 27))
+		move_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(Color("8eb5a1")))
+		move_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("b5d6bd")))
+		move_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("e0c58a")))
 		move_btn.modulate = Color(1, 1, 1, 0.96)
 		move_btn.button_down.connect(Input.action_press.bind(data.a))
 		move_btn.button_up.connect(Input.action_release.bind(data.a))
@@ -2224,9 +2225,9 @@ func _build_hud() -> void:
 		elif data.a == "upgrade":
 			action_fill = Color(0.15, 0.11, 0.045, 0.98)
 			action_accent = Color("d0ad6e")
-		action_btn.add_theme_stylebox_override("normal", _hud_button_style(action_fill, action_accent, 16))
-		action_btn.add_theme_stylebox_override("hover", _hud_button_style(action_fill.lightened(0.16), action_accent.lightened(0.18), 16))
-		action_btn.add_theme_stylebox_override("pressed", _hud_button_style(action_fill.lightened(0.28), Color("f0d49b"), 16))
+		action_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(action_accent))
+		action_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(action_accent.lightened(1.22)))
+		action_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
 		action_btn.pressed.connect(_touch_action.bind(data.a))
 		ui_root.add_child(action_btn)
 
@@ -2241,8 +2242,8 @@ func _build_hud() -> void:
 	pause_btn.position = Vector2(-34, -4)
 	pause_btn.size = Vector2(48, 48)
 	pause_btn.add_theme_font_size_override("font_size", 19)
-	pause_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.045, 0.04, 0.96), Color("b18a52"), 16))
-	pause_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.13, 0.11, 0.075, 0.98), Color("dfbd7b"), 16))
+	pause_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(Color("c6a46b")))
+	pause_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("f0d49b")))
 	pause_btn.pressed.connect(_open_menu.bind("pause"))
 	ui_root.add_child(pause_btn)
 
@@ -2370,7 +2371,7 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 func _build_menus() -> void:
 	menu_layer = CanvasLayer.new()
 	menu_layer.name = "GameMenus"
-	menu_layer.layer = 40
+	menu_layer.layer = 100
 	menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(menu_layer)
 	var dimmer := ColorRect.new()
@@ -2391,8 +2392,8 @@ func _build_menus() -> void:
 	var menu_frame_style := _hud_button_style(Color("111916"), Color("a98752"), 18)
 	menu_frame_style.set_border_width_all(2)
 	menu_frame_style.shadow_color = Color(0.0, 0.0, 0.0, 0.82)
-	menu_frame_style.shadow_size = 28
-	menu_frame_style.shadow_offset = Vector2(0, 10)
+	menu_frame_style.shadow_size = 8
+	menu_frame_style.shadow_offset = Vector2(0, 3)
 	menu_frame_style.content_margin_left = 22.0
 	menu_frame_style.content_margin_right = 22.0
 	menu_frame_style.content_margin_top = 18.0
@@ -2830,15 +2831,15 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	button.add_theme_color_override("font_hover_color", Color("fff0cf"))
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
-	var normal_style := _hud_button_style(fill, edge, 13)
+	var normal_style := _ui_button_texture_style(edge)
 	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.22)
 	normal_style.shadow_size = 2
 	normal_style.shadow_offset = Vector2(0, 1)
 	button.add_theme_stylebox_override("normal", normal_style)
-	button.add_theme_stylebox_override("hover", _hud_button_style(fill.lightened(0.18), edge.lightened(0.2), 13))
-	button.add_theme_stylebox_override("pressed", _hud_button_style(fill.lightened(0.3), Color("f0d49b"), 13))
-	button.add_theme_stylebox_override("focus", _hud_button_style(fill.lightened(0.12), Color("e8c987"), 13))
-	button.add_theme_stylebox_override("disabled", _hud_button_style(Color("202722"), Color("51594f"), 13))
+	button.add_theme_stylebox_override("hover", _ui_button_texture_style(edge.lightened(1.22)))
+	button.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
+	button.add_theme_stylebox_override("focus", _ui_button_texture_style(Color("e8c987")))
+	button.add_theme_stylebox_override("disabled", _ui_button_texture_style(Color("59645b")))
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -2849,8 +2850,8 @@ func _menu_add_card(parent: Control, heading: String, body: String) -> void:
 	var card_style := _hud_button_style(Color("1a241f"), Color("786443"), 12)
 	card_style.set_border_width_all(1)
 	card_style.shadow_color = Color(0.0, 0.0, 0.0, 0.38)
-	card_style.shadow_size = 6
-	card_style.shadow_offset = Vector2(0, 3)
+	card_style.shadow_size = 2
+	card_style.shadow_offset = Vector2(0, 1)
 	card_style.content_margin_left = 15.0
 	card_style.content_margin_right = 15.0
 	card_style.content_margin_top = 12.0
@@ -2894,6 +2895,7 @@ func _open_menu(page: String = "pause") -> void:
 
 
 func _start_game() -> void:
+	if is_instance_valid(hud): hud.visible = true
 	if game_started:
 		_close_menu()
 		return
@@ -2980,6 +2982,18 @@ func _hud_bar_style(color: Color) -> StyleBoxFlat:
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(7)
 	style.anti_aliasing = true
+	return style
+
+
+func _ui_button_texture_style(tint: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = load("res://assets/ui/button_frame.svg")
+	style.texture_margin_left = 24.0
+	style.texture_margin_right = 24.0
+	style.texture_margin_top = 18.0
+	style.texture_margin_bottom = 18.0
+	style.modulate_color = tint
+	style.draw_center = true
 	return style
 
 
