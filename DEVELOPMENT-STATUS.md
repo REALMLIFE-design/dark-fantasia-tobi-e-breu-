@@ -257,3 +257,10 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Integrado o Agrupamento de Cristais da Caverna do Eco com sete cristais e núcleo emissivo.
 - Atualizado teste antigo de contrato do workflow Android para refletir a busca atual por project.godot na raiz ou subpastas. O teste anterior exigia um trecho de shell que já havia sido substituído por uma busca mais abrangente; a falha era do teste desatualizado, não da etapa de localização do projeto.
 - Testes de contrato adicionados para os três novos conjuntos; aguardando execução no CI.
+
+
+## Modelo 3D — Gato companheiro de Tobi (22/11/2026)
+- Criado um gato low-poly procedural com corpo, cabeça, orelhas, olhos âmbar, bigodes, patas, cauda segmentada, coleira vinho e medalhão dourado.
+- Integrado ao `DarkFantasyPropPack.build_all()` perto da clareira inicial, sem substituir personagens ou alterar missões.
+- Incluído teste de contrato para confirmar a presença e integração das partes principais.
+- Ainda precisa de validação no Godot 4.3 e em Android; o modelo é visual nesta etapa, sem comportamento de companheiro.
