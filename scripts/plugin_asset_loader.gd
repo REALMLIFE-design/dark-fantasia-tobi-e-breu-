@@ -60,5 +60,56 @@ static func load_pinoc_motion(asset_key: String) -> PackedScene:
 	return load_optional_scene(asset_key)
 
 
+
+static func download_and_load_plugin_asset(parent: Node3D, asset_key: String, position: Vector3, scale: Vector3 = Vector3.ONE) -> void:
+	if parent == null or not PluginAssetCatalog.DOWNLOAD_URLS.has(asset_key):
+		return
+	var target_path: String = PluginAssetCatalog.ASSETS.get(asset_key, "")
+	if target_path.is_empty():
+		return
+	if FileAccess.file_exists(target_path):
+		_load_downloaded_glb(parent, asset_key, target_path, position, scale)
+		return
+	var directory := target_path.get_base_dir()
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
+	var request := HTTPRequest.new()
+	request.timeout = 120.0
+	parent.add_child(request)
+	request.request_completed.connect(func(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+		request.queue_free()
+		if result != HTTPRequest.RESULT_SUCCESS or response_code != 200 or body.is_empty():
+			push_warning("Falha ao baixar asset do plugin: " + asset_key)
+			return
+		var file := FileAccess.open(target_path, FileAccess.WRITE)
+		if file == null:
+			push_warning("Não foi possível salvar asset: " + target_path)
+			return
+		file.store_buffer(body)
+		file.close()
+		_load_downloaded_glb(parent, asset_key, target_path, position, scale)
+	)
+	var error := request.request(PluginAssetCatalog.get_download_url(asset_key))
+	if error != OK:
+		request.queue_free()
+		push_warning("Não foi possível iniciar download do asset: " + asset_key)
+
+
+static func _load_downloaded_glb(parent: Node3D, asset_key: String, path: String, position: Vector3, scale: Vector3) -> void:
+	var document := GLTFDocument.new()
+	var state := GLTFState.new()
+	var error := document.append_from_file(path, state)
+	if error != OK:
+		push_warning("GLB inválido para asset: " + asset_key)
+		return
+	var instance := document.generate_scene(state)
+	if instance == null:
+		push_warning("Não foi possível montar a cena GLB: " + asset_key)
+		return
+	instance.name = asset_key
+	instance.position = position
+	instance.scale = scale
+	parent.add_child(instance)
+
+
 static func load_meshy_gate(parent: Node3D, position: Vector3, scale: Vector3 = Vector3.ONE) -> Node3D:
 	return load_meshy_asset(parent, "meshy_gate", position, scale)
