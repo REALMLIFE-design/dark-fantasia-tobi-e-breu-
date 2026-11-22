@@ -264,3 +264,12 @@ A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para
 - Integrado ao `DarkFantasyPropPack.build_all()` perto da clareira inicial, sem substituir personagens ou alterar missões.
 - Incluído teste de contrato para confirmar a presença e integração das partes principais.
 - Ainda precisa de validação no Godot 4.3 e em Android; o modelo é visual nesta etapa, sem comportamento de companheiro.
+
+
+## Expansão de modelos 3D — qualidade e integração (22/11/2026)
+- Confirmado que world.gd chama o construtor central DarkFantasyPropPack.build_all() durante a montagem do mundo e também solicita os modelos externos cadastrados.
+- Refinada a resolução das malhas esféricas para 24 segmentos radiais e 16 anéis; cilindros e cones passaram a usar mais segmentos.
+- O gato de Tobi recebeu detalhes adicionais de pelagem, sobrancelhas, dedos, tufos do peito, rebites da coleira e medalhão em camadas.
+- Todos os conjuntos ambientais e marcos procedurais existentes permanecem registrados no build_all; os modelos GLB do catálogo Thrixel/Meshy e os pacotes externos são carregados quando seus binários estão disponíveis.
+- Corrigido erro de GDScript na criação do anel emissivo do Altar Glacial: o material emissivo agora é aplicado após criar o cilindro, respeitando a assinatura do helper.
+- A validação do Godot anterior detectou esse erro de argumentos; nova execução do workflow está em andamento após a correção. Não marcar APK como concluído até o CI terminar.
