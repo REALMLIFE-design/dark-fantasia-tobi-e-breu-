@@ -304,6 +304,16 @@ func _physics_process(delta: float) -> void:
 	camera_pivot.rotation.y = lerp_angle(camera_pivot.rotation.y,-rotation.y + camera_yaw_offset,delta*4.0)
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		camera_yaw_offset -= Input.get_last_mouse_velocity().x*0.0015
+	# Right analog stick: orbit and tilt the camera on Bluetooth/USB controllers.
+	var connected_pads := Input.get_connected_joypads()
+	if not connected_pads.is_empty():
+		var pad_id: int = connected_pads[0]
+		var look_x := Input.get_joy_axis(pad_id, JOY_AXIS_RIGHT_X)
+		var look_y := Input.get_joy_axis(pad_id, JOY_AXIS_RIGHT_Y)
+		if absf(look_x) > 0.12:
+			camera_yaw_offset -= look_x * delta * 2.4
+		if absf(look_y) > 0.12:
+			camera.rotation.x = clampf(camera.rotation.x + look_y * delta * 1.8, -0.75, -0.08)
 	if attack_flash > 0.0:
 		attack_visual.rotation.y = sin((1.0 - attack_flash / 0.28) * PI) * 1.35
 	else:
