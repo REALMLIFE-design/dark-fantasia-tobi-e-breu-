@@ -791,6 +791,8 @@ func _build_world_civilization() -> void:
 
 
 func _build_mill_village() -> void:
+	var village_road := _box(self, "RoadToMillVillage", Vector3(-176.0, 0.035, 103.0), Vector3(132.0, 0.07, 5.0), Color("665844"))
+	village_road.rotation.y = -0.07
 	var center := Vector3(-238.0, 0.0, 112.0)
 	var village := Node3D.new()
 	village.name = "VilaDoMoinho"
