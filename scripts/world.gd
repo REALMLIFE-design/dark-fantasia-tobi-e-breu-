@@ -771,6 +771,9 @@ func _build_world_civilization() -> void:
 	# Every structure uses low-cost meshes and keeps the established painterly palette.
 	_build_settlement("VilaDoCarvalho", Vector3(-112.0, 0.0, 92.0), "VILA DO CARVALHO", 7, Color("6b5948"), Color("8c765a"))
 	_build_settlement("CidadeDePedra", Vector3(174.0, 0.0, 88.0), "CIDADE DE PEDRA", 11, Color("62645f"), Color("827f72"))
+	# Nova vila independente: arquitetura de madeira, canal, roda d'água e mercado.
+	_build_mill_village()
+
 	# Dirt roads connect the new civil hubs to the original trail and outer regions.
 	for road_spec in [
 		[Vector3(-42.0, 0.025, 42.0), Vector3(7.0, 0.05, 74.0), -0.22],
@@ -785,6 +788,105 @@ func _build_world_civilization() -> void:
 	_build_royal_castle()
 	_build_ancient_dungeon()
 	_build_guild_relics()
+
+
+func _build_mill_village() -> void:
+	var center := Vector3(-238.0, 0.0, 112.0)
+	var village := Node3D.new()
+	village.name = "VilaDoMoinho"
+	village.position = center
+	add_child(village)
+
+	# Praça de madeira e pedra, com canal raso atravessando a vila.
+	var plaza := _box(village, "MillVillagePlaza", Vector3(0.0, 0.06, 0.0), Vector3(30.0, 0.16, 25.0), Color("786b55"))
+	plaza.material_override = _painter_mat(Color("786b55"), 3.0, 0.12, 0, Color("51483b"))
+	var canal := _box(village, "MillVillageCanal", Vector3(0.0, 0.12, -13.0), Vector3(34.0, 0.12, 3.2), Color("426b70"))
+	var water_material := _mat(Color("426b70"), 0.2)
+	water_material.metallic = 0.18
+	water_material.emission_enabled = true
+	water_material.emission = Color("244d55")
+	water_material.emission_energy_multiplier = 0.18
+	canal.material_override = water_material
+
+	# Casas assimétricas de madeira e pedra, diferentes das duas cidades existentes.
+	var house_positions := [
+		Vector3(-12.0, 0.0, 7.0), Vector3(-3.0, 0.0, 10.0),
+		Vector3(10.0, 0.0, 7.0), Vector3(14.0, 0.0, -5.0),
+		Vector3(-12.0, 0.0, -4.0), Vector3(3.0, 0.0, 2.0)
+	]
+	for i in range(house_positions.size()):
+		var house := Node3D.new()
+		house.name = "MillHouse_%02d" % i
+		house.position = house_positions[i]
+		village.add_child(house)
+		var width := 4.2 + float(i % 3) * 0.45
+		var depth := 4.0 + float(i % 2) * 0.55
+		var wall_color := Color("75624b") if i % 2 == 0 else Color("625b4c")
+		_box(house, "StoneFoundation", Vector3(0.0, 0.35, 0.0), Vector3(width + 0.35, 0.7, depth + 0.35), Color("575950"))
+		var walls := _box(house, "TimberAndPlasterWalls", Vector3(0.0, 1.95, 0.0), Vector3(width, 3.2, depth), wall_color)
+		_add_box_collision(house, "MillHouseCollision", Vector3(0.0, 1.95, 0.0), Vector3(width, 3.2, depth))
+		_box(house, "FrontDoor", Vector3(0.0, 1.0, depth * 0.51), Vector3(0.95, 2.0, 0.12), Color("3f3027"))
+		var roof := _box(house, "SteepRoof", Vector3(0.0, 3.75, 0.0), Vector3(width + 1.0, 0.55, depth + 1.0), Color("704b3e") if i % 2 == 0 else Color("665747"))
+		roof.rotation.z = 0.08 if i % 2 == 0 else -0.08
+		_box(house, "RoofRidge", Vector3(0.0, 4.08, 0.0), Vector3(width + 1.1, 0.25, 0.48), Color("493a32"))
+		for side in [-1.0, 1.0]:
+			_box(house, "TimberPost", Vector3(side * width * 0.43, 1.95, depth * 0.52), Vector3(0.18, 3.25, 0.18), Color("49372b"))
+		if i % 2 == 0:
+			_box(house, "Window", Vector3(width * 0.27, 2.25, depth * 0.515), Vector3(0.78, 0.82, 0.12), Color("d3ad70"))
+
+	# Moinho: roda vertical, pás e edifício de moagem junto ao canal.
+	var mill := Node3D.new()
+	mill.name = "WaterMill"
+	mill.position = Vector3(0.0, 0.0, -18.0)
+	village.add_child(mill)
+	_box(mill, "MillBuilding", Vector3(0.0, 2.1, -2.8), Vector3(8.0, 4.2, 6.0), Color("695844"))
+	_box(mill, "MillBuildingRoof", Vector3(0.0, 4.45, -2.8), Vector3(9.0, 0.5, 7.0), Color("594238"))
+	var wheel := MeshInstance3D.new()
+	wheel.name = "WaterWheel"
+	var wheel_mesh := TorusMesh.new()
+	wheel_mesh.inner_radius = 1.45
+	wheel_mesh.outer_radius = 1.72
+	wheel_mesh.rings = 12
+	wheel_mesh.ring_segments = 10
+	wheel.mesh = wheel_mesh
+	wheel.position = Vector3(0.0, 2.0, 0.35)
+	wheel.rotation.x = PI * 0.5
+	wheel.material_override = _mat(Color("79563a"))
+	mill.add_child(wheel)
+	for i in range(8):
+		var angle := TAU * float(i) / 8.0
+		var paddle := _box(mill, "WaterWheelPaddle_%02d" % i, Vector3(cos(angle) * 1.56, 2.0 + sin(angle) * 1.56, 0.35), Vector3(0.22, 0.82, 0.16), Color("8a6543"))
+		paddle.rotation.z = -angle
+	var axle := MeshInstance3D.new()
+	var axle_mesh := CylinderMesh.new()
+	axle_mesh.top_radius = 0.16
+	axle_mesh.bottom_radius = 0.16
+	axle_mesh.height = 1.2
+	axle.mesh = axle_mesh
+	axle.position = Vector3(0.0, 2.0, 0.35)
+	axle.rotation.x = PI * 0.5
+	axle.material_override = _mat(Color("49372b"))
+	mill.add_child(axle)
+
+	# Ponte, barracas e iluminação dão identidade própria ao povoado.
+	var bridge := _box(village, "CanalBridge", Vector3(0.0, 0.55, -13.0), Vector3(5.5, 0.28, 4.2), Color("806044"))
+	for side in [-1.0, 1.0]:
+		_box(village, "BridgeRail", Vector3(side * 2.45, 1.05, -13.0), Vector3(0.18, 0.9, 4.0), Color("4b392d"))
+	var market := Node3D.new()
+	market.name = "MillVillageMarket"
+	market.position = Vector3(8.0, 0.0, 14.0)
+	village.add_child(market)
+	_box(market, "MarketCounter", Vector3(0.0, 0.8, 0.0), Vector3(4.8, 1.6, 2.0), Color("654a35"))
+	_box(market, "MarketCanopy", Vector3(0.0, 2.0, 0.0), Vector3(5.5, 0.22, 3.0), Color("9a6248"))
+	for x in [-2.2, 2.2]:
+		_box(market, "MarketPost", Vector3(x, 1.5, 0.0), Vector3(0.16, 3.0, 0.16), Color("49372b"))
+	for i in range(4):
+		var lamp_position := Vector3(-12.0 + float(i) * 8.0, 2.2, 15.0)
+		_box(village, "LanternPost", lamp_position, Vector3(0.16, 3.2, 0.16), Color("44372d"))
+		var lantern := _sphere(village, "LanternGlow", lamp_position + Vector3(0.0, 1.25, 0.0), 0.24, Color("e4b16b"), 0.38)
+		lantern.material_override = _painter_mat(Color("e4b16b"), 7.0, 0.1)
+	_add_region_title("VILA DO MOINHO", center + Vector3(0.0, 10.0, 0.0), Color("e8c99a"))
+
 
 func _build_settlement(settlement_name: String, center: Vector3, title_text: String, house_count: int, wall_color: Color, roof_color: Color) -> void:
 	var root := Node3D.new()
