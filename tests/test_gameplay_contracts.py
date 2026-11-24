@@ -78,7 +78,8 @@ class GameplayContracts(unittest.TestCase):
 
     def test_gameplay_keeps_authored_animated_tobi_when_meshy_asset_is_missing(self):
         self.assertIn('func _make_character() -> void:', self.player)
-        self.assertIn('GLB final do Tobi ainda não instalado; mantendo o Tobi autoral animado.', self.player)
+        self.assertIn('Modelo externo do Tobi indisponível; mantendo o Tobi autoral animado.', self.player)
+        self.assertIn('load("res://scenes/characters/tobi_quaternius_candidate.tscn")', self.player)
         self.assertIn('load_optional_scene("meshy_tobi_hero")', self.player)
         self.assertIn('if hero_scene == null:', self.player)
         self.assertNotIn('Tobi3DCC0Fallback', self.player)
@@ -101,8 +102,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 15', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -340,8 +341,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 15', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
 
@@ -799,7 +800,7 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn("AS TRÊS PEDRAS-ÂNCORA DESPERTARAM!", world)
         self.assertIn('cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)', world)
         self.assertIn('cfg.get_value("progress", "ancient_waystone_ids", [])', world)
-        self.assertIn('cfg.set_value("meta", "save_version", 15)', world)
+        self.assertIn('cfg.set_value("meta", "save_version", 16)', world)
 
 
     def test_android_auto_update_bootstrap_is_registered(self):
@@ -839,7 +840,11 @@ class TokenFreeAssetForgeContracts(unittest.TestCase):
         world = (root / "scripts/world.gd").read_text(encoding="utf-8")
         for key in ("thrixel_stag_guardian", "thrixel_river_crab", "thrixel_drowned_wraith", "thrixel_ancient_tree", "thrixel_rune_obelisk", "thrixel_way_shrine", "meshy_gate"):
             self.assertIn('"%s"' % key, forge)
+        for key in ("thrixel_ancient_tree", "thrixel_rune_obelisk", "thrixel_way_shrine", "meshy_gate"):
             self.assertIn('load_or_create_asset(self, "%s"' % key, world)
+        enemy = (root / "scripts/enemy.gd").read_text(encoding="utf-8")
+        for key in ("thrixel_stag_guardian", "thrixel_river_crab", "thrixel_drowned_wraith"):
+            self.assertIn('asset_key = "%s"' % key, enemy)
         self.assertIn('PROCEDURAL_FORGE.create_asset(asset_key)', loader)
         self.assertIn('sem IA, tokens ou downloads', forge)
 
