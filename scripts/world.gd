@@ -563,30 +563,50 @@ func _add_box_collision(parent: Node3D, collision_name: String, local_pos: Vecto
 
 
 func _build_environment() -> void:
+	# Dreamlike fantasy grade: warm sunlight, cool magical shadows and a soft
+	# lavender-teal horizon. Keep the effect in Environment so every existing
+	# biome, imported model and quest area inherits the same visual identity.
 	world_environment = WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("17252c")
-	sky_mat.sky_horizon_color = Color("b17b63")
-	sky_mat.ground_bottom_color = Color("101b1b")
-	sky_mat.ground_horizon_color = Color("54483d")
+	sky_mat.sky_top_color = Color("263b50")
+	sky_mat.sky_horizon_color = Color("b99a9a")
+	sky_mat.ground_bottom_color = Color("172321")
+	sky_mat.ground_horizon_color = Color("64736b")
+	sky_mat.sun_angle_max = 18.0
+	sky_mat.sun_curve = 0.12
 	sky.sky_material = sky_mat
 	e.sky = sky
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color("84908a")
-	e.ambient_light_energy = 0.62
+	e.ambient_light_color = Color("9a9bb0")
+	e.ambient_light_energy = 0.72
+	e.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.tonemap_exposure = 1.04
+	e.tonemap_white = 1.12
+	e.adjustment_enabled = true
+	e.adjustment_brightness = 1.025
+	e.adjustment_contrast = 1.045
+	e.adjustment_saturation = 1.10
+	e.glow_enabled = true
+	e.glow_intensity = 0.28
+	e.glow_strength = 0.62
+	e.glow_bloom = 0.08
+	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	e.glow_hdr_threshold = 1.35
+	e.glow_hdr_scale = 1.35
 	e.fog_enabled = true
-	e.fog_light_color = Color("89918a")
-	e.fog_density = 0.012
+	e.fog_light_color = Color("8c9b9b")
+	e.fog_density = 0.009
+	e.fog_sun_scatter = 0.18
 	world_environment.environment = e
 	add_child(world_environment)
 	sun_light = DirectionalLight3D.new()
 	sun_light.rotation_degrees = Vector3(-42, -28, 0)
-	sun_light.light_color = Color("ffd0a1")
-	sun_light.light_energy = 1.15
+	sun_light.light_color = Color("ffe0b5")
+	sun_light.light_energy = 1.12
 	sun_light.shadow_enabled = true
 	add_child(sun_light)
 
