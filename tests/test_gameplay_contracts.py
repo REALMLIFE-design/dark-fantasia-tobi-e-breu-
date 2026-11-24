@@ -1218,6 +1218,10 @@ class StartupAndHudRegressionTests(unittest.TestCase):
             self.assertIn('"%s"' % action, world)
         self.assertIn('action_btn.pressed.connect(_touch_action.bind(data.a))', world)
         self.assertIn('hud_viewport.size_changed.connect(_on_hud_viewport_resized)', world)
+        self.assertIn('desktop_hidden_button.visible = false', world)
+        self.assertIn('touch_button.visible = true', world)
+        self.assertIn('desktop_pause.visible = false', world)
+        self.assertIn('if not mobile:', world)
         self.assertIn('Input.action_press(action, strength)', joystick)
         self.assertIn('Input.action_release(action)', joystick)
 
