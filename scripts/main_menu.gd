@@ -63,10 +63,16 @@ func _build_menu() -> void:
 	# Decorative portal-ring motif; intentionally static and inexpensive on mobile.
 	var ring := Panel.new()
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ring.anchor_left = 0.70
-	ring.anchor_top = 0.14
-	ring.anchor_right = 0.93
-	ring.anchor_bottom = 0.58
+	if mobile_ui:
+		ring.anchor_left = 0.72
+		ring.anchor_top = 0.035
+		ring.anchor_right = 0.97
+		ring.anchor_bottom = 0.23
+	else:
+		ring.anchor_left = 0.70
+		ring.anchor_top = 0.14
+		ring.anchor_right = 0.93
+		ring.anchor_bottom = 0.58
 	var ring_style := StyleBoxFlat.new()
 	ring_style.bg_color = Color(0.20, 0.43, 0.49, 0.035)
 	ring_style.border_color = Color(0.43, 0.78, 0.82, 0.24)
@@ -74,8 +80,7 @@ func _build_menu() -> void:
 	ring_style.set_corner_radius_all(999)
 	ring.add_theme_stylebox_override("panel", ring_style)
 	background.add_child(ring)
-	if mobile_ui:
-		ring.visible = false
+	# O portal permanece discreto também no celular, como marca visual do reino.
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "BootMenuScroll"
