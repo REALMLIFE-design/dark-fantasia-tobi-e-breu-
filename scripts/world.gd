@@ -3256,6 +3256,13 @@ func _process(delta: float) -> void:
 	var nearest_waystone_id := _nearest_ancient_waystone()
 	var waystone_node := get_node_or_null("AncientWaystone_%d" % nearest_waystone_id) if nearest_waystone_id >= 0 else null
 	var waystone_distance := player.global_position.distance_to(waystone_node.global_position) if waystone_node else 999.0
+	var nearest_ashen_relic_id := _nearest_ashen_relic()
+	var ashen_relic_distance := 999.0
+	if nearest_ashen_relic_id >= 0:
+		var ashen_relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % nearest_ashen_relic_id)
+		if ashen_relic: ashen_relic_distance = player.global_position.distance_to(ashen_relic.global_position)
+	var ashen_altar := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar")
+	var ashen_altar_distance := player.global_position.distance_to(ashen_altar.global_position) if ashen_altar else 999.0
 	var nearest_guild_relic_distance := 999.0
 	for relic_id in range(3):
 		var relic := get_node_or_null("GuildRelic_%d" % relic_id)
@@ -3270,6 +3277,9 @@ func _process(delta: float) -> void:
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
 	elif stag_guardian_distance < 4.5 and whisper_guardian_reward_claimed: prompt_label.text = "O GUARDIÃO JÁ CONCEDEU SUA BÊNÇÃO"
 	elif stag_guardian_distance < 4.5: prompt_label.text = "E: RECEBER A BÊNÇÃO DO GUARDIÃO"
+	elif ashen_relic_distance < 3.6: prompt_label.text = "E: RECUPERAR RELÍQUIA DAS CINZAS  •  (%d/3)" % ashen_relic_ids.size()
+	elif ashen_altar_distance < 4.0 and ashen_relic_ids.size() >= 3 and not ashen_reward_claimed: prompt_label.text = "E: REIVINDICAR TESOURO DA CRIPTA"
+	elif ashen_altar_distance < 4.0 and ashen_reward_claimed: prompt_label.text = "ALTAR DAS CINZAS — DESPERTO"
 	elif waystone_distance < 4.0: prompt_label.text = "E: ATIVAR PEDRA-ÂNCORA ANTIGA  •  (%d/3)" % ancient_waystone_ids.size()
 	elif bell_tower_distance < 5.0 and bell_tower_ring_count < 3: prompt_label.text = "E: TOCAR O SINO ANTIGO  •  (%d/3)" % bell_tower_ring_count
 	elif bell_tower_distance < 5.0: prompt_label.text = "SINO DO ÚLTIMO VIGIA — CONCLUÍDO"
@@ -3352,6 +3362,20 @@ func _nearest_river_chest() -> int:
 		var chest := get_node_or_null("RiverTreasureChest_%d" % i)
 		if chest:
 			var distance := player.global_position.distance_to(chest.global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best_id = i
+	return best_id
+
+func _nearest_ashen_relic() -> int:
+	if not is_instance_valid(player): return -1
+	var best_id := -1
+	var best_distance := 3.6
+	for i in range(3):
+		if ashen_relic_ids.has(i): continue
+		var relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % i)
+		if relic:
+			var distance := player.global_position.distance_to(relic.global_position)
 			if distance < best_distance:
 				best_distance = distance
 				best_id = i
@@ -3443,6 +3467,48 @@ func _open_river_chest(chest_id: int) -> void:
 	_save_game()
 
 func _interact() -> void:
+	var ashen_relic_id := _nearest_ashen_relic()
+	if ashen_relic_id >= 0:
+		var ashen_relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % ashen_relic_id)
+		if ashen_relic and ashen_relic.visible:
+			ashen_relic_ids.append(ashen_relic_id)
+			ashen_relic_ids.sort()
+			ashen_relic.visible = false
+			_grant_xp(35)
+			dark_essence += 1
+			if ashen_relic_ids.size() >= 3:
+				toast_label.text = "AS TRÊS RELÍQUIAS DAS CINZAS RECUPERADAS! O altar da cripta despertou."
+				var reward_crystal := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar/AshenRewardCrystal")
+				if reward_crystal:
+					reward_crystal.material_override = _painter_mat(Color("d7a5df"), 7.0, 0.18, 13, Color("734d83"))
+				var altar_light := OmniLight3D.new()
+				altar_light.name = "AshenRewardLight"
+				altar_light.position = Vector3(-15.0, 2.0, 17.0)
+				altar_light.light_color = Color("c78bd9")
+				altar_light.light_energy = 0.65
+				altar_light.omni_range = 7.0
+				get_node("AldeiaDasCinzas").add_child(altar_light)
+			else:
+				toast_label.text = "RELÍQUIA DAS CINZAS RECUPERADA (%d/3) • +35 XP • Essência +1" % ashen_relic_ids.size()
+			_update_inventory()
+			_save_game()
+		return
+	var ashen_altar := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar")
+	if ashen_altar and player.global_position.distance_to(ashen_altar.global_position) < 4.0:
+		if ashen_relic_ids.size() < 3:
+			toast_label.text = "O altar está selado. Recupere as três relíquias espalhadas pela aldeia (%d/3)." % ashen_relic_ids.size()
+		elif not ashen_reward_claimed:
+			ashen_reward_claimed = true
+			_grant_xp(150)
+			shards += 5
+			dark_essence += 4
+			potions += 2
+			toast_label.text = "TESOURO DA CRIPTA REIVINDICADO! +150 XP • 5 Fragmentos • 4 Essências • 2 Poções"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "O altar já entregou seu tesouro."
+		return
 	var waystone_id := _nearest_ancient_waystone()
 	if waystone_id >= 0:
 		var waystone := get_node_or_null("AncientWaystone_%d" % waystone_id)
