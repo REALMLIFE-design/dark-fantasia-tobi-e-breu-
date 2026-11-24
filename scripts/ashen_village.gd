@@ -13,13 +13,13 @@ static func build(world: Node3D) -> void:
 	_box(village, "AshenVillageGround", Vector3.ZERO, Vector3(58.0, 0.18, 52.0), Color("514d46"))
 	_box(village, "AshenMainSquare", Vector3(0.0, 0.12, 3.0), Vector3(24.0, 0.12, 18.0), Color("777064"))
 	var road := _box(world, "AshenRoad", Vector3(224.0, 0.08, 131.0), Vector3(6.0, 0.16, 130.0), Color("665947"))
-	road.rotation.y = -0.72
+	road.rotation.y = 0.85
 	_box(village, "AshenSquareWell", Vector3(0.0, 0.85, 3.0), Vector3(2.8, 1.7, 2.8), Color("66645d"))
 	_box(village, "AshenWellRim", Vector3(0.0, 1.75, 3.0), Vector3(3.2, 0.22, 3.2), Color("9a9281"))
 	_build_house(village, "AshenHouse_01", Vector3(-20.0, 0.0, -13.0), 5.0, 4.6)
 	_build_house(village, "AshenHouse_02", Vector3(19.0, 0.0, -15.0), 4.4, 4.2)
-	_build_house(village, "AshenHouse_03", Vector3(-21.0, 0.0, 12.0), 4.8, 4.5)
-	_build_house(village, "AshenHouse_04", Vector3(20.0, 0.0, 13.0), 5.2, 4.6)
+	_build_house(village, "AshenHouse_03", Vector3(-21.0, 0.0, 3.0), 4.8, 4.5)
+	_build_house(village, "AshenHouse_04", Vector3(20.0, 0.0, 1.0), 5.2, 4.6)
 	_build_chapel(village)
 	_build_crypt(village)
 	_build_graveyard(village)
