@@ -3516,14 +3516,6 @@ func _interact() -> void:
 			if not ancient_waystone_ids.has(waystone_id):
 				ancient_waystone_ids.append(waystone_id)
 				ancient_waystone_ids.sort()
-	ashen_relic_ids.clear()
-	var saved_ashen_relic_ids: Array = cfg.get_value("progress", "ashen_relic_ids", [])
-	for saved_ashen_id in saved_ashen_relic_ids:
-		var ashen_id := int(saved_ashen_id)
-		if ashen_id >= 0 and ashen_id < 3 and not ashen_relic_ids.has(ashen_id):
-			ashen_relic_ids.append(ashen_id)
-	ashen_relic_ids.sort()
-	ashen_reward_claimed = bool(cfg.get_value("progress", "ashen_reward_claimed", false))
 				var waystone_rune := waystone.get_node_or_null("WaystoneRune")
 				if waystone_rune: waystone_rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
 				_grant_xp(30)
@@ -4191,6 +4183,14 @@ func _load_save() -> void:
 		if waystone_id >= 0 and waystone_id < 3 and not ancient_waystone_ids.has(waystone_id):
 			ancient_waystone_ids.append(waystone_id)
 	ancient_waystone_ids.sort()
+	ashen_relic_ids.clear()
+	var saved_ashen_relic_ids: Array = cfg.get_value("progress", "ashen_relic_ids", [])
+	for saved_ashen_id in saved_ashen_relic_ids:
+		var ashen_id := int(saved_ashen_id)
+		if ashen_id >= 0 and ashen_id < 3 and not ashen_relic_ids.has(ashen_id):
+			ashen_relic_ids.append(ashen_id)
+	ashen_relic_ids.sort()
+	ashen_reward_claimed = bool(cfg.get_value("progress", "ashen_reward_claimed", false))
 	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
