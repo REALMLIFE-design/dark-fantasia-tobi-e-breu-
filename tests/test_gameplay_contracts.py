@@ -1252,3 +1252,17 @@ class AndroidEmulatorInstallContracts(unittest.TestCase):
         self.assertIn('adb install -r --streaming "$APK_PATH"', script)
         self.assertIn('adb install -r --no-streaming "$APK_PATH"', script)
         self.assertNotIn("for attempt in 1 2 3 4 5", script)
+
+
+class AndroidSigningContracts(unittest.TestCase):
+    def test_android_signing_uses_persistent_keystore_secret_when_available(self):
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        signing_start = workflow.index("- name: Assinar e validar APK")
+        release_start = workflow.index("- name: Publicar APK no GitHub Releases")
+        signing = workflow[signing_start:release_start]
+        release = workflow[release_start:]
+        self.assertIn("ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}", signing)
+        self.assertIn("base64 --decode", signing)
+        self.assertIn("APK_SIGNING_MODE=stable", signing)
+        self.assertIn("APK_SIGNING_MODE=temporary", signing)
+        self.assertIn("APK_SIGNING_MODE", release)

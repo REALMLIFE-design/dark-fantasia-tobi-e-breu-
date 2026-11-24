@@ -235,6 +235,7 @@ jobs:
 
       - name: Assinar e validar APK
         env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -244,17 +245,39 @@ jobs:
           APK="$PROJECT_PATH/build/TobiEBreu.apk"
           ALIGNED="$PROJECT_PATH/build/TobiEBreu-aligned.apk"
           SIGNED="$PROJECT_PATH/build/TobiEBreu-signed.apk"
+          KEYSTORE_PATH="$RUNNER_TEMP/tobi-breu-release.keystore"
           "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$ALIGNED"
-          STORE_PASS="${ANDROID_KEYSTORE_PASSWORD:-android}"
-          KEY_ALIAS="${ANDROID_KEY_ALIAS:-androiddebugkey}"
-          KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
+          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            if [ -z "${ANDROID_KEYSTORE_PASSWORD:-}" ] || [ -z "${ANDROID_KEY_ALIAS:-}" ]; then
+              echo "::error::ANDROID_KEYSTORE_PASSWORD e ANDROID_KEY_ALIAS são obrigatórios com ANDROID_KEYSTORE_BASE64."
+              exit 1
+            fi
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+            STORE_PASS="$ANDROID_KEYSTORE_PASSWORD"
+            KEY_ALIAS="$ANDROID_KEY_ALIAS"
+            KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
+            SIGNING_MODE="stable"
+            echo "APK_SIGNING_MODE=stable" >> "$GITHUB_ENV"
+          else
+            KEYSTORE_PATH="$HOME/.android/debug.keystore"
+            STORE_PASS="android"
+            KEY_ALIAS="androiddebugkey"
+            KEY_PASS="android"
+            SIGNING_MODE="temporary"
+            echo "APK_SIGNING_MODE=temporary" >> "$GITHUB_ENV"
+            echo "::warning::Sem ANDROID_KEYSTORE_BASE64: APK usa chave debug temporária e pode exigir desinstalação para instalar outra versão."
+          fi
+          test -s "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null
           "$BUILD_TOOLS/apksigner" sign \
-            --ks "$HOME/.android/debug.keystore" \
+            --ks "$KEYSTORE_PATH" \
             --ks-key-alias "$KEY_ALIAS" \
             --ks-pass "pass:$STORE_PASS" \
             --key-pass "pass:$KEY_PASS" \
             --out "$SIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED"
+          echo "APK signing mode: $SIGNING_MODE"
           mv "$SIGNED" "$APK"
           rm -f "$ALIGNED"
           test -s "$APK"
@@ -274,7 +297,7 @@ jobs:
           APK_TAG="android-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           gh release create "$APK_TAG" "$PROJECT_PATH/build/TobiEBreu.apk" \
             --title "Tobi e Breu Android APK ${GITHUB_RUN_NUMBER}" \
-            --notes "APK Android assinado e validado pelo workflow. Pacote: com.tobiebreu.darkworld3d. Commit: ${GITHUB_SHA}."
+            --notes "APK Android assinado e validado pelo workflow. Modo de assinatura: ${APK_SIGNING_MODE:-temporary}. Pacote: com.tobiebreu.darkworld3d. Commit: ${GITHUB_SHA}."
           echo "APK_RELEASE_URL=https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/tag/$APK_TAG" >> "$GITHUB_ENV"
 
       - name: Preparar patch incremental Android

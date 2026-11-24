@@ -20,7 +20,7 @@ A primeira instalação que contém o `UpdateManager` e a cena de inicializaçã
 
 ## Assinatura do APK e preservação do progresso
 
-Para que o Android instale um APK novo por cima do anterior sem desinstalar o app, ambos precisam usar o mesmo certificado de assinatura. O workflow aceita estes GitHub Actions Secrets:
+Para que o Android instale um APK novo por cima do anterior sem desinstalar o app, ambos precisam usar o mesmo certificado de assinatura. O workflow lê e decodifica `ANDROID_KEYSTORE_BASE64` para usar uma chave persistente. Configure os quatro GitHub Actions Secrets abaixo antes de distribuir atualizações que precisem instalar por cima da versão anterior:
 
 - `ANDROID_KEYSTORE_BASE64`: arquivo keystore codificado em Base64
 - `ANDROID_KEYSTORE_PASSWORD`: senha do keystore
