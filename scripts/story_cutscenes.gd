@@ -1,5 +1,6 @@
 extends RefCounted
-## Cinematic story layer for Tobi e Breu. Uses native Godot UI so it stays lightweight on Android.
+## Cinematic story layer for Dark World: A Lenda de Tobi e Breu.
+## Native Godot UI keeps the story presentation lightweight on Android.
 
 const STORY_SETTINGS_PATH := "user://tobi_breu_story.cfg"
 
@@ -107,9 +108,10 @@ static func play_intro(world: Node) -> void:
 	content.add_child(next_button)
 
 	var pages := [
-		{"chapter":"PRÓLOGO  •  QUANDO A LUZ SE CALOU","title":"O Coração Roubado","body":"Durante gerações, o Coração Rubro manteve o equilíbrio entre a vida e a escuridão. Até que, numa noite sem estrelas, alguém o arrancou do Templo do Coração. Uma névoa cinzenta começou a engolir florestas, rios e lembranças.","hint":"Uma antiga lenda voltou a despertar."},
-		{"chapter":"DOIS VIAJANTES  •  UMA PROMESSA","title":"Tobi e Breu","body":"Tobi encontrou Breu ainda pequeno, perdido na fronteira da floresta corrompida. Desde então, os dois nunca se separaram. Agora, enquanto o Silêncio Cinzento avança, Breu sente a corrupção antes de qualquer pessoa — e Tobi decide não abandonar seu amigo nem o mundo que os acolheu.","hint":"A amizade deles será testada em cada região."},
-		{"chapter":"CAPÍTULO I  •  A PRIMEIRA PISTA","title":"O chamado de Azulan","body":"O Mestre Azulan sabe que o roubo não foi obra de um simples ladrão. As marcas levam para além da clareira, até o Guardião do Silêncio e as terras esquecidas. Para encontrar o Coração Rubro, Tobi precisará reunir aliados, purificar os santuários e descobrir quem está por trás da névoa.","hint":"Sua jornada começa agora."}
+		{"chapter":"PRÓLOGO  •  UMA HISTÓRIA ANTIGA","title":"Era uma vez…","body":"Era uma vez um mundo costurado por rios brilhantes, florestas antigas e pequenas luzes que dançavam no céu. No coração desse lugar pulsava o Coração Rubro, uma joia mágica que mantinha o equilíbrio entre todas as coisas. Dizem que, enquanto sua luz brilhasse, até a noite teria sonhos tranquilos.","hint":"Mas toda história guarda um dia que muda tudo…"},
+		{"chapter":"PRÓLOGO  •  A NOITE SEM ESTRELAS","title":"Quando a luz se calou","body":"Numa noite em que nenhuma estrela apareceu, uma sombra levou o Coração Rubro do templo. Uma névoa cinzenta despertou e começou a cobrir caminhos, rios e lembranças. Alguns moradores esqueceram canções antigas; outros já não reconheciam o próprio lar. E o mundo, pouco a pouco, deixou de contar suas histórias.","hint":"Foi então que dois pequenos destinos se encontraram."},
+		{"chapter":"PRÓLOGO  •  DOIS AMIGOS","title":"Tobi e Breu","body":"Muito antes daquela noite, Tobi encontrou Breu ainda pequeno, perdido perto da floresta. Ninguém sabia de onde ele tinha vindo, mas Tobi percebeu que aquele companheiro precisava de um amigo. Desde então, os dois dividiram trilhas, sustos, risadas e promessas. Agora, Breu sente a névoa antes de todos — e Tobi não vai deixá-lo enfrentar esse medo sozinho.","hint":"Porque até a maior aventura começa com uma amizade."},
+		{"chapter":"CAPÍTULO I  •  O CHAMADO","title":"O conselho de Azulan","body":"Ao ver a névoa se aproximar de sua casa, Tobi procurou o velho Mestre Azulan. O sábio observou uma marca rubra deixada pela sombra e ficou em silêncio por um longo instante. Então revelou que a pista apontava para terras esquecidas, onde um Guardião vigiava um segredo antigo. Tobi apertou a mão do amigo. A jornada pelo Coração Rubro estava prestes a começar.","hint":"Abra o caminho, ajude quem encontrar e descubra o primeiro segredo."}
 	]
 
 	var page_index := 0
@@ -128,7 +130,7 @@ static func play_intro(world: Node) -> void:
 		title.text = str(page["title"])
 		body.text = str(page["body"])
 		hint.text = str(page["hint"])
-		next_button.text = "INICIAR A JORNADA" if page_index == pages.size() - 1 else "CONTINUAR"
+		next_button.text = "COMEÇAR A AVENTURA" if page_index == pages.size() - 1 else "CONTINUAR"
 		await next_button.pressed
 		if page_index < pages.size() - 1:
 			var fade := world.create_tween()
