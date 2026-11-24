@@ -91,6 +91,21 @@ const ITCH_DUNGEON_MODEL_PATHS := [
 ]
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
+func _configure_adaptive_4k() -> void:
+	# Render at native 4K only on a 4K desktop display. Mobile keeps its native
+	# viewport resolution to avoid forcing 4K rendering on phone GPUs.
+	if OS.has_feature("pc"):
+		var screen_size := DisplayServer.screen_get_size()
+		if screen_size.x >= 3840 and screen_size.y >= 2160:
+			get_window().content_scale_size = Vector2i(3840, 2160)
+			print("TOBI_BREU_4K_DESKTOP_ENABLED: 3840x2160")
+		else:
+			get_window().content_scale_size = Vector2i(1920, 1080)
+			print("TOBI_BREU_HIGH_RES_DESKTOP_ENABLED: 1920x1080")
+	else:
+		print("TOBI_BREU_ADAPTIVE_MOBILE_RESOLUTION: native device resolution")
+
+
 func _ready() -> void:
 	_configure_adaptive_4k()
 	_create_loading_screen()
