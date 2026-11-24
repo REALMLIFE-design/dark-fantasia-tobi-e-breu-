@@ -9,6 +9,7 @@ const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd")
 const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
 const HUD_STYLE = preload("res://scripts/hud_style.gd")
+const ASHEN_VILLAGE = preload("res://scripts/ashen_village.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -131,6 +132,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
+	ASHEN_VILLAGE.build(self)
 	await get_tree().process_frame
 	_build_npcs()
 	await get_tree().process_frame
