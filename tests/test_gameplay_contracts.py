@@ -1198,3 +1198,23 @@ class EnemyModelImportContracts(unittest.TestCase):
         enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
         self.assertIn('if packed_scene == null:', enemy)
         self.assertIn('_cache_hit_flash_materials(visual)', enemy)
+
+
+class StartupAndHudRegressionTests(unittest.TestCase):
+    def test_boot_menu_does_not_wait_for_network_update_check(self):
+        bootstrap = (ROOT / "scripts/update_bootstrap.gd").read_text(encoding="utf-8")
+        self.assertIn("UpdateManager.check_for_updates()", bootstrap)
+        self.assertNotIn("await UpdateManager.check_for_updates()", bootstrap)
+        self.assertIn('change_scene_to_file("res://scenes/menu.tscn")', bootstrap)
+        self.assertIn("status_changed.connect(_on_update_status_changed)", bootstrap)
+
+    def test_mobile_hud_has_live_touch_actions_and_resize_reflow(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        joystick = (ROOT / "scripts/virtual_joystick.gd").read_text(encoding="utf-8")
+        for action in ("attack", "jump", "interact", "dodge", "potion", "upgrade", "inventory", "shadow", "guard"):
+            self.assertIn('"TouchAction_" + data.a', world)
+            self.assertIn('"%s"' % action, world)
+        self.assertIn('action_btn.pressed.connect(_touch_action.bind(data.a))', world)
+        self.assertIn('hud_viewport.size_changed.connect(_on_hud_viewport_resized)', world)
+        self.assertIn('Input.action_press(action, strength)', joystick)
+        self.assertIn('Input.action_release(action)', joystick)
