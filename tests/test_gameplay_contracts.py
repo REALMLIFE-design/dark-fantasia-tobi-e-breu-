@@ -1218,3 +1218,12 @@ class StartupAndHudRegressionTests(unittest.TestCase):
         self.assertIn('hud_viewport.size_changed.connect(_on_hud_viewport_resized)', world)
         self.assertIn('Input.action_press(action, strength)', joystick)
         self.assertIn('Input.action_release(action)', joystick)
+
+
+class OpeningCinematicContracts(unittest.TestCase):
+    def test_intro_can_be_skipped_without_blocking_gameplay(self):
+        cutscenes = (ROOT / "scripts/story_cutscenes.gd").read_text(encoding="utf-8")
+        self.assertIn('skip_button.text = "PULAR INTRODUÇÃO"', cutscenes)
+        self.assertIn('skip_button.pressed.connect(func() -> void:', cutscenes)
+        self.assertIn('while not advance_requested and not finished:', cutscenes)
+        self.assertNotIn('await next_button.pressed', cutscenes)
