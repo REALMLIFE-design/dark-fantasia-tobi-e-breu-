@@ -90,22 +90,36 @@ static func play_intro(world: Node) -> void:
 	hint.add_theme_color_override("font_color", Color("a99a80"))
 	content.add_child(hint)
 
+	var button_style := StyleBoxFlat.new()
+	button_style.bg_color = Color("3b3025")
+	button_style.border_color = Color("b18b55")
+	button_style.set_border_width_all(2)
+	button_style.set_corner_radius_all(8)
+	button_style.content_margin_left = 24
+	button_style.content_margin_right = 24
+	button_style.content_margin_top = 12
+	button_style.content_margin_bottom = 12
+
 	var next_button := Button.new()
 	next_button.custom_minimum_size = Vector2(220, 54)
 	next_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	next_button.text = "CONTINUAR"
 	next_button.add_theme_font_size_override("font_size", 17)
-	var button_style := StyleBoxFlat.new()
-	button_style.bg_color = Color("3b3025")
-	button_style.border_color = Color("b18b55")
-	button_style.set_border_width_all(2)
-	button_style.set_corner_radius_all(12)
-	button_style.content_margin_left = 24
-	button_style.content_margin_right = 24
-	button_style.content_margin_top = 12
-	button_style.content_margin_bottom = 12
 	next_button.add_theme_stylebox_override("normal", button_style)
 	content.add_child(next_button)
+
+	var skip_button := Button.new()
+	skip_button.custom_minimum_size = Vector2(180, 42)
+	skip_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	skip_button.text = "PULAR INTRODUÇÃO"
+	skip_button.add_theme_font_size_override("font_size", 13)
+	var skip_style := StyleBoxFlat.new()
+	skip_style.bg_color = Color(0.08, 0.11, 0.14, 0.72)
+	skip_style.border_color = Color(0.48, 0.55, 0.55, 0.65)
+	skip_style.set_border_width_all(1)
+	skip_style.set_corner_radius_all(6)
+	skip_button.add_theme_stylebox_override("normal", skip_style)
+	content.add_child(skip_button)
 
 	var pages := [
 		{"chapter":"PRÓLOGO  •  UMA HISTÓRIA ANTIGA","title":"Era uma vez…","body":"Era uma vez um mundo costurado por rios brilhantes, florestas antigas e pequenas luzes que dançavam no céu. No coração desse lugar pulsava o Coração Rubro, uma joia mágica que mantinha o equilíbrio entre todas as coisas. Dizem que, enquanto sua luz brilhasse, até a noite teria sonhos tranquilos.","hint":"Mas toda história guarda um dia que muda tudo…"},
@@ -116,6 +130,13 @@ static func play_intro(world: Node) -> void:
 
 	var page_index := 0
 	var finished := false
+	var advance_requested := false
+	next_button.pressed.connect(func() -> void:
+		advance_requested = true
+	)
+	skip_button.pressed.connect(func() -> void:
+		finished = true
+	)
 	var tween := world.create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	backdrop.modulate.a = 0.0
@@ -131,7 +152,11 @@ static func play_intro(world: Node) -> void:
 		body.text = str(page["body"])
 		hint.text = str(page["hint"])
 		next_button.text = "COMEÇAR A AVENTURA" if page_index == pages.size() - 1 else "CONTINUAR"
-		await next_button.pressed
+		advance_requested = false
+		while not advance_requested and not finished:
+			await world.get_tree().process_frame
+		if finished:
+			break
 		if page_index < pages.size() - 1:
 			var fade := world.create_tween()
 			fade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
