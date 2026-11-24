@@ -1,0 +1,23 @@
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+
+class AshenVillageContracts(unittest.TestCase):
+    def test_world_boot_builds_ashen_village(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("ASHEN_VILLAGE.build(self)", world)
+
+    def test_ashen_village_has_distinct_landmarks(self):
+        script = (ROOT / "scripts/ashen_village.gd").read_text(encoding="utf-8")
+        for landmark in ("AldeiaDasCinzas", "AshenChapel", "AshenCrypt", "RavenGraveyard", "DeadTree", "AshenRoad"):
+            self.assertIn(landmark, script)
+
+    def test_ashen_village_is_mobile_bounded(self):
+        script = (ROOT / "scripts/ashen_village.gd").read_text(encoding="utf-8")
+        self.assertIn("MAX_GRAVESTONES := 12", script)
+        self.assertIn("MAX_DEAD_TREES := 5", script)
+        self.assertIn("add_child(village)", script)
+
+if __name__ == "__main__":
+    unittest.main()
