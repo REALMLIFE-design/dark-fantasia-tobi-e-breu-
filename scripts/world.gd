@@ -10,6 +10,7 @@ const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd"
 const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
 const HUD_STYLE = preload("res://scripts/hud_style.gd")
 const ASHEN_VILLAGE = preload("res://scripts/ashen_village.gd")
+const STORY_CUTSCENES = preload("res://scripts/story_cutscenes.gd")
 var player: CharacterBody3D
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
@@ -188,6 +189,8 @@ func _ready() -> void:
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	if quest_stage == 0 and not STORY_CUTSCENES.intro_was_seen():
+		await STORY_CUTSCENES.play_intro(self)
 	print("TOBI_BREU_BOOT_READY")
 
 
