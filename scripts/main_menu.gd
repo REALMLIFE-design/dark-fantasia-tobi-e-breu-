@@ -1,6 +1,7 @@
 extends Control
 
 const STORY_SCENE := "res://scenes/main.tscn"
+const MAX_ADVENTURE_PLAYERS := 4
 
 var status_label: Label
 var notice_dialog: AcceptDialog
@@ -139,7 +140,7 @@ func _build_menu() -> void:
 	layout.add_child(section)
 
 	_add_menu_button(layout, "CONTINUAR A JORNADA", "Retome sua aventura", _start_story, true)
-	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Aventura com até 4 jogadores", _show_coop_info)
+	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Aventura com até %d jogadores" % MAX_ADVENTURE_PLAYERS, _show_coop_info)
 	_add_menu_button(layout, "MULTIPLAYER", "Explore com seus amigos", _show_multiplayer_info)
 	_add_menu_button(layout, "AMIGOS  •  CONTA GOOGLE", "Conta e lista de amigos", _show_google_info)
 	_add_menu_button(layout, "CONFIGURAÇÕES", "Áudio, imagem e controles", _show_settings)
