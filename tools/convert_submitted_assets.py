@@ -35,12 +35,13 @@ def export_scene(source, destination, max_faces):
     reset_scene()
     if source.suffix.lower() == ".blend":
         bpy.ops.wm.open_mainfile(filepath=str(source))
-        maps = source.parent / "maps"
-        if maps.is_dir():
-            try:
-                bpy.ops.file.find_missing_files(directory=str(maps))
-            except Exception as exc:
-                print("WARN texture relink:", exc)
+        search_dirs = [source.parent / "maps", source.parent / "textures", source.parent]
+        for search_dir in search_dirs:
+            if search_dir.is_dir():
+                try:
+                    bpy.ops.file.find_missing_files(directory=str(search_dir))
+                except Exception as exc:
+                    print("WARN texture relink:", search_dir, exc)
     elif source.suffix.lower() == ".usdz":
         bpy.ops.wm.usd_import(filepath=str(source))
     else:
