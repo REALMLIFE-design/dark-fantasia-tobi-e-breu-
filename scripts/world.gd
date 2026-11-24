@@ -79,6 +79,8 @@ var guild_contract_started := false
 var guild_contract_claimed := false
 var bell_tower_ring_count := 0
 var ancient_waystone_ids: Array[int] = []
+var ashen_relic_ids: Array[int] = []
+var ashen_reward_claimed := false
 var itch_dungeon_stream_requested := false
 var itch_dungeon_assets_loaded := false
 var nature_models_stream_requested := false
@@ -132,7 +134,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
-	ASHEN_VILLAGE.build(self)
+	ASHEN_VILLAGE.build(self, ashen_relic_ids)
 	await get_tree().process_frame
 	_build_npcs()
 	await get_tree().process_frame
@@ -3448,6 +3450,14 @@ func _interact() -> void:
 			if not ancient_waystone_ids.has(waystone_id):
 				ancient_waystone_ids.append(waystone_id)
 				ancient_waystone_ids.sort()
+	ashen_relic_ids.clear()
+	var saved_ashen_relic_ids: Array = cfg.get_value("progress", "ashen_relic_ids", [])
+	for saved_ashen_id in saved_ashen_relic_ids:
+		var ashen_id := int(saved_ashen_id)
+		if ashen_id >= 0 and ashen_id < 3 and not ashen_relic_ids.has(ashen_id):
+			ashen_relic_ids.append(ashen_id)
+	ashen_relic_ids.sort()
+	ashen_reward_claimed = bool(cfg.get_value("progress", "ashen_reward_claimed", false))
 				var waystone_rune := waystone.get_node_or_null("WaystoneRune")
 				if waystone_rune: waystone_rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
 				_grant_xp(30)
@@ -3959,7 +3969,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 15)
+	cfg.set_value("meta", "save_version", 16)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -3989,6 +3999,8 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)
 	cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)
+	cfg.set_value("progress", "ashen_relic_ids", ashen_relic_ids)
+	cfg.set_value("progress", "ashen_reward_claimed", ashen_reward_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
 	# Grava em arquivo temporário e valida antes de substituir o progresso atual.
 	var temp_path := save_path + ".tmp"
@@ -4041,7 +4053,7 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 15:
+	if save_version > 16:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
