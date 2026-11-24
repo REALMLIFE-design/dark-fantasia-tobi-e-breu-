@@ -11,7 +11,7 @@ var update_status_label: Label
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_menu()
-	print("TOBI_BREU_BOOT_READY")
+	print("DARK_WORLD_LEGEND_BOOT_READY")
 
 func _build_menu() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -53,25 +53,33 @@ func _build_menu() -> void:
 	center.add_child(layout)
 
 	var eyebrow := Label.new()
-	eyebrow.text = "UMA AVENTURA EM DARK FANTASY"
+	eyebrow.text = "UMA LENDA DE AMIZADE, CORAGEM E MAGIA"
 	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	eyebrow.add_theme_color_override("font_color", Color("b7a77a"))
 	eyebrow.add_theme_font_size_override("font_size", 14)
 	layout.add_child(eyebrow)
 
 	var title := Label.new()
-	title.text = "TOBI  &  BREU"
+	title.text = "DARK WORLD"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Color("f0e9d7"))
 	title.add_theme_font_size_override("font_size", 38 if viewport_width < 600.0 else 48)
 	layout.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "DARK WORLD  •  ESCOLHA COMO JOGAR"
+	subtitle.text = "A LENDA DE TOBI E BREU"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_color_override("font_color", Color("a9b5a9"))
-	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.add_theme_color_override("font_color", Color("c7a66b"))
+	subtitle.add_theme_font_size_override("font_size", 17)
 	layout.add_child(subtitle)
+
+	var story_tagline := Label.new()
+	story_tagline.text = "Uma aventura contada página por página."
+	story_tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	story_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story_tagline.add_theme_color_override("font_color", Color("a9b5a9"))
+	story_tagline.add_theme_font_size_override("font_size", 13)
+	layout.add_child(story_tagline)
 
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 12
@@ -84,7 +92,7 @@ func _build_menu() -> void:
 	_add_menu_button(layout, "CONFIGURAÇÕES", "Preferências do jogo", _show_settings)
 
 	var footer := Label.new()
-	footer.text = "A campanha original continua sendo a base da aventura."
+	footer.text = "Toda grande lenda começa com dois amigos."
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	footer.add_theme_color_override("font_color", Color("788984"))
 	footer.add_theme_font_size_override("font_size", 12)
@@ -103,7 +111,7 @@ func _build_menu() -> void:
 		updater.status_changed.connect(_on_update_status_changed)
 
 	notice_dialog = AcceptDialog.new()
-	notice_dialog.title = "TOBI & BREU ONLINE"
+	notice_dialog.title = "DARK WORLD • A LENDA DE TOBI E BREU"
 	add_child(notice_dialog)
 
 func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, action: Callable, primary := false) -> void:
@@ -144,7 +152,7 @@ func _show_coop_info() -> void:
 	_show_notice("História cooperativa", "A aventura será compartilhada por até 4 jogadores. A campanha atual será preservada. O servidor gratuito e a sincronização da história ainda precisam ser configurados.")
 
 func _show_multiplayer_info() -> void:
-	_show_notice("Multiplayer", "As salas privadas e os convites de amigos fazem parte do Tobi e Breu Online. A conexão multiplayer ainda não está ativa nesta versão.")
+	_show_notice("Multiplayer", "As salas privadas e os convites de amigos fazem parte de Dark World: A Lenda de Tobi e Breu. A conexão multiplayer ainda não está ativa nesta versão.")
 
 func _show_google_info() -> void:
 	_show_notice("Conta Google", "O login Google será usado para identificar sua conta e adicionar amigos. A integração depende da configuração segura do OAuth e do servidor; nenhum login falso será exibido.")
