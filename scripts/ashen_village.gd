@@ -234,5 +234,17 @@ static func _build_ashen_relics(parent: Node3D, activated_ids: Array[int]) -> vo
 	reward_material.emission_enabled = true
 	reward_material.emission = Color("302936")
 	reward_material.emission_energy_multiplier = 0.25
+	if activated_ids.size() >= 3:
+		reward_material.albedo_color = Color("d7a5df")
+		reward_material.emission = Color("734d83")
+		reward_material.emission_energy_multiplier = 0.8
 	reward.material_override = reward_material
+	if activated_ids.size() >= 3:
+		var altar_light := OmniLight3D.new()
+		altar_light.name = "AshenRewardLight"
+		altar_light.position = Vector3(0.0, 2.0, 0.0)
+		altar_light.light_color = Color("c78bd9")
+		altar_light.light_energy = 0.65
+		altar_light.omni_range = 7.0
+		altar.add_child(altar_light)
 	altar.set_meta("relics_required", 3)
