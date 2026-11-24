@@ -1,0 +1,31 @@
+{
+  "kit": {
+    "name": "Tobi e Breu - HUD dark fantasy",
+    "ui_kit_id": "09b00cc0-cf89-4859-a570-f02778600d72",
+    "project_id": "57bf2a14-aa9f-4971-9c50-d753d4e9c788",
+    "concept_asset_id": "274dfcec-b686-49fc-893b-ece1a0b7747b",
+    "sheet_asset_id": "b10392e9-05f6-40c0-95a6-691794d20c04",
+    "review_url": "https://app.spritecook.ai/ui-kits?kitId=09b00cc0-cf89-4859-a570-f02778600d72",
+    "note": "Pecas finalizadas no SpriteCook. Os PNGs ainda nao estao neste repositorio: baixe o pacote Godot na review_url e coloque os arquivos em assets/ui/. Tres deteccoes mescladas (paineis empilhados, barra de vida com painel, medalhoes) ficaram de fora."
+  },
+  "components": [
+    {"asset_id": "638d670e-ad86-4cab-882d-ba2da8a86821", "name": "ornate_wide_frame", "type": "frame", "size": [816, 165], "scalable": true},
+    {"asset_id": "00dadf94-b0a1-4eb4-9616-95ff69f4998d", "name": "round_frame_a", "type": "frame", "group": "round_frames", "size": [270, 271]},
+    {"asset_id": "9a700220-a2aa-4183-8227-4da2264860a9", "name": "round_frame_b", "type": "frame", "group": "round_frames", "size": [269, 271]},
+    {"asset_id": "2c5ab426-5f91-49c0-a6ce-372f3d8bf251", "name": "large_red_round_frame", "type": "frame", "size": [543, 553]},
+    {"asset_id": "880c5302-e87f-426c-a420-e300c07f7ff5", "name": "round_frame_c", "type": "frame", "group": "round_frames", "size": [269, 272]},
+    {"asset_id": "a3d1c02c-abb4-4ea6-94c7-fbcd629bf858", "name": "round_frame_d", "type": "frame", "group": "round_frames", "size": [269, 272]},
+    {"asset_id": "73ef7019-d45f-4877-b817-9fb3c0532796", "name": "red_meter_fill_a", "type": "fill", "group": "colored_meter_fills", "size": [879, 66]},
+    {"asset_id": "34d5b169-037d-4cec-80ae-f7441d3011b0", "name": "green_meter_fill", "type": "fill", "group": "colored_meter_fills", "size": [879, 62]},
+    {"asset_id": "b4cf1b60-5bdc-48af-b683-3d700b33ccb1", "name": "ornate_narrow_panel_a", "type": "frame", "group": "narrow_panels", "size": [889, 94], "scalable": true},
+    {"asset_id": "33452bbb-820e-4c21-9af8-0f1ea9be9255", "name": "purple_meter_fill", "type": "fill", "group": "colored_meter_fills", "size": [879, 61]},
+    {"asset_id": "7a1810ab-993d-4e70-b900-99bb4ecd5e09", "name": "ornate_narrow_panel_b", "type": "frame", "group": "narrow_panels", "size": [890, 95], "scalable": true},
+    {"asset_id": "35b4901b-a81a-4c43-ad01-b0025384f6c0", "name": "red_meter_fill_b", "type": "fill", "group": "colored_meter_fills", "size": [878, 61]},
+    {"asset_id": "e46b31dd-11cf-4cae-8327-50f4c3fc253c", "name": "large_round_navigation_frame", "type": "frame", "size": [649, 651]},
+    {"asset_id": "5162d64f-9fc7-4bc9-be8c-1824307b4de9", "name": "sword_round_button", "type": "button", "group": "round_icon_buttons", "state": "normal", "size": [298, 297]},
+    {"asset_id": "47e7cc2f-925d-49d2-8754-4d5a213bbbf1", "name": "boot_round_button", "type": "button", "group": "round_icon_buttons", "state": "normal", "size": [295, 298]},
+    {"asset_id": "b19c6e30-607f-440d-88fe-7cd197608579", "name": "arrows_round_button", "type": "button", "group": "round_icon_buttons", "state": "normal", "size": [296, 297]},
+    {"asset_id": "c84ed5a3-88a6-406c-a1f9-6b07e8fef42b", "name": "gray_round_frame", "type": "frame", "size": [249, 253]},
+    {"asset_id": "fe00980c-87f6-4328-a4d8-e15e89829a0e", "name": "trophy_round_button", "type": "button", "group": "round_icon_buttons", "state": "normal", "size": [282, 284]}
+  ]
+}
