@@ -2476,10 +2476,24 @@ func _apply_mobile_hud_layout(ui_root: Control) -> void:
 		return
 	var mobile := OS.has_feature("mobile") or viewport_size.x < 900.0
 	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
+	var touch_actions := ["attack", "jump", "interact", "dodge", "potion", "upgrade", "inventory", "shadow", "guard"]
 	if not mobile:
 		if joystick:
 			joystick.visible = false
+		for action in touch_actions:
+			var desktop_hidden_button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+			if desktop_hidden_button:
+				desktop_hidden_button.visible = false
+		var desktop_pause := ui_root.get_node_or_null("PauseMenuButton") as Button
+		if desktop_pause:
+			desktop_pause.visible = false
 		return
+	if joystick:
+		joystick.visible = true
+	for action in touch_actions:
+		var touch_button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+		if touch_button:
+			touch_button.visible = true
 	var portrait := viewport_size.y > viewport_size.x
 	var compact_scale := 0.90 if portrait else 1.0
 	if joystick:
