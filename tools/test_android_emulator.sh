@@ -56,7 +56,13 @@ if [[ -n "$RESUMED_ACTIVITY" ]] && ! grep -E "mResumedActivity.*$PACKAGE_ID|topR
   tail -n 160 "$LOG_PATH" || true
   exit 1
 fi
-if grep -Eq "Fatal signal.*pid[ =:] *$APP_PID|pid: *$APP_PID|Process: $PACKAGE_ID|Process $PACKAGE_ID has died|>>> $PACKAGE_ID <<<" "$LOG_PATH" "$CRASH_LOG_PATH"; then
+# O buffer crash pode conter falhas de serviços do próprio emulador (ex.: Bluetooth).
+# Só reprovar quando o PID ou o nome do processo do jogo aparecer literalmente.
+if grep -Fq "pid $APP_PID (" "$CRASH_LOG_PATH" \
+  || grep -Fq "pid: $APP_PID," "$CRASH_LOG_PATH" \
+  || grep -Fq ">>> $PACKAGE_ID <<<" "$CRASH_LOG_PATH" \
+  || grep -Fq "Process: $PACKAGE_ID" "$CRASH_LOG_PATH" \
+  || grep -Fq "Process $PACKAGE_ID has died" "$LOG_PATH" "$CRASH_LOG_PATH"; then
   echo "ERRO: falha fatal no processo Android do jogo (PID $APP_PID)"
   cat "$CRASH_LOG_PATH" || true
   exit 1
