@@ -5,7 +5,7 @@ const MAX_GRAVESTONES := 12
 const MAX_DEAD_TREES := 5
 const VILLAGE_CENTER := Vector3(275.0, 0.0, 175.0)
 
-static func build(world: Node3D) -> void:
+static func build(world: Node3D, activated_relic_ids: Array[int] = []) -> void:
 	var village := Node3D.new()
 	village.name = "AldeiaDasCinzas"
 	village.position = VILLAGE_CENTER
@@ -25,6 +25,7 @@ static func build(world: Node3D) -> void:
 	_build_graveyard(village)
 	_build_dead_trees(village)
 	_build_lanterns(village)
+	_build_ashen_relics(village, activated_relic_ids)
 	for i in range(8):
 		var x := -25.0 + float(i) * 7.0
 		if absf(x) < 5.0:
@@ -189,3 +190,49 @@ static func _title(parent: Node3D, title_text: String, position: Vector3, color:
 	title.font_size = 36
 	title.modulate = color
 	parent.add_child(title)
+
+
+static func _build_ashen_relics(parent: Node3D, activated_ids: Array[int]) -> void:
+	# Três fragmentos opcionais formam uma pequena missão ambiental na aldeia.
+	var positions := [Vector3(-17.0, 0.0, -5.0), Vector3(18.0, 0.0, -7.0), Vector3(2.0, 0.0, 23.0)]
+	var colors := [Color("8bc8b5"), Color("a78bd1"), Color("d58b62")]
+	for i in range(positions.size()):
+		var relic := Node3D.new()
+		relic.name = "AshenRelic_%d" % i
+		relic.position = positions[i]
+		relic.set_meta("relic_name", ["Lágrima Verde", "Cinza Violeta", "Brasa Antiga"][i])
+		relic.set_meta("collected", activated_ids.has(i))
+		parent.add_child(relic)
+		var pedestal := _box(relic, "RelicPedestal", Vector3(0.0, 0.42, 0.0), Vector3(1.25, 0.84, 1.25), Color("55534d"))
+		pedestal.rotation.y = 0.18 * float(i)
+		var crystal := _sphere(relic, "RelicCrystal", Vector3(0.0, 1.28, 0.0), 0.34, colors[i])
+		crystal.scale = Vector3(0.72, 1.5, 0.72)
+		var glow := _material(colors[i])
+		glow.emission_enabled = true
+		glow.emission = colors[i].darkened(0.2)
+		glow.emission_energy_multiplier = 0.8
+		crystal.material_override = glow
+		var light := OmniLight3D.new()
+		light.name = "RelicLight"
+		light.position = Vector3(0.0, 1.4, 0.0)
+		light.light_color = colors[i]
+		light.light_energy = 0.42
+		light.omni_range = 4.5
+		relic.add_child(light)
+		if activated_ids.has(i):
+			relic.visible = false
+
+	var altar := Node3D.new()
+	altar.name = "AshenRewardAltar"
+	altar.position = Vector3(-15.0, 0.0, 17.0)
+	parent.add_child(altar)
+	_box(altar, "AshenAltarBase", Vector3(0.0, 0.35, 0.0), Vector3(3.0, 0.7, 2.4), Color("55514b"))
+	_box(altar, "AshenAltarStone", Vector3(0.0, 1.0, 0.0), Vector3(1.8, 0.65, 1.35), Color("777064"))
+	var reward := _sphere(altar, "AshenRewardCrystal", Vector3(0.0, 1.85, 0.0), 0.42, Color("574c58"))
+	reward.scale = Vector3(0.8, 1.45, 0.8)
+	var reward_material := _material(Color("574c58"))
+	reward_material.emission_enabled = true
+	reward_material.emission = Color("302936")
+	reward_material.emission_energy_multiplier = 0.25
+	reward.material_override = reward_material
+	altar.set_meta("relics_required", 3)
