@@ -1,0 +1,138 @@
+name: Importar assets enviados para Dark World
+
+on:
+  workflow_dispatch:
+    inputs:
+      medieval_pack_url:
+        description: "Link HTTPS direto para MedievalPackSTY.rar (opcional)"
+        required: false
+        type: string
+      castle_pack_url:
+        description: "Link HTTPS direto para o ZIP do castelo (opcional)"
+        required: false
+        type: string
+      forest_pack_url:
+        description: "Link HTTPS direto para EU43_FORESTPACK.zip (opcional)"
+        required: false
+        type: string
+      gledista_pack_url:
+        description: "Link HTTPS direto para Gledista_Triacanthos_BLEND.zip (opcional)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: submitted-dark-world-assets
+  cancel-in-progress: false
+
+jobs:
+  convert-and-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+
+      - name: Install extraction, Blender and texture tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender p7zip-full python3-pil
+
+      - name: Download and extract submitted archives
+        env:
+          MEDIEVAL_URL: ${{ inputs.medieval_pack_url }}
+          CASTLE_URL: ${{ inputs.castle_pack_url }}
+          FOREST_URL: ${{ inputs.forest_pack_url }}
+          GLEDISTA_URL: ${{ inputs.gledista_pack_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/darkworld-input /tmp/darkworld-extracted
+          fetch() {
+            local url="$1" name="$2"
+            [ -n "$url" ] || return 0
+            case "$url" in https://*) ;; *) echo "Only HTTPS links are accepted"; exit 1;; esac
+            curl --fail --location --retry 3 --connect-timeout 20 --max-time 900 "$url" -o "/tmp/darkworld-input/$name"
+          }
+          fetch "$MEDIEVAL_URL" medieval.rar
+          fetch "$CASTLE_URL" castle.zip
+          fetch "$FOREST_URL" forest.zip
+          fetch "$GLEDISTA_URL" gledista.zip
+          for archive in /tmp/darkworld-input/*; do
+            [ -f "$archive" ] || continue
+            7z x -y "-o/tmp/darkworld-extracted/$(basename "$archive").dir" "$archive"
+          done
+          test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
+
+      - name: Convert Blender and USDZ assets to GLB
+        run: |
+          set -euo pipefail
+          mkdir -p assets/external_packs/user_submitted
+          blender --background --python tools/convert_submitted_assets.py -- /tmp/darkworld-extracted assets/external_packs/user_submitted 2>&1 | tee /tmp/darkworld-blender.log
+
+      - name: Optimise Forestpack textures for mobile
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import re
+          roots = Path('/tmp/darkworld-extracted')
+          out = Path('assets/textures/user_submitted/forestpack')
+          out.mkdir(parents=True, exist_ok=True)
+          count = 0
+          for src in roots.rglob('*'):
+              if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png'}:
+                  continue
+              try:
+                  image = Image.open(src).convert('RGBA' if 'a' in src.stem.lower() else 'RGB')
+                  image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+                  name = re.sub(r'[^A-Za-z0-9_.-]+', '_', src.stem).lower()
+                  image.save(out / (name + ('.png' if image.mode == 'RGBA' else '.jpg')), optimize=True, quality=88)
+                  count += 1
+              except Exception as exc:
+                  print('WARN texture', src.name, exc)
+          print('FOREST_TEXTURES_OPTIMISED', count)
+          PY
+
+      - name: Write import report
+        run: |
+          cat > assets/external_packs/user_submitted/IMPORT-REPORT.md <<'EOF'
+          # Assets enviados — Dark World
+          Blender e USDZ convertidos com sucesso ficam nesta pasta em GLB.
+          Texturas do EU43 Forestpack são preparadas em assets/textures/user_submitted/forestpack/.
+
+          Limitação: os nove arquivos .max do EU43 Forestpack são cenas Autodesk 3ds Max e não são convertidos pelo Blender. As texturas compatíveis são otimizadas; a geometria .max precisa ser exportada pelo 3ds Max para FBX/GLB.
+
+          Antes de posicionar modelos no mundo, conferir escala, orientação, materiais, colisões e triângulos no Godot 4.3. Nenhum mapa ou cena existente é substituído.
+          EOF
+
+      - name: Validate converted GLBs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = list(Path('assets/external_packs/user_submitted').glob('*.glb'))
+          for path in files:
+              with path.open('rb') as f:
+                  assert f.read(4) == b'glTF', f'Invalid GLB: {path}'
+              assert path.stat().st_size > 1024, f'Empty GLB: {path}'
+          if not files:
+              raise SystemExit('No converted GLB files found')
+          print('Validated GLBs:', len(files))
+          PY
+
+      - name: Commit converted assets
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/user_submitted assets/textures/user_submitted
+          if git diff --cached --quiet; then
+            echo 'No converted assets to commit'
+            exit 0
+          fi
+          git commit -m 'Importa modelos enviados e texturas otimizadas para Dark World'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions
