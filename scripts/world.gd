@@ -92,6 +92,7 @@ const ITCH_DUNGEON_MODEL_PATHS := [
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
+	_configure_adaptive_4k()
 	_create_loading_screen()
 	_set_loading_progress(4.0, "Acendendo as runas...")
 	await get_tree().process_frame
@@ -2770,6 +2771,7 @@ func _show_menu_page(page: String) -> void:
 		"settings":
 			title.text = "CONFIGURAÇÕES"
 			subtitle.text = "Ajuste a câmera e consulte os controles."
+			_menu_add_card(content, "GRÁFICOS • 4K ADAPTATIVO", "PC com tela 4K: renderização 3840×2160 automática. Outras telas de PC: 1920×1080. Android: resolução nativa do aparelho para preservar desempenho.")
 			_menu_add_card(content, "SENSIBILIDADE DA CÂMERA", "Arraste na metade direita da tela para girar a câmera. Ajuste a velocidade abaixo.")
 			var sensitivity := HSlider.new()
 			sensitivity.min_value = 0.003
