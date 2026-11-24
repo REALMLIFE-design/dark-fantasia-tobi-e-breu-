@@ -146,6 +146,7 @@ func _ready() -> void:
 	_build_whisper_grove()
 	await get_tree().process_frame
 	_build_outer_regions()
+	_build_wandering_lighthouse()
 	await get_tree().process_frame
 	_build_ancient_waystones()
 	await get_tree().process_frame
@@ -4259,3 +4260,60 @@ func _load_save() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		_save_game()
+
+
+func _build_wandering_lighthouse() -> void:
+	# Novo ponto opcional no extremo sudoeste, construído com geometria leve.
+	var root := Node3D.new()
+	root.name = "FarolDosErrantes"
+	root.position = Vector3(-245.0, 0.0, 220.0)
+	add_child(root)
+	var ground := _box(root, "WanderingLighthouseGround", Vector3(0.0, -0.08, 0.0), Vector3(66.0, 0.16, 56.0), Color("4b514c"))
+	ground.material_override = _painter_mat(Color("4b514c"), 3.0, 0.16, 3, Color("313d39"))
+	var access_road := _box(self, "WanderingLighthouseRoad", Vector3(-210.0, 0.025, 187.0), Vector3(7.0, 0.05, 94.0), Color("655744"))
+	access_road.rotation.y = -0.72
+	_box(root, "LighthouseFoundation", Vector3(0.0, 0.35, -3.0), Vector3(10.0, 0.7, 10.0), Color("5e625c"))
+	_box(root, "LighthouseLowerShaft", Vector3(0.0, 4.0, -3.0), Vector3(6.2, 7.0, 6.2), Color("77786e"))
+	_box(root, "LighthouseUpperShaft", Vector3(0.0, 9.2, -3.0), Vector3(4.7, 3.4, 4.7), Color("898779"))
+	_box(root, "LighthouseLanternRoom", Vector3(0.0, 11.6, -3.0), Vector3(5.5, 1.3, 5.5), Color("39464a"))
+	_box(root, "LighthouseRoof", Vector3(0.0, 12.45, -3.0), Vector3(6.5, 0.45, 6.5), Color("4a3f3c"))
+	var beacon := _sphere(root, "WanderingBeacon", Vector3(0.0, 14.0, -3.0), 0.72, Color("e5bd78"), 1.1)
+	beacon.material_override = _painter_mat(Color("e5bd78"), 8.0, 0.22)
+	var beacon_light := OmniLight3D.new()
+	beacon_light.name = "WanderingBeaconLight"
+	beacon_light.position = Vector3(0.0, 14.0, -3.0)
+	beacon_light.light_color = Color("e7c58b")
+	beacon_light.light_energy = 1.15
+	beacon_light.omni_range = 24.0
+	root.add_child(beacon_light)
+	for side in [-1.0, 1.0]:
+		_box(root, "LanternArchPillar", Vector3(side * 8.0, 2.7, 15.0), Vector3(1.6, 5.4, 1.6), Color("696c64"))
+	_box(root, "LanternArchLintel", Vector3(0.0, 5.5, 15.0), Vector3(18.0, 1.4, 1.8), Color("77776d"))
+	var grave_positions := [
+		Vector3(-22.0, 0.0, -16.0), Vector3(-14.0, 0.0, -22.0),
+		Vector3(14.0, 0.0, -21.0), Vector3(23.0, 0.0, -12.0),
+		Vector3(-24.0, 0.0, 8.0), Vector3(-15.0, 0.0, 21.0),
+		Vector3(16.0, 0.0, 20.0), Vector3(25.0, 0.0, 7.0)
+	]
+	for i in range(grave_positions.size()):
+		var marker := Node3D.new()
+		marker.name = "WanderingGrave_%02d" % i
+		marker.position = grave_positions[i]
+		root.add_child(marker)
+		_box(marker, "GraveStone", Vector3(0.0, 0.85, 0.0), Vector3(1.2, 1.7, 0.38), Color("77786f"))
+		_box(marker, "GraveCap", Vector3(0.0, 1.72, 0.0), Vector3(1.45, 0.22, 0.48), Color("89897c"))
+		if i % 2 == 0:
+			_box(marker, "CarvedCross", Vector3(0.0, 1.05, 0.22), Vector3(0.16, 0.72, 0.08), Color("b6a98d"))
+	for i in range(5):
+		var lamp := Node3D.new()
+		lamp.name = "WanderingPathLamp_%d" % i
+		lamp.position = Vector3(-16.0 + float(i) * 8.0, 0.0, 11.0)
+		root.add_child(lamp)
+		_box(lamp, "LampPost", Vector3(0.0, 1.5, 0.0), Vector3(0.18, 3.0, 0.18), Color("493c32"))
+		var flame := _sphere(lamp, "LampFlame", Vector3(0.0, 3.15, 0.0), 0.2, Color("e6b36e"), 0.4)
+		flame.material_override = _painter_mat(Color("e6b36e"), 8.0, 0.12)
+	for i in range(9):
+		var angle := TAU * float(i) / 9.0
+		var rock := _sphere(root, "WeatheredBoundaryRock", Vector3(cos(angle) * 29.0, 0.8, sin(angle) * 24.0), 1.0, Color("5d625d"), 1.8 + float(i % 3) * 0.35)
+		rock.scale = Vector3(1.4, 0.8, 1.1)
+	_add_region_title("FAROL DOS ERRANTES", root.position + Vector3(0.0, 17.0, 0.0), Color("e3c99b"))

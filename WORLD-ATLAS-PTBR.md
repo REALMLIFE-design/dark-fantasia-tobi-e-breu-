@@ -99,3 +99,13 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - **Observatório da Queda das Estrelas** — aproximadamente (-62, -292): ruína circular com colunas, mapa celeste, orbe luminoso e telescópio antigo.
 - **Caravana Abandonada** — aproximadamente (92, 218): carro de carga, mantimentos, lona rasgada e tochas de estrada na Planície Dourada.
 - Os três marcos são cenografia procedural leve, carregada pelo pacote central. Nesta etapa são pontos visuais de exploração, sem loot, colisões dedicadas ou novas missões.
+
+
+## Farol dos Errantes — expansão 24/11/2026
+- Novo marco no extremo sudoeste do mundo, aproximadamente em (-245, 220), conectado à trilha ocidental por uma estrada de terra.
+- Torre-farol com sala de luz, arco de entrada em ruínas, oito lápides, cinco lampiões e rochas de limite.
+- Cenografia procedural leve, sem substituir áreas, missões, personagens ou dados de save existentes; não adiciona missão nem recompensa nesta etapa.
+
+## Modelos Thrixel no pacote Android — 24/11/2026
+- A compilação do commit `329e040` confirmou o download e a inclusão no APK dos seis GLBs existentes: Guardião Cervo, Caranguejo do Rio Prateado, Espectro Afogado, Árvore Ancestral, Obelisco Rúnico e Santuário de Pedra.
+- Os modelos são baixados durante o workflow de Android; o fallback procedural permanece quando algum download falhar.

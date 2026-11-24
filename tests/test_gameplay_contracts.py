@@ -1280,3 +1280,15 @@ class WorldExpansionContracts(unittest.TestCase):
         for function_name, display_name in landmarks.items():
             self.assertIn(function_name + "(parent,", props)
             self.assertIn(display_name, atlas)
+
+
+class WanderingLighthouseContracts(unittest.TestCase):
+    def test_wandering_lighthouse_is_registered_as_an_additive_outer_landmark(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        atlas = (ROOT / "WORLD-ATLAS-PTBR.md").read_text(encoding="utf-8")
+        self.assertIn("_build_wandering_lighthouse()", world)
+        self.assertIn("func _build_wandering_lighthouse() -> void:", world)
+        self.assertIn('root.name = "FarolDosErrantes"', world)
+        self.assertIn('"WanderingLighthouseRoad"', world)
+        self.assertIn('"WanderingBeaconLight"', world)
+        self.assertIn("FAROL DOS ERRANTES", atlas)
