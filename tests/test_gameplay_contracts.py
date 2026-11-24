@@ -85,7 +85,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertNotIn('Tobi3DCC0Fallback', self.player)
         self.assertNotIn('low-poly-character-figures-knight-sword-raised-5e8b7e11.glb', self.player)
         self.assertIn('visual.set_meta("external_tobi_model", hero)', self.player)
-        self.assertIn('if visual.has_node("Breu"):', self.player)
+        self.assertIn('cat.name = "Breu"', self.player)
         self.assertIn('visual.set_meta("left_arm", left_arm)', self.player)
         self.assertIn('visual.set_meta("right_arm", right_arm)', self.player)
 
@@ -458,7 +458,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('save_version > 16', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
