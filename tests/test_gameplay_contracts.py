@@ -1043,7 +1043,10 @@ class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
         self.assertIn('button.add_theme_stylebox_override("hover", hover)', menu)
         self.assertIn('button.add_theme_stylebox_override("pressed", pressed)', menu)
         self.assertIn("StyleBoxTexture.new()", world)
-        self.assertIn("StyleBoxTexture.new()", menu)
+        # The redesigned boot menu intentionally uses native flat style boxes;
+        # keep its hover/pressed states covered without requiring the old texture frame.
+        self.assertIn('var normal := StyleBoxFlat.new()', menu)
+        self.assertIn('button.add_theme_stylebox_override("normal", normal)', menu)
 
     def test_ui_panel_shadows_are_reduced_for_mobile(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
