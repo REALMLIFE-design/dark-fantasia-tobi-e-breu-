@@ -101,7 +101,7 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - Os três marcos são cenografia procedural leve, carregada pelo pacote central. Nesta etapa são pontos visuais de exploração, sem loot, colisões dedicadas ou novas missões.
 
 
-## Farol dos Errantes — expansão 24/11/2026
+## FAROL DOS ERRANTES — expansão 24/11/2026
 - Novo marco no extremo sudoeste do mundo, aproximadamente em (-245, 220), conectado à trilha ocidental por uma estrada de terra.
 - Torre-farol com sala de luz, arco de entrada em ruínas, oito lápides, cinco lampiões e rochas de limite.
 - Cenografia procedural leve, sem substituir áreas, missões, personagens ou dados de save existentes; não adiciona missão nem recompensa nesta etapa.
