@@ -1233,3 +1233,22 @@ class OpeningCinematicContracts(unittest.TestCase):
         self.assertIn('skip_button.pressed.connect(func() -> void:', cutscenes)
         self.assertIn('while not advance_requested and not finished:', cutscenes)
         self.assertNotIn('await next_button.pressed', cutscenes)
+
+
+class AndroidEmulatorInstallContracts(unittest.TestCase):
+    def test_android_emulator_runner_enables_kvm_and_uses_a_bounded_boot_profile(self):
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        kvm_step = workflow.index("Habilitar KVM para acelerar o emulador Android")
+        emulator_step = workflow.index("Testar APK em emulador Android")
+        self.assertLess(kvm_step, emulator_step)
+        self.assertIn('KERNEL=="kvm"', workflow)
+        self.assertIn("emulator-boot-timeout: 900", workflow)
+        self.assertIn("cores: 4", workflow)
+        self.assertIn("timeout-minutes: 25", workflow)
+
+    def test_android_apk_install_has_streaming_and_non_streaming_fallbacks(self):
+        script = (ROOT / "tools/test_android_emulator.sh").read_text(encoding="utf-8")
+        self.assertIn('TOBI_TEST_INSTALL_TIMEOUT_SECONDS:-420', script)
+        self.assertIn('adb install -r --streaming "$APK_PATH"', script)
+        self.assertIn('adb install -r --no-streaming "$APK_PATH"', script)
+        self.assertNotIn("for attempt in 1 2 3 4 5", script)

@@ -19,12 +19,16 @@ done
 [[ "${BOOT_STATE:-}" == "1" ]] || { echo "ERRO: Android não terminou o boot"; exit 1; }
 adb logcat -c || true
 adb shell wm size 1280x720 >/dev/null 2>&1 || true
+INSTALL_TIMEOUT_SECONDS="${TOBI_TEST_INSTALL_TIMEOUT_SECONDS:-420}"
 install_ok=false
-for attempt in 1 2 3 4 5; do
-  if timeout 240 adb install -r --streaming "$APK_PATH"; then install_ok=true; break; fi
-  echo "Instalação ADB falhou na tentativa $attempt; aguardando serviços Android."
-  sleep 4
-done
+if timeout "$INSTALL_TIMEOUT_SECONDS" adb install -r --streaming "$APK_PATH"; then
+  install_ok=true
+else
+  echo "Instalação ADB por streaming falhou; tentando modo tradicional."
+  if timeout "$INSTALL_TIMEOUT_SECONDS" adb install -r --no-streaming "$APK_PATH"; then
+    install_ok=true
+  fi
+fi
 [[ "$install_ok" == "true" ]] || { echo "ERRO: não foi possível instalar o APK"; exit 1; }
 adb shell am force-stop "$PACKAGE_ID" || true
 adb shell monkey -p "$PACKAGE_ID" -c android.intent.category.LAUNCHER 1
