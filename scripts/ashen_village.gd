@@ -4,6 +4,7 @@ class_name AshenVillageBuilder
 const MAX_GRAVESTONES := 12
 const MAX_DEAD_TREES := 5
 const VILLAGE_CENTER := Vector3(275.0, 0.0, 175.0)
+const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
 
 static func build(world: Node3D, activated_relic_ids: Array[int] = []) -> void:
 	var village := Node3D.new()
@@ -26,6 +27,7 @@ static func build(world: Node3D, activated_relic_ids: Array[int] = []) -> void:
 	_build_dead_trees(village)
 	_build_lanterns(village)
 	_build_ashen_relics(village, activated_relic_ids)
+	_build_existing_character_dressing(village)
 	for i in range(8):
 		var x := -25.0 + float(i) * 7.0
 		if absf(x) < 5.0:
@@ -248,3 +250,27 @@ static func _build_ashen_relics(parent: Node3D, activated_ids: Array[int]) -> vo
 		altar_light.omni_range = 7.0
 		altar.add_child(altar_light)
 	altar.set_meta("relics_required", 3)
+
+
+static func _build_existing_character_dressing(parent: Node3D) -> void:
+	# Reaproveita dois GLBs já versionados no projeto; não depende dos ZIPs novos.
+	var villager := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+		parent,
+		"3dassets_dev",
+		"villager-man",
+		Vector3(7.5, 0.0, 8.0),
+		Vector3.ONE * 1.0
+	)
+	if villager:
+		villager.name = "AshenVillageVillager"
+		villager.rotation.y = -0.8
+	var guard := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+		parent,
+		"3dassets_dev",
+		"knight-sword-raised",
+		Vector3(5.0, 0.0, -9.0),
+		Vector3.ONE * 0.95
+	)
+	if guard:
+		guard.name = "AshenChapelGuard"
+		guard.rotation.y = 2.7
