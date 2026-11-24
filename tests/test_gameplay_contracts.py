@@ -251,7 +251,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('get_tree().paused = false', start)
 
     def test_project_display_name_matches_archive_version(self):
-        self.assertIn('Dark World 3D 0.12.2', self.project)
+        self.assertIn('config/name="Dark World: A Lenda de Tobi e Breu"', self.project)
+        self.assertIn('config/features=PackedStringArray("4.3"', self.project)
 
 
     def test_three_step_combo_scales_damage_and_expires(self):
@@ -676,7 +677,7 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('res://scenes/menu.tscn', bootstrap)
         self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
         self.assertIn('func _start_story()', menu)
-        self.assertIn('MODO HISTÓRIA', menu)
+        self.assertIn('CONTINUAR A JORNADA', menu)
         self.assertIn('HISTÓRIA COOPERATIVA', menu)
         self.assertIn('MULTIPLAYER', menu)
         self.assertIn('AMIGOS', menu)
@@ -1023,8 +1024,8 @@ class InterfaceLayerAndResponsiveContracts(unittest.TestCase):
 
     def test_boot_menu_buttons_fit_small_screens(self):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
-        self.assertIn('minf(560.0, viewport_width * (0.94 if mobile_ui else 0.90))', menu)
-        self.assertIn('minf(520.0, available_width * (0.90 if mobile_ui else 0.84))', menu)
+        self.assertIn('minf(560.0, viewport_size.x * (0.90 if mobile_ui else 0.49))', menu)
+        self.assertIn('minf(520.0, available_width * (0.90 if mobile_ui else 0.48))', menu)
 
 
 class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
@@ -1038,7 +1039,9 @@ class InterfaceVisibilityAndTextureContracts(unittest.TestCase):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
         self.assertIn('res://assets/ui/button_frame.svg', world)
-        self.assertIn('res://assets/ui/button_frame.svg', menu)
+        self.assertIn('var normal := StyleBoxFlat.new()', menu)
+        self.assertIn('button.add_theme_stylebox_override("hover", hover)', menu)
+        self.assertIn('button.add_theme_stylebox_override("pressed", pressed)', menu)
         self.assertIn("StyleBoxTexture.new()", world)
         self.assertIn("StyleBoxTexture.new()", menu)
 
@@ -1053,8 +1056,9 @@ class MobileFirstAllScreensContracts(unittest.TestCase):
     def test_boot_menu_has_touch_sized_buttons_and_vertical_scroll(self):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
         self.assertIn('scroll.name = "BootMenuScroll"', menu)
-        self.assertIn('76 if mobile_ui else 68', menu)
-        self.assertIn('viewport_width * (0.94 if mobile_ui else 0.90)', menu)
+        self.assertIn('68 if mobile_ui else 64', menu)
+        self.assertIn('viewport_size.x * (0.90 if mobile_ui else 0.49)', menu)
+        self.assertIn('available_width * (0.90 if mobile_ui else 0.48)', menu)
 
     def test_all_in_game_menu_pages_use_mobile_touch_targets(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
@@ -1092,7 +1096,10 @@ class TouchInputDeliveryContracts(unittest.TestCase):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
         project = (ROOT / "project.godot").read_text(encoding="utf-8")
         self.assertIn("background.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
-        self.assertIn("glow.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("cold_wash.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("warm_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("frame.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
+        self.assertIn("ring.mouse_filter = Control.MOUSE_FILTER_IGNORE", menu)
         self.assertIn("button.mouse_filter = Control.MOUSE_FILTER_STOP", menu)
         self.assertIn("pointing/emulate_mouse_from_touch=true", project)
 
