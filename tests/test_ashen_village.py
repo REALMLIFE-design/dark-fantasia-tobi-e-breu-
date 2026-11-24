@@ -18,6 +18,9 @@ class AshenVillageContracts(unittest.TestCase):
         self.assertIn("MAX_GRAVESTONES := 12", script)
         self.assertIn("MAX_DEAD_TREES := 5", script)
         self.assertIn("add_child(village)", script)
+        self.assertIn("road.rotation.y = 0.85", script)
+        self.assertIn("Vector3(-21.0, 0.0, 3.0)", script)
+        self.assertIn("Vector3(20.0, 0.0, 1.0)", script)
 
 if __name__ == "__main__":
     unittest.main()
