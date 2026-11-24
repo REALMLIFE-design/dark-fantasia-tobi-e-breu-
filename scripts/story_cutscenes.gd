@@ -129,12 +129,7 @@ static func play_intro(world: Node) -> void:
 		body.text = str(page["body"])
 		hint.text = str(page["hint"])
 		next_button.text = "INICIAR A JORNADA" if page_index == pages.size() - 1 else "CONTINUAR"
-		var pressed := false
-		var callback := func() -> void: pressed = true
-		next_button.pressed.connect(callback)
-		while not pressed:
-			await world.get_tree().process_frame
-		next_button.pressed.disconnect(callback)
+		await next_button.pressed
 		if page_index < pages.size() - 1:
 			var fade := world.create_tween()
 			fade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
