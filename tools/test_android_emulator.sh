@@ -21,7 +21,7 @@ adb logcat -c || true
 adb shell wm size 1280x720 >/dev/null 2>&1 || true
 install_ok=false
 for attempt in 1 2 3 4 5; do
-  if adb install -r --no-streaming "$APK_PATH"; then install_ok=true; break; fi
+  if timeout 240 adb install -r --streaming "$APK_PATH"; then install_ok=true; break; fi
   echo "Instalação ADB falhou na tentativa $attempt; aguardando serviços Android."
   sleep 4
 done
