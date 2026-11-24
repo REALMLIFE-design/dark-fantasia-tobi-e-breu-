@@ -1266,3 +1266,17 @@ class AndroidSigningContracts(unittest.TestCase):
         self.assertIn("APK_SIGNING_MODE=stable", signing)
         self.assertIn("APK_SIGNING_MODE=temporary", signing)
         self.assertIn("APK_SIGNING_MODE", release)
+
+
+class WorldExpansionContracts(unittest.TestCase):
+    def test_three_new_exploration_landmarks_are_registered_in_the_main_prop_pack(self):
+        props = (ROOT / "scripts/dark_fantasy_prop_pack.gd").read_text(encoding="utf-8")
+        atlas = (ROOT / "WORLD-ATLAS-PTBR.md").read_text(encoding="utf-8")
+        landmarks = {
+            "_build_lantern_lake": "Lago das Lanternas",
+            "_build_starfall_observatory": "Observatório da Queda das Estrelas",
+            "_build_abandoned_caravan": "Caravana Abandonada",
+        }
+        for function_name, display_name in landmarks.items():
+            self.assertIn(function_name + "(parent,", props)
+            self.assertIn(display_name, atlas)

@@ -35,6 +35,9 @@ static func build_all(parent: Node3D) -> void:
 	_build_watchtower(parent, Vector3(200, 0, 68))
 	_build_blacksmith_forge(parent, Vector3(-121, 0, 96))
 	_build_alchemist_workshop(parent, Vector3(188, 0, 100))
+	_build_lantern_lake(parent, Vector3(-38, 0, -184))
+	_build_starfall_observatory(parent, Vector3(-62, 0, -292))
+	_build_abandoned_caravan(parent, Vector3(92, 0, 218))
 
 static func _root(parent: Node3D, node_name: String, position: Vector3) -> Node3D:
 	var root := Node3D.new()
@@ -558,3 +561,83 @@ static func _build_alchemist_workshop(parent: Node3D, position: Vector3) -> void
 	_box(root, "SpellbookClasp", Vector3(-1.3, 1.36, 0.7), Vector3(0.08, 0.08, 0.05), Color("d3b16d"), 12, true)
 	_cone(root, "FocusCrystal", Vector3(2.15, 1.72, 0.38), 0.28, 1.05, Color("8ac9c1"), 13)
 	_sphere(root, "FocusCrystalGlow", Vector3(2.15, 2.15, 0.38), 0.12, Color("b4f4dc"), Vector3.ONE, 13, true)
+
+
+# Novos POIs da expansao de exploracao — cenografia leve e sem alterar quests.
+static func _build_lantern_lake(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "LanternLake", position)
+	# Espelhos d'agua rasos em tons frios, com margens de pedra.
+	for i in range(3):
+		var pond := _sphere(root, "MoonlitWater_%d" % i, Vector3(-2.2 + float(i) * 2.2, 0.06, sin(float(i) * 1.4) * 1.2), 1.0, Color("477f83"), Vector3(1.8, 0.055, 1.15), 13, true)
+		pond.rotation.y = float(i) * 0.24
+	for i in range(11):
+		var angle := TAU * float(i) / 11.0
+		var radius := 5.0 + float(i % 3) * 0.35
+		var stone := _box(root, "LakeShoreStone_%d" % i, Vector3(cos(angle) * radius, 0.18, sin(angle) * radius), Vector3(0.9, 0.35, 0.72), Color("73796e"), 10)
+		stone.rotation.y = angle
+	for i in range(5):
+		var x := -4.0 + float(i) * 2.0
+		_cylinder(root, "LanternStake_%d" % i, Vector3(x, 1.15, -4.0), 0.07, 2.3, Color("4b514d"), 12, 12)
+		_box(root, "LanternHousing_%d" % i, Vector3(x, 2.25, -4.0), Vector3(0.42, 0.52, 0.42), Color("4c5d5a"), 12)
+		_sphere(root, "LanternGlow_%d" % i, Vector3(x, 2.25, -4.0), 0.13, Color("9fe2cf"), Vector3.ONE, 13, true)
+	for side in [-1.0, 1.0]:
+		_cylinder(root, "WillowTrunk", Vector3(side * 6.2, 2.0, 1.2), 0.38, 4.0, Color("514438"), 4, 12)
+		for branch in range(4):
+			_sphere(root, "WillowCanopy", Vector3(side * 6.2 + (branch - 1.5) * 0.48, 4.0 - float(branch % 2) * 0.3, 1.2 + (branch % 2) * 0.45), 1.15, Color("496957"), Vector3(0.82, 1.0, 0.88), 8)
+	_box(root, "LakeOldJetty", Vector3(0, 0.42, 5.6), Vector3(3.8, 0.18, 2.2), Color("604a37"), 4)
+	for i in range(4):
+		_cylinder(root, "JettyPost_%d" % i, Vector3(-1.55 + float(i % 2) * 3.1, 0.68, 4.7 + float(i / 2) * 1.7), 0.10, 1.35, Color("4b3c31"), 4, 10)
+
+
+static func _build_starfall_observatory(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "StarfallObservatory", position)
+	_cylinder(root, "ObservatoryFoundation", Vector3(0, 0.22, 0), 6.2, 0.44, Color("555d5c"), 10, 32)
+	_cylinder(root, "ObservatoryUpperRing", Vector3(0, 0.52, 0), 4.8, 0.18, Color("77796e"), 10, 32)
+	for i in range(8):
+		var angle := TAU * float(i) / 8.0
+		var x := cos(angle) * 4.3
+		var z := sin(angle) * 4.3
+		_cylinder(root, "ObservatoryColumn_%d" % i, Vector3(x, 2.15, z), 0.28, 3.2, Color("73796f"), 10, 12)
+		_cylinder(root, "ColumnCapital_%d" % i, Vector3(x, 3.82, z), 0.48, 0.24, Color("9a927d"), 10, 12)
+	_box(root, "ObservatoryLintelNorth", Vector3(0, 3.95, -4.25), Vector3(8.7, 0.3, 0.42), Color("696f68"), 10)
+	_box(root, "ObservatoryLintelSouth", Vector3(0, 3.95, 4.25), Vector3(8.7, 0.3, 0.42), Color("696f68"), 10)
+	_box(root, "ObservatoryLintelEast", Vector3(4.25, 3.95, 0), Vector3(0.42, 0.3, 8.7), Color("696f68"), 10)
+	_box(root, "ObservatoryLintelWest", Vector3(-4.25, 3.95, 0), Vector3(0.42, 0.3, 8.7), Color("696f68"), 10)
+	_cylinder(root, "StarChartPedestal", Vector3(0, 0.95, 0), 1.1, 1.1, Color("454f50"), 12, 24)
+	_sphere(root, "CelestialOrb", Vector3(0, 2.0, 0), 0.72, Color("91c9d1"), Vector3.ONE, 13, true)
+	for i in range(6):
+		var angle := TAU * float(i) / 6.0
+		var star := _sphere(root, "OrbitingStar_%d" % i, Vector3(cos(angle) * 1.65, 2.0 + sin(angle * 2.0) * 0.38, sin(angle) * 1.65), 0.13, Color("e5c98a"), Vector3.ONE, 13, true)
+		star.scale = Vector3.ONE * (0.85 + float(i % 2) * 0.35)
+	var telescope := _cylinder(root, "AncientTelescope", Vector3(2.4, 2.0, -1.8), 0.22, 2.8, Color("8b7658"), 12, 16)
+	telescope.rotation.z = -0.62
+	_cylinder(root, "TelescopeLens", Vector3(3.15, 2.75, -1.8), 0.31, 0.16, Color("8cc6c8"), 13, 20)
+	for i in range(4):
+		_box(root, "StarChartSlab_%d" % i, Vector3(-2.6 + float(i) * 1.7, 0.66, 2.5), Vector3(1.25, 0.12, 0.72), Color("555d5c"), 10)
+
+
+static func _build_abandoned_caravan(parent: Node3D, position: Vector3) -> void:
+	var root := _root(parent, "AbandonedGoldenCaravan", position)
+	# Carro de carga com rodas simples e lona de viagem.
+	_box(root, "CaravanCartBed", Vector3(0, 1.05, 0), Vector3(4.2, 0.28, 2.2), Color("654a34"), 4)
+	for side in [-1.0, 1.0]:
+		var wheel := _cylinder(root, "CartWheel", Vector3(side * 1.5, 0.72, 0), 0.72, 0.22, Color("40352e"), 4, 20)
+		wheel.rotation.z = PI * 0.5
+		_cylinder(root, "WheelHub", Vector3(side * 1.5, 0.72, 0.13), 0.22, 0.25, Color("a17b50"), 4, 16)
+	for i in range(5):
+		_box(root, "CartSideBoard_%d" % i, Vector3(-1.65 + float(i) * 0.82, 1.58, -1.0), Vector3(0.78, 0.82, 0.12), Color("79583c"), 4)
+		_box(root, "CartSideBoardFar_%d" % i, Vector3(-1.65 + float(i) * 0.82, 1.58, 1.0), Vector3(0.78, 0.82, 0.12), Color("79583c"), 4)
+	_cylinder(root, "CartAxle", Vector3(0, 0.72, 0), 0.12, 3.5, Color("514239"), 4, 12)
+	for i in range(3):
+		_sphere(root, "TravelSupplySack_%d" % i, Vector3(-0.9 + float(i) * 0.9, 1.82, 0.1), 0.48, Color("8a765c"), Vector3(1.0, 0.85, 0.9), 4)
+	var canopy := _cone(root, "CaravanCanvas", Vector3(0, 3.0, -3.2), 2.0, 2.5, Color("8a6b52"), 4)
+	canopy.rotation.z = PI
+	for side in [-1.0, 1.0]:
+		_cylinder(root, "CanvasSupport", Vector3(side * 1.6, 1.6, -3.2), 0.09, 3.2, Color("57432f"), 4, 12)
+		_cylinder(root, "RoadsideTorch", Vector3(side * 4.0, 1.1, 1.5), 0.08, 2.2, Color("57432f"), 4, 12)
+		_sphere(root, "RoadsideFlame", Vector3(side * 4.0, 2.28, 1.5), 0.16, Color("e5a260"), Vector3(0.8, 1.2, 0.8), 13, true)
+	_box(root, "CaravanSign", Vector3(0, 2.5, 3.5), Vector3(2.0, 0.7, 0.14), Color("624633"), 4)
+	_cylinder(root, "BrokenCartPole", Vector3(2.8, 0.85, 0), 0.10, 2.8, Color("654a34"), 4, 10).rotation.z = -0.22
+	for i in range(4):
+		var stone := _sphere(root, "RoadsideStone_%d" % i, Vector3(-4.2 + float(i) * 2.8, 0.24, 4.0), 0.42, Color("77776b"), Vector3(1.4, 0.7, 1.0), 10)
+		stone.rotation.y = float(i) * 0.5

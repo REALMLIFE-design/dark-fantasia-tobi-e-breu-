@@ -92,3 +92,10 @@ As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não t�
 - As famílias procedurais dos tipos 0 a 10 continuam disponíveis: goblins, Guardião do Silêncio, Bruxa do Pântano, Cavaleiros Afogados, Leviatã do Lodo, Espectros Afogados, Caranguejos de Prata, Vigia das Raízes e Corvos Glaciais.
 - Os GLBs externos já gerados do Espectro Afogado, Caranguejo de Prata e Guardião Cervo têm pontos de encaixe nas instâncias reais dos inimigos (tipos 7, 8 e 9). Quando o GLB existe no projeto, substitui a malha visual procedural; se estiver ausente, o fallback permanece.
 - Os GLBs ainda dependem de transferência/importação binária para `assets/plugin_imports/thrixel/`; o código de encaixe não significa que esses arquivos já estejam presentes.
+
+
+## Novos pontos de exploração — expansão complementar
+- **Lago das Lanternas** — aproximadamente (-38, -184): lagoas rasas azul-esverdeadas, passarela de madeira, salgueiros e cinco lanternas antigas.
+- **Observatório da Queda das Estrelas** — aproximadamente (-62, -292): ruína circular com colunas, mapa celeste, orbe luminoso e telescópio antigo.
+- **Caravana Abandonada** — aproximadamente (92, 218): carro de carga, mantimentos, lona rasgada e tochas de estrada na Planície Dourada.
+- Os três marcos são cenografia procedural leve, carregada pelo pacote central. Nesta etapa são pontos visuais de exploração, sem loot, colisões dedicadas ou novas missões.
