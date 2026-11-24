@@ -169,7 +169,16 @@ void fragment() {
     else if (pattern_mode == 5) { atlas_influence = 0.76; }
     else if (pattern_mode == 6) { atlas_influence = 0.70; }
     else if (pattern_mode >= 9) { atlas_influence = 0.30; }
-    ALBEDO = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern + pigment_variation);
+    vec3 painted_surface = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern + pigment_variation);
+    // A restrained dreamlike color drift: tiny cool/warm pigment shifts add
+    // visual magic without animated distortion or expensive extra textures.
+    float dream_shift = (broad - 0.5) * 0.035 + (fine - 0.5) * 0.018;
+    vec3 cool_lavender = vec3(0.78, 0.82, 1.04);
+    vec3 warm_amber = vec3(1.05, 0.91, 0.76);
+    vec3 dream_tint = mix(cool_lavender, warm_amber, clamp(broad * 0.72 + 0.18, 0.0, 1.0));
+    float luminance = dot(painted_surface, vec3(0.299, 0.587, 0.114));
+    vec3 gently_richer = mix(vec3(luminance), painted_surface, 1.055);
+    ALBEDO = max(gently_richer * (vec3(1.0) + dream_tint * dream_shift), vec3(0.0));
     float base_roughness = pattern_mode == 5 ? 0.20 : (pattern_mode == 3 ? 0.78 : 0.94);
     if (pattern_mode == 9) { base_roughness = 0.28; }
     else if (pattern_mode == 12) { base_roughness = 0.38; }
