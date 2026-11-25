@@ -1320,14 +1320,14 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "003_obj", "lod1_fantasy_house", "lod2_fantasy_house", "big_watchtower_lod1", "lowpoly_log_watchtower", "scari_rotund", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/11")', world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
-        self.assertIn("_build_chestnut_billboard_grove(hamlet)", world)
+        self.assertIn("_build_chestnut_grove(hamlet)", world)
 
     def test_imported_model_manifest_files_exist_and_platform_is_integrated(self):
         import json
@@ -1356,19 +1356,16 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source", workflow)
         self.assertIn("res://assets/textures/user_submitted_source/*", preset)
         self.assertTrue((ROOT / "assets/textures/user_submitted_source/.gdignore").is_file())
-        self.assertIn("USER_TEXTURES_RUNTIME_BILLBOARDS", workflow)
+        self.assertIn("USER_TEXTURES_RUNTIME_BILLBOARDS', 0", workflow)
         self.assertIn("USER_TEXTURES_SOURCE_ONLY", workflow)
-        self.assertIn("'transparency' in image.info", workflow)
-        self.assertIn("BILLBOARD_SOURCE_ALPHA", workflow)
-        self.assertIn("BILLBOARD_COLORKEY", workflow)
-        self.assertIn("np.median(corners, axis=0)", workflow)
-        self.assertIn("np.dstack((pixels.astype(np.uint8), alpha))", workflow)
+        self.assertNotIn("BILLBOARD_COLORKEY", workflow)
+        self.assertNotIn("np.dstack", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
-        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 11/11", workflow)
+        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17", workflow)
         self.assertIn("CHESTNUT_TREES_PLACED: 9", workflow)
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("func _build_chestnut_grove", world)
@@ -1380,20 +1377,14 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("\tawait _build_imported_medieval_hamlet()", world)
         self.assertNotIn("\t_build_imported_medieval_hamlet()", world)
 
-    def test_chestnut_billboards_are_mobile_friendly_and_require_real_alpha(self):
+    def test_chestnut_trees_use_low_poly_biome_materials_not_opaque_billboards(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
-        self.assertIn('file_name.begins_with("EU43_Billboard_")', world)
-        self.assertIn('file_name.get_basename().substr(0, 19)', world)
-        self.assertIn("billboard_variants.has(variant_key)", world)
-        self.assertIn("CHESTNUT_BILLBOARD_FILES_FOUND", world)
-        self.assertIn("CHESTNUT_BILLBOARD_TEXTURE_CHECK", world)
-        self.assertIn("billboard_image.get_format()", world)
-        self.assertNotIn("billboard_image.has_alpha()", world)
-        self.assertNotIn("if not texture.has_alpha():", world)
-        self.assertIn("tree_mesh.size = Vector2(7.0, 10.0)", world)
-        self.assertIn("BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR", world)
-        self.assertIn("BaseMaterial3D.BILLBOARD_ENABLED", world)
-        self.assertIn("GeometryInstance3D.SHADOW_CASTING_SETTING_OFF", world)
+        self.assertIn("func _build_chestnut_grove(parent: Node3D)", world)
+        self.assertIn("CastanheiraLowPoly_%02d", world)
+        self.assertIn('Color("496d58")', world)
+        self.assertIn("SphereMesh.new()", world)
+        self.assertIn("CHESTNUT_TREES_PLACED", world)
+        self.assertNotIn("_build_chestnut_billboard_grove", world)
 
     def test_imported_models_keep_original_albedo_maps_with_a_subtle_biome_filter(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")

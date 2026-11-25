@@ -856,7 +856,14 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "house_3x2x1", "position": Vector3(35.0, 0.0, 3.0), "scale": 0.62},
 		{"fragment": "big_watchtower", "position": Vector3(-40.0, 0.0, 18.0), "scale": 0.72},
 		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68},
-		{"fragment": "medieval_platform", "position": Vector3(0.0, 0.0, -28.0), "scale": 0.72}
+		{"fragment": "medieval_platform", "position": Vector3(0.0, 0.0, -28.0), "scale": 0.72},
+		# Modelos restantes: versões leves criam uma silhueta de vila ao fundo.
+		{"fragment": "003_obj", "position": Vector3(-53.0, 0.0, -12.0), "scale": 0.46},
+		{"fragment": "lod1_fantasy_house", "position": Vector3(-51.0, 0.0, -31.0), "scale": 0.54},
+		{"fragment": "lod2_fantasy_house", "position": Vector3(49.0, 0.0, -31.0), "scale": 0.58},
+		{"fragment": "big_watchtower_lod1", "position": Vector3(-48.0, 0.0, 31.0), "scale": 0.56},
+		{"fragment": "lowpoly_log_watchtower", "position": Vector3(48.0, 0.0, 29.0), "scale": 0.58},
+		{"fragment": "scari_rotund", "position": Vector3(0.0, 0.0, -40.0), "scale": 0.72}
 	]
 	var placed := 0
 	for item in placements:
@@ -894,7 +901,7 @@ func _build_imported_medieval_hamlet() -> void:
 
 	_build_chestnut_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
-	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/11")
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")
 
 
 func _build_chestnut_grove(parent: Node3D) -> void:
