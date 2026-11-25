@@ -68,12 +68,14 @@ if args[:2] == ['logcat', '-d']:
     def test_enters_the_adventure_from_the_main_menu(self):
         script = SCRIPT.read_text(encoding="utf-8")
         self.assertIn('adb shell input tap 640 260', script)
+        self.assertIn('adb shell input tap 640 570', script)
+        self.assertLess(script.index('adb shell input tap 640 260'), script.index('adb shell input tap 640 570'))
         self.assertNotIn('adb shell input tap 920 528', script)
         self.assertNotIn('adb shell input tap 640 490', script)
 
     def test_capture_occurs_after_entering_the_adventure(self):
         script = SCRIPT.read_text(encoding="utf-8")
-        self.assertLess(script.index("adb shell input tap 640 260"), script.index("adb exec-out screencap -p"))
+        self.assertLess(script.index("adb shell input tap 640 570"), script.index("adb exec-out screencap -p"))
 
     def test_verifies_game_remains_the_resumed_android_activity(self):
         script = SCRIPT.read_text(encoding="utf-8")
