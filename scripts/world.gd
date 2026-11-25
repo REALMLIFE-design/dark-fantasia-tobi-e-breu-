@@ -851,7 +851,11 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "house_1exportversion", "position": Vector3(12.0, 0.0, -10.0), "scale": 0.82},
 		{"fragment": "medhouse_", "position": Vector3(-3.0, 0.0, 10.0), "scale": 0.82},
 		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72},
-		{"fragment": "lod1_long_house", "position": Vector3(31.0, 0.0, -8.0), "scale": 0.62}
+		{"fragment": "lod1_long_house", "position": Vector3(31.0, 0.0, -8.0), "scale": 0.62},
+		{"fragment": "lod0_fantasy_house", "position": Vector3(-34.0, 0.0, -10.0), "scale": 0.66},
+		{"fragment": "house_3x2x1", "position": Vector3(35.0, 0.0, 3.0), "scale": 0.62},
+		{"fragment": "big_watchtower", "position": Vector3(-40.0, 0.0, 18.0), "scale": 0.72},
+		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68}
 	]
 	var placed := 0
 	for item in placements:
@@ -889,7 +893,7 @@ func _build_imported_medieval_hamlet() -> void:
 
 	_build_chestnut_billboard_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
-	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/6")
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/10")
 
 
 func _build_chestnut_billboard_grove(parent: Node3D) -> void:
@@ -901,11 +905,16 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 		return
 	var files := directory.get_files()
 	files.sort()
-	var billboard_files: Array[String] = []
+	var billboard_variants: Dictionary = {}
 	for file_name in files:
 		if file_name.begins_with("EU43_Billboard_") and file_name.to_lower().ends_with(".png"):
-			billboard_files.append(file_name)
-	if billboard_files.is_empty():
+			# Os pacotes Maya e Vue trazem cópias do mesmo billboard; manter uma por índice.
+			var variant_key := file_name.get_basename().substr(0, 19)
+			if not billboard_variants.has(variant_key):
+				billboard_variants[variant_key] = file_name
+	var billboard_keys: Array = billboard_variants.keys()
+	billboard_keys.sort()
+	if billboard_keys.is_empty():
 		return
 
 	var spots := [
@@ -919,8 +928,8 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 	grove.name = "BosqueDeCastanheiras"
 	parent.add_child(grove)
 	var placed := 0
-	for index in range(mini(billboard_files.size(), spots.size())):
-		var texture := load(TEXTURE_ROOT.path_join(billboard_files[index])) as Texture2D
+	for index in range(mini(billboard_keys.size(), spots.size())):
+		var texture := load(TEXTURE_ROOT.path_join(str(billboard_variants[billboard_keys[index]]))) as Texture2D
 		if texture == null:
 			continue
 		if not texture.has_alpha():
