@@ -1355,6 +1355,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("assets/textures/user_submitted_source", workflow)
         self.assertIn("git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source", workflow)
         self.assertIn("res://assets/textures/user_submitted_source/*", preset)
+        self.assertTrue((ROOT / "assets/textures/user_submitted_source/.gdignore").is_file())
         self.assertIn("USER_TEXTURES_RUNTIME_BILLBOARDS", workflow)
         self.assertIn("USER_TEXTURES_SOURCE_ONLY", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
