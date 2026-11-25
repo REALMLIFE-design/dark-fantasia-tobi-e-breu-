@@ -2,11 +2,15 @@
 """Convert user-submitted 3D assets to mobile-conscious GLB for Godot 4.3."""
 import hashlib
 import json
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 import bpy
 
-SUPPORTED = {".blend", ".usdz", ".fbx", ".obj"}
+SUPPORTED = {".blend", ".usdz", ".fbx", ".obj", ".3ds", ".dae"}
+ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae"}
+FORMAT_PRIORITY = {".blend": 0, ".usdz": 0, ".fbx": 1, ".dae": 2, ".3ds": 3, ".obj": 4}
 
 def parse_args():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -17,6 +21,41 @@ def parse_args():
 def clear_scene():
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
+
+def import_with_assimp(source):
+    """Use Assimp for FBX/3DS/Collada formats that Blender's bundled importer may reject."""
+    temporary = tempfile.TemporaryDirectory(prefix="darkworld_assimp_")
+    converted = Path(temporary.name) / "assimp_intermediate.glb"
+    result = subprocess.run(
+        ["assimp", "export", str(source), str(converted), "-f", "glb2"],
+        capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0 or not converted.is_file() or converted.stat().st_size <= 1024:
+        detail = (result.stderr or result.stdout or "Assimp did not create a GLB")[-3000:]
+        temporary.cleanup()
+        raise RuntimeError(f"Assimp conversion failed for {source.name}: {detail}")
+    bpy.ops.import_scene.gltf(filepath=str(converted))
+    return temporary
+
+
+def source_group_key(source):
+    parent = source.parent
+    if parent.name.lower() in {"obj", "fbx", "3ds", "dae"}:
+        parent = parent.parent
+    return str(parent / source.stem.lower())
+
+
+def choose_sources(candidates):
+    """Prefer one best source format per asset instead of importing duplicate LOD/model copies."""
+    selected = {}
+    for source in sorted(candidates, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower())):
+        key = source_group_key(source)
+        if key not in selected:
+            selected[key] = source
+        else:
+            print("SKIP duplicate format", source, "using", selected[key])
+    return sorted(selected.values())
+
 
 def import_asset(source):
     ext = source.suffix.lower()
@@ -66,14 +105,19 @@ def safe_stem(source):
 def main():
     input_dir, output_dir = parse_args()
     output_dir.mkdir(parents=True, exist_ok=True)
-    sources = sorted(p for p in input_dir.rglob("*") if p.is_file()
-                     and p.suffix.lower() in SUPPORTED
-                     and not p.name.lower().endswith(".blend1"))
+    candidates = [p for p in input_dir.rglob("*") if p.is_file()
+                  and p.suffix.lower() in SUPPORTED
+                  and not p.name.lower().endswith(".blend1")]
+    sources = choose_sources(candidates)
     manifest = []
     for source in sources:
+        temporary = None
         try:
             clear_scene()
-            import_asset(source)
+            if source.suffix.lower() in ASSIMP_IMPORT_FORMATS:
+                temporary = import_with_assimp(source)
+            else:
+                import_asset(source)
             meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
             if not meshes:
                 print("SKIP no mesh", source)
@@ -96,6 +140,9 @@ def main():
                 print("SKIP invalid export", source)
         except Exception as exc:
             print("ERROR converting", source, repr(exc))
+        finally:
+            if temporary is not None:
+                temporary.cleanup()
     (output_dir / "ASSET-MANIFEST.json").write_text(json.dumps(manifest, indent=2))
     print("CONVERSION_SUMMARY", len(manifest), "of", len(sources))
     if not manifest:
