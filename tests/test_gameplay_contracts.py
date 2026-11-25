@@ -1330,7 +1330,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
     def test_chestnut_billboards_are_mobile_friendly_and_require_real_alpha(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn('file_name.begins_with("EU43_Billboard_")', world)
-        self.assertIn("image == null or not image.has_alpha()", world)
+        self.assertIn("if not texture.has_alpha():", world)
         self.assertIn("tree_mesh.size = Vector2(7.0, 10.0)", world)
         self.assertIn("BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR", world)
         self.assertIn("BaseMaterial3D.BILLBOARD_ENABLED", world)
