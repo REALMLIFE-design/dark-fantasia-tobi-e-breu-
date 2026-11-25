@@ -923,8 +923,7 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 		var texture := load(TEXTURE_ROOT.path_join(billboard_files[index])) as Texture2D
 		if texture == null:
 			continue
-		var image := texture.get_image()
-		if image == null or not image.has_alpha():
+		if not texture.has_alpha():
 			continue
 		var tree_mesh := QuadMesh.new()
 		tree_mesh.size = Vector2(7.0, 10.0)
