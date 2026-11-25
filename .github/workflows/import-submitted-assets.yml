@@ -83,112 +83,28 @@ jobs:
           while true; do
             mapfile -d '' archives < <(find /tmp/darkworld-extracted -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.unitypackage' \) -print0)
             pending=()
-            for archive in "\${archives[@]}"; do
-              [ -f "\${archive}.darkworld-extracted" ] || pending+=("$archive")
+            for archive in "${archives[@]}"; do
+              [ -f "${archive}.darkworld-extracted" ] || pending+=("$archive")
             done
-            [ "\${#pending[@]}" -gt 0 ] || break
-            for archive in "\${pending[@]}"; do
-              target="\${archive}.dir"
+            [ "${#pending[@]}" -gt 0 ] || break
+            for archive in "${pending[@]}"; do
+              target="${archive}.dir"
               mkdir -p "$target"
               if 7z x -y "-o$target" "$archive"; then
-                touch "\${archive}.darkworld-extracted"
+                touch "${archive}.darkworld-extracted"
               else
                 echo "WARN archive could not be extracted: $archive"
-                touch "\${archive}.darkworld-extracted"
+                touch "${archive}.darkworld-extracted"
               fi
             done
           done
           echo "=== INVENTARIO COMPLETO DOS ARQUIVOS ENCONTRADOS NO DRIVE ==="
-          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\n' | sort > /tmp/darkworld-drive-inventory.txt
+          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\\n' | sort > /tmp/darkworld-drive-inventory.txt
           echo "TOTAL_FILES=$(wc -l < /tmp/darkworld-drive-inventory.txt)"
           echo "=== CONTAGEM POR EXTENSAO ==="
           find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
           echo "=== FORMATOS DE MODELO ENCONTRADOS ==="
-          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)
-
-      - name: Convert Blender, USDZ, FBX and OBJ models to GLB
-        run: |
-          set -euo pipefail
-          mkdir -p assets/external_packs/user_submitted
-          export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH:-}"
-          blender --background --python-expr "import numpy; print('BLENDER_NUMPY_READY', numpy.__version__)"
-          blender --background --python tools/convert_submitted_assets.py -- /tmp/darkworld-extracted assets/external_packs/user_submitted 2>&1 | tee /tmp/darkworld-blender.log
-
-      - name: Optimise submitted textures for Android
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          from PIL import Image
-          import hashlib
-          roots = Path('/tmp/darkworld-extracted')
-          out = Path('assets/textures/user_submitted')
-          out.mkdir(parents=True, exist_ok=True)
-          count = 0
-          for src in roots.rglob('*'):
-              if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.tga'}:
-                  continue
-              try:
-                  image = Image.open(src)
-                  image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-                  image = image.convert('RGBA' if 'A' in image.getbands() else 'RGB')
-                  digest = hashlib.sha1(str(src).encode()).hexdigest()[:8]
-                  target = out / f'{src.stem[:48]}_{digest}.png'
-                  image.save(target, optimize=True)
-                  count += 1
-              except Exception as exc:
-                  print('WARN texture', src.name, exc)
-          print('USER_TEXTURES_OPTIMISED', count)
-          PY
-
-      - name: Validate models and write full import report
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import json
-          root = Path('assets/external_packs/user_submitted')
-          files = sorted(root.glob('*.glb'))
-          for path in files:
-              with path.open('rb') as f:
-                  assert f.read(4) == b'glTF', f'Invalid GLB: {path}'
-              assert path.stat().st_size > 1024, f'Empty GLB: {path}'
-          manifest = json.loads((root / 'ASSET-MANIFEST.json').read_text()) if (root / 'ASSET-MANIFEST.json').exists() else []
-          report = [
-            '# Relatório de importação — Dark World',
-            '',
-            f'Modelos GLB validados: {len(files)}',
-            f'Texturas Android otimizadas: {len(list(Path("assets/textures/user_submitted").glob("*.png")))}',
-            '',
-            '## Modelos convertidos'
-          ]
-          report += [f'- {p.name} ({p.stat().st_size // 1024} KB)' for p in files]
-          report += ['', '## Fontes que exigem tratamento externo',
-                     '- FBX, 3DS e DAE são convertidos via Assimp; OBJ/BLEND/USDZ seguem o fluxo Blender.',
-                     '- Arquivos .max/.ma/.mb/.vob/.xfr exigem exportação no aplicativo de origem para FBX/GLB/OBJ.',
-                     '- Arquivos que ultrapassarem 90 MB convertidos são mantidos fora do Git e listados no log do workflow.',
-                     '- Todos os modelos precisam de inspeção de escala, orientação, materiais, colisões e desempenho no Godot 4.3.',
-                     '- A importação é aditiva: nenhum mapa, personagem, missão, HUD, save ou cena existente é substituído.']
-          (root / 'IMPORT-REPORT.md').write_text('\n'.join(report) + '\n')
-          print('Validated GLBs:', len(files))
-          PY
-
-      - name: Keep GitHub repository below per-file limit
-        run: |
-          find assets/external_packs/user_submitted -maxdepth 1 -type f -name '*.glb' -size +90M -print -delete
-
-      - name: Commit converted assets and report
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/external_packs/user_submitted assets/textures/user_submitted
-          if git diff --cached --quiet; then
-            echo 'No converted assets to commit'
-            exit 0
-          fi
-          git commit -m 'Importa modelos 3D enviados para Dark World'
-          git pull --rebase origin integration/definitive-all-versions
-          git push origin HEAD:integration/definitive-all-versions
- | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
+          find /tmp/darkworld-extracted -type f | grep -Ei '\\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
           test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
 
       - name: Convert Blender, USDZ, FBX and OBJ models to GLB
