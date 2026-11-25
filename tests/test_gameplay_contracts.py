@@ -1420,6 +1420,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("fetch_model silver_river_coffer 3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3", workflow)
         self.assertIn('load_optional_scene("thrixel_river_coffer")', world)
         self.assertIn('find_child("hinged_lid", true, false)', world)
+        self.assertIn('for clasp_name in ["left_clasp", "right_clasp"]:', world)
+        self.assertIn('saved_clasp.visible = false', world)
+        self.assertIn('plugin_clasp.visible = false', world)
         self.assertIn("_apply_dream_biome_tint(coffer_instance)", world)
         self.assertIn('ChestBase', world)  # Original procedural fallback remains available.
 

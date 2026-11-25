@@ -2064,6 +2064,10 @@ func _build_river_treasure_chests() -> void:
 				var saved_lid := coffer_instance.find_child("hinged_lid", true, false) as Node3D
 				if saved_lid != null:
 					saved_lid.rotation.x = -1.05
+				for clasp_name in ["left_clasp", "right_clasp"]:
+					var saved_clasp := coffer_instance.find_child(clasp_name, true, false) as Node3D
+					if saved_clasp != null:
+						saved_clasp.visible = false
 		else:
 			_box(chest, "ChestBase", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.86, 0.92), Color("465b5b"))
 			_box(chest, "ChestFrontBand", Vector3(0.0, 0.5, 0.48), Vector3(1.52, 0.16, 0.12), Color("b49a63"))
@@ -2090,10 +2094,6 @@ func _build_river_treasure_chests() -> void:
 		light.light_energy = 0.65 if not river_chest_ids.has(i) else 0.0
 		light.omni_range = 4.0
 		chest.add_child(light)
-		if river_chest_ids.has(i):
-			lid_pivot.rotation.x = -1.05
-			clasp.visible = false
-
 func _build_river_shrine_puzzle() -> void:
 	# A three-ring mechanism gives the river region a tactile, repeatable puzzle.
 	var shrine := Node3D.new()
@@ -3762,6 +3762,10 @@ func _open_river_chest(chest_id: int) -> void:
 	else:
 		var lid_pivot := chest.get_node_or_null("ChestLidPivot")
 		if lid_pivot: lid_pivot.rotation.x = -1.05
+	for clasp_name in ["left_clasp", "right_clasp"]:
+		var plugin_clasp := chest.find_child(clasp_name, true, false) as Node3D
+		if plugin_clasp != null:
+			plugin_clasp.visible = false
 	var clasp := chest.get_node_or_null("ChestClasp")
 	if clasp: clasp.visible = false
 	var glow := chest.get_node_or_null("ChestGlow")
