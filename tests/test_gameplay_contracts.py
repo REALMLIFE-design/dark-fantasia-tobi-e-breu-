@@ -1393,6 +1393,22 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertNotIn("np.dstack", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
+    def test_imported_static_models_receive_trimesh_collisions(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        self.assertIn("func _add_imported_model_collisions(root: Node) -> int:", world)
+        self.assertIn("mesh_instance.mesh.create_trimesh_shape()", world)
+        self.assertIn("collision_shapes_added += _add_imported_model_collisions(instance)", world)
+        self.assertIn('IMPORTED_STATIC_COLLIDERS: [1-9]', workflow)
+
+    def test_android_emulator_saves_a_gameplay_screenshot(self):
+        script = (ROOT / "tools/test_android_emulator.sh").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        self.assertIn("adb exec-out screencap -p", script)
+        self.assertIn("android-world.png", script)
+        self.assertIn("dark-world-android-emulator-screenshot", workflow)
+        self.assertIn("runner.temp }}/android-world.png", workflow)
+
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)

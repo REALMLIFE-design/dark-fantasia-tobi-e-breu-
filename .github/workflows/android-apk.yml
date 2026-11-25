@@ -235,11 +235,15 @@ jobs:
             exit 1
           fi
           if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17" "$RUNNER_TEMP/godot-world-smoke.log"; then
-            echo "ERRO: os 11 modelos previstos não foram carregados no mundo"
+            echo "ERRO: os 17 modelos previstos não foram carregados no mundo"
             exit 1
           fi
           if ! grep -q "CHESTNUT_TREES_PLACED: 9" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: as nove castanheiras transparentes não foram colocadas"
+            exit 1
+          fi
+          if ! grep -Eq "IMPORTED_STATIC_COLLIDERS: [1-9][0-9]*" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: as construções importadas não receberam colisões estáticas"
             exit 1
           fi
 
@@ -423,3 +427,11 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
+
+      - name: Salvar captura do jogo no emulador
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dark-world-android-emulator-screenshot
+          path: ${{ runner.temp }}/android-world.png
+          if-no-files-found: warn

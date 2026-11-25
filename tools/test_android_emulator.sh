@@ -8,7 +8,7 @@ LOG_PATH="$RUNNER_TEMP/android-launch.log"
 CRASH_LOG_PATH="$RUNNER_TEMP/android-crash-buffer.log"
 FAILURE_LOG_PATH="$RUNNER_TEMP/android-launch-failure.log"
 STARTUP_WAIT="${TOBI_TEST_SLEEP_SECONDS:-60}"
-INTERACTION_WAIT="${TOBI_TEST_POST_TAP_SECONDS:-3}"
+INTERACTION_WAIT="${TOBI_TEST_POST_TAP_SECONDS:-15}"
 [[ -s "$APK_PATH" ]] || { echo "ERRO: APK não encontrado em $APK_PATH"; exit 1; }
 adb wait-for-device
 for attempt in $(seq 1 60); do
@@ -71,4 +71,7 @@ if grep -Fq "pid $APP_PID (" "$CRASH_LOG_PATH" \
   cat "$CRASH_LOG_PATH" || true
   exit 1
 fi
+adb exec-out screencap -p > "$RUNNER_TEMP/android-world.png"
+[[ -s "$RUNNER_TEMP/android-world.png" ]] || { echo "ERRO: captura do jogo vazia"; exit 1; }
+echo "TOBI_BREU_ANDROID_SCREENSHOT=$RUNNER_TEMP/android-world.png"
 echo "TOBI_BREU_ANDROID_INTERACTION_OK pid=$APP_PID"

@@ -867,6 +867,7 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "scari_rotund", "position": Vector3(0.0, 0.0, -40.0), "scale": 0.72}
 	]
 	var placed := 0
+	var collision_shapes_added := 0
 	for item in placements:
 		var instance := EXTERNAL_ASSET_LOADER.instantiate_by_name(
 			hamlet, "user_submitted", str(item.fragment), item.position, Vector3.ONE * float(item.scale)
@@ -874,6 +875,7 @@ func _build_imported_medieval_hamlet() -> void:
 		if instance != null:
 			instance.rotation.y = -0.18 if placed % 2 == 0 else 0.22
 			_apply_dream_biome_tint(instance)
+			collision_shapes_added += _add_imported_model_collisions(instance)
 			placed += 1
 			await get_tree().process_frame
 
@@ -898,11 +900,44 @@ func _build_imported_medieval_hamlet() -> void:
 	if bridge != null:
 		bridge.rotation.y = PI * 0.5
 		_apply_dream_biome_tint(bridge)
+		collision_shapes_added += _add_imported_model_collisions(bridge)
 		placed += 1
 
 	_build_chestnut_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
+	print("IMPORTED_STATIC_COLLIDERS: ", collision_shapes_added)
 	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")
+
+
+func _add_imported_model_collisions(root: Node) -> int:
+	# Casas, torres, plataforma e ponte são cenários estáticos; cada malha recebe
+	# uma forma trimesh própria, respeitando a transformação local do GLB.
+	if root == null:
+		return 0
+	var mesh_nodes := root.find_children("*", "MeshInstance3D", true, false)
+	if root is MeshInstance3D:
+		mesh_nodes.push_front(root)
+	var added := 0
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		if not mesh_instance.find_children("*", "CollisionShape3D", true, false).is_empty():
+			continue
+		var shape := mesh_instance.mesh.create_trimesh_shape()
+		if shape == null:
+			continue
+		var body := StaticBody3D.new()
+		body.name = "ImportedStaticCollision"
+		body.collision_layer = 1
+		body.collision_mask = 0
+		var collision := CollisionShape3D.new()
+		collision.name = "ImportedMeshShape"
+		collision.shape = shape
+		body.add_child(collision)
+		mesh_instance.add_child(body)
+		added += 1
+	return added
 
 
 func _build_chestnut_grove(parent: Node3D) -> void:
