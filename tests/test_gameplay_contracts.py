@@ -858,7 +858,8 @@ class SubmittedAssetConversionContracts(unittest.TestCase):
         self.assertIn('".3ds"', converter)
         self.assertIn('".dae"', converter)
         self.assertIn('".fbx"', converter)
-        self.assertIn('ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae"}', converter)
+        self.assertIn('".x3d"', converter)
+        self.assertIn('ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae", ".x3d"}', converter)
         self.assertIn('["assimp", "export", str(source), str(converted), "-f", "glb2"]', converter)
         self.assertIn("bpy.ops.import_scene.gltf(filepath=str(converted))", converter)
 
