@@ -42,8 +42,25 @@ if [[ -z "$APP_PID" ]]; then
 fi
 # A validação do APK não depende de um patch PCK opcional ou de rede externa.
 adb logcat -d -v threadtime -t 8000 > "$LOG_PATH" || true
-# Enter the actual adventure, then skip the optional opening story cards
-# so the screenshot shows the playable world rather than a paused intro panel.
+# The Android immersive-mode confirmation is a native system overlay.
+# Detect it through the accessibility tree before tapping its "GOT IT" button;
+# never tap the Friends/Google menu item when the overlay is absent.
+WINDOW_XML_PATH="$RUNNER_TEMP/android-window.xml"
+if timeout 20 adb shell uiautomator dump /sdcard/darkworld-window.xml >/dev/null 2>&1   && timeout 10 adb pull /sdcard/darkworld-window.xml "$WINDOW_XML_PATH" >/dev/null 2>&1; then
+  if grep -qi "GOT IT" "$WINDOW_XML_PATH"; then
+    echo "Android immersive-mode hint detected; dismissing it."
+    adb shell input tap 920 528
+    sleep 1
+    if timeout 20 adb shell uiautomator dump /sdcard/darkworld-window.xml >/dev/null 2>&1       && timeout 10 adb pull /sdcard/darkworld-window.xml "$WINDOW_XML_PATH" >/dev/null 2>&1       && grep -qi "GOT IT" "$WINDOW_XML_PATH"; then
+      echo "ERRO: o aviso nativo de tela cheia continuou aberto"
+      exit 1
+    fi
+  fi
+else
+  echo "ERRO: não foi possível verificar a árvore de acessibilidade Android"
+  exit 1
+fi
+# Enter the adventure and skip the optional opening story cards.
 adb shell input tap 640 260
 sleep 2
 adb shell input tap 640 570

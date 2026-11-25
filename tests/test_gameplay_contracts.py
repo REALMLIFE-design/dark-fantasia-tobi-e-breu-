@@ -1410,6 +1410,8 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("android-world.png", script)
         self.assertIn("adb shell input tap 640 260", script)
         self.assertIn("adb shell input tap 640 570", script)
+        self.assertIn('if grep -qi "GOT IT" "$WINDOW_XML_PATH"; then', script)
+        self.assertIn("adb shell input tap 920 528", script)
         self.assertNotIn("adb shell input tap 640 490", script)
         self.assertNotIn("adb shell input tap 920 528", script)
         self.assertIn("dark-world-android-emulator-screenshot", workflow)

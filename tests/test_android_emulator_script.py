@@ -21,8 +21,16 @@ class AndroidEmulatorScriptTests(unittest.TestCase):
 import os, pathlib, sys
 args = sys.argv[1:]
 state = pathlib.Path(os.environ['FAKE_ADB_STATE'])
+hint_state = pathlib.Path(os.environ['FAKE_ADB_HINT_STATE'])
 if args[:3] == ['shell', 'getprop', 'sys.boot_completed']:
     print('1')
+    raise SystemExit(0)
+if args[:3] == ['shell', 'uiautomator', 'dump']:
+    print('UI hierchary dumped to: /sdcard/darkworld-window.xml')
+    raise SystemExit(0)
+if args[:1] == ['pull']:
+    target = pathlib.Path(args[2])
+    target.write_text('' if hint_state.exists() else '<node text="GOT IT" />')
     raise SystemExit(0)
 if args[:2] == ['exec-out', 'screencap']:
     sys.stdout.buffer.write(b'\\x89PNG\\r\\n\\x1a\\nFAKEPNG')
@@ -31,7 +39,9 @@ if args[:2] == ['shell', 'pidof']:
     if state.exists() and state.read_text() == 'yes':
         print('4321')
     raise SystemExit(0)
-if args[:3] == ['shell', 'input', 'tap'] and os.environ.get('FAKE_ADB_EXIT_AFTER_TAP') == '1':
+if args[:3] == ['shell', 'input', 'tap'] and args[3:] == ['920', '528']:
+    hint_state.write_text('dismissed')
+if args[:3] == ['shell', 'input', 'tap'] and args[3:] in (['640', '260'], ['640', '570']) and os.environ.get('FAKE_ADB_EXIT_AFTER_TAP') == '1':
     state.write_text('no')
 if args[:2] == ['shell', 'dumpsys'] and args[2:4] == ['activity', 'activities']:
     print('mResumedActivity: ActivityRecord{abc com.tobiebreu.darkworld3d/.MainActivity}')
@@ -52,6 +62,7 @@ if args[:2] == ['logcat', '-d']:
                 "PROJECT_PATH": str(project),
                 "RUNNER_TEMP": str(runner_temp),
                 "FAKE_ADB_STATE": str(state),
+                "FAKE_ADB_HINT_STATE": str(temp_path / "hint-dismissed"),
                 "TOBI_TEST_SLEEP_SECONDS": "0",
                 "TOBI_TEST_POST_TAP_SECONDS": "0",
             })
@@ -67,10 +78,12 @@ if args[:2] == ['logcat', '-d']:
 
     def test_enters_the_adventure_from_the_main_menu(self):
         script = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('uiautomator dump /sdcard/darkworld-window.xml', script)
+        self.assertIn('grep -qi "GOT IT"', script)
+        self.assertIn('adb shell input tap 920 528', script)
         self.assertIn('adb shell input tap 640 260', script)
         self.assertIn('adb shell input tap 640 570', script)
         self.assertLess(script.index('adb shell input tap 640 260'), script.index('adb shell input tap 640 570'))
-        self.assertNotIn('adb shell input tap 920 528', script)
         self.assertNotIn('adb shell input tap 640 490', script)
 
     def test_capture_occurs_after_entering_the_adventure(self):
