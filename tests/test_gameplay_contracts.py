@@ -1383,6 +1383,8 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("billboard_variants.has(variant_key)", world)
         self.assertIn("CHESTNUT_BILLBOARD_FILES_FOUND", world)
         self.assertIn("CHESTNUT_BILLBOARD_TEXTURE_CHECK", world)
+        self.assertIn("billboard_image.get_format()", world)
+        self.assertNotIn("billboard_image.has_alpha()", world)
         self.assertNotIn("if not texture.has_alpha():", world)
         self.assertIn("tree_mesh.size = Vector2(7.0, 10.0)", world)
         self.assertIn("BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR", world)
