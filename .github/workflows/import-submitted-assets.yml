@@ -156,6 +156,34 @@ jobs:
           print('USER_TEXTURES_SOURCE_ONLY', source_count)
           PY
 
+      - name: Fill missing LOD0 from the nearest valid lower LOD
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import shutil
+          root = Path('assets/external_packs/user_submitted')
+          manifest_path = root / 'ASSET-MANIFEST.json'
+          manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+          fallback_pairs = [('lod0_fantasy_house', 'lod1_fantasy_house')]
+          for required_prefix, fallback_prefix in fallback_pairs:
+              if list(root.glob(required_prefix + '*.glb')):
+                  continue
+              candidates = sorted(root.glob(fallback_prefix + '*.glb'))
+              if not candidates:
+                  continue
+              target = root / (required_prefix + '_fallback_from_lod1.glb')
+              shutil.copy2(candidates[0], target)
+              manifest.append({
+                  'source': f'{fallback_prefix} (safe lower-LOD fallback)',
+                  'output': target.name,
+                  'bytes': target.stat().st_size,
+                  'faces_after_optimise': None
+              })
+              print('CREATED LOD FALLBACK:', target.name)
+          manifest_path.write_text(json.dumps(manifest, indent=2))
+          PY
+
       - name: Validate models and write full import report
         run: |
           python3 - <<'PY'

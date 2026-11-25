@@ -872,6 +872,13 @@ class SubmittedAssetConversionContracts(unittest.TestCase):
         self.assertIn("destination.unlink(missing_ok=True)", converter)
         self.assertIn('valid_header = exported.read(4) == b"glTF"', converter)
 
+    def test_import_pipeline_supplies_missing_lod0_from_valid_lod1(self):
+        workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
+        self.assertIn("Fill missing LOD0 from the nearest valid lower LOD", workflow)
+        self.assertIn("fallback_pairs = [('lod0_fantasy_house', 'lod1_fantasy_house')]", workflow)
+        self.assertIn("safe lower-LOD fallback", workflow)
+        self.assertIn("CREATED LOD FALLBACK:", workflow)
+
     def test_import_validation_removes_empty_glbs_and_requires_all_seventeen_models(self):
         workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
         self.assertIn("WARN removed invalid or empty GLB", workflow)
