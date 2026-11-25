@@ -1022,7 +1022,7 @@ func _add_imported_model_collisions(root: Node) -> int:
 		if mesh_instance == null or mesh_instance.mesh == null:
 			continue
 		var relative_transform := root_inverse * mesh_instance.global_transform
-		var mesh_bounds := mesh_instance.mesh.get_aabb().transformed(relative_transform)
+		var mesh_bounds := _transform_aabb(mesh_instance.mesh.get_aabb(), relative_transform)
 		if mesh_bounds.size.length_squared() <= 0.0001:
 			continue
 		combined_bounds = mesh_bounds if not has_bounds else combined_bounds.merge(mesh_bounds)
@@ -1046,6 +1046,23 @@ func _add_imported_model_collisions(root: Node) -> int:
 	body.add_child(collision)
 	model_root.add_child(body)
 	return 1
+
+
+func _transform_aabb(bounds: AABB, transform: Transform3D) -> AABB:
+	# Godot 4.3 não oferece AABB.transformed(); transforma os oito cantos e
+	# reconstrói os limites no espaço local da raiz do modelo.
+	var first_corner := transform * bounds.position
+	var transformed_bounds := AABB(first_corner, Vector3.ZERO)
+	for x in range(2):
+		for y in range(2):
+			for z in range(2):
+				var corner := bounds.position + Vector3(
+					bounds.size.x * float(x),
+					bounds.size.y * float(y),
+					bounds.size.z * float(z)
+				)
+				transformed_bounds = transformed_bounds.expand(transform * corner)
+	return transformed_bounds
 
 
 func _build_chestnut_grove(parent: Node3D) -> void:
