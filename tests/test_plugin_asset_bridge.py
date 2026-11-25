@@ -38,7 +38,7 @@ class PluginAssetBridgeContracts(unittest.TestCase):
 
     def test_catalog_points_to_grouped_mobile_thrixel_models(self):
         self.assertIn("354f8a8c-3812-43a4-b187-3df95354eb48", self.catalog)
-        self.assertIn("2fbc201f-5a50-4516-9aa9-07736603d9ff", self.catalog)
+        self.assertIn("2fbc201f-5a50-4511-9aa9-07736603d9ff", self.catalog)
         self.assertIn("c90ac6cc-200e-4892-a7a5-0cc263e64d1c", self.catalog)
         self.assertIn("texture_size=512", self.catalog)
 

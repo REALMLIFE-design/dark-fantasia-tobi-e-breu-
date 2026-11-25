@@ -990,7 +990,7 @@ class ThrixelBuildImportContracts(unittest.TestCase):
             "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1",
             "584d17cf-92ff-4fde-ba50-19037a88d832",
             "354f8a8c-3812-43a4-b187-3df95354eb48",
-            "2fbc201f-5a50-4516-9aa9-07736603d9ff",
+            "2fbc201f-5a50-4511-9aa9-07736603d9ff",
             "c90ac6cc-200e-4892-a7a5-0cc263e64d1c",
         ):
             self.assertIn(submission, workflow)
