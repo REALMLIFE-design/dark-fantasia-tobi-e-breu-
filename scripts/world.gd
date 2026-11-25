@@ -2003,16 +2003,37 @@ func _build_river_treasure_chests() -> void:
 		chest.position = positions[i]
 		chest.set_meta("opened", river_chest_ids.has(i))
 		add_child(chest)
-		_box(chest, "ChestBase", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.86, 0.92), Color("465b5b"))
-		_box(chest, "ChestFrontBand", Vector3(0.0, 0.5, 0.48), Vector3(1.52, 0.16, 0.12), Color("b49a63"))
-		_box(chest, "ChestLeftBand", Vector3(-0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
-		_box(chest, "ChestRightBand", Vector3(0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
-		var lid_pivot := Node3D.new()
-		lid_pivot.name = "ChestLidPivot"
-		lid_pivot.position = Vector3(0.0, 0.88, -0.42)
-		chest.add_child(lid_pivot)
-		var lid := _box(lid_pivot, "ChestLid", Vector3(0.0, 0.18, 0.42), Vector3(1.48, 0.42, 0.92), Color("536d69"))
-		var clasp := _box(chest, "ChestClasp", Vector3(0.0, 0.63, 0.54), Vector3(0.22, 0.3, 0.12), Color("d1b36f"))
+		# Prefer the real Thrixel Silver River coffer; retain the original handcrafted
+		# chest as a safe fallback if the optional plugin model is unavailable.
+		var coffer_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_river_coffer")
+		var coffer_instance: Node3D = null
+		if coffer_scene != null:
+			coffer_instance = coffer_scene.instantiate() as Node3D
+		if coffer_instance != null:
+			coffer_instance.name = "ThrixelSilverRiverCoffer"
+			coffer_instance.scale = Vector3.ONE * 1.6
+			chest.add_child(coffer_instance)
+			_apply_dream_biome_tint(coffer_instance)
+			if river_chest_ids.has(i):
+				var saved_lid := coffer_instance.find_child("hinged_lid", true, false) as Node3D
+				if saved_lid != null:
+					saved_lid.rotation.x = -1.05
+		else:
+			_box(chest, "ChestBase", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.86, 0.92), Color("465b5b"))
+			_box(chest, "ChestFrontBand", Vector3(0.0, 0.5, 0.48), Vector3(1.52, 0.16, 0.12), Color("b49a63"))
+			_box(chest, "ChestLeftBand", Vector3(-0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
+			_box(chest, "ChestRightBand", Vector3(0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
+			var lid_pivot := Node3D.new()
+			lid_pivot.name = "ChestLidPivot"
+			lid_pivot.position = Vector3(0.0, 0.88, -0.42)
+			chest.add_child(lid_pivot)
+			_box(lid_pivot, "ChestLid", Vector3(0.0, 0.18, 0.42), Vector3(1.48, 0.42, 0.92), Color("536d69"))
+			_box(chest, "ChestClasp", Vector3(0.0, 0.63, 0.54), Vector3(0.22, 0.3, 0.12), Color("d1b36f"))
+			if river_chest_ids.has(i):
+				lid_pivot.rotation.x = -1.05
+				var fallback_clasp := chest.get_node_or_null("ChestClasp") as Node3D
+				if fallback_clasp != null:
+					fallback_clasp.visible = false
 		var glow := _sphere(chest, "ChestGlow", Vector3(0.0, 1.35, 0.0), 0.22, Color("8fd8ca"), 0.34)
 		glow.material_override = _painter_mat(Color("8fd8ca"), 8.0, 0.28)
 		glow.visible = not river_chest_ids.has(i)
@@ -3689,8 +3710,12 @@ func _open_river_chest(chest_id: int) -> void:
 	river_chest_ids.append(chest_id)
 	river_chest_ids.sort()
 	chest.set_meta("opened", true)
-	var lid_pivot := chest.get_node_or_null("ChestLidPivot")
-	if lid_pivot: lid_pivot.rotation.x = -1.05
+	var plugin_lid := chest.find_child("hinged_lid", true, false) as Node3D
+	if plugin_lid != null:
+		plugin_lid.rotation.x = -1.05
+	else:
+		var lid_pivot := chest.get_node_or_null("ChestLidPivot")
+		if lid_pivot: lid_pivot.rotation.x = -1.05
 	var clasp := chest.get_node_or_null("ChestClasp")
 	if clasp: clasp.visible = false
 	var glow := chest.get_node_or_null("ChestGlow")

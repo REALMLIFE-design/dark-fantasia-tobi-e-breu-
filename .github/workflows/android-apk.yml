@@ -105,6 +105,7 @@ jobs:
           fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 &
           fetch_model rune_obelisk 07af580b-8b0e-4511-b2bd-c0164d113fc9 &
           fetch_model stone_way_shrine 3ec3e3e0-e234-4ee1-942a-13391b648107 &
+          fetch_model silver_river_coffer 3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3 &
           wait
 
       - name: Normalizar GLBs para compatibilidade com Godot 4.3

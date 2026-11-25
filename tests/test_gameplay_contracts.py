@@ -1412,6 +1412,17 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("dark-world-android-emulator-screenshot", workflow)
         self.assertIn("runner.temp }}/android-world.png", workflow)
 
+    def test_thrixel_silver_river_coffer_is_downloaded_and_used_with_animated_lid(self):
+        catalog = (ROOT / "scripts/plugin_asset_catalog.gd").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('"thrixel_river_coffer": "res://assets/plugin_imports/thrixel/silver_river_coffer.glb"', catalog)
+        self.assertIn("fetch_model silver_river_coffer 3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3", workflow)
+        self.assertIn('load_optional_scene("thrixel_river_coffer")', world)
+        self.assertIn('find_child("hinged_lid", true, false)', world)
+        self.assertIn("_apply_dream_biome_tint(coffer_instance)", world)
+        self.assertIn('ChestBase', world)  # Original procedural fallback remains available.
+
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
