@@ -1327,6 +1327,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_billboard_grove(hamlet)", world)
 
+    def test_imported_hamlet_builder_is_awaited_before_world_loading_continues(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("\\tawait _build_imported_medieval_hamlet()", world)
+        self.assertNotIn("\\t_build_imported_medieval_hamlet()", world)
+
     def test_chestnut_billboards_are_mobile_friendly_and_require_real_alpha(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn('file_name.begins_with("EU43_Billboard_")', world)
