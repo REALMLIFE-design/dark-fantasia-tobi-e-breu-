@@ -79,22 +79,22 @@ jobs:
           fetch "$GLEDISTA_URL" gledista.zip
           mkdir -p /tmp/darkworld-extracted/direct-files
           cp -a /tmp/darkworld-input/. /tmp/darkworld-extracted/direct-files/
-          # Extrai também arquivos compactados dentro de outros pacotes (ex.: textures.zip).
+          # Extrai arquivos compactados, inclusive pacotes aninhados.
           while true; do
             mapfile -d '' archives < <(find /tmp/darkworld-extracted -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.unitypackage' \) -print0)
             pending=()
-            for archive in "${archives[@]}"; do
-              [ -f "${archive}.darkworld-extracted" ] || pending+=("$archive")
+            for archive in "\${archives[@]}"; do
+              [ -f "\${archive}.darkworld-extracted" ] || pending+=("$archive")
             done
-            [ "${#pending[@]}" -gt 0 ] || break
-            for archive in "${pending[@]}"; do
-              target="${archive}.dir"
+            [ "\${#pending[@]}" -gt 0 ] || break
+            for archive in "\${pending[@]}"; do
+              target="\${archive}.dir"
               mkdir -p "$target"
               if 7z x -y "-o$target" "$archive"; then
-                touch "${archive}.darkworld-extracted"
+                touch "\${archive}.darkworld-extracted"
               else
                 echo "WARN archive could not be extracted: $archive"
-                touch "${archive}.darkworld-extracted"
+                touch "\${archive}.darkworld-extracted"
               fi
             done
           done
@@ -104,7 +104,7 @@ jobs:
           echo "=== CONTAGEM POR EXTENSAO ==="
           find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
           echo "=== FORMATOS DE MODELO ENCONTRADOS ==="
-          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
+          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)
 
       - name: Convert Blender, USDZ, FBX and OBJ models to GLB
         run: |
@@ -163,7 +163,7 @@ jobs:
           report += [f'- {p.name} ({p.stat().st_size // 1024} KB)' for p in files]
           report += ['', '## Fontes que exigem tratamento externo',
                      '- FBX, 3DS e DAE são convertidos via Assimp; OBJ/BLEND/USDZ seguem o fluxo Blender.',
-                     '- Arquivos .max/.ma/.mb/.vob/.xfr não têm conversor confiável neste pipeline; exportar no aplicativo de origem para FBX/GLB/OBJ.',
+                     '- Arquivos .max/.ma/.mb/.vob/.xfr exigem exportação no aplicativo de origem para FBX/GLB/OBJ.',
                      '- Arquivos que ultrapassarem 90 MB convertidos são mantidos fora do Git e listados no log do workflow.',
                      '- Todos os modelos precisam de inspeção de escala, orientação, materiais, colisões e desempenho no Godot 4.3.',
                      '- A importação é aditiva: nenhum mapa, personagem, missão, HUD, save ou cena existente é substituído.']
