@@ -241,7 +241,7 @@ jobs:
             echo "ERRO: o mundo 3D apresentou falha durante a montagem"
             exit 1
           fi
-          if ! grep -q "THRIXEL_WORLD_MODELS_LOADED: 3/3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+          if ! grep -q "THRIXEL_WORLD_MODELS_LOADED: 2/2" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: os três marcos Thrixel do cenário não foram carregados"
             exit 1
           fi
@@ -261,6 +261,10 @@ jobs:
           fi
           if ! grep -q "CHESTNUT_TREES_PLACED: 9" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: as nove castanheiras transparentes não foram colocadas"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: o altar Thrixel não foi ligado ao puzzle do Rio Prateado"
             exit 1
           fi
           if ! grep -q "THRIXEL_SILVER_RIVER_COFFER_PLACED: 3" "$RUNNER_TEMP/godot-world-smoke.log"; then

@@ -358,12 +358,7 @@ func _build_imported_plugin_models() -> void:
 		_animate_plugin_obelisk(rune_obelisk)
 	await get_tree().process_frame
 
-	var way_shrine := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
-	if way_shrine != null:
-		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(way_shrine, 0.14)
-		if way_shrine.get_meta("plugin_asset_loaded", false):
-			imported_count += 1
-			plugin_colliders += _add_imported_model_collisions(way_shrine)
+	# O altar Thrixel é montado dentro do puzzle do Rio Prateado, sem duplicar a estrutura.
 	await get_tree().process_frame
 
 	# Os três baús de recompensa usam o cofre Thrixel em _build_river_treasure_chests().
@@ -380,7 +375,7 @@ func _build_imported_plugin_models() -> void:
 	if meshy_shrine == null:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
 
-	print("THRIXEL_WORLD_MODELS_LOADED: %d/3" % imported_count)
+	print("THRIXEL_WORLD_MODELS_LOADED: %d/2" % imported_count)
 	print("THRIXEL_STATIC_COLLIDERS: %d" % plugin_colliders)
 
 
@@ -2092,18 +2087,34 @@ func _build_river_treasure_chests() -> void:
 		chest.add_child(light)
 	print("THRIXEL_SILVER_RIVER_COFFER_PLACED: ", plugin_coffers_loaded)
 func _build_river_shrine_puzzle() -> void:
-	# A three-ring mechanism gives the river region a tactile, repeatable puzzle.
+	# O modelo Thrixel vira a estrutura real do puzzle; os anéis e recompensas continuam ligados ao save antigo.
 	var shrine := Node3D.new()
 	shrine.name = "RiverShrinePuzzle"
 	shrine.position = Vector3(82.0, 0.0, -143.0)
 	shrine.set_meta("solved", river_shrine_solved)
 	add_child(shrine)
-	_box(shrine, "PuzzlePlinth", Vector3(0.0, 0.48, 0.0), Vector3(3.2, 0.96, 2.0), Color("56666a"))
-	_box(shrine, "PuzzleBackplate", Vector3(0.0, 2.25, -0.72), Vector3(2.65, 2.65, 0.32), Color("3d555b"))
+
+	var shrine_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_way_shrine")
+	var shrine_model: Node3D = null
+	if shrine_scene != null:
+		shrine_model = shrine_scene.instantiate() as Node3D
+	if shrine_model != null:
+		shrine_model.name = "ThrixelRiverShrine"
+		shrine.add_child(shrine_model)
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(shrine_model, 0.14)
+		var shrine_body := shrine_model.find_child("Shrine_Static_Body", true, false) as MeshInstance3D
+		if shrine_body != null:
+			_add_imported_model_collisions(shrine_body)
+		print("THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1")
+	else:
+		_box(shrine, "PuzzlePlinth", Vector3(0.0, 0.48, 0.0), Vector3(3.2, 0.96, 2.0), Color("56666a"))
+		_box(shrine, "PuzzleBackplate", Vector3(0.0, 2.25, -0.72), Vector3(2.65, 2.65, 0.32), Color("3d555b"))
+		print("THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 0")
+
 	for i in range(3):
 		var ring_node := Node3D.new()
 		ring_node.name = "PuzzleRing_%d" % i
-		ring_node.position = Vector3(0.0, 2.25, -0.48 + float(i) * 0.025)
+		ring_node.position = Vector3(0.0, 1.12 if shrine_model != null else 2.25, -0.72 if shrine_model != null else -0.48 + float(i) * 0.025)
 		ring_node.rotation_degrees.x = 90.0
 		ring_node.rotation.z = float(river_puzzle_ring_steps[i]) * PI * 0.5
 		var ring_mesh := TorusMesh.new()
@@ -2119,41 +2130,50 @@ func _build_river_shrine_puzzle() -> void:
 		var marker := _sphere(ring_node, "RingMarker", Vector3(0.0, 0.0, -ring_mesh.outer_radius - 0.12), 0.105, Color("b9e9dd"), 0.16)
 		marker.material_override = _painter_mat(Color("b9e9dd"), 8.0, 0.24)
 		shrine.add_child(ring_node)
-	var lever := Node3D.new()
-	lever.name = "PuzzleLever"
-	lever.position = Vector3(1.48, 1.05, 0.0)
-	shrine.add_child(lever)
-	_box(lever, "LeverBase", Vector3(0.0, 0.0, 0.0), Vector3(0.42, 0.3, 0.42), Color("756b51"))
-	var lever_arm := _box(lever, "LeverArm", Vector3(0.0, 0.48, 0.0), Vector3(0.16, 1.0, 0.18), Color("9a8058"))
-	lever_arm.rotation.z = -0.35
-	var drawer := Node3D.new()
-	drawer.name = "PuzzleOfferingDrawer"
-	drawer.position = Vector3(0.0, 1.0, 0.95)
-	shrine.add_child(drawer)
-	_box(drawer, "DrawerBody", Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.45, 0.55), Color("35464a"))
-	var lid := _box(drawer, "DrawerLid", Vector3(0.0, 0.28, -0.2), Vector3(1.08, 0.12, 0.62), Color("788a83"))
-	lid.rotation.x = -0.08
-	var crystal := _sphere(shrine, "PuzzleRewardCrystal", Vector3(0.0, 1.55, 1.05), 0.28, Color("9b4e62"), 0.5)
+
+	if shrine_model == null:
+		var lever := Node3D.new()
+		lever.name = "PuzzleLever"
+		lever.position = Vector3(1.48, 1.05, 0.0)
+		shrine.add_child(lever)
+		_box(lever, "LeverBase", Vector3(0.0, 0.0, 0.0), Vector3(0.42, 0.3, 0.42), Color("756b51"))
+		var fallback_lever_arm := _box(lever, "lever_arm", Vector3(0.0, 0.48, 0.0), Vector3(0.16, 1.0, 0.18), Color("9a8058"))
+		fallback_lever_arm.rotation.z = -0.35
+		var drawer := Node3D.new()
+		drawer.name = "PuzzleOfferingDrawer"
+		drawer.position = Vector3(0.0, 1.0, 0.95)
+		shrine.add_child(drawer)
+		_box(drawer, "DrawerBody", Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.45, 0.55), Color("35464a"))
+		var fallback_drawer_lid := _box(drawer, "drawer_lid", Vector3(0.0, 0.28, -0.2), Vector3(1.08, 0.12, 0.62), Color("788a83"))
+		fallback_drawer_lid.rotation.x = -0.08
+
+	var crystal_position := Vector3(0.0, 0.92, 0.82) if shrine_model != null else Vector3(0.0, 1.55, 1.05)
+	var crystal := _sphere(shrine, "PuzzleRewardCrystal", crystal_position, 0.28, Color("9b4e62"), 0.5)
 	crystal.material_override = _painter_mat(Color("9b4e62"), 8.0, 0.22)
 	crystal.visible = river_shrine_solved
 	var clue := Label3D.new()
 	clue.name = "PuzzleSequenceClue"
 	clue.text = "MARÉ: I  •  III  •  II"
-	clue.position = Vector3(0.0, 3.95, 0.05)
+	clue.position = Vector3(0.0, 2.5 if shrine_model != null else 3.95, 0.05)
 	clue.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	clue.font_size = 30
 	clue.modulate = Color("b8dcd5")
 	shrine.add_child(clue)
 	var glow := OmniLight3D.new()
 	glow.name = "PuzzleGlow"
-	glow.position = Vector3(0.0, 2.3, 0.2)
+	glow.position = Vector3(0.0, 1.2 if shrine_model != null else 2.3, 0.2)
 	glow.light_color = Color("70c7c0")
 	glow.light_energy = 0.85 if not river_shrine_solved else 1.35
 	glow.omni_range = 8.0
 	shrine.add_child(glow)
 	if river_shrine_solved:
-		lever.rotation.z = -0.85
-		lid.rotation.x = -1.1
+		var solved_lever_arm := shrine.find_child("lever_arm", true, false) as Node3D
+		var solved_drawer_lid := shrine.find_child("drawer_lid", true, false) as Node3D
+		if solved_lever_arm != null:
+			solved_lever_arm.rotation.z = -0.85
+		if solved_drawer_lid != null:
+			solved_drawer_lid.rotation.x = -1.1
+
 
 func _build_river_relics() -> void:
 	# Optional discoveries reward exploration and persist independently of the main quest.
@@ -3950,11 +3970,11 @@ func _interact() -> void:
 				else:
 					river_shrine_solved = true
 					river_puzzle.set_meta("solved", true)
-					var lever := river_puzzle.get_node_or_null("PuzzleLever")
-					var drawer := river_puzzle.get_node_or_null("PuzzleOfferingDrawer/DrawerLid")
+					var lever_arm := river_puzzle.find_child("lever_arm", true, false) as Node3D
+					var drawer_lid := river_puzzle.find_child("drawer_lid", true, false) as Node3D
 					var reward_crystal := river_puzzle.get_node_or_null("PuzzleRewardCrystal")
-					if lever: lever.rotation.z = -0.85
-					if drawer: drawer.rotation.x = -1.1
+					if lever_arm != null: lever_arm.rotation.z = -0.85
+					if drawer_lid != null: drawer_lid.rotation.x = -1.1
 					if reward_crystal: reward_crystal.visible = true
 					_grant_xp(60)
 					dark_essence += 3

@@ -77,9 +77,13 @@ class PluginAssetBridgeContracts(unittest.TestCase):
         for asset in ['thrixel_ancient_tree', 'thrixel_rune_obelisk', 'thrixel_way_shrine']:
             self.assertIn(f'load_or_create_asset(self, "{asset}"', self.world)
         self.assertIn('load_optional_scene("thrixel_river_coffer")', self.world)
+        self.assertIn('load_optional_scene("thrixel_way_shrine")', self.world)
         self.assertIn('apply_biome_moss_filter(', self.world)
-        self.assertIn('THRIXEL_WORLD_MODELS_LOADED: %d/3', self.world)
+        self.assertIn('THRIXEL_WORLD_MODELS_LOADED: %d/2', self.world)
         self.assertIn('THRIXEL_SILVER_RIVER_COFFER_PLACED', self.world)
+        self.assertIn('THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1', self.world)
+        self.assertIn('find_child("lever_arm"', self.world)
+        self.assertIn('find_child("drawer_lid"', self.world)
         self.assertIn('THRIXEL_OBELISK_RINGS_ANIMATED: %d/3', self.world)
 
     def test_optional_enemy_models_are_attached_to_real_enemy_instances(self):
@@ -97,8 +101,9 @@ class PluginAssetBridgeContracts(unittest.TestCase):
 
     def test_android_ci_requires_all_plugin_models_and_smokes_the_actual_world(self):
         self.assertIn('THRIXEL_MODELS_READY: $ready/7', self.android_workflow)
-        self.assertIn('THRIXEL_WORLD_MODELS_LOADED: 3/3', self.android_workflow)
+        self.assertIn('THRIXEL_WORLD_MODELS_LOADED: 2/2', self.android_workflow)
         self.assertIn('THRIXEL_SILVER_RIVER_COFFER_PLACED: 3', self.android_workflow)
+        self.assertIn('THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1', self.android_workflow)
         self.assertIn('THRIXEL_OBELISK_RINGS_ANIMATED: 3/3', self.android_workflow)
         self.assertIn('THRIXEL_ENEMY_MODEL_ATTACHED: $model_key', self.android_workflow)
 
