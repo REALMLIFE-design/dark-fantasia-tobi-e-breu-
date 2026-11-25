@@ -52,9 +52,9 @@ const DOWNLOAD_URLS := {
 	"thrixel_river_crab": "https://api.thrixel.com/api/v1/4592675e-0e7e-491d-9d1e-a4a15eee7304/download?format=glb&quality=full&texture_size=1024",
 	"thrixel_drowned_wraith": "https://api.thrixel.com/api/v1/c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1/download?format=glb&quality=full&texture_size=1024",
 	"thrixel_ancient_tree": "https://api.thrixel.com/api/v1/584d17cf-92ff-4fde-ba50-19037a88d832/download?format=glb&quality=full&texture_size=1024",
-	"thrixel_rune_obelisk": "https://api.thrixel.com/api/v1/07af580b-8b0e-4511-b2bd-c0164d113fc9/download?format=glb&quality=full&texture_size=1024",
-	"thrixel_way_shrine": "https://api.thrixel.com/api/v1/3ec3e3e0-e234-4ee1-942a-13391b648107/download?format=glb&quality=full&texture_size=1024",
-	"thrixel_river_coffer": "https://api.thrixel.com/api/v1/3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3/download?format=glb&quality=full&texture_size=1024"
+	"thrixel_rune_obelisk": "https://api.thrixel.com/api/v1/354f8a8c-3812-43a4-b187-3df95354eb48/download?format=glb&quality=full&texture_size=512",
+	"thrixel_way_shrine": "https://api.thrixel.com/api/v1/2fbc201f-5a50-4516-9aa9-07736603d9ff/download?format=glb&quality=full&texture_size=512",
+	"thrixel_river_coffer": "https://api.thrixel.com/api/v1/c90ac6cc-200e-4892-a7a5-0cc263e64d1c/download?format=glb&quality=full&texture_size=512"
 }
 
 

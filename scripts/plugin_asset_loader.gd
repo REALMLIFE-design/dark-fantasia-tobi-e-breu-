@@ -13,17 +13,91 @@ const MESHY_GATE_PATH := "res://assets/plugin_imports/meshy/gothic_gate.glb"
 static func apply_aqueduct_stone(target: MeshInstance3D) -> bool:
 	if target == null or target.mesh == null:
 		return false
+	var source_material := target.material_override as StandardMaterial3D
+	if source_material == null and target.mesh.get_surface_count() > 0:
+		source_material = target.get_active_material(0) as StandardMaterial3D
+	var has_aqueduct_maps := true
 	for texture_path in [BASE_COLOR_PATH, NORMAL_PATH, ROUGHNESS_PATH, AO_PATH]:
 		if not FileAccess.file_exists(texture_path):
-			return false
-	var material := ShaderMaterial.new()
-	material.shader = AQUEDUCT_SHADER
-	material.set_shader_parameter("base_color_texture", load(BASE_COLOR_PATH))
-	material.set_shader_parameter("normal_texture", load(NORMAL_PATH))
-	material.set_shader_parameter("roughness_texture", load(ROUGHNESS_PATH))
-	material.set_shader_parameter("ao_texture", load(AO_PATH))
+			has_aqueduct_maps = false
+	var material := _make_aqueduct_material(source_material, 0.22)
+	if has_aqueduct_maps:
+		material.set_shader_parameter("has_base_color_texture", true)
+		material.set_shader_parameter("has_normal_texture", true)
+		material.set_shader_parameter("has_roughness_texture", true)
+		material.set_shader_parameter("has_ao_texture", true)
+		material.set_shader_parameter("base_color_texture", load(BASE_COLOR_PATH))
+		material.set_shader_parameter("normal_texture", load(NORMAL_PATH))
+		material.set_shader_parameter("roughness_texture", load(ROUGHNESS_PATH))
+		material.set_shader_parameter("ao_texture", load(AO_PATH))
 	target.material_override = material
 	return true
+
+
+static func apply_biome_moss_filter(root: Node, moss_strength: float = 0.14) -> int:
+	if root == null:
+		return 0
+	var mesh_nodes := root.find_children("*", "MeshInstance3D", true, false)
+	if root is MeshInstance3D:
+		mesh_nodes.push_front(root)
+	var material_cache: Dictionary = {}
+	var applied := 0
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		for surface_index in range(mesh_instance.mesh.get_surface_count()):
+			var source_material := mesh_instance.get_active_material(surface_index) as StandardMaterial3D
+			if source_material == null or source_material.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+				continue
+			var material_key := source_material.get_instance_id()
+			var tuned_material := material_cache.get(material_key) as ShaderMaterial
+			if tuned_material == null:
+				tuned_material = _make_aqueduct_material(source_material, moss_strength)
+				material_cache[material_key] = tuned_material
+			mesh_instance.set_surface_override_material(surface_index, tuned_material)
+			applied += 1
+	return applied
+
+
+static func _make_aqueduct_material(source_material: StandardMaterial3D, moss_strength: float) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = AQUEDUCT_SHADER
+	material.set_shader_parameter("base_color", source_material.albedo_color if source_material != null else Color("46564a"))
+	material.set_shader_parameter("base_roughness", source_material.roughness if source_material != null else 0.90)
+	material.set_shader_parameter("base_metallic", source_material.metallic if source_material != null else 0.0)
+	material.set_shader_parameter("base_ao", 1.0)
+	material.set_shader_parameter("base_emission", Vector3.ZERO)
+	material.set_shader_parameter("moss_color", Vector3(0.18, 0.28, 0.20))
+	material.set_shader_parameter("cold_tint", Vector3(0.94, 0.98, 0.96))
+	material.set_shader_parameter("moss_strength", clampf(moss_strength, 0.0, 0.4))
+	material.set_shader_parameter("moss_scale", 4.0)
+	if source_material == null:
+		return material
+	if source_material.albedo_texture != null:
+		material.set_shader_parameter("has_base_color_texture", true)
+		material.set_shader_parameter("base_color_texture", source_material.albedo_texture)
+	if source_material.normal_enabled and source_material.normal_texture != null:
+		material.set_shader_parameter("has_normal_texture", true)
+		material.set_shader_parameter("normal_texture", source_material.normal_texture)
+		material.set_shader_parameter("normal_strength", source_material.normal_scale)
+	if source_material.roughness_texture != null:
+		material.set_shader_parameter("has_roughness_texture", true)
+		material.set_shader_parameter("roughness_texture", source_material.roughness_texture)
+	if source_material.metallic_texture != null:
+		material.set_shader_parameter("has_metallic_texture", true)
+		material.set_shader_parameter("metallic_texture", source_material.metallic_texture)
+	if source_material.ao_enabled and source_material.ao_texture != null:
+		material.set_shader_parameter("has_ao_texture", true)
+		material.set_shader_parameter("ao_texture", source_material.ao_texture)
+	if source_material.emission_enabled:
+		var emission := source_material.emission
+		var energy := source_material.emission_energy_multiplier
+		material.set_shader_parameter("base_emission", Vector3(emission.r * energy, emission.g * energy, emission.b * energy))
+		if source_material.emission_texture != null:
+			material.set_shader_parameter("has_emission_texture", true)
+			material.set_shader_parameter("emission_texture", source_material.emission_texture)
+	return material
 
 
 static func load_optional_scene(asset_key: String) -> PackedScene:
@@ -120,6 +194,7 @@ static func load_or_create_asset(parent: Node3D, asset_key: String, position: Ve
 	if parent == null:
 		return null
 	var packed_scene := load_optional_scene(asset_key)
+	var loaded_from_plugin := packed_scene != null
 	var instance: Node3D
 	if packed_scene != null:
 		instance = packed_scene.instantiate() as Node3D
@@ -129,6 +204,7 @@ static func load_or_create_asset(parent: Node3D, asset_key: String, position: Ve
 		push_warning("Não foi possível criar asset local: " + asset_key)
 		return null
 	instance.name = asset_key
+	instance.set_meta("plugin_asset_loaded", loaded_from_plugin)
 	instance.position = position
 	instance.scale = scale
 	parent.add_child(instance)

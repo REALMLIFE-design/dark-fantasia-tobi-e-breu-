@@ -340,16 +340,42 @@ func _build_visible_3dassets_showcase() -> void:
 	print("3DASSETS_SHOWCASE_LOADED: ", placed, "/", showcase.size())
 
 func _build_imported_plugin_models() -> void:
-	# Modelos 3D ja existentes nos plugins; baixados uma vez e guardados em user://.
-	# Os modelos mantem materiais/texturas PBR incorporados ao GLB.
-	# GLBs de inimigos são anexados às instâncias reais em enemy.gd, nunca como decoração estática.
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
+	# Assets originais do Thrixel, com materiais preservados e filtro Aqueduct de musgo discreto.
+	var imported_count := 0
+	var plugin_colliders := 0
+	var ancient_tree := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
+	if ancient_tree != null:
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(ancient_tree, 0.10)
+		if ancient_tree.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
 	await get_tree().process_frame
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
+
+	var rune_obelisk := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
+	if rune_obelisk != null:
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(rune_obelisk, 0.18)
+		if rune_obelisk.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
+		_animate_plugin_obelisk(rune_obelisk)
 	await get_tree().process_frame
-	PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
+
+	var way_shrine := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_way_shrine", Vector3(83.0, 0.0, -143.0), Vector3.ONE)
+	if way_shrine != null:
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(way_shrine, 0.14)
+		if way_shrine.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
+			plugin_colliders += _add_imported_model_collisions(way_shrine)
 	await get_tree().process_frame
-	# Assets Meshy ja existentes: carregam quando os GLBs forem importados em res://assets/plugin_imports/meshy/.
+
+	var river_coffer := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_river_coffer", Vector3(88.5, 0.0, -139.0), Vector3.ONE)
+	if river_coffer != null:
+		river_coffer.rotation.y = 0.42
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(river_coffer, 0.16)
+		if river_coffer.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
+			plugin_colliders += _add_imported_model_collisions(river_coffer)
+	await get_tree().process_frame
+
+	# Assets Meshy continuam com fallback local quando o plano impede exportar os GLBs.
 	var meshy_gate := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
 	if meshy_gate == null:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
@@ -359,6 +385,26 @@ func _build_imported_plugin_models() -> void:
 	var meshy_shrine := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
 	if meshy_shrine == null:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
+
+	print("THRIXEL_WORLD_MODELS_LOADED: %d/4" % imported_count)
+	print("THRIXEL_STATIC_COLLIDERS: %d" % plugin_colliders)
+
+
+func _animate_plugin_obelisk(root: Node3D) -> int:
+	if root == null:
+		return 0
+	var ring_names := ["Lower_Ring", "Middle_Ring", "Upper_Ring"]
+	var animated := 0
+	for index in range(ring_names.size()):
+		var ring := root.find_child(ring_names[index], true, false) as Node3D
+		if ring == null:
+			continue
+		var duration := 18.0 + float(index) * 4.0
+		var tween := create_tween().set_loops()
+		tween.tween_property(ring, "rotation:y", ring.rotation.y + TAU, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		animated += 1
+	print("THRIXEL_OBELISK_RINGS_ANIMATED: %d/3" % animated)
+	return animated
 
 
 func _create_loading_screen() -> void:
