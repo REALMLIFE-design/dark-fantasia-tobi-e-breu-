@@ -1318,11 +1318,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/6")', world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/10")', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_billboard_grove(hamlet)", world)
@@ -1330,6 +1330,8 @@ class ImportedMedievalPackContracts(unittest.TestCase):
     def test_chestnut_billboards_are_mobile_friendly_and_require_real_alpha(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn('file_name.begins_with("EU43_Billboard_")', world)
+        self.assertIn('file_name.get_basename().substr(0, 19)', world)
+        self.assertIn("billboard_variants.has(variant_key)", world)
         self.assertIn("if not texture.has_alpha():", world)
         self.assertIn("tree_mesh.size = Vector2(7.0, 10.0)", world)
         self.assertIn("BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR", world)
