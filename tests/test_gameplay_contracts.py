@@ -244,6 +244,16 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"guard": [Vector2(0.75, 0.60), 54.0]', self.world)
         self.assertIn('call_deferred("_on_hud_viewport_resized")', self.world)
 
+    def test_in_game_loading_screen_has_animated_background_and_corner_spinner(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("class LoadingAtmosphere extends Control:", world)
+        self.assertIn("class LoadingSpinner extends Control:", world)
+        self.assertIn("var atmosphere := LoadingAtmosphere.new()", world)
+        self.assertIn("var spinner := LoadingSpinner.new()", world)
+        self.assertIn("Control.PRESET_BOTTOM_RIGHT", world)
+        self.assertIn('corner_label.text = "CARREGANDO"', world)
+        self.assertIn("draw_arc(center, radius", world)
+
     def test_start_game_skips_duplicate_loading_screen(self):
         start = self.world.split('func _start_game() -> void:', 1)[1].split('func _close_menu()', 1)[0]
         self.assertNotIn('_create_loading_screen()', start)

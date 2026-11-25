@@ -1,5 +1,37 @@
 extends Node3D
 
+class LoadingAtmosphere extends Control:
+	var elapsed := 0.0
+
+	func _process(delta: float) -> void:
+		elapsed += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := Vector2(size.x * 0.5, size.y * 0.48)
+		var base_radius := minf(size.x, size.y) * 0.22
+		for i in range(5):
+			var radius := base_radius + float(i) * 34.0 + sin(elapsed * 0.48 + float(i)) * 6.0
+			var start := elapsed * 0.065 + float(i) * 0.7
+			draw_arc(center, radius, start, start + PI * 1.62, 96, Color(0.29, 0.58, 0.62, 0.10 + float(i) * 0.018), 1.5, true)
+		for i in range(28):
+			var angle := float(i) * TAU / 28.0 + elapsed * 0.09
+			var radius := base_radius + 48.0 + sin(elapsed * 0.58 + float(i)) * 26.0
+			var point := center + Vector2(cos(angle), sin(angle)) * radius
+			draw_circle(point, 1.2 if i % 4 else 1.8, Color(0.77, 0.67, 0.48, 0.28))
+
+class LoadingSpinner extends Control:
+	var phase := 0.0
+
+	func _process(delta: float) -> void:
+		phase = fposmod(phase + delta * 4.2, TAU)
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := size * 0.5
+		draw_arc(center, 14.0, 0.0, TAU, 48, Color(0.34, 0.55, 0.58, 0.42), 2.4, true)
+		draw_arc(center, 14.0, phase, phase + TAU * 0.68, 48, Color("d8b77c"), 3.2, true)
+
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
@@ -410,12 +442,39 @@ func _create_loading_screen() -> void:
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.color = Color("080b0d")
 	loading_root.add_child(backdrop)
+
+	var atmosphere := LoadingAtmosphere.new()
+	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	atmosphere.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_root.add_child(atmosphere)
+
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
 	frame.position = Vector2(-160.0, -112.0)
 	frame.size = Vector2(320.0, 224.0)
 	frame.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.035, 0.035, 0.98), Color("9d7546"), 20))
 	loading_root.add_child(frame)
+
+	var corner := HBoxContainer.new()
+	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	corner.offset_left = -206.0
+	corner.offset_top = -62.0
+	corner.offset_right = -22.0
+	corner.offset_bottom = -20.0
+	corner.alignment = BoxContainer.ALIGNMENT_END
+	corner.add_theme_constant_override("separation", 10)
+	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_root.add_child(corner)
+	var spinner := LoadingSpinner.new()
+	spinner.custom_minimum_size = Vector2(34, 34)
+	corner.add_child(spinner)
+	var corner_label := Label.new()
+	corner_label.text = "CARREGANDO"
+	corner_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	corner_label.add_theme_font_size_override("font_size", 10)
+	corner_label.add_theme_color_override("font_color", Color("c9c0aa"))
+	corner.add_child(corner_label)
+
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 12)
