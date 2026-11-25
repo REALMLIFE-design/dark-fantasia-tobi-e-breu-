@@ -1,15 +1,28 @@
 # Relatório de importação — Dark World
 
-Modelos GLB validados: 6
-Texturas Android otimizadas: 136
+Modelos GLB validados: 19
+Texturas Android otimizadas: 148
 
 ## Modelos convertidos
+- 003_obj_d9489306.glb (4525 KB)
+- big_watchtower_25eae7ec.glb (787 KB)
+- big_watchtower_lod1_8d265604.glb (288 KB)
 - house_1exportversion_b84f9c2b.glb (2166 KB)
+- house_3x2x1_0317e91a.glb (12526 KB)
+- lod0_fantasy_house_1571c25d.glb (4246 KB)
 - lod0_long_house_65d844aa.glb (3879 KB)
+- lod0_long_house_c7863672.glb (3880 KB)
+- lod1_fantasy_house_0df16d26.glb (1215 KB)
 - lod1_long_house_23dc60ba.glb (610 KB)
+- lod1_long_house_2cc09a6e.glb (611 KB)
+- lod2_fantasy_house_af874858.glb (637 KB)
+- log_watchtower_c5c888f1.glb (293 KB)
+- lowpoly_log_watchtower_ca4baceb.glb (108 KB)
 - medhouse_94e78ae0.glb (1677 KB)
 - medieval_wood_bridge_cg_trader_dcc4683a.glb (451 KB)
 - p3d_medieval_enterable_bld_13_71ad5b78.glb (431 KB)
+- p3d_medieval_enterable_bld_13_cc65eb7b.glb (452 KB)
+- scari_rotund_5df78de7.glb (62 KB)
 
 ## Fontes que exigem tratamento externo
 - Arquivos .max não são convertidos pelo Blender; exportar no Autodesk 3ds Max para FBX/GLB.

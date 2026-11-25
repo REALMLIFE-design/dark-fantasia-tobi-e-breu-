@@ -1,9 +1,15 @@
 [
   {
-    "source": "p3d_medieval_enterable_bld-13.obj",
-    "output": "p3d_medieval_enterable_bld_13_71ad5b78.glb",
-    "bytes": 441900,
-    "faces_after_optimise": 5219
+    "source": "003_obj.obj",
+    "output": "003_obj_d9489306.glb",
+    "bytes": 4634088,
+    "faces_after_optimise": 44660
+  },
+  {
+    "source": "p3d_medieval_enterable_bld-13.fbx",
+    "output": "p3d_medieval_enterable_bld_13_cc65eb7b.glb",
+    "bytes": 463552,
+    "faces_after_optimise": 8391
   },
   {
     "source": "House#1ExportVersion.obj",
@@ -18,21 +24,75 @@
     "faces_after_optimise": 35841
   },
   {
+    "source": "house_3x2x1.fbx",
+    "output": "house_3x2x1_0317e91a.glb",
+    "bytes": 12826920,
+    "faces_after_optimise": 2720
+  },
+  {
     "source": "medieval_wood_bridge_cg_trader.obj",
     "output": "medieval_wood_bridge_cg_trader_dcc4683a.glb",
     "bytes": 462784,
     "faces_after_optimise": 7547
   },
   {
-    "source": "LOD0_long_house.obj",
-    "output": "lod0_long_house_65d844aa.glb",
-    "bytes": 3972296,
-    "faces_after_optimise": 62242
+    "source": "scari-rotund.fbx",
+    "output": "scari_rotund_5df78de7.glb",
+    "bytes": 64012,
+    "faces_after_optimise": 762
   },
   {
-    "source": "LOD1_long_house.obj",
-    "output": "lod1_long_house_23dc60ba.glb",
-    "bytes": 624848,
-    "faces_after_optimise": 7114
+    "source": "LOD0_fantasy_house.fbx",
+    "output": "lod0_fantasy_house_1571c25d.glb",
+    "bytes": 4348040,
+    "faces_after_optimise": 119339
+  },
+  {
+    "source": "LOD1_fantasy_house.fbx",
+    "output": "lod1_fantasy_house_0df16d26.glb",
+    "bytes": 1244984,
+    "faces_after_optimise": 27878
+  },
+  {
+    "source": "LOD2_fantasy_house.fbx",
+    "output": "lod2_fantasy_house_af874858.glb",
+    "bytes": 653284,
+    "faces_after_optimise": 10330
+  },
+  {
+    "source": "big_watchtower.fbx",
+    "output": "big_watchtower_25eae7ec.glb",
+    "bytes": 806756,
+    "faces_after_optimise": 23232
+  },
+  {
+    "source": "big_watchtower_LOD1.fbx",
+    "output": "big_watchtower_lod1_8d265604.glb",
+    "bytes": 295068,
+    "faces_after_optimise": 5880
+  },
+  {
+    "source": "LOWPOLY_log_watchtower.fbx",
+    "output": "lowpoly_log_watchtower_ca4baceb.glb",
+    "bytes": 111060,
+    "faces_after_optimise": 2180
+  },
+  {
+    "source": "log_watchtower.fbx",
+    "output": "log_watchtower_c5c888f1.glb",
+    "bytes": 300080,
+    "faces_after_optimise": 8552
+  },
+  {
+    "source": "LOD0_long_house.fbx",
+    "output": "lod0_long_house_c7863672.glb",
+    "bytes": 3973344,
+    "faces_after_optimise": 124740
+  },
+  {
+    "source": "LOD1_long_house.fbx",
+    "output": "lod1_long_house_2cc09a6e.glb",
+    "bytes": 625888,
+    "faces_after_optimise": 14556
   }
 ]
