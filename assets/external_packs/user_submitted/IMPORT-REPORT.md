@@ -1,8 +1,8 @@
 # Relatório de importação — Dark World
 
 Modelos GLB validados: 17
-Texturas otimizadas no repositório: 151
-Texturas incluídas no APK (billboards): 9
+Texturas otimizadas no repositório: 142
+Texturas incluídas no APK (billboards): 0
 Texturas de referência preservadas fora do APK: 142
 
 ## Modelos convertidos
