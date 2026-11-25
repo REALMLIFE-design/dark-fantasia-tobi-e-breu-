@@ -81,7 +81,7 @@ jobs:
           cp -a /tmp/darkworld-input/. /tmp/darkworld-extracted/direct-files/
           # Extrai também arquivos compactados dentro de outros pacotes (ex.: textures.zip).
           while true; do
-            mapfile -d '' archives < <(find /tmp/darkworld-extracted -type f \\( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.unitypackage' \\) -print0)
+            mapfile -d '' archives < <(find /tmp/darkworld-extracted -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.unitypackage' \) -print0)
             pending=()
             for archive in "${archives[@]}"; do
               [ -f "${archive}.darkworld-extracted" ] || pending+=("$archive")
@@ -99,12 +99,12 @@ jobs:
             done
           done
           echo "=== INVENTARIO COMPLETO DOS ARQUIVOS ENCONTRADOS NO DRIVE ==="
-          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\\n' | sort > /tmp/darkworld-drive-inventory.txt
+          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\n' | sort > /tmp/darkworld-drive-inventory.txt
           echo "TOTAL_FILES=$(wc -l < /tmp/darkworld-drive-inventory.txt)"
           echo "=== CONTAGEM POR EXTENSAO ==="
           find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
           echo "=== FORMATOS DE MODELO ENCONTRADOS ==="
-          find /tmp/darkworld-extracted -type f | grep -Ei '\\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)
+          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)
 
       - name: Convert Blender, USDZ, FBX and OBJ models to GLB
         run: |
