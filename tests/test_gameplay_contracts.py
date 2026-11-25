@@ -1357,6 +1357,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("res://assets/textures/user_submitted_source/*", preset)
         self.assertIn("USER_TEXTURES_RUNTIME_BILLBOARDS", workflow)
         self.assertIn("USER_TEXTURES_SOURCE_ONLY", workflow)
+        self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")

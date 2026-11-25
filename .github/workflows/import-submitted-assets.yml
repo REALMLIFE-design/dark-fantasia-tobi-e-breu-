@@ -129,7 +129,7 @@ jobs:
               folder.mkdir(parents=True, exist_ok=True)
               # Remove only importer-generated PNGs (stem + 8-char content digest).
               for stale in folder.glob('*.png'):
-                  if re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name):
+                  if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
                       stale.unlink()
 
           # Keep one transparent billboard per chestnut-tree index in the Android build.
