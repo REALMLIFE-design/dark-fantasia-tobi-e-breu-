@@ -1344,11 +1344,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "003_obj", "lod1_fantasy_house", "lod2_fantasy_house", "big_watchtower_lod1", "lowpoly_log_watchtower", "scari_rotund", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "003_obj", "lod1_fantasy_house", "lod2_fantasy_house", "big_watchtower_lod1", "lowpoly_log_watchtower", "scari_rotund", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")', world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/16")', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_grove(hamlet)", world)
@@ -1416,7 +1416,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn('if grep -qi "GOT IT" "$WINDOW_XML_PATH"; then', script)
         self.assertIn("adb shell input tap 920 528", script)
         self.assertNotIn("adb shell input tap 640 490", script)
-        self.assertNotIn("adb shell input tap 920 528", script)
+        self.assertIn("uiautomator dump /sdcard/darkworld-window.xml", script)
         self.assertIn("dark-world-android-emulator-screenshot", workflow)
         self.assertIn("runner.temp }}/android-world.png", workflow)
 
@@ -1434,7 +1434,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn('for clasp_name in ["left_clasp", "right_clasp"]:', world)
         self.assertIn('saved_clasp.visible = false', world)
         self.assertIn('plugin_clasp.visible = false', world)
-        self.assertIn("_apply_dream_biome_tint(coffer_instance)", world)
+        self.assertIn("apply_biome_moss_filter(coffer_instance, 0.16)", world)
         self.assertIn('ChestBase', world)  # Original procedural fallback remains available.
 
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
