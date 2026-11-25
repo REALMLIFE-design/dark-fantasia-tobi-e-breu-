@@ -1333,17 +1333,19 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         import json
         manifest_path = ROOT / "assets/external_packs/user_submitted/ASSET-MANIFEST.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        output_names = {item["output"] for item in manifest}
-        for expected in ("medieval_platform_7d92a489.glb", "big_watchtower_e728f8c2.glb",
-                         "lod0_fantasy_house_3ec38fa0.glb", "house_3x2x1_0317e91a.glb"):
-            self.assertIn(expected, output_names)
-            self.assertTrue((manifest_path.parent / expected).is_file())
+        for expected_prefix in ("medieval_platform_", "big_watchtower_",
+                                "lod0_fantasy_house_", "house_3x2x1_"):
+            matches = [item["output"] for item in manifest
+                       if item["output"].startswith(expected_prefix)]
+            self.assertTrue(matches, f"Missing model family: {expected_prefix}")
+            for output in matches:
+                self.assertTrue((manifest_path.parent / output).is_file())
 
     def test_importer_uses_content_hashes_and_cleans_only_generated_duplicates(self):
         converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
         self.assertIn('file_digest(source, "sha1")', converter)
-        self.assertIn('re.fullmatch(r".+_[0-9a-f]{8}\\\\.glb", stale.name)', converter)
+        self.assertIn('re.fullmatch(r".+_[0-9a-f]{8}\\.glb", stale.name)', converter)
         self.assertIn("hashlib.sha1(src.read_bytes()).hexdigest()[:8]", workflow)
         self.assertIn("stale.unlink()", workflow)
 

@@ -127,7 +127,7 @@ jobs:
           import re
           # Limpa somente PNGs produzidos pelo importador (nome + hash de 8 dígitos).
           for stale in out.glob('*.png'):
-              if re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name):
+              if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
                   stale.unlink()
           count = 0
           for src in roots.rglob('*'):
