@@ -1,7 +1,7 @@
 # Relatório de importação — Dark World
 
 Modelos GLB validados: 6
-Texturas Android otimizadas: 96
+Texturas Android otimizadas: 136
 
 ## Modelos convertidos
 - house_1exportversion_b84f9c2b.glb (2166 KB)
