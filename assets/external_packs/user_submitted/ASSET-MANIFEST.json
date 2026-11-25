@@ -1,0 +1,38 @@
+[
+  {
+    "source": "p3d_medieval_enterable_bld-13.obj",
+    "output": "p3d_medieval_enterable_bld_13_71ad5b78.glb",
+    "bytes": 441900,
+    "faces_after_optimise": 5219
+  },
+  {
+    "source": "House#1ExportVersion.obj",
+    "output": "house_1exportversion_b84f9c2b.glb",
+    "bytes": 2218664,
+    "faces_after_optimise": 19944
+  },
+  {
+    "source": "MedHouse.obj",
+    "output": "medhouse_94e78ae0.glb",
+    "bytes": 1717652,
+    "faces_after_optimise": 35841
+  },
+  {
+    "source": "medieval_wood_bridge_cg_trader.obj",
+    "output": "medieval_wood_bridge_cg_trader_dcc4683a.glb",
+    "bytes": 462784,
+    "faces_after_optimise": 7547
+  },
+  {
+    "source": "LOD0_long_house.obj",
+    "output": "lod0_long_house_65d844aa.glb",
+    "bytes": 3972296,
+    "faces_after_optimise": 62242
+  },
+  {
+    "source": "LOD1_long_house.obj",
+    "output": "lod1_long_house_23dc60ba.glb",
+    "bytes": 624848,
+    "faces_after_optimise": 7114
+  }
+]
