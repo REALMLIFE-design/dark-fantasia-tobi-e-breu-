@@ -11,7 +11,7 @@
 ## Integração visual
 
 - `_apply_dream_biome_tint()` duplica os materiais importados, preserva os mapas albedo e aplica um leve ajuste frio/esmeralda, além de elevar discretamente a rugosidade.
-- As castanheiras usam billboards com alpha scissor, sem sombras dinâmicas, para reduzir custo no Android.
+- As castanheiras usam billboards com máscara alpha suave derivada do fundo branco dos TIFFs, alpha scissor e sem sombras dinâmicas, para reduzir custo no Android.
 - O bairro é aditivo e fica separado das vilas originais; a integração não substitui mapas, missões, HUD, personagens ou saves.
 
 ## Formatos e limitações
