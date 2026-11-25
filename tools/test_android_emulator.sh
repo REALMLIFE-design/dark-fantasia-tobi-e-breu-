@@ -42,10 +42,9 @@ if [[ -z "$APP_PID" ]]; then
 fi
 # A validação do APK não depende de um patch PCK opcional ou de rede externa.
 adb logcat -d -v threadtime -t 8000 > "$LOG_PATH" || true
-# Dismiss the Android immersive-mode first-run hint ("GOT IT") if it covers the menu.
-adb shell input tap 920 528 || true
-sleep 1
-adb shell input tap 640 490 || true
+# Enter the actual adventure from the first menu action; do not tap the
+# Friends/Google button (which only opens an informational dialog).
+adb shell input tap 640 260
 sleep "$INTERACTION_WAIT"
 APP_PID="$(adb shell pidof "$PACKAGE_ID" 2>/dev/null | tr -d '\r' || true)"
 if [[ -z "$APP_PID" ]]; then

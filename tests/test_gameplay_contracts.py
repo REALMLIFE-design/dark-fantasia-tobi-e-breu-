@@ -1406,6 +1406,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("adb exec-out screencap -p", script)
         self.assertIn("android-world.png", script)
+        self.assertIn("adb shell input tap 640 260", script)
+        self.assertNotIn("adb shell input tap 640 490", script)
+        self.assertNotIn("adb shell input tap 920 528", script)
         self.assertIn("dark-world-android-emulator-screenshot", workflow)
         self.assertIn("runner.temp }}/android-world.png", workflow)
 
