@@ -183,6 +183,11 @@ jobs:
                   count += 1
                   if is_runtime_billboard:
                       runtime_count += 1
+                      saved = Image.open(target).convert('RGBA')
+                      alpha_values = np.asarray(saved.getchannel('A'))
+                      print('BILLBOARD_ALPHA_STATS', target.name, int(alpha_values.min()),
+                            int(alpha_values.max()), int(np.count_nonzero(alpha_values == 0)),
+                            int(np.count_nonzero(alpha_values < 255)))
                   else:
                       source_count += 1
               except Exception as exc:

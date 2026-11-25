@@ -915,6 +915,7 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 				billboard_variants[variant_key] = file_name
 	var billboard_keys: Array = billboard_variants.keys()
 	billboard_keys.sort()
+	print("CHESTNUT_BILLBOARD_FILES_FOUND: ", billboard_keys.size())
 	if billboard_keys.is_empty():
 		return
 
@@ -932,9 +933,11 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 	for index in range(mini(billboard_keys.size(), spots.size())):
 		var texture := load(TEXTURE_ROOT.path_join(str(billboard_variants[billboard_keys[index]]))) as Texture2D
 		if texture == null:
+			print("CHESTNUT_BILLBOARD_LOAD_FAILED: ", billboard_variants[billboard_keys[index]])
 			continue
-		if not texture.has_alpha():
-			continue
+		var billboard_image := texture.get_image()
+		print("CHESTNUT_BILLBOARD_TEXTURE_CHECK: ", billboard_variants[billboard_keys[index]],
+			" alpha=", texture.has_alpha(), " image_alpha=", billboard_image != null and billboard_image.has_alpha())
 		var tree_mesh := QuadMesh.new()
 		tree_mesh.size = Vector2(7.0, 10.0)
 		var tree := MeshInstance3D.new()
