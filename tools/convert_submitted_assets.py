@@ -8,8 +8,8 @@ import tempfile
 from pathlib import Path
 import bpy
 
-SUPPORTED = {".blend", ".usdz", ".fbx", ".obj", ".3ds", ".dae"}
-ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae"}
+SUPPORTED = {".blend", ".usdz", ".fbx", ".obj", ".3ds", ".dae", ".x3d"}
+ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae", ".x3d"}
 FORMAT_PRIORITY = {".blend": 0, ".usdz": 0, ".fbx": 1, ".dae": 2, ".3ds": 3, ".obj": 4}
 
 def parse_args():
