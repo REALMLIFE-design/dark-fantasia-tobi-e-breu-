@@ -84,7 +84,10 @@ jobs:
             7z x -y "-o$target" "$archive"
           done
           cp -a /tmp/darkworld-input/. /tmp/darkworld-extracted/direct-files/ 2>/dev/null || true
-          find /tmp/darkworld-extracted -type f | head -200
+          echo "=== INVENTARIO COMPLETO DOS ARQUIVOS ENCONTRADOS NO DRIVE ==="
+          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\\n' | sort | tee /tmp/darkworld-drive-inventory.txt
+          echo "=== CONTAGEM POR EXTENSAO ==="
+          find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
           test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
 
       - name: Convert Blender, USDZ, FBX and OBJ models to GLB
