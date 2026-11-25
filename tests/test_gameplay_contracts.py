@@ -1393,11 +1393,13 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertNotIn("np.dstack", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
-    def test_imported_static_models_receive_trimesh_collisions(self):
+    def test_imported_static_models_use_lightweight_bounding_colliders(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("func _add_imported_model_collisions(root: Node) -> int:", world)
-        self.assertIn("mesh_instance.mesh.create_trimesh_shape()", world)
+        self.assertIn("mesh_instance.mesh.get_aabb().transformed(relative_transform)", world)
+        self.assertIn("BoxShape3D.new()", world)
+        self.assertNotIn("create_trimesh_shape()", world)
         self.assertIn("collision_shapes_added += _add_imported_model_collisions(instance)", world)
         self.assertIn('IMPORTED_STATIC_COLLIDERS: [1-9]', workflow)
 

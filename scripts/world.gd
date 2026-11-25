@@ -945,34 +945,48 @@ func _build_imported_medieval_hamlet() -> void:
 
 
 func _add_imported_model_collisions(root: Node) -> int:
-	# Casas, torres, plataforma e ponte são cenários estáticos; cada malha recebe
-	# uma forma trimesh própria, respeitando a transformação local do GLB.
-	if root == null:
+	# Mantém todas as malhas visuais, mas usa uma colisão simples por construção.
+	# Trimesh por submalha multiplicava memória e custo físico no Android.
+	var model_root := root as Node3D
+	if model_root == null:
 		return 0
-	var mesh_nodes := root.find_children("*", "MeshInstance3D", true, false)
-	if root is MeshInstance3D:
-		mesh_nodes.push_front(root)
-	var added := 0
+	if not model_root.find_children("*", "CollisionShape3D", true, false).is_empty():
+		return 0
+	var mesh_nodes := model_root.find_children("*", "MeshInstance3D", true, false)
+	if model_root is MeshInstance3D:
+		mesh_nodes.push_front(model_root)
+	var combined_bounds := AABB()
+	var has_bounds := false
+	var root_inverse := model_root.global_transform.affine_inverse()
 	for mesh_node in mesh_nodes:
 		var mesh_instance := mesh_node as MeshInstance3D
 		if mesh_instance == null or mesh_instance.mesh == null:
 			continue
-		if not mesh_instance.find_children("*", "CollisionShape3D", true, false).is_empty():
+		var relative_transform := root_inverse * mesh_instance.global_transform
+		var mesh_bounds := mesh_instance.mesh.get_aabb().transformed(relative_transform)
+		if mesh_bounds.size.length_squared() <= 0.0001:
 			continue
-		var shape := mesh_instance.mesh.create_trimesh_shape()
-		if shape == null:
-			continue
-		var body := StaticBody3D.new()
-		body.name = "ImportedStaticCollision"
-		body.collision_layer = 1
-		body.collision_mask = 0
-		var collision := CollisionShape3D.new()
-		collision.name = "ImportedMeshShape"
-		collision.shape = shape
-		body.add_child(collision)
-		mesh_instance.add_child(body)
-		added += 1
-	return added
+		combined_bounds = mesh_bounds if not has_bounds else combined_bounds.merge(mesh_bounds)
+		has_bounds = true
+	if not has_bounds:
+		return 0
+	var box := BoxShape3D.new()
+	box.size = Vector3(
+		maxf(combined_bounds.size.x, 0.25),
+		maxf(combined_bounds.size.y, 0.25),
+		maxf(combined_bounds.size.z, 0.25)
+	)
+	var body := StaticBody3D.new()
+	body.name = "ImportedStaticCollision"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	body.position = combined_bounds.position + combined_bounds.size * 0.5
+	var collision := CollisionShape3D.new()
+	collision.name = "ImportedBoundsShape"
+	collision.shape = box
+	body.add_child(collision)
+	model_root.add_child(body)
+	return 1
 
 
 func _build_chestnut_grove(parent: Node3D) -> void:
