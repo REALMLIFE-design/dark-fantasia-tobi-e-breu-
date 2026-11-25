@@ -1,7 +1,9 @@
 # Relatório de importação — Dark World
 
 Modelos GLB validados: 17
-Texturas Android otimizadas: 142
+Texturas otimizadas no repositório: 284
+Texturas incluídas no APK (billboards): 142
+Texturas de referência preservadas fora do APK: 142
 
 ## Modelos convertidos
 - 003_obj_60185448.glb (4525 KB)
