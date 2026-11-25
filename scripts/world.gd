@@ -887,8 +887,67 @@ func _build_imported_medieval_hamlet() -> void:
 		_apply_dream_biome_tint(bridge)
 		placed += 1
 
+	_build_chestnut_billboard_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
 	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/6")
+
+
+func _build_chestnut_billboard_grove(parent: Node3D) -> void:
+	# Billboards de castanheira: alternativa leve para os modelos Maya/Vue que ainda
+	# precisam ser exportados para FBX/GLB. Só usa imagens com transparência real.
+	const TEXTURE_ROOT := "res://assets/textures/user_submitted"
+	var directory := DirAccess.open(TEXTURE_ROOT)
+	if directory == null:
+		return
+	var files := directory.get_files()
+	files.sort()
+	var billboard_files: Array[String] = []
+	for file_name in files:
+		if file_name.begins_with("EU43_Billboard_") and file_name.to_lower().ends_with(".png"):
+			billboard_files.append(file_name)
+	if billboard_files.is_empty():
+		return
+
+	var spots := [
+		Vector3(-27.0, 0.0, 24.0), Vector3(-20.0, 0.0, 32.0),
+		Vector3(-8.0, 0.0, 35.0), Vector3(10.0, 0.0, 34.0),
+		Vector3(25.0, 0.0, 29.0), Vector3(34.0, 0.0, 17.0),
+		Vector3(-34.0, 0.0, 9.0), Vector3(-29.0, 0.0, -2.0),
+		Vector3(31.0, 0.0, -20.0)
+	]
+	var grove := Node3D.new()
+	grove.name = "BosqueDeCastanheiras"
+	parent.add_child(grove)
+	var placed := 0
+	for index in range(mini(billboard_files.size(), spots.size())):
+		var texture := load(TEXTURE_ROOT.path_join(billboard_files[index])) as Texture2D
+		if texture == null:
+			continue
+		var image := texture.get_image()
+		if image == null or not image.has_alpha():
+			continue
+		var tree_mesh := QuadMesh.new()
+		tree_mesh.size = Vector2(7.0, 10.0)
+		var tree := MeshInstance3D.new()
+		tree.name = "CastanheiraBillboard_%02d" % index
+		tree.mesh = tree_mesh
+		tree.position = spots[index] + Vector3(0.0, 5.0, 0.0)
+		tree.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var tree_material := StandardMaterial3D.new()
+		tree_material.albedo_texture = texture
+		tree_material.albedo_color = Color(0.94, 0.99, 0.94, 1.0)
+		tree_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		tree_material.alpha_scissor_threshold = 0.18
+		tree_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		tree_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		tree_material.roughness = 1.0
+		tree.material_override = tree_material
+		grove.add_child(tree)
+		placed += 1
+	if placed == 0:
+		grove.queue_free()
+	else:
+		print("CHESTNUT_BILLBOARDS_PLACED: ", placed)
 
 
 func _apply_dream_biome_tint(root: Node) -> void:
