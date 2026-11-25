@@ -255,7 +255,7 @@ jobs:
               exit 1
             fi
           done
-          if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17" "$RUNNER_TEMP/godot-world-smoke.log"; then
+          if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 16/16" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: os 17 modelos previstos não foram carregados no mundo"
             exit 1
           fi

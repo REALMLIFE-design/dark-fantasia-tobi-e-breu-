@@ -207,7 +207,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func _add_stag_antler_segment', self.world)
         self.assertNotIn('ancient_stag_guardian.glb', self.world)
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
-        self.assertIn("Baixar modelos Thrixel já existentes (opcional)", workflow)
+        self.assertIn("Validar e baixar os sete modelos Thrixel do jogo", workflow)
         self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec", workflow)
         self.assertIn("fallback procedural será mantido", workflow)
 
@@ -843,8 +843,9 @@ class TokenFreeAssetForgeContracts(unittest.TestCase):
         world = (root / "scripts/world.gd").read_text(encoding="utf-8")
         for key in ("thrixel_stag_guardian", "thrixel_river_crab", "thrixel_drowned_wraith", "thrixel_ancient_tree", "thrixel_rune_obelisk", "thrixel_way_shrine", "meshy_gate"):
             self.assertIn('"%s"' % key, forge)
-        for key in ("thrixel_ancient_tree", "thrixel_rune_obelisk", "thrixel_way_shrine", "meshy_gate"):
+        for key in ("thrixel_ancient_tree", "thrixel_rune_obelisk", "meshy_gate"):
             self.assertIn('load_or_create_asset(self, "%s"' % key, world)
+        self.assertIn('load_optional_scene("thrixel_way_shrine")', world)
         enemy = (root / "scripts/enemy.gd").read_text(encoding="utf-8")
         for key in ("thrixel_stag_guardian", "thrixel_river_crab", "thrixel_drowned_wraith"):
             self.assertIn('asset_key = "%s"' % key, enemy)
@@ -982,14 +983,15 @@ class ThrixelBuildImportContracts(unittest.TestCase):
         }
         for key, filename in expected.items():
             self.assertIn(f'"{key}": "res://assets/plugin_imports/thrixel/{filename}.glb"', catalog)
-        self.assertIn("Baixar modelos Thrixel já existentes (opcional)", workflow)
+        self.assertIn("Validar e baixar os sete modelos Thrixel do jogo", workflow)
         for submission in (
             "10f1f722-53d8-4ca0-b99b-e0e687bc8fec",
             "4592675e-0e7e-491d-9d1e-a4a15eee7304",
             "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1",
             "584d17cf-92ff-4fde-ba50-19037a88d832",
-            "07af580b-8b0e-4511-b2bd-c0164d113fc9",
-            "3ec3e3e0-e234-4ee1-942a-13391b648107",
+            "354f8a8c-3812-43a4-b187-3df95354eb48",
+            "2fbc201f-5a50-4516-9aa9-07736603d9ff",
+            "c90ac6cc-200e-4892-a7a5-0cc263e64d1c",
         ):
             self.assertIn(submission, workflow)
         self.assertIn("PROCEDURAL_FORGE.create_asset(asset_key)", loader)
@@ -1363,8 +1365,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         import json
         manifest_path = ROOT / "assets/external_packs/user_submitted/ASSET-MANIFEST.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(len(manifest), 16)
         for expected_prefix in ("medieval_platform_", "big_watchtower_",
-                                "lod0_fantasy_house_", "house_3x2x1_"):
+                                "lod1_fantasy_house_", "house_3x2x1_"):
             matches = [item["output"] for item in manifest
                        if item["output"].startswith(expected_prefix)]
             self.assertTrue(matches, f"Missing model family: {expected_prefix}")
@@ -1422,7 +1425,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn('"thrixel_river_coffer": "res://assets/plugin_imports/thrixel/silver_river_coffer.glb"', catalog)
-        self.assertIn("fetch_model silver_river_coffer 3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3", workflow)
+        self.assertIn("fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512", workflow)
         self.assertIn('load_optional_scene("thrixel_river_coffer")', world)
         self.assertIn("plugin_coffers_loaded += 1", world)
         self.assertIn("THRIXEL_SILVER_RIVER_COFFER_PLACED", world)
@@ -1437,7 +1440,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
-        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17", workflow)
+        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 16/16", workflow)
         self.assertIn("CHESTNUT_TREES_PLACED: 9", workflow)
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("func _build_chestnut_grove", world)

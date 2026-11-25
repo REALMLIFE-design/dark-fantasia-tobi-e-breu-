@@ -74,7 +74,7 @@ class PluginAssetBridgeContracts(unittest.TestCase):
             self.assertIn(token, self.aqueduct_graph)
 
     def test_world_places_and_filters_all_thrixel_landmarks_and_treasure_chests(self):
-        for asset in ['thrixel_ancient_tree', 'thrixel_rune_obelisk', 'thrixel_way_shrine']:
+        for asset in ['thrixel_ancient_tree', 'thrixel_rune_obelisk']:
             self.assertIn(f'load_or_create_asset(self, "{asset}"', self.world)
         self.assertIn('load_optional_scene("thrixel_river_coffer")', self.world)
         self.assertIn('load_optional_scene("thrixel_way_shrine")', self.world)

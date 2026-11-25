@@ -873,7 +873,7 @@ func _build_world_civilization() -> void:
 
 func _build_imported_medieval_hamlet() -> void:
 	# Modelos convertidos do Drive: integração aditiva, preservando as vilas originais.
-	# O LOD1 entra como uma construção menor ao fundo; o LOD0 fica na área principal.
+	# O pacote contém LOD1/LOD2 para as casas de fundo; não inventamos um LOD0 ausente.
 	var hamlet := Node3D.new()
 	hamlet.name = "BairroDosArtesaosImportado"
 	hamlet.position = Vector3(-300.0, 0.0, 150.0)
@@ -888,7 +888,6 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "medhouse_", "position": Vector3(-3.0, 0.0, 10.0), "scale": 0.82},
 		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72},
 		{"fragment": "lod1_long_house", "position": Vector3(31.0, 0.0, -8.0), "scale": 0.62},
-		{"fragment": "lod0_fantasy_house", "position": Vector3(-34.0, 0.0, -10.0), "scale": 0.66},
 		{"fragment": "house_3x2x1", "position": Vector3(35.0, 0.0, 3.0), "scale": 0.62},
 		{"fragment": "big_watchtower", "position": Vector3(-40.0, 0.0, 18.0), "scale": 0.72},
 		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68},
@@ -941,7 +940,7 @@ func _build_imported_medieval_hamlet() -> void:
 	_build_chestnut_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
 	print("IMPORTED_STATIC_COLLIDERS: ", collision_shapes_added)
-	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/16")
 
 
 func _add_imported_model_collisions(root: Node) -> int:
