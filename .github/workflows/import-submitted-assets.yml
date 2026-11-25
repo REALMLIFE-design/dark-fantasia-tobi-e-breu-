@@ -51,7 +51,7 @@ jobs:
       - name: Install extraction, Blender and texture tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender p7zip-full python3-pil assimp-utils
+          sudo apt-get install -y blender p7zip-full python3-pil python3-numpy assimp-utils
           python3 -m pip install --user --break-system-packages gdown
 
       - name: Download all models from the shared Drive folder and older packages
@@ -91,6 +91,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p assets/external_packs/user_submitted
+          export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH:-}"
+          blender --background --python-expr "import numpy; print('BLENDER_NUMPY_READY', numpy.__version__)"
           blender --background --python tools/convert_submitted_assets.py -- /tmp/darkworld-extracted assets/external_packs/user_submitted 2>&1 | tee /tmp/darkworld-blender.log
 
       - name: Optimise submitted textures for Android

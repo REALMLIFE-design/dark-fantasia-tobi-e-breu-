@@ -31,7 +31,7 @@ def import_asset(source):
     elif ext == ".usdz":
         bpy.ops.wm.usd_import(filepath=str(source))
     elif ext == ".fbx":
-        bpy.ops.import_scene.fbx(filepath=str(source), automatic_bone_orientation=True)
+        bpy.ops.import_scene.fbx(filepath=str(source))
     elif ext == ".obj":
         if hasattr(bpy.ops.wm, "obj_import"):
             bpy.ops.wm.obj_import(filepath=str(source))
