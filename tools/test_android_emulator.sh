@@ -8,7 +8,7 @@ LOG_PATH="$RUNNER_TEMP/android-launch.log"
 CRASH_LOG_PATH="$RUNNER_TEMP/android-crash-buffer.log"
 FAILURE_LOG_PATH="$RUNNER_TEMP/android-launch-failure.log"
 STARTUP_WAIT="${TOBI_TEST_SLEEP_SECONDS:-60}"
-INTERACTION_WAIT="${TOBI_TEST_POST_TAP_SECONDS:-15}"
+INTERACTION_WAIT="${TOBI_TEST_POST_TAP_SECONDS:-20}"
 [[ -s "$APK_PATH" ]] || { echo "ERRO: APK não encontrado em $APK_PATH"; exit 1; }
 adb wait-for-device
 for attempt in $(seq 1 60); do
@@ -42,6 +42,9 @@ if [[ -z "$APP_PID" ]]; then
 fi
 # A validação do APK não depende de um patch PCK opcional ou de rede externa.
 adb logcat -d -v threadtime -t 8000 > "$LOG_PATH" || true
+# Dismiss the Android immersive-mode first-run hint ("GOT IT") if it covers the menu.
+adb shell input tap 920 528 || true
+sleep 1
 adb shell input tap 640 490 || true
 sleep "$INTERACTION_WAIT"
 APP_PID="$(adb shell pidof "$PACKAGE_ID" 2>/dev/null | tr -d '\r' || true)"
