@@ -152,7 +152,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
-	_build_imported_medieval_hamlet()
+	await _build_imported_medieval_hamlet()
 	ASHEN_VILLAGE.build(self, ashen_relic_ids)
 	await get_tree().process_frame
 	_build_npcs()
