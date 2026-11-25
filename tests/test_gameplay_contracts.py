@@ -1358,6 +1358,8 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertTrue((ROOT / "assets/textures/user_submitted_source/.gdignore").is_file())
         self.assertIn("USER_TEXTURES_RUNTIME_BILLBOARDS", workflow)
         self.assertIn("USER_TEXTURES_SOURCE_ONLY", workflow)
+        self.assertIn("'transparency' in image.info", workflow)
+        self.assertIn("BILLBOARD_SOURCE_ALPHA", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
