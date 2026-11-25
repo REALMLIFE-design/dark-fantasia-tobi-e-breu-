@@ -1,6 +1,6 @@
 # Relatório de importação — Dark World
 
-Modelos GLB validados: 30
+Modelos GLB validados: 31
 Texturas Android otimizadas: 339
 
 ## Modelos convertidos
@@ -29,6 +29,7 @@ Texturas Android otimizadas: 339
 - lowpoly_log_watchtower_9046df31.glb (108 KB)
 - lowpoly_log_watchtower_ca4baceb.glb (108 KB)
 - medhouse_94e78ae0.glb (1677 KB)
+- medieval_platform_7d92a489.glb (236 KB)
 - medieval_wood_bridge_cg_trader_dcc4683a.glb (451 KB)
 - p3d_medieval_enterable_bld_13_71ad5b78.glb (431 KB)
 - p3d_medieval_enterable_bld_13_cc65eb7b.glb (452 KB)

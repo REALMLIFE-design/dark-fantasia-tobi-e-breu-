@@ -18,6 +18,12 @@
     "faces_after_optimise": 35841
   },
   {
+    "source": "Medieval-Platform.x3d",
+    "output": "medieval_platform_7d92a489.glb",
+    "bytes": 241800,
+    "faces_after_optimise": 3360
+  },
+  {
     "source": "p3d_medieval_enterable_bld-13.fbx",
     "output": "p3d_medieval_enterable_bld_13_f59ba0bc.glb",
     "bytes": 463552,
