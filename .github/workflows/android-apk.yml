@@ -225,6 +225,24 @@ jobs:
             exit 1
           fi
 
+      - name: Testar mundo 3D e modelos importados no Godot
+        timeout-minutes: 3
+        run: |
+          set -o pipefail
+          timeout 90 "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 2400 res://scenes/main.tscn 2>&1 | tee "$RUNNER_TEMP/godot-world-smoke.log"
+          if grep -E "SCRIPT ERROR:|Parse Error|Failed to load script|ERROR: Failed to load" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: o mundo 3D apresentou falha durante a montagem"
+            exit 1
+          fi
+          if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 11/11" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os 11 modelos previstos não foram carregados no mundo"
+            exit 1
+          fi
+          if ! grep -q "CHESTNUT_BILLBOARDS_PLACED: 9" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: as nove castanheiras transparentes não foram colocadas"
+            exit 1
+          fi
+
       - name: Gerar APK
         timeout-minutes: 16
         run: |

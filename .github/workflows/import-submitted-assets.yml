@@ -121,16 +121,29 @@ jobs:
           from pathlib import Path
           from PIL import Image
           import hashlib
+          import re
           roots = Path('/tmp/darkworld-extracted')
           out = Path('assets/textures/user_submitted')
-          out.mkdir(parents=True, exist_ok=True)
-          import re
-          # Limpa somente PNGs produzidos pelo importador (nome + hash de 8 dígitos).
-          for stale in out.glob('*.png'):
-              if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
-                  stale.unlink()
+          source_out = Path('assets/textures/user_submitted_source')
+          for folder in (out, source_out):
+              folder.mkdir(parents=True, exist_ok=True)
+              # Remove only importer-generated PNGs (stem + 8-char content digest).
+              for stale in folder.glob('*.png'):
+                  if re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name):
+                      stale.unlink()
+
+          # Keep one transparent billboard per chestnut-tree index in the Android build.
+          billboard_sources = {}
+          for src in sorted(roots.rglob('*')):
+              if src.is_file() and src.stem.startswith('EU43_Billboard_'):
+                  variant_key = src.stem[:19]
+                  if variant_key not in billboard_sources:
+                      billboard_sources[variant_key] = src
+
           count = 0
-          for src in roots.rglob('*'):
+          runtime_count = 0
+          source_count = 0
+          for src in sorted(roots.rglob('*')):
               if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.tga'}:
                   continue
               try:
@@ -138,12 +151,23 @@ jobs:
                   image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
                   image = image.convert('RGBA' if 'A' in image.getbands() else 'RGB')
                   digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
-                  target = out / f'{src.stem[:48]}_{digest}.png'
+                  is_runtime_billboard = (
+                      src.stem.startswith('EU43_Billboard_')
+                      and billboard_sources.get(src.stem[:19]) == src
+                  )
+                  target_root = out if is_runtime_billboard else source_out
+                  target = target_root / f'{src.stem[:48]}_{digest}.png'
                   image.save(target, optimize=True)
                   count += 1
+                  if is_runtime_billboard:
+                      runtime_count += 1
+                  else:
+                      source_count += 1
               except Exception as exc:
                   print('WARN texture', src.name, exc)
           print('USER_TEXTURES_OPTIMISED', count)
+          print('USER_TEXTURES_RUNTIME_BILLBOARDS', runtime_count)
+          print('USER_TEXTURES_SOURCE_ONLY', source_count)
           PY
 
       - name: Validate models and write full import report
@@ -158,11 +182,15 @@ jobs:
                   assert f.read(4) == b'glTF', f'Invalid GLB: {path}'
               assert path.stat().st_size > 1024, f'Empty GLB: {path}'
           manifest = json.loads((root / 'ASSET-MANIFEST.json').read_text()) if (root / 'ASSET-MANIFEST.json').exists() else []
+          runtime_textures = list(Path("assets/textures/user_submitted").glob("*.png"))
+          source_textures = list(Path("assets/textures/user_submitted_source").glob("*.png"))
           report = [
             '# Relatório de importação — Dark World',
             '',
             f'Modelos GLB validados: {len(files)}',
-            f'Texturas Android otimizadas: {len(list(Path("assets/textures/user_submitted").glob("*.png")))}',
+            f'Texturas otimizadas no repositório: {len(runtime_textures) + len(source_textures)}',
+            f'Texturas incluídas no APK (billboards): {len(runtime_textures)}',
+            f'Texturas de referência preservadas fora do APK: {len(source_textures)}',
             '',
             '## Modelos convertidos'
           ]
@@ -185,7 +213,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/external_packs/user_submitted assets/textures/user_submitted
+          git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source
           if git diff --cached --quiet; then
             echo 'No converted assets to commit'
             exit 0
