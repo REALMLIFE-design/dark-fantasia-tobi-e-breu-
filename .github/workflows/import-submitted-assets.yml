@@ -99,12 +99,12 @@ jobs:
             done
           done
           echo "=== INVENTARIO COMPLETO DOS ARQUIVOS ENCONTRADOS NO DRIVE ==="
-          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\\n' | sort > /tmp/darkworld-drive-inventory.txt
+          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\n' | sort > /tmp/darkworld-drive-inventory.txt
           echo "TOTAL_FILES=$(wc -l < /tmp/darkworld-drive-inventory.txt)"
           echo "=== CONTAGEM POR EXTENSAO ==="
           find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
           echo "=== FORMATOS DE MODELO ENCONTRADOS ==="
-          find /tmp/darkworld-extracted -type f | grep -Ei '\\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
+          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
           test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
 
       - name: Convert Blender, USDZ, FBX and OBJ models to GLB
