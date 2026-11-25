@@ -1345,6 +1345,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
         self.assertIn('file_digest(source, "sha1")', converter)
+        self.assertIn("def optimise_meshes(max_faces=45000):", converter)
         self.assertIn('re.fullmatch(r".+_[0-9a-f]{8}\\.glb", stale.name)', converter)
         self.assertIn("hashlib.sha1(src.read_bytes()).hexdigest()[:8]", workflow)
         self.assertIn("stale.unlink()", workflow)

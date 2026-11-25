@@ -87,7 +87,7 @@ def import_asset(source):
         return False
     return True
 
-def optimise_meshes(max_faces=140000):
+def optimise_meshes(max_faces=45000):
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
     total = sum(len(o.data.polygons) for o in meshes)
     if total > max_faces:
