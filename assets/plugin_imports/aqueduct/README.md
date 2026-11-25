@@ -1,13 +1,18 @@
-# Aqueduct PBR — pedra do Santuário
+# Aqueduct — pedra esmeralda com musgo
 
-Projeto: `0931f547-7cd7-40af-a785-d6ddf642c7ce`
+O projeto Aqueduct `Tobi e Breu — Materiais PBR Dark Fantasy` usa um grafo procedural de 1024×1024, guardado em `stone_moss_material.toml`.
 
-O pacote de exportação foi concluído (job `exp_edaba8b3-ae4e-4011-b627-910bd03d17e3`) com cinco mapas de 1024×1024 e normal OpenGL:
+- Base color: pedra azul-ardósia escura com mistura de pigmento verde.
+- Moss mask: ruído Simplex + threshold; manchas discretas, sem cobrir os relevos.
+- Normal: OpenGL.
+- Roughness e AO: derivados da altura.
+- Export concluído em PNG: base color, normal, roughness, AO e height (height fica fora do shader móvel).
+
+O pacote PBR foi gerado no Aqueduct. Como a transferência binária do ZIP ainda não foi concluída, `scripts/aqueduct_stone.gdshader` reproduz a camada de musgo proceduralmente e continua aceitando os quatro mapas reais quando forem colocados nesta pasta:
 
 - `base_color.png`
 - `normal.png`
 - `roughness.png`
 - `ao.png`
-- `height.png`
 
-O shader `res://scripts/aqueduct_stone.gdshader` aplica base color, normal, roughness e AO. O mapa height é preservado para futura utilização, mas fica fora do shader móvel atual para evitar deslocamento caro/incompatível com GL Compatibility. Os PNGs ainda não foram copiados para o repositório nesta sessão.
+O shader mantém albedo, normal, rugosidade, metalness, AO e emissão originais dos GLBs quando usado como filtro; metais e superfícies emissivas recebem menos musgo.

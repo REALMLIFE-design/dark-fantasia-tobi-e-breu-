@@ -366,13 +366,7 @@ func _build_imported_plugin_models() -> void:
 			plugin_colliders += _add_imported_model_collisions(way_shrine)
 	await get_tree().process_frame
 
-	var river_coffer := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_river_coffer", Vector3(88.5, 0.0, -139.0), Vector3.ONE)
-	if river_coffer != null:
-		river_coffer.rotation.y = 0.42
-		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(river_coffer, 0.16)
-		if river_coffer.get_meta("plugin_asset_loaded", false):
-			imported_count += 1
-			plugin_colliders += _add_imported_model_collisions(river_coffer)
+	# Os três baús de recompensa usam o cofre Thrixel em _build_river_treasure_chests().
 	await get_tree().process_frame
 
 	# Assets Meshy continuam com fallback local quando o plano impede exportar os GLBs.
@@ -386,7 +380,7 @@ func _build_imported_plugin_models() -> void:
 	if meshy_shrine == null:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
 
-	print("THRIXEL_WORLD_MODELS_LOADED: %d/4" % imported_count)
+	print("THRIXEL_WORLD_MODELS_LOADED: %d/3" % imported_count)
 	print("THRIXEL_STATIC_COLLIDERS: %d" % plugin_colliders)
 
 
@@ -2061,7 +2055,7 @@ func _build_river_treasure_chests() -> void:
 			coffer_instance.name = "ThrixelSilverRiverCoffer"
 			coffer_instance.scale = Vector3.ONE * 1.6
 			chest.add_child(coffer_instance)
-			_apply_dream_biome_tint(coffer_instance)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(coffer_instance, 0.16)
 			if river_chest_ids.has(i):
 				var saved_lid := coffer_instance.find_child("hinged_lid", true, false) as Node3D
 				if saved_lid != null:

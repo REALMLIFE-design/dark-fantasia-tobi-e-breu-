@@ -74,39 +74,45 @@ jobs:
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v
           python3 "$PROJECT_PATH/tools/validate_project.py"
 
-      - name: Baixar modelos Thrixel já existentes (opcional)
-        timeout-minutes: 6
+      - name: Validar e baixar os sete modelos Thrixel do jogo
+        timeout-minutes: 8
         run: |
           set -euo pipefail
           DEST="$PROJECT_PATH/assets/plugin_imports/thrixel"
           mkdir -p "$DEST"
           fetch_model() {
-            local name="$1"
-            local submission="$2"
+            local name="$1" submission="$2" texture_size="$3"
             local target="$DEST/$name.glb"
             local temporary="$target.part"
-            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=1024"
-            if curl --fail --location --silent --show-error --connect-timeout 15 --max-time 120 "$url" -o "$temporary"; then
-              if [ "$(head -c 4 "$temporary")" = "glTF" ] && [ "$(stat -c%s "$temporary")" -gt 1024 ]; then
-                mv "$temporary" "$target"
-                echo "Modelo Thrixel integrado ao APK: $name"
-              else
-                rm -f "$temporary"
-                echo "::warning::O GLB Thrixel $name não passou na validação; o fallback procedural será mantido."
-              fi
-            else
-              rm -f "$temporary"
-              echo "::warning::Download Thrixel indisponível para $name; o fallback procedural será mantido."
+            if [ -s "$target" ] && [ "$(head -c 4 "$target")" = "glTF" ]; then
+              echo "THRIXEL_MODEL_READY: $name"
+              return 0
             fi
+            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=$texture_size"
+            curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 "$url" -o "$temporary"
+            if [ "$(head -c 4 "$temporary")" != "glTF" ] || [ "$(stat -c%s "$temporary")" -le 1024 ]; then
+              rm -f "$temporary"
+              echo "ERRO: GLB Thrixel inválido: $name"
+              return 1
+            fi
+            mv "$temporary" "$target"
+            echo "THRIXEL_MODEL_READY: $name"
           }
-          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec &
-          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 &
-          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 &
-          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 &
-          fetch_model rune_obelisk 07af580b-8b0e-4511-b2bd-c0164d113fc9 &
-          fetch_model stone_way_shrine 3ec3e3e0-e234-4ee1-942a-13391b648107 &
-          fetch_model silver_river_coffer 3e100dbb-35b7-4cc5-a1aa-4c61d00efdf3 &
-          wait
+          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 1024
+          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec 1024
+          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 1024
+          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 1024
+          fetch_model rune_obelisk 354f8a8c-3812-43a4-b187-3df95354eb48 512
+          fetch_model stone_way_shrine 2fbc201f-5a50-4511-9aa9-07736603d9ff 512
+          fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512
+          ready=0
+          for model in ancient_tree ancient_stag_guardian silver_river_crab drowned_wraith rune_obelisk stone_way_shrine silver_river_coffer; do
+            if [ -s "$DEST/$model.glb" ] && [ "$(head -c 4 "$DEST/$model.glb")" = "glTF" ]; then
+              ready=$((ready + 1))
+            fi
+          done
+          echo "THRIXEL_MODELS_READY: $ready/7"
+          test "$ready" -eq 7
 
       - name: Normalizar GLBs para compatibilidade com Godot 4.3
         timeout-minutes: 8
@@ -235,6 +241,20 @@ jobs:
             echo "ERRO: o mundo 3D apresentou falha durante a montagem"
             exit 1
           fi
+          if ! grep -q "THRIXEL_WORLD_MODELS_LOADED: 3/3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três marcos Thrixel do cenário não foram carregados"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_OBELISK_RINGS_ANIMATED: 3/3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três anéis do obelisco não foram animados"
+            exit 1
+          fi
+          for model_key in thrixel_stag_guardian thrixel_river_crab thrixel_drowned_wraith; do
+            if ! grep -q "THRIXEL_ENEMY_MODEL_ATTACHED: $model_key" "$RUNNER_TEMP/godot-world-smoke.log"; then
+              echo "ERRO: modelo de inimigo Thrixel não foi anexado: $model_key"
+              exit 1
+            fi
+          done
           if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: os 17 modelos previstos não foram carregados no mundo"
             exit 1

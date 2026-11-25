@@ -234,6 +234,111 @@
       ],
       "status": "implemented_in_world_boot_on_integration_branch",
       "note": "Procedural runtime geometry is an intentional mobile-friendly fallback while source plugin binary exports remain inaccessible."
+    },
+    "thrixel_integration": {
+      "world_landmarks": [
+        "ancient_tree",
+        "rune_obelisk",
+        "way_shrine"
+      ],
+      "treasure_chests": [
+        "silver_river_coffer",
+        "three_reward_chests"
+      ],
+      "optional_enemy_models": [
+        "ancient_stag_guardian",
+        "silver_river_crab",
+        "drowned_wraith"
+      ],
+      "obelisk_animation": "Lower_Ring, Middle_Ring, Upper_Ring rotate independently",
+      "biome_filter": "Aqueduct moss overlay applied to static plugin landmarks and river chests",
+      "status": "code_integration_added_ci_validation_pending"
+    },
+    "aqueduct_moss_overlay": {
+      "shader": "scripts/aqueduct_stone.gdshader",
+      "graph_file": "aqueduct/stone_moss_material.toml",
+      "status": "procedural_shader_fallback_active"
     }
+  },
+  "aqueduct": {
+    "project_id": "0931f547-7cd7-40af-a785-d6ddf642c7ce",
+    "graph_file": "aqueduct/stone_moss_material.toml",
+    "export_job_id": "exp_0fe396e4-dcdd-4dfc-bf66-8339ba370be8",
+    "maps": [
+      "base_color",
+      "normal",
+      "roughness",
+      "ao",
+      "height"
+    ],
+    "resolution": 1024,
+    "normal_format": "opengl",
+    "material_style": "blue-grey river slate with restrained emerald moss patches",
+    "status": "export_completed_shader_fallback_active_binary_package_pending_transfer"
+  },
+  "thrixel": {
+    "project_id": "b46b162d-e1d0-48cb-8b1d-93781ce4eec3",
+    "assets": [
+      {
+        "asset": "ancient_tree",
+        "submission_id": "584d17cf-92ff-4fde-ba50-19037a88d832",
+        "file": "thrixel/ancient_tree.glb",
+        "texture_size": 1024,
+        "triangles": 14132,
+        "role": "world_landmark"
+      },
+      {
+        "asset": "ancient_stag_guardian",
+        "submission_id": "10f1f722-53d8-4ca0-b99b-e0e687bc8fec",
+        "file": "thrixel/ancient_stag_guardian.glb",
+        "texture_size": 1024,
+        "triangles": 14064,
+        "role": "optional_enemy"
+      },
+      {
+        "asset": "silver_river_crab",
+        "submission_id": "4592675e-0e7e-491d-9d1e-a4a15eee7304",
+        "file": "thrixel/silver_river_crab.glb",
+        "texture_size": 1024,
+        "triangles": 9442,
+        "role": "optional_enemy"
+      },
+      {
+        "asset": "drowned_wraith",
+        "submission_id": "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1",
+        "file": "thrixel/drowned_wraith.glb",
+        "texture_size": 1024,
+        "triangles": 8996,
+        "role": "optional_enemy"
+      },
+      {
+        "asset": "rune_obelisk",
+        "submission_id": "354f8a8c-3812-43a4-b187-3df95354eb48",
+        "file": "thrixel/rune_obelisk.glb",
+        "texture_size": 512,
+        "triangles": 45000,
+        "role": "animated_landmark",
+        "grouped_meshes": 7
+      },
+      {
+        "asset": "way_shrine",
+        "submission_id": "2fbc201f-5a50-4511-9aa9-07736603d9ff",
+        "file": "thrixel/stone_way_shrine.glb",
+        "texture_size": 512,
+        "triangles": 22276,
+        "role": "puzzle_landmark",
+        "grouped_meshes": 3
+      },
+      {
+        "asset": "river_coffer",
+        "submission_id": "c90ac6cc-200e-4892-a7a5-0cc263e64d1c",
+        "file": "thrixel/silver_river_coffer.glb",
+        "texture_size": 512,
+        "triangles": 11180,
+        "role": "treasure_prop",
+        "grouped_meshes": 2
+      }
+    ],
+    "status": "seven_models_prepared_for_repository_import"
   }
 }

@@ -107,6 +107,65 @@ jobs:
           find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
           test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
 
+      - name: Importar modelos prontos do Thrixel para o repositório
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          DEST="assets/plugin_imports/thrixel"
+          mkdir -p "$DEST"
+          fetch_model() {
+            local name="$1" submission="$2" texture_size="$3"
+            local target="$DEST/$name.glb"
+            local temporary="$target.part"
+            if [ -s "$target" ] && [ "$(head -c 4 "$target")" = "glTF" ]; then
+              echo "THRIXEL_MODEL_ALREADY_PRESENT: $name"
+              return 0
+            fi
+            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=$texture_size"
+            if curl --fail --location --retry 3 --connect-timeout 20 --max-time 240 "$url" -o "$temporary"; then
+              if [ "$(head -c 4 "$temporary")" = "glTF" ] && [ "$(stat -c%s "$temporary")" -gt 1024 ]; then
+                mv "$temporary" "$target"
+                echo "THRIXEL_MODEL_IMPORTED: $name"
+              else
+                rm -f "$temporary"
+                echo "::warning::GLB Thrixel inválido: $name"
+              fi
+            else
+              rm -f "$temporary"
+              echo "::warning::Não foi possível baixar o modelo Thrixel: $name"
+            fi
+          }
+          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 1024
+          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec 1024
+          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 1024
+          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 1024
+          fetch_model rune_obelisk 354f8a8c-3812-43a4-b187-3df95354eb48 512
+          fetch_model stone_way_shrine 2fbc201f-5a50-4511-9aa9-07736603d9ff 512
+          fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path("assets/plugin_imports/thrixel")
+          records = [
+              ("thrixel_ancient_tree", "ancient_tree.glb", "584d17cf-92ff-4fde-ba50-19037a88d832", 1024, 14132, "world_landmark"),
+              ("thrixel_stag_guardian", "ancient_stag_guardian.glb", "10f1f722-53d8-4ca0-b99b-e0e687bc8fec", 1024, 14064, "optional_enemy"),
+              ("thrixel_river_crab", "silver_river_crab.glb", "4592675e-0e7e-491d-9d1e-a4a15eee7304", 1024, 9442, "optional_enemy"),
+              ("thrixel_drowned_wraith", "drowned_wraith.glb", "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1", 1024, 8996, "optional_enemy"),
+              ("thrixel_rune_obelisk", "rune_obelisk.glb", "354f8a8c-3812-43a4-b187-3df95354eb48", 512, 45000, "animated_landmark"),
+              ("thrixel_way_shrine", "stone_way_shrine.glb", "2fbc201f-5a50-4511-9aa9-07736603d9ff", 512, 22276, "puzzle_landmark"),
+              ("thrixel_river_coffer", "silver_river_coffer.glb", "c90ac6cc-200e-4892-a7a5-0cc263e64d1c", 512, 11180, "treasure_prop"),
+          ]
+          manifest = []
+          for key, filename, submission, texture_size, triangles, role in records:
+              path = root / filename
+              if path.is_file() and path.stat().st_size > 1024 and path.read_bytes()[:4] == b"glTF":
+                  manifest.append({"asset_key": key, "file": filename, "submission_id": submission,
+                                   "texture_size": texture_size, "triangles": triangles, "role": role,
+                                   "bytes": path.stat().st_size})
+          (root / "THRIXEL-ASSET-MANIFEST.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+          print(f"THRIXEL_MODELS_PERSISTED: {len(manifest)}/7")
+          PY
+
       - name: Convert supported 3D models to GLB
         run: |
           set -euo pipefail
@@ -237,7 +296,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source
+          git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source assets/plugin_imports/thrixel
           if git diff --cached --quiet; then
             echo 'No converted assets to commit'
             exit 0
