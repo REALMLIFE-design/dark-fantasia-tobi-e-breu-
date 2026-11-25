@@ -1292,3 +1292,23 @@ class WanderingLighthouseContracts(unittest.TestCase):
         self.assertIn('"WanderingLighthouseRoad"', world)
         self.assertIn('"WanderingBeaconLight"', world)
         self.assertIn("FAROL DOS ERRANTES", atlas)
+
+
+class ImportedMedievalPackContracts(unittest.TestCase):
+    def test_converted_medieval_models_are_added_without_replacing_existing_settlements(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
+        self.assertIn("_build_imported_medieval_hamlet()", world)
+        self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "medieval_wood_bridge"):
+            self.assertIn(model, world)
+        self.assertIn("instantiate_by_name(", world)
+        self.assertIn("list_models(pack_id)", loader)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/5")', world)
+        self.assertNotIn("lod1_long_house", world)
+
+    def test_imported_medieval_hamlet_keeps_original_civilization_builders(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn('_build_settlement("VilaDoCarvalho"', world)
+        self.assertIn('_build_settlement("CidadeDePedra"', world)
+        self.assertIn('village.name = "VilaDoMoinho"', world)

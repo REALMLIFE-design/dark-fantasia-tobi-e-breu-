@@ -152,6 +152,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
+	_build_imported_medieval_hamlet()
 	ASHEN_VILLAGE.build(self, ashen_relic_ids)
 	await get_tree().process_frame
 	_build_npcs()
@@ -832,6 +833,59 @@ func _build_world_civilization() -> void:
 	_build_royal_castle()
 	_build_ancient_dungeon()
 	_build_guild_relics()
+
+
+func _build_imported_medieval_hamlet() -> void:
+	# Modelos convertidos do pacote enviado: adição visual, sem substituir as vilas existentes.
+	# O LOD1 fica reservado para uma futura troca por distância; não duplicamos a casa no mapa.
+	var hamlet := Node3D.new()
+	hamlet.name = "BairroDosArtesaosImportado"
+	hamlet.position = Vector3(-300.0, 0.0, 150.0)
+	add_child(hamlet)
+
+	var road := _box(self, "ArtisanQuarterRoad", Vector3(-270.0, 0.035, 132.0), Vector3(68.0, 0.07, 4.2), Color("6a5947"))
+	road.rotation.y = -0.55
+
+	var placements := [
+		{"fragment": "p3d_medieval_enterable_bld_13", "position": Vector3(-15.0, 0.0, -8.0), "scale": 0.82},
+		{"fragment": "house_1exportversion", "position": Vector3(12.0, 0.0, -10.0), "scale": 0.82},
+		{"fragment": "medhouse_", "position": Vector3(-3.0, 0.0, 10.0), "scale": 0.82},
+		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72}
+	]
+	var placed := 0
+	for item in placements:
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+			hamlet, "user_submitted", str(item.fragment), item.position, Vector3.ONE * float(item.scale)
+		)
+		if instance != null:
+			instance.rotation.y = -0.18 if placed % 2 == 0 else 0.22
+			placed += 1
+			await get_tree().process_frame
+
+	# Um pequeno braço d'água e a ponte importada formam a entrada do bairro.
+	var stream_mesh := PlaneMesh.new()
+	stream_mesh.size = Vector2(13.0, 5.0)
+	var stream := MeshInstance3D.new()
+	stream.name = "ArtisanQuarterStream"
+	stream.mesh = stream_mesh
+	stream.position = Vector3(1.0, 0.035, 25.0)
+	var stream_material := _mat(Color("416e70"), 0.22)
+	stream_material.metallic = 0.12
+	stream_material.emission_enabled = true
+	stream_material.emission = Color("244b50")
+	stream_material.emission_energy_multiplier = 0.16
+	stream.material_override = stream_material
+	hamlet.add_child(stream)
+
+	var bridge := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+		hamlet, "user_submitted", "medieval_wood_bridge", Vector3(1.0, 0.08, 25.0), Vector3.ONE * 0.82
+	)
+	if bridge != null:
+		bridge.rotation.y = PI * 0.5
+		placed += 1
+
+	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/5")
 
 
 func _build_mill_village() -> void:
