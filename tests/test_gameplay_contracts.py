@@ -1300,12 +1300,21 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/5")', world)
-        self.assertNotIn("lod1_long_house", world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/6")', world)
+        self.assertIn("_apply_dream_biome_tint(instance)", world)
+        self.assertIn("_apply_dream_biome_tint(bridge)", world)
+
+    def test_imported_models_keep_original_albedo_maps_with_a_subtle_biome_filter(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("func _apply_dream_biome_tint(root: Node)", world)
+        self.assertIn("source_material.duplicate(true) as StandardMaterial3D", world)
+        self.assertIn("Color(0.95, 0.98, 1.0, 1.0)", world)
+        self.assertIn("set_surface_override_material(surface_index, tuned_material)", world)
+        self.assertIn("tuned_material.roughness + 0.035", world)
 
     def test_imported_medieval_hamlet_keeps_original_civilization_builders(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
