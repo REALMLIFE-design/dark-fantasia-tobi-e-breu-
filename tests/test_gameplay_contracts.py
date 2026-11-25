@@ -870,7 +870,7 @@ class SubmittedAssetConversionContracts(unittest.TestCase):
         self.assertIn("for source in source_group:", converter)
         self.assertIn("trying fallback format", converter)
         self.assertIn("destination.unlink(missing_ok=True)", converter)
-        self.assertIn("valid_header = exported.read(4) == b'glTF'", converter)
+        self.assertIn('valid_header = exported.read(4) == b"glTF"', converter)
 
     def test_import_validation_removes_empty_glbs_and_requires_all_seventeen_models(self):
         workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
