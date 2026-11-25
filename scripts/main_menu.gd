@@ -1,15 +1,31 @@
 extends Control
 
+class LoadingSpinner extends Control:
+	var phase := 0.0
+
+	func _process(delta: float) -> void:
+		phase = fposmod(phase + delta * 4.2, TAU)
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := size * 0.5
+		draw_arc(center, 14.0, 0.0, TAU, 48, Color(0.34, 0.55, 0.58, 0.42), 2.4, true)
+		draw_arc(center, 14.0, phase, phase + TAU * 0.68, 48, Color("d8b77c"), 3.2, true)
+
 const STORY_SCENE := "res://scenes/main.tscn"
 const MAX_ADVENTURE_PLAYERS := 4
 
 var status_label: Label
 var notice_dialog: AcceptDialog
 var update_status_label: Label
+var portal_ring: Panel
+var menu_content: ScrollContainer
+var _loading_story := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_menu()
+	call_deferred("_start_menu_ambience")
 	print("DARK_WORLD_LEGEND_BOOT_READY")
 
 func _build_menu() -> void:
@@ -80,7 +96,9 @@ func _build_menu() -> void:
 	ring_style.set_corner_radius_all(999)
 	ring.add_theme_stylebox_override("panel", ring_style)
 	background.add_child(ring)
+	portal_ring = ring
 	# O portal permanece discreto também no celular, como marca visual do reino.
+	_add_menu_ambient_motes(background, viewport_size)
 
 	var scroll := ScrollContainer.new()
 	scroll.name = "BootMenuScroll"
@@ -89,7 +107,9 @@ func _build_menu() -> void:
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	scroll.process_mode = Node.PROCESS_MODE_ALWAYS
+	scroll.modulate.a = 0.0
 	add_child(scroll)
+	menu_content = scroll
 
 	var center := CenterContainer.new()
 	center.custom_minimum_size.y = viewport_size.y
@@ -216,6 +236,39 @@ func _build_menu() -> void:
 	notice_dialog.title = "DARK WORLD • A LENDA DE TOBI E BREU"
 	add_child(notice_dialog)
 
+func _start_menu_ambience() -> void:
+	await get_tree().process_frame
+	if is_instance_valid(portal_ring):
+		portal_ring.pivot_offset = portal_ring.size * 0.5
+		portal_ring.rotation = 0.0
+		var rotation_tween := create_tween().set_loops()
+		rotation_tween.tween_property(portal_ring, "rotation", TAU, 34.0).from(0.0).set_trans(Tween.TRANS_LINEAR)
+		var pulse_tween := create_tween().set_loops()
+		pulse_tween.tween_property(portal_ring, "modulate:a", 0.52, 3.2).from(1.0)
+		pulse_tween.tween_property(portal_ring, "modulate:a", 1.0, 3.2)
+	if is_instance_valid(menu_content):
+		create_tween().tween_property(menu_content, "modulate:a", 1.0, 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+func _add_menu_ambient_motes(parent: Control, viewport_size: Vector2) -> void:
+	# Pequenas partículas lentas dão profundidade sem usar shaders pesados ou imagens grandes.
+	for i in range(14):
+		var mote := ColorRect.new()
+		var x := fposmod(float(i * 137 + 41), maxf(viewport_size.x - 8.0, 1.0))
+		var y := fposmod(float(i * 83 + 29), maxf(viewport_size.y - 8.0, 1.0))
+		var side := 2.0 if i % 3 != 0 else 3.0
+		mote.size = Vector2(side, side)
+		mote.position = Vector2(x, y + 72.0)
+		mote.color = Color(0.62, 0.83, 0.80, 0.22)
+		mote.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mote.z_index = 2
+		parent.add_child(mote)
+		var duration := 8.0 + float(i % 5) * 1.35
+		var drift := 70.0 + float(i % 4) * 24.0
+		var mote_tween := create_tween().set_loops()
+		mote_tween.tween_property(mote, "position", Vector2(x, y - drift), duration).from(Vector2(x, y + drift))
+		mote_tween.parallel().tween_property(mote, "modulate:a", 0.68, duration * 0.45).from(0.0)
+		mote_tween.tween_property(mote, "modulate:a", 0.0, duration * 0.55)
+
 func _add_rule(parent: Control, tint: Color, thickness: float) -> void:
 	var rule := ColorRect.new()
 	rule.color = tint
@@ -261,7 +314,103 @@ func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, ac
 	parent.add_child(button)
 
 func _start_story() -> void:
-	get_tree().change_scene_to_file(STORY_SCENE)
+	if _loading_story:
+		return
+	_loading_story = true
+	var overlay := Control.new()
+	overlay.name = "CinematicLoadingOverlay"
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(overlay)
+
+	var veil := ColorRect.new()
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.color = Color(0.025, 0.045, 0.060, 0.97)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(veil)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(center)
+	var content := VBoxContainer.new()
+	content.custom_minimum_size.x = minf(440.0, get_viewport_rect().size.x * 0.78)
+	content.add_theme_constant_override("separation", 12)
+	center.add_child(content)
+	var emblem := Label.new()
+	emblem.text = "✧"
+	emblem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	emblem.add_theme_font_size_override("font_size", 42)
+	emblem.add_theme_color_override("font_color", Color("d8b77c"))
+	content.add_child(emblem)
+	var heading := Label.new()
+	heading.text = "O REINO SE REVELA"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 19)
+	heading.add_theme_color_override("font_color", Color("f1eee5"))
+	content.add_child(heading)
+	var detail := Label.new()
+	detail.text = "Tobi e Breu estão a caminho..."
+	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	detail.add_theme_font_size_override("font_size", 12)
+	detail.add_theme_color_override("font_color", Color("9bc8c7"))
+	content.add_child(detail)
+	var progress_bar := ProgressBar.new()
+	progress_bar.custom_minimum_size = Vector2(0, 5)
+	progress_bar.show_percentage = false
+	progress_bar.max_value = 100.0
+	content.add_child(progress_bar)
+
+	var corner := HBoxContainer.new()
+	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	corner.offset_left = -206.0
+	corner.offset_top = -62.0
+	corner.offset_right = -22.0
+	corner.offset_bottom = -20.0
+	corner.alignment = BoxContainer.ALIGNMENT_END
+	corner.add_theme_constant_override("separation", 10)
+	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(corner)
+	var spinner := LoadingSpinner.new()
+	spinner.custom_minimum_size = Vector2(34, 34)
+	corner.add_child(spinner)
+	var corner_label := Label.new()
+	corner_label.text = "CARREGANDO"
+	corner_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	corner_label.add_theme_font_size_override("font_size", 10)
+	corner_label.add_theme_color_override("font_color", Color("b5c4c2"))
+	corner.add_child(corner_label)
+
+	await get_tree().process_frame
+	var request_error := ResourceLoader.load_threaded_request(STORY_SCENE)
+	if request_error != OK:
+		push_error("Não foi possível iniciar o carregamento da aventura: %s" % request_error)
+		_loading_story = false
+		overlay.queue_free()
+		return
+
+	var started_at := Time.get_ticks_msec()
+	var progress: Array = []
+	var load_status := ResourceLoader.load_threaded_get_status(STORY_SCENE, progress)
+	while load_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS or Time.get_ticks_msec() - started_at < 550:
+		if not progress.is_empty():
+			progress_bar.value = clampf(float(progress[0]) * 100.0, 0.0, 100.0)
+		await get_tree().process_frame
+		load_status = ResourceLoader.load_threaded_get_status(STORY_SCENE, progress)
+
+	if load_status == ResourceLoader.THREAD_LOAD_LOADED:
+		progress_bar.value = 100.0
+		var packed_scene := ResourceLoader.load_threaded_get(STORY_SCENE) as PackedScene
+		if packed_scene != null:
+			get_tree().change_scene_to_packed(packed_scene)
+			return
+
+	detail.text = "Não foi possível carregar a aventura. Tente novamente."
+	push_error("Falha ao carregar a cena principal: %s" % STORY_SCENE)
+	await get_tree().create_timer(1.6).timeout
+	overlay.queue_free()
+	_loading_story = false
 
 func _show_coop_info() -> void:
 	_show_notice("História cooperativa", "A aventura será compartilhada por até 4 jogadores. A campanha atual será preservada. O servidor gratuito e a sincronização da história ainda precisam ser configurados.")

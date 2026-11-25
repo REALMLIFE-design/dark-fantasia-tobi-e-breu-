@@ -1247,6 +1247,34 @@ class EnemyModelImportContracts(unittest.TestCase):
 
 
 class StartupAndHudRegressionTests(unittest.TestCase):
+    def test_boot_menu_has_animated_fantasy_ambience_and_floating_motes(self):
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        self.assertIn("class LoadingSpinner extends Control:", menu)
+        self.assertIn("func _start_menu_ambience()", menu)
+        self.assertIn('rotation_tween.tween_property(portal_ring, "rotation", TAU, 34.0)', menu)
+        self.assertIn("func _add_menu_ambient_motes", menu)
+        self.assertIn("for i in range(14):", menu)
+        self.assertIn('call_deferred("_start_menu_ambience")', menu)
+
+    def test_story_loading_uses_threaded_scene_loading_and_corner_spinner(self):
+        menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
+        self.assertIn("ResourceLoader.load_threaded_request(STORY_SCENE)", menu)
+        self.assertIn("ResourceLoader.load_threaded_get_status(STORY_SCENE, progress)", menu)
+        self.assertIn("ResourceLoader.THREAD_LOAD_IN_PROGRESS", menu)
+        self.assertIn("CARREGANDO", menu)
+        self.assertIn("CinematicLoadingOverlay", menu)
+        self.assertIn("get_tree().change_scene_to_packed(packed_scene)", menu)
+
+    def test_bootstrap_loading_has_animated_atmosphere_and_bottom_corner_spinner(self):
+        bootstrap = (ROOT / "scripts/update_bootstrap.gd").read_text(encoding="utf-8")
+        self.assertIn("class BootstrapAtmosphere extends Control:", bootstrap)
+        self.assertIn("draw_arc(center, radius", bootstrap)
+        self.assertIn("class LoadingSpinner extends Control:", bootstrap)
+        self.assertIn("INICIALIZANDO", bootstrap)
+        self.assertIn("create_timer(0.78)", bootstrap)
+        self.assertIn("UpdateManager.check_for_updates()", bootstrap)
+        self.assertNotIn("await UpdateManager.check_for_updates()", bootstrap)
+
     def test_boot_menu_does_not_wait_for_network_update_check(self):
         bootstrap = (ROOT / "scripts/update_bootstrap.gd").read_text(encoding="utf-8")
         self.assertIn("UpdateManager.check_for_updates()", bootstrap)
