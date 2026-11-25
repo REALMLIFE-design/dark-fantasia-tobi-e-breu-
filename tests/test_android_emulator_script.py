@@ -65,14 +65,15 @@ if args[:2] == ['logcat', '-d']:
         self.assertIn("TOBI_BREU_ANDROID_INTERACTION_OK", result.stdout)
         self.assertIn("TOBI_BREU_ANDROID_SCREENSHOT=", result.stdout)
 
-    def test_dismisses_android_immersive_hint_before_starting_adventure(self):
+    def test_enters_the_adventure_from_the_main_menu(self):
         script = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn('adb shell input tap 920 528', script)
-        self.assertLess(script.index('adb shell input tap 920 528'), script.index('adb shell input tap 640 490'))
+        self.assertIn('adb shell input tap 640 260', script)
+        self.assertNotIn('adb shell input tap 920 528', script)
+        self.assertNotIn('adb shell input tap 640 490', script)
 
-    def test_taps_the_redesigned_play_button(self):
+    def test_capture_occurs_after_entering_the_adventure(self):
         script = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("adb shell input tap 640 490", script)
+        self.assertLess(script.index("adb shell input tap 640 260"), script.index("adb exec-out screencap -p"))
 
     def test_verifies_game_remains_the_resumed_android_activity(self):
         script = SCRIPT.read_text(encoding="utf-8")
