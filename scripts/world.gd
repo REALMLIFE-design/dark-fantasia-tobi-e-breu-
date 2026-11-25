@@ -2043,6 +2043,7 @@ func _add_stag_antler_segment(parent: Node3D, segment_name: String, start: Vecto
 func _build_river_treasure_chests() -> void:
 	# Three optional caches reward exploration on both banks and near the old gate.
 	var positions := [Vector3(39.0, 0.0, -137.0), Vector3(91.0, 0.0, -115.0), Vector3(62.0, 0.0, -164.0)]
+	var plugin_coffers_loaded := 0
 	for i in range(positions.size()):
 		var chest := Node3D.new()
 		chest.name = "RiverTreasureChest_%d" % i
@@ -2056,6 +2057,7 @@ func _build_river_treasure_chests() -> void:
 		if coffer_scene != null:
 			coffer_instance = coffer_scene.instantiate() as Node3D
 		if coffer_instance != null:
+			plugin_coffers_loaded += 1
 			coffer_instance.name = "ThrixelSilverRiverCoffer"
 			coffer_instance.scale = Vector3.ONE * 1.6
 			chest.add_child(coffer_instance)
@@ -2094,6 +2096,7 @@ func _build_river_treasure_chests() -> void:
 		light.light_energy = 0.65 if not river_chest_ids.has(i) else 0.0
 		light.omni_range = 4.0
 		chest.add_child(light)
+	print("THRIXEL_SILVER_RIVER_COFFER_PLACED: ", plugin_coffers_loaded)
 func _build_river_shrine_puzzle() -> void:
 	# A three-ring mechanism gives the river region a tactile, repeatable puzzle.
 	var shrine := Node3D.new()

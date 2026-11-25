@@ -243,6 +243,10 @@ jobs:
             echo "ERRO: as nove castanheiras transparentes não foram colocadas"
             exit 1
           fi
+          if ! grep -q "THRIXEL_SILVER_RIVER_COFFER_PLACED: 3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três baús do Rio Prateado não carregaram o modelo Thrixel"
+            exit 1
+          fi
           if ! grep -Eq "IMPORTED_STATIC_COLLIDERS: [1-9][0-9]*" "$RUNNER_TEMP/godot-world-smoke.log"; then
             echo "ERRO: as construções importadas não receberam colisões estáticas"
             exit 1
