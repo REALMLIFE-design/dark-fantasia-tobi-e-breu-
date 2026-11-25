@@ -5,7 +5,7 @@
 - 17 modelos 3D convertidos e validados em GLB.
 - 11 modelos/peças são instanciados no Bairro dos Artesãos: casas medievais, casas de fantasia, torres, plataforma e ponte.
 - As variantes LOD continuam no pacote para uso futuro, mas não são colocadas como cópias lado a lado no mapa.
-- 9 billboards transparentes de castanheira ficam no pacote de runtime e formam o bosque ao redor do bairro.
+- 9 billboards transparentes de castanheira ficam no pacote de runtime e formam o bosque ao redor do bairro; a importação valida pixels transparentes nas nove imagens.
 - 142 texturas de referência ficam preservadas em `assets/textures/user_submitted_source/` e são excluídas do APK Android para evitar carregar imagens que não são usadas diretamente pelo jogo.
 
 ## Integração visual
