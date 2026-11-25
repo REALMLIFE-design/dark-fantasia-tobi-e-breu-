@@ -64,6 +64,23 @@ def choose_sources(candidates):
     return sorted(selected.values())
 
 
+def choose_source_groups(candidates):
+    """Keep ordered fallback formats per model so a broken FBX can fall back to OBJ/3DS."""
+    grouped = {}
+    content_seen = set()
+    for source in sorted(candidates, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower())):
+        digest = file_digest(source)
+        if digest in content_seen:
+            print("SKIP exact duplicate content", source)
+            continue
+        content_seen.add(digest)
+        grouped.setdefault(source_group_key(source), []).append(source)
+    return [
+        sorted(group, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower()))
+        for _, group in sorted(grouped.items())
+    ]
+
+
 def import_asset(source):
     ext = source.suffix.lower()
     if ext == ".blend":
@@ -127,43 +144,55 @@ def main():
     candidates = [p for p in input_dir.rglob("*") if p.is_file()
                   and p.suffix.lower() in SUPPORTED
                   and not p.name.lower().endswith(".blend1")]
-    sources = choose_sources(candidates)
+    source_groups = choose_source_groups(candidates)
     manifest = []
-    for source in sources:
-        temporary = None
-        try:
-            clear_scene()
-            if source.suffix.lower() in ASSIMP_IMPORT_FORMATS:
-                temporary = import_with_assimp(source)
-            else:
-                import_asset(source)
-            meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
-            if not meshes:
-                print("SKIP no mesh", source)
-                continue
-            bpy.ops.object.select_all(action="DESELECT")
-            for obj in bpy.context.scene.objects:
-                if obj.type in {"MESH", "EMPTY"} and obj.visible_get():
-                    obj.select_set(True)
-            faces = optimise_meshes()
+    for source_group in source_groups:
+        group_exported = False
+        for source in source_group:
+            temporary = None
             destination = output_dir / (safe_stem(source) + ".glb")
-            bpy.ops.export_scene.gltf(filepath=str(destination), export_format="GLB",
-                use_selection=True, export_apply=True, export_image_format="AUTO",
-                export_materials="EXPORT", export_cameras=False, export_lights=False)
-            if destination.exists() and destination.stat().st_size > 1024:
-                entry = {"source": source.name, "output": destination.name,
-                         "bytes": destination.stat().st_size, "faces_after_optimise": faces}
-                manifest.append(entry)
-                print("EXPORTED", json.dumps(entry))
-            else:
-                print("SKIP invalid export", source)
-        except Exception as exc:
-            print("ERROR converting", source, repr(exc))
-        finally:
-            if temporary is not None:
-                temporary.cleanup()
+            try:
+                destination.unlink(missing_ok=True)
+                clear_scene()
+                if source.suffix.lower() in ASSIMP_IMPORT_FORMATS:
+                    temporary = import_with_assimp(source)
+                else:
+                    import_asset(source)
+                meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
+                if not meshes:
+                    print("SKIP no mesh", source)
+                    continue
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in bpy.context.scene.objects:
+                    if obj.type in {"MESH", "EMPTY"} and obj.visible_get():
+                        obj.select_set(True)
+                faces = optimise_meshes()
+                bpy.ops.export_scene.gltf(filepath=str(destination), export_format="GLB",
+                    use_selection=True, export_apply=True, export_image_format="AUTO",
+                    export_materials="EXPORT", export_cameras=False, export_lights=False)
+                if destination.exists() and destination.stat().st_size > 1024:
+                    with destination.open("rb") as exported:
+                        valid_header = exported.read(4) == b"glTF"
+                    if not valid_header:
+                        raise RuntimeError("exported file is missing the GLB magic header")
+                    entry = {"source": source.name, "output": destination.name,
+                             "bytes": destination.stat().st_size, "faces_after_optimise": faces}
+                    manifest.append(entry)
+                    print("EXPORTED", json.dumps(entry))
+                    group_exported = True
+                    break
+                print("SKIP invalid export; trying fallback format", source)
+                destination.unlink(missing_ok=True)
+            except Exception as exc:
+                print("ERROR converting; trying fallback format", source, repr(exc))
+                destination.unlink(missing_ok=True)
+            finally:
+                if temporary is not None:
+                    temporary.cleanup()
+        if not group_exported:
+            print("ERROR all source formats failed for model group", source_group[0].stem)
     (output_dir / "ASSET-MANIFEST.json").write_text(json.dumps(manifest, indent=2))
-    print("CONVERSION_SUMMARY", len(manifest), "of", len(sources))
+    print("CONVERSION_SUMMARY", len(manifest), "of", len(source_groups))
     if not manifest:
         raise SystemExit("No 3D models converted successfully.")
 

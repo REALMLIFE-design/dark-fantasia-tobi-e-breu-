@@ -163,10 +163,19 @@ jobs:
           import json
           root = Path('assets/external_packs/user_submitted')
           files = sorted(root.glob('*.glb'))
+          invalid = []
           for path in files:
-              with path.open('rb') as f:
-                  assert f.read(4) == b'glTF', f'Invalid GLB: {path}'
-              assert path.stat().st_size > 1024, f'Empty GLB: {path}'
+              valid = path.stat().st_size > 1024
+              if valid:
+                  with path.open('rb') as f:
+                      valid = f.read(4) == b'glTF'
+              if not valid:
+                  invalid.append(path.name)
+                  path.unlink()
+                  print('WARN removed invalid or empty GLB:', path.name)
+          files = sorted(root.glob('*.glb'))
+          if len(files) < 17:
+              raise SystemExit(f'Expected at least 17 valid imported models, found {len(files)}; invalid removed: {invalid}')
           manifest = json.loads((root / 'ASSET-MANIFEST.json').read_text()) if (root / 'ASSET-MANIFEST.json').exists() else []
           runtime_textures = list(Path("assets/textures/user_submitted").glob("*.png"))
           source_textures = list(Path("assets/textures/user_submitted_source").glob("*.png"))
@@ -188,6 +197,7 @@ jobs:
                      '- A importação é aditiva: nenhum mapa, personagem, missão, HUD, save ou cena existente é substituído.']
           (root / 'IMPORT-REPORT.md').write_text('\n'.join(report) + '\n')
           print('Validated GLBs:', len(files))
+          print('Removed invalid GLBs:', len(invalid))
           PY
 
       - name: Keep GitHub repository below per-file limit

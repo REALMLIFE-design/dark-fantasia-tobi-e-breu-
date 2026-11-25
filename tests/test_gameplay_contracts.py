@@ -863,6 +863,21 @@ class SubmittedAssetConversionContracts(unittest.TestCase):
         self.assertIn('["assimp", "export", str(source), str(converted), "-f", "glb2"]', converter)
         self.assertIn("bpy.ops.import_scene.gltf(filepath=str(converted))", converter)
 
+    def test_converter_keeps_fallback_formats_when_preferred_export_fails(self):
+        converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
+        self.assertIn("def choose_source_groups(candidates):", converter)
+        self.assertIn("source_groups = choose_source_groups(candidates)", converter)
+        self.assertIn("for source in source_group:", converter)
+        self.assertIn("trying fallback format", converter)
+        self.assertIn("destination.unlink(missing_ok=True)", converter)
+        self.assertIn("valid_header = exported.read(4) == b'glTF'", converter)
+
+    def test_import_validation_removes_empty_glbs_and_requires_all_seventeen_models(self):
+        workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
+        self.assertIn("WARN removed invalid or empty GLB", workflow)
+        self.assertIn("if len(files) < 17:", workflow)
+        self.assertIn("invalid removed:", workflow)
+
     def test_converter_deduplicates_multiple_export_formats_for_same_model(self):
         converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
         self.assertIn("def source_group_key(source):", converter)
