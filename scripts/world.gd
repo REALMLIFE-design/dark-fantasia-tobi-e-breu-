@@ -855,7 +855,8 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "lod0_fantasy_house", "position": Vector3(-34.0, 0.0, -10.0), "scale": 0.66},
 		{"fragment": "house_3x2x1", "position": Vector3(35.0, 0.0, 3.0), "scale": 0.62},
 		{"fragment": "big_watchtower", "position": Vector3(-40.0, 0.0, 18.0), "scale": 0.72},
-		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68}
+		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68},
+		{"fragment": "medieval_platform", "position": Vector3(0.0, 0.0, -28.0), "scale": 0.72}
 	]
 	var placed := 0
 	for item in placements:
@@ -893,7 +894,7 @@ func _build_imported_medieval_hamlet() -> void:
 
 	_build_chestnut_billboard_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
-	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/10")
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/11")
 
 
 func _build_chestnut_billboard_grove(parent: Node3D) -> void:

@@ -867,6 +867,8 @@ class SubmittedAssetConversionContracts(unittest.TestCase):
         converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
         self.assertIn("def source_group_key(source):", converter)
         self.assertIn("def choose_sources(candidates):", converter)
+        self.assertIn("content_seen = set()", converter)
+        self.assertIn("file_digest(source)", converter)
         self.assertIn('FORMAT_PRIORITY =', converter)
 
 
@@ -1318,14 +1320,32 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/10")', world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/11")', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_billboard_grove(hamlet)", world)
+
+    def test_imported_model_manifest_files_exist_and_platform_is_integrated(self):
+        import json
+        manifest_path = ROOT / "assets/external_packs/user_submitted/ASSET-MANIFEST.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        output_names = {item["output"] for item in manifest}
+        for expected in ("medieval_platform_7d92a489.glb", "big_watchtower_e728f8c2.glb",
+                         "lod0_fantasy_house_3ec38fa0.glb", "house_3x2x1_0317e91a.glb"):
+            self.assertIn(expected, output_names)
+            self.assertTrue((manifest_path.parent / expected).is_file())
+
+    def test_importer_uses_content_hashes_and_cleans_only_generated_duplicates(self):
+        converter = (ROOT / "tools/convert_submitted_assets.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/import-submitted-assets.yml").read_text(encoding="utf-8")
+        self.assertIn('file_digest(source, "sha1")', converter)
+        self.assertIn('re.fullmatch(r".+_[0-9a-f]{8}\\\\.glb", stale.name)', converter)
+        self.assertIn("hashlib.sha1(src.read_bytes()).hexdigest()[:8]", workflow)
+        self.assertIn("stale.unlink()", workflow)
 
     def test_imported_hamlet_builder_is_awaited_before_world_loading_continues(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")

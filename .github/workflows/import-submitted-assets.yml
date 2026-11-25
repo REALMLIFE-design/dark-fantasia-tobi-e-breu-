@@ -107,7 +107,7 @@ jobs:
           find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
           test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
 
-      - name: Convert Blender, USDZ, FBX and OBJ models to GLB
+      - name: Convert supported 3D models to GLB
         run: |
           set -euo pipefail
           mkdir -p assets/external_packs/user_submitted
@@ -124,6 +124,11 @@ jobs:
           roots = Path('/tmp/darkworld-extracted')
           out = Path('assets/textures/user_submitted')
           out.mkdir(parents=True, exist_ok=True)
+          import re
+          # Limpa somente PNGs produzidos pelo importador (nome + hash de 8 dígitos).
+          for stale in out.glob('*.png'):
+              if re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name):
+                  stale.unlink()
           count = 0
           for src in roots.rglob('*'):
               if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.tga'}:
@@ -132,7 +137,7 @@ jobs:
                   image = Image.open(src)
                   image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
                   image = image.convert('RGBA' if 'A' in image.getbands() else 'RGB')
-                  digest = hashlib.sha1(str(src).encode()).hexdigest()[:8]
+                  digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
                   target = out / f'{src.stem[:48]}_{digest}.png'
                   image.save(target, optimize=True)
                   count += 1
