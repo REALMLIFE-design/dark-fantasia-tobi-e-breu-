@@ -24,6 +24,9 @@ state = pathlib.Path(os.environ['FAKE_ADB_STATE'])
 if args[:3] == ['shell', 'getprop', 'sys.boot_completed']:
     print('1')
     raise SystemExit(0)
+if args[:2] == ['exec-out', 'screencap']:
+    sys.stdout.buffer.write(b'\\x89PNG\\r\\n\\x1a\\nFAKEPNG')
+    raise SystemExit(0)
 if args[:2] == ['shell', 'pidof']:
     if state.exists() and state.read_text() == 'yes':
         print('4321')
@@ -60,6 +63,7 @@ if args[:2] == ['logcat', '-d']:
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("TOBI_BREU_ANDROID_INTERACTION_OK", result.stdout)
+        self.assertIn("TOBI_BREU_ANDROID_SCREENSHOT=", result.stdout)
 
     def test_taps_the_redesigned_play_button(self):
         script = SCRIPT.read_text(encoding="utf-8")
