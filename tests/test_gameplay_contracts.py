@@ -1421,9 +1421,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("func _apply_dream_biome_tint(root: Node)", world)
         self.assertIn("source_material.duplicate(true) as StandardMaterial3D", world)
-        self.assertIn("Color(0.95, 0.98, 1.0, 1.0)", world)
+        self.assertIn("source_material.get_instance_id()", world)
+        self.assertIn("_dream_tint_material_cache[material_key] = tuned_material", world)
+        self.assertIn("Color(0.93, 0.98, 0.96, 1.0)", world)
         self.assertIn("set_surface_override_material(surface_index, tuned_material)", world)
-        self.assertIn("tuned_material.roughness + 0.035", world)
+        self.assertIn("tuned_material.roughness + 0.055", world)
 
     def test_imported_medieval_hamlet_keeps_original_civilization_builders(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
