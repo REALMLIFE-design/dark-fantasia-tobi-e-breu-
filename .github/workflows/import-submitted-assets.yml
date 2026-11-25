@@ -122,7 +122,6 @@ jobs:
           from PIL import Image
           import hashlib
           import re
-          import numpy as np
           roots = Path('/tmp/darkworld-extracted')
           out = Path('assets/textures/user_submitted')
           source_out = Path('assets/textures/user_submitted_source')
@@ -133,10 +132,9 @@ jobs:
                   if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
                       stale.unlink()
 
-          # All submitted source textures stay available in the repo but outside the Android APK.
-          # Runtime uses optimized in-engine materials and low-poly trees; opaque billboards are not rendered.
-                    count = 0
-          runtime_count = 0
+          # All submitted source textures stay in the repository, outside the Android APK.
+          # Runtime uses the in-engine low-poly foliage; opaque image cards are not rendered.
+          count = 0
           source_count = 0
           for src in sorted(roots.rglob('*')):
               if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.tga'}:
@@ -144,50 +142,17 @@ jobs:
               try:
                   image = Image.open(src)
                   image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-                  # Preserve existing alpha, or derive a soft mask for RGB chestnut renders.
                   has_alpha = 'A' in image.getbands() or 'transparency' in image.info
-                  if src.stem.startswith('EU43_Billboard_') and not has_alpha:
-                      rgb_image = image.convert('RGB')
-                      pixels = np.asarray(rgb_image, dtype=np.int16)
-                      height, width = pixels.shape[:2]
-                      corners = np.asarray([
-                          pixels[0, 0], pixels[0, width - 1],
-                          pixels[height - 1, 0], pixels[height - 1, width - 1]
-                      ], dtype=np.float32)
-                      background = np.median(corners, axis=0)
-                      corner_spread = float(np.max(np.linalg.norm(corners - background, axis=1)))
-                      distance = np.sqrt(np.sum((pixels.astype(np.float32) - background) ** 2, axis=2))
-                      alpha = np.clip((distance - 28.0) / 42.0 * 255.0, 0, 255).astype(np.uint8)
-                      rgba = np.dstack((pixels.astype(np.uint8), alpha))
-                      image = Image.fromarray(rgba, 'RGBA')
-                      has_alpha = True
-                      print('BILLBOARD_COLORKEY', src.name, background.tolist(), round(corner_spread, 2))
-                  else:
-                      image = image.convert('RGBA' if has_alpha else 'RGB')
-                  if src.stem.startswith('EU43_Billboard_'):
-                      print('BILLBOARD_SOURCE_ALPHA', src.name, has_alpha, image.mode)
+                  image = image.convert('RGBA' if has_alpha else 'RGB')
                   digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
-                  is_runtime_billboard = (
-                      src.stem.startswith('EU43_Billboard_')
-                      and billboard_sources.get(src.stem[:19]) == src
-                  )
-                  target_root = out if is_runtime_billboard else source_out
-                  target = target_root / f'{src.stem[:48]}_{digest}.png'
+                  target = source_out / f'{src.stem[:48]}_{digest}.png'
                   image.save(target, optimize=True)
                   count += 1
-                  if is_runtime_billboard:
-                      runtime_count += 1
-                      saved = Image.open(target).convert('RGBA')
-                      alpha_values = np.asarray(saved.getchannel('A'))
-                      print('BILLBOARD_ALPHA_STATS', target.name, int(alpha_values.min()),
-                            int(alpha_values.max()), int(np.count_nonzero(alpha_values == 0)),
-                            int(np.count_nonzero(alpha_values < 255)))
-                  else:
-                      source_count += 1
+                  source_count += 1
               except Exception as exc:
                   print('WARN texture', src.name, exc)
           print('USER_TEXTURES_OPTIMISED', count)
-          print('USER_TEXTURES_RUNTIME_BILLBOARDS', runtime_count)
+          print('USER_TEXTURES_RUNTIME_BILLBOARDS', 0)
           print('USER_TEXTURES_SOURCE_ONLY', source_count)
           PY
 
