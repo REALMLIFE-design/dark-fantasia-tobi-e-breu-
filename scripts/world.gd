@@ -836,8 +836,8 @@ func _build_world_civilization() -> void:
 
 
 func _build_imported_medieval_hamlet() -> void:
-	# Modelos convertidos do pacote enviado: adição visual, sem substituir as vilas existentes.
-	# O LOD1 fica reservado para uma futura troca por distância; não duplicamos a casa no mapa.
+	# Modelos convertidos do Drive: integração aditiva, preservando as vilas originais.
+	# O LOD1 entra como uma construção menor ao fundo; o LOD0 fica na área principal.
 	var hamlet := Node3D.new()
 	hamlet.name = "BairroDosArtesaosImportado"
 	hamlet.position = Vector3(-300.0, 0.0, 150.0)
@@ -850,7 +850,8 @@ func _build_imported_medieval_hamlet() -> void:
 		{"fragment": "p3d_medieval_enterable_bld_13", "position": Vector3(-15.0, 0.0, -8.0), "scale": 0.82},
 		{"fragment": "house_1exportversion", "position": Vector3(12.0, 0.0, -10.0), "scale": 0.82},
 		{"fragment": "medhouse_", "position": Vector3(-3.0, 0.0, 10.0), "scale": 0.82},
-		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72}
+		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72},
+		{"fragment": "lod1_long_house", "position": Vector3(31.0, 0.0, -8.0), "scale": 0.62}
 	]
 	var placed := 0
 	for item in placements:
@@ -859,10 +860,11 @@ func _build_imported_medieval_hamlet() -> void:
 		)
 		if instance != null:
 			instance.rotation.y = -0.18 if placed % 2 == 0 else 0.22
+			_apply_dream_biome_tint(instance)
 			placed += 1
 			await get_tree().process_frame
 
-	# Um pequeno braço d'água e a ponte importada formam a entrada do bairro.
+	# Água fria e ponte de madeira dão uma entrada visual ao bairro.
 	var stream_mesh := PlaneMesh.new()
 	stream_mesh.size = Vector2(13.0, 5.0)
 	var stream := MeshInstance3D.new()
@@ -882,10 +884,32 @@ func _build_imported_medieval_hamlet() -> void:
 	)
 	if bridge != null:
 		bridge.rotation.y = PI * 0.5
+		_apply_dream_biome_tint(bridge)
 		placed += 1
 
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
-	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/5")
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/6")
+
+
+func _apply_dream_biome_tint(root: Node) -> void:
+	# Filtro leve de pigmento frio-esmeralda/lavanda: mantém mapas albedo e detalhes originais.
+	if root == null:
+		return
+	var mesh_nodes := root.find_children("*", "MeshInstance3D", true, false)
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		for surface_index in range(mesh_instance.mesh.get_surface_count()):
+			var source_material := mesh_instance.get_active_material(surface_index)
+			if source_material == null:
+				continue
+			var tuned_material := source_material.duplicate(true) as StandardMaterial3D
+			if tuned_material == null:
+				continue
+			tuned_material.albedo_color = tuned_material.albedo_color * Color(0.95, 0.98, 1.0, 1.0)
+			tuned_material.roughness = clampf(tuned_material.roughness + 0.035, 0.0, 1.0)
+			mesh_instance.set_surface_override_material(surface_index, tuned_material)
 
 
 func _build_mill_village() -> void:
