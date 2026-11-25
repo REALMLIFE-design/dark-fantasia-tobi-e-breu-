@@ -103,7 +103,7 @@ jobs:
           fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 1024
           fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 1024
           fetch_model rune_obelisk 354f8a8c-3812-43a4-b187-3df95354eb48 512
-          fetch_model stone_way_shrine 2fbc201f-5a50-4511-9aa9-07736603d9ff 512
+          fetch_model stone_way_shrine 2fbc201f-5a50-4516-9aa9-07736603d9ff 512
           fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512
           ready=0
           for model in ancient_tree ancient_stag_guardian silver_river_crab drowned_wraith rune_obelisk stone_way_shrine silver_river_coffer; do
