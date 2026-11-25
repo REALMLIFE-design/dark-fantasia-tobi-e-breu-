@@ -122,6 +122,7 @@ jobs:
           from PIL import Image
           import hashlib
           import re
+          import numpy as np
           roots = Path('/tmp/darkworld-extracted')
           out = Path('assets/textures/user_submitted')
           source_out = Path('assets/textures/user_submitted_source')
@@ -149,9 +150,26 @@ jobs:
               try:
                   image = Image.open(src)
                   image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-                  # PNG palette transparency is stored in image.info, not always in getbands().
+                  # Preserve existing alpha, or derive a soft mask for RGB chestnut renders.
                   has_alpha = 'A' in image.getbands() or 'transparency' in image.info
-                  image = image.convert('RGBA' if has_alpha else 'RGB')
+                  if src.stem.startswith('EU43_Billboard_') and not has_alpha:
+                      rgb_image = image.convert('RGB')
+                      pixels = np.asarray(rgb_image, dtype=np.int16)
+                      height, width = pixels.shape[:2]
+                      corners = np.asarray([
+                          pixels[0, 0], pixels[0, width - 1],
+                          pixels[height - 1, 0], pixels[height - 1, width - 1]
+                      ], dtype=np.float32)
+                      background = np.median(corners, axis=0)
+                      corner_spread = float(np.max(np.linalg.norm(corners - background, axis=1)))
+                      distance = np.sqrt(np.sum((pixels.astype(np.float32) - background) ** 2, axis=2))
+                      alpha = np.clip((distance - 28.0) / 42.0 * 255.0, 0, 255).astype(np.uint8)
+                      rgba = np.dstack((pixels.astype(np.uint8), alpha))
+                      image = Image.fromarray(rgba, 'RGBA')
+                      has_alpha = True
+                      print('BILLBOARD_COLORKEY', src.name, background.tolist(), round(corner_spread, 2))
+                  else:
+                      image = image.convert('RGBA' if has_alpha else 'RGB')
                   if src.stem.startswith('EU43_Billboard_'):
                       print('BILLBOARD_SOURCE_ALPHA', src.name, has_alpha, image.mode)
                   digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]

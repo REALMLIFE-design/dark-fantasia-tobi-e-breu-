@@ -1360,6 +1360,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("USER_TEXTURES_SOURCE_ONLY", workflow)
         self.assertIn("'transparency' in image.info", workflow)
         self.assertIn("BILLBOARD_SOURCE_ALPHA", workflow)
+        self.assertIn("BILLBOARD_COLORKEY", workflow)
+        self.assertIn("np.median(corners, axis=0)", workflow)
+        self.assertIn("np.dstack((pixels.astype(np.uint8), alpha))", workflow)
         self.assertIn("re.fullmatch(r'.+_[0-9a-f]{8}\\.png', stale.name)", workflow)
 
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
