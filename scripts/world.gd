@@ -25,6 +25,7 @@ var combo_label: Label
 var objective_label: Label
 var defeated_count := 0
 var enemies: Array[Node3D] = []
+var _dream_tint_material_cache: Dictionary = {}
 var xp := 0
 var shards := 0
 var potions := 3
@@ -971,11 +972,16 @@ func _apply_dream_biome_tint(root: Node) -> void:
 			var source_material := mesh_instance.get_active_material(surface_index)
 			if source_material == null:
 				continue
-			var tuned_material := source_material.duplicate(true) as StandardMaterial3D
+			var material_key := source_material.get_instance_id()
+			var tuned_material := _dream_tint_material_cache.get(material_key) as StandardMaterial3D
 			if tuned_material == null:
-				continue
-			tuned_material.albedo_color = tuned_material.albedo_color * Color(0.95, 0.98, 1.0, 1.0)
-			tuned_material.roughness = clampf(tuned_material.roughness + 0.035, 0.0, 1.0)
+				tuned_material = source_material.duplicate(true) as StandardMaterial3D
+				if tuned_material == null:
+					continue
+				# Pigmento esmeralda frio e acabamento mais mate, sem apagar a textura original.
+				tuned_material.albedo_color = tuned_material.albedo_color * Color(0.93, 0.98, 0.96, 1.0)
+				tuned_material.roughness = clampf(tuned_material.roughness + 0.055, 0.0, 1.0)
+				_dream_tint_material_cache[material_key] = tuned_material
 			mesh_instance.set_surface_override_material(surface_index, tuned_material)
 
 

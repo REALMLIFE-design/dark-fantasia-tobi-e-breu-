@@ -1351,6 +1351,14 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_grove(hamlet)", world)
 
+    def test_imported_models_share_a_cached_emerald_matte_biome_tint(self):
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("var _dream_tint_material_cache: Dictionary = {}", world)
+        self.assertIn("source_material.get_instance_id()", world)
+        self.assertIn("_dream_tint_material_cache[material_key] = tuned_material", world)
+        self.assertIn("Color(0.93, 0.98, 0.96, 1.0)", world)
+        self.assertIn("tuned_material.roughness + 0.055", world)
+
     def test_imported_model_manifest_files_exist_and_platform_is_integrated(self):
         import json
         manifest_path = ROOT / "assets/external_packs/user_submitted/ASSET-MANIFEST.json"
