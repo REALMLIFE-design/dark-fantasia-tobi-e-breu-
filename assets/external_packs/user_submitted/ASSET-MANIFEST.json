@@ -94,5 +94,11 @@
     "output": "scari_rotund_91c68622.glb",
     "bytes": 64012,
     "faces_after_optimise": 762
+  },
+  {
+    "source": "generated fallback from LOD1_fantasy_house.fbx",
+    "output": "lod0_fantasy_house_fallback_from_lod1.glb",
+    "bytes": 1244984,
+    "faces_after_optimise": 27878
   }
 ]

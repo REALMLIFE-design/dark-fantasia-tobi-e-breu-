@@ -1344,11 +1344,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         loader = (ROOT / "scripts/external_asset_pack_loader.gd").read_text(encoding="utf-8")
         self.assertIn("_build_imported_medieval_hamlet()", world)
         self.assertIn('hamlet.name = "BairroDosArtesaosImportado"', world)
-        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "003_obj", "lod1_fantasy_house", "lod2_fantasy_house", "big_watchtower_lod1", "lowpoly_log_watchtower", "scari_rotund", "medieval_wood_bridge"):
+        for model in ("p3d_medieval_enterable_bld_13", "house_1exportversion", "medhouse_", "lod0_long_house", "lod1_long_house", "lod0_fantasy_house", "house_3x2x1", "big_watchtower", "log_watchtower_", "medieval_platform", "003_obj", "lod1_fantasy_house", "lod2_fantasy_house", "big_watchtower_lod1", "lowpoly_log_watchtower", "scari_rotund", "medieval_wood_bridge"):
             self.assertIn(model, world)
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
-        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/16")', world)
+        self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_grove(hamlet)", world)
@@ -1365,9 +1365,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         import json
         manifest_path = ROOT / "assets/external_packs/user_submitted/ASSET-MANIFEST.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        self.assertEqual(len(manifest), 16)
+        self.assertEqual(len(manifest), 17)
         for expected_prefix in ("medieval_platform_", "big_watchtower_",
-                                "lod1_fantasy_house_", "house_3x2x1_"):
+                                "lod0_fantasy_house_", "lod1_fantasy_house_", "house_3x2x1_"):
             matches = [item["output"] for item in manifest
                        if item["output"].startswith(expected_prefix)]
             self.assertTrue(matches, f"Missing model family: {expected_prefix}")
@@ -1440,7 +1440,7 @@ class ImportedMedievalPackContracts(unittest.TestCase):
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
-        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 16/16", workflow)
+        self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17", workflow)
         self.assertIn("CHESTNUT_TREES_PLACED: 9", workflow)
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("func _build_chestnut_grove", world)
