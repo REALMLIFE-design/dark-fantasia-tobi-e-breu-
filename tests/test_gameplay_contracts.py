@@ -1369,7 +1369,11 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
         self.assertIn("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 11/11", workflow)
-        self.assertIn("CHESTNUT_BILLBOARDS_PLACED: 9", workflow)
+        self.assertIn("CHESTNUT_TREES_PLACED: 9", workflow)
+        world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        self.assertIn("func _build_chestnut_grove", world)
+        self.assertIn("CastanheiraLowPoly_%02d", world)
+        self.assertNotIn("_build_chestnut_billboard_grove", world)
 
     def test_imported_hamlet_builder_is_awaited_before_world_loading_continues(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")

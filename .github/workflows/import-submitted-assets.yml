@@ -133,15 +133,9 @@ jobs:
                   if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
                       stale.unlink()
 
-          # Keep one transparent billboard per chestnut-tree index in the Android build.
-          billboard_sources = {}
-          for src in sorted(roots.rglob('*')):
-              if src.is_file() and src.stem.startswith('EU43_Billboard_'):
-                  variant_key = src.stem[:19]
-                  if variant_key not in billboard_sources:
-                      billboard_sources[variant_key] = src
-
-          count = 0
+          # All submitted source textures stay available in the repo but outside the Android APK.
+          # Runtime uses optimized in-engine materials and low-poly trees; opaque billboards are not rendered.
+                    count = 0
           runtime_count = 0
           source_count = 0
           for src in sorted(roots.rglob('*')):

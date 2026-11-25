@@ -892,33 +892,14 @@ func _build_imported_medieval_hamlet() -> void:
 		_apply_dream_biome_tint(bridge)
 		placed += 1
 
-	_build_chestnut_billboard_grove(hamlet)
+	_build_chestnut_grove(hamlet)
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
 	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/11")
 
 
-func _build_chestnut_billboard_grove(parent: Node3D) -> void:
-	# Billboards de castanheira: alternativa leve para os modelos Maya/Vue que ainda
-	# precisam ser exportados para FBX/GLB. Só usa imagens com transparência real.
-	const TEXTURE_ROOT := "res://assets/textures/user_submitted"
-	var directory := DirAccess.open(TEXTURE_ROOT)
-	if directory == null:
-		return
-	var files := directory.get_files()
-	files.sort()
-	var billboard_variants: Dictionary = {}
-	for file_name in files:
-		if file_name.begins_with("EU43_Billboard_") and file_name.to_lower().ends_with(".png"):
-			# Os pacotes Maya e Vue trazem cópias do mesmo billboard; manter uma por índice.
-			var variant_key := file_name.get_basename().substr(0, 19)
-			if not billboard_variants.has(variant_key):
-				billboard_variants[variant_key] = file_name
-	var billboard_keys: Array = billboard_variants.keys()
-	billboard_keys.sort()
-	print("CHESTNUT_BILLBOARD_FILES_FOUND: ", billboard_keys.size())
-	if billboard_keys.is_empty():
-		return
-
+func _build_chestnut_grove(parent: Node3D) -> void:
+	# As imagens recebidas são opacas (sem recorte alpha real). Em vez de exibir
+	# retângulos no cenário, criamos castanheiras low-poly com a paleta do bioma.
 	var spots := [
 		Vector3(-27.0, 0.0, 24.0), Vector3(-20.0, 0.0, 32.0),
 		Vector3(-8.0, 0.0, 35.0), Vector3(10.0, 0.0, 34.0),
@@ -929,38 +910,45 @@ func _build_chestnut_billboard_grove(parent: Node3D) -> void:
 	var grove := Node3D.new()
 	grove.name = "BosqueDeCastanheiras"
 	parent.add_child(grove)
-	var placed := 0
-	for index in range(mini(billboard_keys.size(), spots.size())):
-		var texture := load(TEXTURE_ROOT.path_join(str(billboard_variants[billboard_keys[index]]))) as Texture2D
-		if texture == null:
-			print("CHESTNUT_BILLBOARD_LOAD_FAILED: ", billboard_variants[billboard_keys[index]])
-			continue
-		var billboard_image := texture.get_image()
-		var image_format := billboard_image.get_format() if billboard_image != null else -1
-		print("CHESTNUT_BILLBOARD_TEXTURE_CHECK: ", billboard_variants[billboard_keys[index]],
-			" texture_alpha=", texture.has_alpha(), " image_format=", image_format)
-		var tree_mesh := QuadMesh.new()
-		tree_mesh.size = Vector2(7.0, 10.0)
-		var tree := MeshInstance3D.new()
-		tree.name = "CastanheiraBillboard_%02d" % index
-		tree.mesh = tree_mesh
-		tree.position = spots[index] + Vector3(0.0, 5.0, 0.0)
-		tree.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		var tree_material := StandardMaterial3D.new()
-		tree_material.albedo_texture = texture
-		tree_material.albedo_color = Color(0.94, 0.99, 0.94, 1.0)
-		tree_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-		tree_material.alpha_scissor_threshold = 0.18
-		tree_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		tree_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-		tree_material.roughness = 1.0
-		tree.material_override = tree_material
+	var leaf_palette := [
+		Color("496d58"), Color("5c785a"), Color("74815e")
+	]
+	for index in range(spots.size()):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20261125 + index
+		var tree := Node3D.new()
+		tree.name = "CastanheiraLowPoly_%02d" % index
+		tree.position = spots[index]
+		tree.scale = Vector3.ONE * rng.randf_range(0.88, 1.12)
+		tree.rotation.y = rng.randf_range(0.0, TAU)
 		grove.add_child(tree)
-		placed += 1
-	if placed == 0:
-		grove.queue_free()
-	else:
-		print("CHESTNUT_BILLBOARDS_PLACED: ", placed)
+
+		var trunk := MeshInstance3D.new()
+		trunk.name = "Tronco"
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.top_radius = 0.16
+		trunk_mesh.bottom_radius = 0.27
+		trunk_mesh.height = 3.3
+		trunk_mesh.radial_segments = 7
+		trunk.mesh = trunk_mesh
+		trunk.position = Vector3(0.0, 1.65, 0.0)
+		trunk.material_override = _mat(Color("76513a"), 0.94)
+		tree.add_child(trunk)
+
+		for crown_index in range(3):
+			var crown := MeshInstance3D.new()
+			crown.name = "Copa_%02d" % crown_index
+			var crown_mesh := SphereMesh.new()
+			crown_mesh.radius = 1.55 if crown_index == 0 else 1.28
+			crown_mesh.height = 2.35 if crown_index == 0 else 1.95
+			crown_mesh.radial_segments = 8
+			crown_mesh.rings = 4
+			crown.mesh = crown_mesh
+			var side := -1.0 if crown_index == 1 else 1.0
+			crown.position = Vector3(0.0, 4.0, 0.0) if crown_index == 0 else Vector3(side * 0.82, 3.75, 0.0)
+			crown.material_override = _mat(leaf_palette[(index + crown_index) % leaf_palette.size()], 0.96)
+			tree.add_child(crown)
+	print("CHESTNUT_TREES_PLACED: ", spots.size())
 
 
 func _apply_dream_biome_tint(root: Node) -> void:
