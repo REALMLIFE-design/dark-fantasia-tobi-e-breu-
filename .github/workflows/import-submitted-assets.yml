@@ -162,7 +162,8 @@ jobs:
           ]
           report += [f'- {p.name} ({p.stat().st_size // 1024} KB)' for p in files]
           report += ['', '## Fontes que exigem tratamento externo',
-                     '- Arquivos .max não são convertidos pelo Blender; exportar no Autodesk 3ds Max para FBX/GLB.',
+                     '- FBX, 3DS e DAE são convertidos via Assimp; OBJ/BLEND/USDZ seguem o fluxo Blender.',
+                     '- Arquivos .max/.ma/.mb/.vob/.xfr não têm conversor confiável neste pipeline; exportar no aplicativo de origem para FBX/GLB/OBJ.',
                      '- Arquivos que ultrapassarem 90 MB convertidos são mantidos fora do Git e listados no log do workflow.',
                      '- Todos os modelos precisam de inspeção de escala, orientação, materiais, colisões e desempenho no Godot 4.3.',
                      '- A importação é aditiva: nenhum mapa, personagem, missão, HUD, save ou cena existente é substituído.']
