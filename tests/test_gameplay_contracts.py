@@ -617,7 +617,7 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('ForgottenTempleGuardian', self.world)
         self.assertIn('Silencio_Cinzento', self.world)
         self.assertIn('CRÉDITOS', self.world)
-        self.assertIn('quest_stage == 30', self.world)
+        self.assertIn('quest_stage = 30', self.world)
 
     def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
         self.assertIn('ForgottenTempleSeal_%d', self.world)
