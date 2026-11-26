@@ -13,6 +13,7 @@ var room_refresh_timer: Timer
 var friend_search_input: LineEdit
 var friend_requests_stack: VBoxContainer
 var copy_code_button: Button
+var leave_room_button: Button
 var chapter_option: OptionButton
 var active_room_chapter := "Floresta Corrompida"
 
@@ -144,6 +145,11 @@ func _build_lobby() -> void:
 	copy_code_button.disabled = true
 	copy_code_button.pressed.connect(_copy_room_code)
 	party_stack.add_child(copy_code_button)
+	leave_room_button = Button.new()
+	leave_room_button.text = "SAIR / FECHAR SALA"
+	leave_room_button.disabled = true
+	leave_room_button.pressed.connect(_leave_active_room)
+	party_stack.add_child(leave_room_button)
 
 	var footer_text := "Amigos e pedidos usam o Supabase. A lista da sala atualiza a cada 4 segundos; movimento e combate cooperativo ainda não são sincronizados."
 	if not SupabaseClient.is_authenticated():
@@ -286,9 +292,40 @@ func _set_active_room(room: Dictionary) -> void:
 	room_status.text = "SALA %s • %s • aguardando jogadores..." % [active_room_code, active_room_chapter]
 	room_code_input.text = active_room_code
 	copy_code_button.disabled = false
+	leave_room_button.disabled = false
 	room_refresh_timer.start()
 	await _refresh_room_members()
 	_show_notice("Sala criada/aberta! Compartilhe este código com seus amigos: %s" % active_room_code)
+
+
+func _leave_active_room() -> void:
+	if active_room_id.is_empty():
+		return
+	if room_status.text.begins_with("SALA ENCERRADA"):
+		_clear_active_room("Você saiu da sala encerrada.")
+		return
+	var result: Dictionary = await SupabaseClient.leave_game_room(active_room_id)
+	if not result.get("ok", false):
+		if room_status.text.begins_with("SALA ENCERRADA"):
+			_clear_active_room("Você saiu da sala encerrada.")
+		else:
+			_show_notice(str(result.get("message", "Não foi possível sair da sala.")))
+		return
+	var host_closed := bool(result.get("data", false))
+	_clear_active_room("Sala encerrada pelo anfitrião." if host_closed else "Você saiu da sala.")
+
+
+func _clear_active_room(message: String) -> void:
+	room_refresh_timer.stop()
+	active_room_id = ""
+	active_room_code = ""
+	active_room_chapter = ""
+	room_code_input.text = ""
+	copy_code_button.disabled = true
+	leave_room_button.disabled = true
+	for i in range(slot_labels.size()):
+		slot_labels[i].text = "JOGADOR %d  •  VAGA LIVRE" % (i + 1)
+	room_status.text = message
 
 
 func _copy_room_code() -> void:
@@ -315,7 +352,10 @@ func _refresh_room_members() -> void:
 			slot_labels[i].text = "JOGADOR %d  •  %s" % [i + 1, username]
 		else:
 			slot_labels[i].text = "JOGADOR %d  •  VAGA LIVRE" % (i + 1)
-	room_status.text = "SALA %s  •  %s  •  %d/%d JOGADORES" % [active_room_code, active_room_chapter, members.size(), MAX_PLAYERS]
+	if members.is_empty():
+		room_status.text = "SALA ENCERRADA • O anfitrião fechou a sala ou todos saíram."
+	else:
+		room_status.text = "SALA %s  •  %s  •  %d/%d JOGADORES" % [active_room_code, active_room_chapter, members.size(), MAX_PLAYERS]
 
 
 func _panel(heading: String) -> PanelContainer:
