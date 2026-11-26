@@ -3212,7 +3212,7 @@ func _interact() -> void:
 			quest_text = "Recupere os três Ecos de Memória do Rio"
 			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
 			toast_label.text = "Azulan: o rio guarda as lembranças do Coração. Reúna os três ecos e siga a trilha até o templo."
-			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A marca do guardião", "O Guardião do Rio deixou uma marca nas águas. Ela aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O chamado do rio", "O Guardião do Rio deixou um sinal nas águas. Ele aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
 			_save_game()
 		elif quest_stage == 25:
 			quest_stage = 26
@@ -3369,7 +3369,7 @@ func enemy_defeated(kind: int = 0) -> void:
 		shards += 5
 		dark_essence += 4
 		_update_inventory()
-		call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O coração e a escolha", "O guardião cai. A Guardiã revela que o Coração Rubro pode restaurar o mundo — mas sua luz também exige uma escolha de quem a carrega.")
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A verdade do Coração", "O guardião cai. A Guardiã revela que o Coração Rubro pode restaurar o mundo — mas sua luz também exige uma escolha de quem a carrega.")
 		_update_quest()
 		_save_game()
 		return
