@@ -185,3 +185,29 @@ O projeto usa um shader procedural painterly para diferenciar visualmente grama,
 
 ### Texturas do mundo
 O projeto inclui atlases compartilhados de albedo e rugosidade em `assets/textures/`, com oito superfícies tileáveis (grama, terra, lama, madeira, água, neve, telhas e pedra). O shader painterly combina esses mapas com variações procedurais, projeção triplanar em superfícies verticais/inclinadas e relevo normal derivado do próprio atlas, preservando a identidade cromática de cada região sem adicionar novos bindings de textura. Mapas normais bitmap dedicados continuam como melhoria futura.
+
+
+## Atualização de campanha e serviços online — 26/11/2026
+
+Esta seção descreve o estado da branch `feature/google-login-loading-friends-lobby`; não significa que o APK ou a execução em aparelho físico já tenham sido aprovados.
+
+### Campanha de cinco capítulos
+- **Capítulo I — A Floresta Corrompida:** adicionadas as cenas narrativas “A Marca do Guardião” e “O Último Totem”.
+- **Capítulo II — O Rio Prateado:** cadeia do Guardião do Rio e Leviatã do Lodo preservada.
+- **Capítulo III — O Rio das Memórias:** três memórias exclusivas e persistentes, retorno a Azulan, Guardiã do Templo e Guardião do Templo como chefe.
+- **Capítulo IV — O Templo Esquecido:** três selos nas Ruínas Antigas, Oráculo das Ruínas e chefe Guardião das Ruínas.
+- **Capítulo V — O Último Amanhecer:** três fragmentos no Cume das Nuvens, Guardião do Amanhecer, chefe Silêncio Cinzento, cena de encerramento e créditos.
+- O save está na versão 16 e lê saves antigos; os novos colecionáveis de cada capítulo são salvos separadamente.
+
+### Login, amigos e salas
+- Login/cadastro por e-mail conectado ao Supabase; sessão permanece em memória durante a navegação entre telas.
+- Busca de perfis por nome, envio e resposta a solicitações de amizade.
+- Criar sala, entrar por código, limite de quatro membros e atualização periódica da lista de jogadores.
+- O lobby não simula jogadores conectados. **Sincronização de posição/combate em tempo real entre jogadores ainda não foi implementada.**
+- **Google OAuth ainda não está configurado**: faltam as credenciais do projeto Google/Firebase e a integração nativa Android. O botão informa essa limitação e não finge autenticar.
+
+### Validação e pendências
+- A suíte de contratos automatizados foi atualizada para save v16 e os cinco capítulos.
+- A validação de importação/boot do Godot e a exportação Android dependem do workflow GitHub Actions; aguardar a execução mais recente antes de considerar o APK aprovado.
+- Ainda faltam testes em aparelho Android físico, áudio/VFX finais, acessibilidade/opções gráficas completas, pathfinding avançado, modelos GLB externos integrados e sincronização multiplayer em tempo real.
+- O saldo do projeto Thrixel está sem créditos de geração; os modelos já existentes continuam disponíveis no projeto Thrixel, mas não foram transferidos para a pasta Godot nesta atualização.
