@@ -1567,8 +1567,14 @@ func _build_enemies() -> void:
 	temple_guardian.name = "Guardiao_do_Templo"
 	temple_guardian.position = Vector3(165.0, 0.0, -337.0)
 	temple_guardian.set("enemy_kind", 3)
+	temple_guardian.set("enemy_title", "GUARDIÃO DO TEMPLO")
+	temple_guardian.set("custom_boss_color", Color("6f7764"))
+	temple_guardian.set("custom_boss_accent", Color("d3b979"))
 	add_child(temple_guardian)
 	temple_guardian.set("hp", 520)
+	temple_guardian.set("attack_damage", 24)
+	temple_guardian.set("move_speed", 1.8)
+	temple_guardian.set("attack_range", 2.4)
 	enemies.append(temple_guardian)
 	if quest_stage != 18:
 		temple_guardian.visible = false
@@ -1578,8 +1584,14 @@ func _build_enemies() -> void:
 	forgotten_guardian.name = "ForgottenTempleGuardian"
 	forgotten_guardian.position = Vector3(164.0, 0.0, -94.0)
 	forgotten_guardian.set("enemy_kind", 3)
+	forgotten_guardian.set("enemy_title", "GUARDIÃO DAS RUÍNAS")
+	forgotten_guardian.set("custom_boss_color", Color("79664d"))
+	forgotten_guardian.set("custom_boss_accent", Color("d9b66c"))
 	add_child(forgotten_guardian)
 	forgotten_guardian.set("hp", 560)
+	forgotten_guardian.set("attack_damage", 26)
+	forgotten_guardian.set("move_speed", 1.85)
+	forgotten_guardian.set("attack_range", 2.5)
 	enemies.append(forgotten_guardian)
 	if quest_stage != 23:
 		forgotten_guardian.visible = false
@@ -1589,8 +1601,14 @@ func _build_enemies() -> void:
 	silence_boss.name = "Silencio_Cinzento"
 	silence_boss.position = Vector3(0.0, 0.0, -345.0)
 	silence_boss.set("enemy_kind", 3)
+	silence_boss.set("enemy_title", "SILÊNCIO CINZENTO")
+	silence_boss.set("custom_boss_color", Color("343443"))
+	silence_boss.set("custom_boss_accent", Color("bb5367"))
 	add_child(silence_boss)
 	silence_boss.set("hp", 760)
+	silence_boss.set("attack_damage", 32)
+	silence_boss.set("move_speed", 2.05)
+	silence_boss.set("attack_range", 2.75)
 	enemies.append(silence_boss)
 	if quest_stage != 28:
 		silence_boss.visible = false
