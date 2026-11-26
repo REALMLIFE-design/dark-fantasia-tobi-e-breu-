@@ -1,6 +1,7 @@
 extends Control
 
 const STORY_SCENE := "res://scenes/main.tscn"
+const FRIENDS_LOBBY_SCENE := "res://scenes/friends_lobby.tscn"
 const MAX_ADVENTURE_PLAYERS := 4
 
 var status_label: Label
@@ -61,8 +62,8 @@ func _build_menu() -> void:
 
 	_add_menu_button(layout, "MODO HISTÓRIA", "Continue sua jornada solo", _start_story, true)
 	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Aventura com até 4 jogadores", _show_coop_info)
-	_add_menu_button(layout, "MULTIPLAYER", "Jogue com amigos em uma sala", _show_multiplayer_info)
-	_add_menu_button(layout, "AMIGOS  •  CONECTAR GOOGLE", "Login e lista de amigos", _show_google_info)
+	_add_menu_button(layout, "MULTIPLAYER", "Jogue com amigos em uma sala", _open_friends_lobby)
+	_add_menu_button(layout, "AMIGOS  •  LOBBY", "Ver grupo, convites e salas", _open_friends_lobby)
 	_add_menu_button(layout, "CONFIGURAÇÕES", "Preferências do jogo", _show_settings)
 
 	var footer := Label.new()
@@ -104,6 +105,9 @@ func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, ac
 
 func _start_story() -> void:
 	get_tree().change_scene_to_file(STORY_SCENE)
+
+func _open_friends_lobby() -> void:
+	get_tree().change_scene_to_file(FRIENDS_LOBBY_SCENE)
 
 func _show_coop_info() -> void:
 	_show_notice("História cooperativa", "A aventura será compartilhada por até 4 jogadores. A campanha atual será preservada. O servidor gratuito e a sincronização da história ainda precisam ser configurados.")
