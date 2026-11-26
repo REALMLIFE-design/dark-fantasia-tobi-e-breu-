@@ -13,6 +13,8 @@ var room_refresh_timer: Timer
 var friend_search_input: LineEdit
 var friend_requests_stack: VBoxContainer
 var copy_code_button: Button
+var chapter_option: OptionButton
+var active_room_chapter := "Floresta Corrompida"
 
 func _ready() -> void:
 	_build_lobby()
@@ -102,6 +104,11 @@ func _build_lobby() -> void:
 	var party_stack := party.get_child(0) as VBoxContainer
 	room_status = _label("Crie uma sala ou entre usando um código.", 12, Color("e2c58c"))
 	party_stack.add_child(room_status)
+	party_stack.add_child(_label("CAPÍTULO DA SALA", 12, Color("b9d8c5")))
+	chapter_option = OptionButton.new()
+	for chapter_name in ["Floresta Corrompida", "Rio das Memórias", "Templo Esquecido", "O Último Amanhecer"]:
+		chapter_option.add_item(chapter_name)
+	party_stack.add_child(chapter_option)
 	for i in range(MAX_PLAYERS):
 		var slot := PanelContainer.new()
 		var slot_style := StyleBoxFlat.new()
@@ -244,7 +251,7 @@ func _create_room() -> void:
 		_show_notice("Entre com sua conta para criar uma sala online. O modo visitante continua disponível para a campanha offline.")
 		return
 	room_status.text = "CRIANDO SALA..."
-	var result: Dictionary = await SupabaseClient.create_game_room("Floresta Corrompida", MAX_PLAYERS)
+	var result: Dictionary = await SupabaseClient.create_game_room(chapter_option.get_item_text(chapter_option.selected), MAX_PLAYERS)
 	if not result.get("ok", false):
 		_show_notice(str(result.get("message", "Não foi possível criar a sala.")))
 		room_status.text = "Não foi possível criar a sala."
@@ -272,10 +279,11 @@ func _join_room() -> void:
 func _set_active_room(room: Dictionary) -> void:
 	active_room_id = str(room.get("room_id", ""))
 	active_room_code = str(room.get("room_code", ""))
+	active_room_chapter = str(room.get("chapter", "Floresta Corrompida"))
 	if active_room_id.is_empty():
 		_show_notice("O servidor não retornou um identificador válido para a sala.")
 		return
-	room_status.text = "SALA %s • aguardando jogadores..." % active_room_code
+	room_status.text = "SALA %s • %s • aguardando jogadores..." % [active_room_code, active_room_chapter]
 	room_code_input.text = active_room_code
 	copy_code_button.disabled = false
 	room_refresh_timer.start()
@@ -307,7 +315,7 @@ func _refresh_room_members() -> void:
 			slot_labels[i].text = "JOGADOR %d  •  %s" % [i + 1, username]
 		else:
 			slot_labels[i].text = "JOGADOR %d  •  VAGA LIVRE" % (i + 1)
-	room_status.text = "SALA %s  •  %d/%d JOGADORES" % [active_room_code, members.size(), MAX_PLAYERS]
+	room_status.text = "SALA %s  •  %s  •  %d/%d JOGADORES" % [active_room_code, active_room_chapter, members.size(), MAX_PLAYERS]
 
 
 func _panel(heading: String) -> PanelContainer:
