@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 14', self.world)
-        self.assertIn('save_version > 14', self.world)
+        self.assertIn('"save_version", 15', self.world)
+        self.assertIn('save_version > 15', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -235,8 +235,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 14', self.world)
-        self.assertIn('save_version > 14', self.world)
+        self.assertIn('"save_version", 15', self.world)
+        self.assertIn('save_version > 15', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)', self.world)
 
@@ -352,7 +352,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 14', self.world)
+        self.assertIn('save_version > 15', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -599,12 +599,14 @@ class ProceduralTextureContracts(unittest.TestCase):
 
     def test_chapter_three_memory_quest_and_temple_boss_are_persisted(self):
         self.assertIn('quest_stage = 15', self.world)
-        self.assertIn('river_relic_ids.size() >= 3', self.world)
+        self.assertIn('chapter3_memory_ids.size() >= 3', self.world)
+        self.assertIn('cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)', self.world)
+        self.assertIn('ChapterThreeMemory_%d', self.world)
         self.assertIn('func _play_chapter_cutscene(', self.world)
         self.assertIn('Guardiã do Templo', self.world)
         self.assertIn('Guardiao_do_Templo', self.world)
         self.assertIn('quest_stage == 18', self.world)
-        self.assertIn('"save_version", 14', self.world)
+        self.assertIn('"save_version", 15', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)', self.world)
 
     def test_supabase_lobby_room_and_friend_flows_are_connected(self):
