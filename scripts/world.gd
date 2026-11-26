@@ -2976,12 +2976,6 @@ func _interact() -> void:
 				_grant_xp(25)
 				dark_essence += 1
 				toast_label.text = "ECO DO RIO RECUPERADO • +25 XP • Essência Sombria +1 (%d/3)" % river_relic_ids.size()
-				if quest_stage == 15 and river_relic_ids.size() >= 3:
-					quest_stage = 16
-					quest_text = "As memórias foram reunidas — retorne a Azulan"
-					objective_label.text = "Objetivo: retorne a Mestre Azulan"
-					toast_label.text = "O RIO SE LEMBRA • As três memórias revelam a trilha até o Templo do Coração."
-					call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O rio se lembra", "As águas devolvem três lembranças: uma voz antiga, uma promessa e o brilho do Coração Rubro. A trilha termina diante do Templo do Coração.")
 				_update_inventory()
 				_save_game()
 			else:
