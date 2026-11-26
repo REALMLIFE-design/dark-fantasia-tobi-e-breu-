@@ -1,25 +1,21 @@
-# Login Google e lobby online — configuração necessária
+# Dark World — autenticação e serviços online
 
-## O que esta atualização entrega
-- Tela de login antes do menu principal, com arte de Dark World.
-- Botão visual de login Google e modo visitante para continuar a campanha local.
-- Tela de lobby com quatro vagas, lista de amigos vazia e ações de convite/sala.
-- As telas informam claramente quando os serviços online ainda não estão conectados.
+## Login por e-mail (Supabase Auth)
+- O jogo usa o projeto Supabase `dark-world-online`.
+- A tela inicial oferece criação de conta e login por e-mail/senha.
+- O cadastro envia o nome do aventureiro como metadado; o trigger `handle_new_user` cria o perfil.
+- Se a confirmação de e-mail estiver ativa no Supabase, o jogador precisa confirmar o endereço antes de entrar.
+- O token de acesso fica somente em memória durante a execução atual. Persistência/renovação de sessão ainda precisa ser adicionada.
+- A chave `sb_publishable_...` no cliente é pública por definição. Nunca colocar `service_role`, secret key, senha do banco ou OAuth client secret no jogo.
 
-## Para ativar login Google real
-1. Criar um projeto no Firebase e registrar o aplicativo Android com o package id `com.tobiebreu.darkworld3d`.
-2. Configurar Google como provedor em Authentication.
-3. Criar/obter o OAuth Web Client ID e configurar os fingerprints SHA-1/SHA-256 do certificado usado na build.
-4. Integrar o fluxo nativo Google Identity Services para Android e entregar o ID token ao Firebase Authentication.
-5. Validar o fluxo de login, logout, expiração e restauração da sessão em aparelho Android físico.
-6. Não colocar client secret, service account ou credenciais privadas dentro do APK/repositório.
+## Google
+O botão Google continua como aviso. Para ativá-lo, configurar o provedor Google no Supabase Auth e implementar o fluxo OAuth nativo para Android com retorno seguro ao jogo. Não simular login.
 
-O botão Google nesta versão é intencionalmente honesto: ele informa que a autenticação ainda não foi configurada. Não cria sessão falsa nem libera o menu como se o usuário estivesse autenticado.
+## Amigos e salas
+As tabelas `profiles`, `friend_requests`, `game_rooms` e `room_members` já existem no banco. A interface de lobby ainda não faz operações nessas tabelas. Antes de ativar criação/entrada em salas, validar as políticas RLS, expor as tabelas necessárias na Data API e definir regras de autorização e presença. Não usar a chave administrativa no cliente.
 
-## Para ativar amigos e salas
-- Definir backend autoritativo para perfis, presença, lista de amigos, convites, criação/entrada em salas e sincronização de partidas.
-- Usar o UID verificado pelo Firebase; nunca confiar em nomes/UIDs enviados pelo cliente.
-- Limitar salas a quatro jogadores, validar convites no servidor e aplicar regras contra spam.
-- Conectar o lobby ao backend e só mostrar jogadores reais após receber presença confirmada.
-
-Até essa integração, o modo visitante mantém o jogo solo e os controles locais funcionando.
+## Testes pendentes
+1. Abrir o projeto no Godot 4.3 e verificar erros de parse.
+2. Criar uma conta de teste e confirmar o e-mail, se exigido.
+3. Fazer login, reiniciar o jogo e validar o comportamento da sessão.
+4. Testar em Android físico; o cliente atual usa HTTPRequest e ainda não tem persistência/refresh de sessão.
