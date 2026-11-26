@@ -66,14 +66,14 @@ func _build_menu() -> void:
 	layout.add_child(spacer)
 
 	_add_menu_button(layout, "MODO HISTÓRIA", "Continue sua jornada solo", _start_story, true)
-	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Prepare uma aventura com até 4 jogadores", _open_friends_lobby)
-	_add_menu_button(layout, "MULTIPLAYER", "Jogue com amigos em uma sala", _open_friends_lobby)
+	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Monte seu grupo de até 4 • coop em desenvolvimento", _open_friends_lobby)
+	_add_menu_button(layout, "MULTIPLAYER", "Crie uma sala e compartilhe o código • partida em desenvolvimento", _open_friends_lobby)
 	_add_menu_button(layout, "AMIGOS  •  LOBBY", "Ver grupo, convites e salas", _open_friends_lobby)
 	_add_menu_button(layout, "CONFIGURAÇÕES", "Áudio e tela", _show_settings)
 	_add_menu_button(layout, "CONTROLES", "Como jogar com Tobi e Breu", _show_controls)
 
 	var footer := Label.new()
-	footer.text = "A campanha original continua sendo a base da aventura.\nOnline: login falso não é usado; conexão multiplayer ainda não está ativa."
+	footer.text = "A campanha original continua sendo a base da aventura.\nOnline: amigos e salas estão conectados; movimento e combate cooperativo ainda estão em desenvolvimento."
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	footer.add_theme_color_override("font_color", Color("788984"))
 	footer.add_theme_font_size_override("font_size", 12)
