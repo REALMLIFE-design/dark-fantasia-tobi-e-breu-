@@ -197,12 +197,8 @@ func _load_friend_requests() -> void:
 			var requester_id := str(request.get("requester_id", ""))
 			var addressee_id := str(request.get("addressee_id", ""))
 			var other_id := addressee_id if requester_id == SupabaseClient.user_id else requester_id
-			var profile_result: Dictionary = await SupabaseClient.get_profile(other_id)
-			var username := "Aventureiro"
-			if profile_result.get("ok", false):
-				var profile_rows = profile_result.get("data", [])
-				if profile_rows is Array and not profile_rows.is_empty():
-					username = str(profile_rows[0].get("username", username))
+			var profile = request.get("addressee", {}) if requester_id == SupabaseClient.user_id else request.get("requester", {})
+			var username := str(profile.get("username", "Aventureiro")) if profile is Dictionary else "Aventureiro"
 			if request_status == "accepted":
 				friend_requests_stack.add_child(_label("AMIGO  •  %s" % username, 12))
 				visible_count += 1
