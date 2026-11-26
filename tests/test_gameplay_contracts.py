@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 15', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -235,10 +235,10 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 15', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
-        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)', self.world)
 
     def test_river_knights_have_a_distinct_silhouette_and_combat_profile(self):
         self.assertIn('elif enemy_kind == 5:', self.enemy)
@@ -352,7 +352,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 15', self.world)
+        self.assertIn('save_version > 16', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -606,8 +606,18 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('Guardiã do Templo', self.world)
         self.assertIn('Guardiao_do_Templo', self.world)
         self.assertIn('quest_stage == 18', self.world)
-        self.assertIn('"save_version", 15', self.world)
+        self.assertIn('"save_version", 16', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)', self.world)
+
+    def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
+        self.assertIn('ForgottenTempleSeal_%d', self.world)
+        self.assertIn('chapter4_seal_ids', self.world)
+        self.assertIn('DawnShard_%d', self.world)
+        self.assertIn('chapter5_dawn_ids', self.world)
+        self.assertIn('ForgottenTempleGuardian', self.world)
+        self.assertIn('Silencio_Cinzento', self.world)
+        self.assertIn('CRÉDITOS', self.world)
+        self.assertIn('quest_stage == 30', self.world)
 
     def test_supabase_lobby_room_and_friend_flows_are_connected(self):
         client = (ROOT / 'scripts/supabase_client.gd').read_text(encoding='utf-8')
