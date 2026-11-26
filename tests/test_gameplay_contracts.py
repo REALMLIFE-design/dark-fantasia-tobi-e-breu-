@@ -634,6 +634,9 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('SupabaseClient.list_room_members', lobby)
         self.assertIn('_search_and_add_friend', lobby)
         self.assertIn('_respond_to_friend_request', lobby)
+        self.assertIn('CAPÍTULO DA SALA', lobby)
+        self.assertIn('chapter_option.get_item_text', lobby)
+        self.assertIn('_copy_room_code', lobby)
 
     def test_supabase_migrations_are_versioned_in_repository(self):
         migration_dir = ROOT / 'supabase/migrations'
