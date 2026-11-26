@@ -62,6 +62,7 @@ var swamp_totem_ids: Array[int] = []
 var swamp_boss_defeated := false
 var river_knights_defeated := 0
 var river_relic_ids: Array[int] = []
+var chapter3_memory_ids: Array[int] = []
 var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
@@ -97,6 +98,7 @@ func _ready() -> void:
 	_build_river_region()
 	_build_whisper_grove()
 	_build_outer_regions()
+	_build_chapter_three_memories()
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
 	_build_world_civilization()
@@ -1369,6 +1371,22 @@ func _make_person(label: String, pos: Vector3, is_master := false) -> Node3D:
 	_sphere(root,"Hood",Vector3(0,2.25,-0.08),0.53,Color("34434a") if is_master else Color("5b493b"),0.55)
 	_box(root,"Legs",Vector3(0,0.28,0),Vector3(0.55,0.55,0.42),Color("403a38"))
 	return root
+
+func _build_chapter_three_memories() -> void:
+	var positions := [Vector3(42.0, 1.2, -158.0), Vector3(58.0, 1.2, -167.0), Vector3(73.0, 1.2, -158.0)]
+	for i in range(3):
+		var memory := _sphere(self, "ChapterThreeMemory_%d" % i, positions[i], 0.72, Color("75b9c2"), 1.8)
+		memory.visible = quest_stage == 15 and not chapter3_memory_ids.has(i)
+		var glow := _sphere(memory, "MemoryCore", Vector3(0.0, 0.55, 0.0), 0.28, Color("c8f0d8"), 0.6)
+		glow.material_override = _painter_mat(Color("c8f0d8"), 3.0, 0.08)
+
+
+func _reveal_chapter_three_memories() -> void:
+	for i in range(3):
+		var memory := get_node_or_null("ChapterThreeMemory_%d" % i)
+		if memory and not chapter3_memory_ids.has(i):
+			memory.visible = true
+
 
 func _build_npcs() -> void:
 	var npc := _make_person("Mestre Azulan",Vector3(2,0,-4),true)
@@ -2766,6 +2784,26 @@ func _interact() -> void:
 			_update_inventory()
 			_save_game()
 		return
+	if quest_stage == 15:
+		for memory_id in range(3):
+			var chapter_memory := get_node_or_null("ChapterThreeMemory_%d" % memory_id)
+			if chapter_memory and chapter_memory.visible and player.global_position.distance_to(chapter_memory.global_position) < 3.2:
+				if not chapter3_memory_ids.has(memory_id):
+					chapter3_memory_ids.append(memory_id)
+					chapter3_memory_ids.sort()
+					chapter_memory.visible = false
+					_grant_xp(30)
+					dark_essence += 1
+					toast_label.text = "MEMÓRIA DO CORAÇÃO RECUPERADA • +30 XP • Essência +1 (%d/3)" % chapter3_memory_ids.size()
+					if chapter3_memory_ids.size() >= 3:
+						quest_stage = 16
+						quest_text = "As três memórias foram reunidas — retorne a Azulan"
+						objective_label.text = "Objetivo: retorne a Mestre Azulan"
+						toast_label.text = "O RIO SE LEMBRA • As três memórias revelam a trilha até o Templo do Coração."
+						call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O rio se lembra", "As águas devolvem três lembranças: uma voz antiga, uma promessa e o brilho do Coração Rubro. A trilha termina diante do Templo do Coração.")
+					_update_inventory()
+					_save_game()
+				return
 	for i in range(3):
 		var relic := get_node_or_null("RiverMemoryRelic_%d" % i)
 		if relic and relic.visible and player.global_position.distance_to(relic.global_position) < 3.2:
@@ -2948,11 +2986,7 @@ func _interact() -> void:
 			_save_game()
 		elif quest_stage == 14:
 			quest_stage = 15
-			river_relic_ids.clear()
-			for relic_index in range(3):
-				var memory_relic := get_node_or_null("RiverMemoryRelic_%d" % relic_index)
-				if memory_relic:
-					memory_relic.visible = true
+			_reveal_chapter_three_memories()
 			quest_text = "Recupere os três Ecos de Memória do Rio"
 			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
 			toast_label.text = "Azulan: o rio guarda as lembranças do Coração. Reúna os três ecos e siga a trilha até o templo."
@@ -3228,7 +3262,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 14)
+	cfg.set_value("meta", "save_version", 15)
 	cfg.set_value("story", "prologue_seen", story_intro_seen)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
@@ -3248,6 +3282,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "swamp_boss_defeated", swamp_boss_defeated)
 	cfg.set_value("progress", "river_knights_defeated", river_knights_defeated)
 	cfg.set_value("progress", "river_relic_ids", river_relic_ids)
+	cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)
 	cfg.set_value("progress", "river_chest_ids", river_chest_ids)
 	cfg.set_value("progress", "whisper_lantern_ids", whisper_lantern_ids)
 	cfg.set_value("progress", "whisper_guardian_reward_claimed", whisper_guardian_reward_claimed)
@@ -3269,7 +3304,7 @@ func _load_save() -> void:
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 14:
+	if save_version > 15:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
@@ -3303,6 +3338,13 @@ func _load_save() -> void:
 		if relic_id >= 0 and relic_id < 3 and not river_relic_ids.has(relic_id):
 			river_relic_ids.append(relic_id)
 	river_relic_ids.sort()
+	chapter3_memory_ids.clear()
+	var saved_chapter3_memory_ids: Array = cfg.get_value("progress", "chapter3_memory_ids", [])
+	for saved_memory_id in saved_chapter3_memory_ids:
+		var memory_id := int(saved_memory_id)
+		if memory_id >= 0 and memory_id < 3 and not chapter3_memory_ids.has(memory_id):
+			chapter3_memory_ids.append(memory_id)
+	chapter3_memory_ids.sort()
 	river_chest_ids.clear()
 	var saved_chest_ids: Array = cfg.get_value("progress", "river_chest_ids", [])
 	for saved_chest_id in saved_chest_ids:
