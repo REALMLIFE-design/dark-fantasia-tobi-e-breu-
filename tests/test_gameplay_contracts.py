@@ -600,6 +600,8 @@ class ProceduralTextureContracts(unittest.TestCase):
     def test_chapter_three_memory_quest_and_temple_boss_are_persisted(self):
         self.assertIn('quest_stage = 15', self.world)
         self.assertIn('chapter3_memory_ids.size() >= 3', self.world)
+        self.assertNotIn('if quest_stage == 15 and river_relic_ids.size() >= 3', self.world)
+        self.assertIn('fale com a Guardiã para seguir às Ruínas', self.world)
         self.assertIn('cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)', self.world)
         self.assertIn('ChapterThreeMemory_%d', self.world)
         self.assertIn('func _play_chapter_cutscene(', self.world)
