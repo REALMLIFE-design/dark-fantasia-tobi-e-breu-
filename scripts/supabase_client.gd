@@ -70,7 +70,7 @@ func _auth_request(endpoint: String, payload: Dictionary) -> Dictionary:
 	var response: Array = await _http.request_completed
 	_request_busy = false
 	var response_code: int = response[1]
-	var body_text := response[3].get_string_from_utf8()
+	var body_text: String = response[3].get_string_from_utf8()
 	var parsed = JSON.parse_string(body_text)
 	var data: Dictionary = parsed if parsed is Dictionary else {}
 	if response_code < 200 or response_code >= 300:
