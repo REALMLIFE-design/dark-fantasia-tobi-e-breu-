@@ -164,6 +164,8 @@ func _ready() -> void:
 
 
 func _play_chapter_cutscene(chapter_title: String, heading_text: String, narration_text: String) -> void:
+	var was_paused := get_tree().paused
+	get_tree().paused = true
 	var layer := CanvasLayer.new()
 	layer.name = "DarkWorldChapterScene"
 	layer.layer = 120
@@ -232,6 +234,7 @@ func _play_chapter_cutscene(chapter_title: String, heading_text: String, narrati
 	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
 	await fade_out.finished
 	layer.queue_free()
+	get_tree().paused = was_paused
 
 
 func _play_prologue_cutscene() -> void:
