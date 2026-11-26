@@ -629,6 +629,8 @@ class ProceduralTextureContracts(unittest.TestCase):
         enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
         self.assertIn('var enemy_title := ""', enemy)
         self.assertIn('custom_boss_color', enemy)
+        self.assertIn('func _enter_final_boss_enrage()', enemy)
+        self.assertIn('var final_boss := enemy_title == "SILÊNCIO CINZENTO"', enemy)
         self.assertIn('enemy_title", "SILÊNCIO CINZENTO"', self.world)
         self.assertIn('CRÉDITOS', self.world)
         self.assertIn('quest_stage = 30', self.world)
