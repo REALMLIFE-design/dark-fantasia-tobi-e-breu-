@@ -192,9 +192,9 @@ O projeto inclui atlases compartilhados de albedo e rugosidade em `assets/textur
 Esta seção descreve o estado da branch `feature/google-login-loading-friends-lobby`; não significa que o APK ou a execução em aparelho físico já tenham sido aprovados.
 
 ### Campanha de cinco capítulos
-- **Capítulo I — A Floresta Corrompida:** adicionadas as cenas narrativas “A Marca do Guardião” e “O Último Totem”.
-- **Capítulo II — O Rio Prateado:** cadeia do Guardião do Rio e Leviatã do Lodo preservada.
-- **Capítulo III — O Rio das Memórias:** três memórias exclusivas e persistentes, retorno a Azulan, Guardiã do Templo e Guardião do Templo como chefe.
+- **Capítulo I — O Coração Roubado:** prólogo cinematográfico, primeira missão e cena “A Marca do Guardião”.
+- **Capítulo II — A Floresta Corrompida:** Pântano dos Ratos, três totens, Bruxa do Pântano e cena “O Último Totem”.
+- **Capítulo III — O Rio das Memórias:** Rio Prateado, Cavaleiros Afogados, Leviatã do Lodo, três memórias exclusivas e persistentes, Guardiã do Templo e Guardião do Templo como chefe.
 - **Capítulo IV — O Templo Esquecido:** três selos nas Ruínas Antigas, Oráculo das Ruínas e chefe Guardião das Ruínas.
 - **Capítulo V — O Último Amanhecer:** três fragmentos no Cume das Nuvens, Guardião do Amanhecer, chefe Silêncio Cinzento, cena de encerramento e créditos.
 - O save está na versão 16 e lê saves antigos; os novos colecionáveis de cada capítulo são salvos separadamente.
