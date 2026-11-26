@@ -168,3 +168,5 @@
 - Advisor de segurança: sem lints. Advisor de performance: o alerta de chave estrangeira sem índice foi resolvido; restam apenas avisos informativos de índices ainda não usados porque as tabelas estão praticamente vazias.
 
 - Lobby: adicionado botão para sair da sala; se o usuário for anfitrião, a RPC fecha a sala e remove os membros. O código de sala fechado deixa de aceitar novas entradas.
+
+- Reprodutibilidade: adicionado `supabase/config.toml` com PostgreSQL 17 (versão consultada no projeto) e instruções `supabase link` / `supabase db push`; nenhuma chave secreta foi adicionada ao repositório.
