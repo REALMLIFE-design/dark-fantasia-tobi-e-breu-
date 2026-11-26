@@ -2,11 +2,23 @@ extends Control
 
 const MENU_SCENE := "res://scenes/menu.tscn"
 const MAX_PLAYERS := 4
+
 var notice: AcceptDialog
+var room_code_input: LineEdit
+var room_status: Label
+var slot_labels: Array[Label] = []
+var active_room_id := ""
+var active_room_code := ""
+var room_refresh_timer: Timer
 
 func _ready() -> void:
 	_build_lobby()
+	room_refresh_timer = Timer.new()
+	room_refresh_timer.wait_time = 4.0
+	room_refresh_timer.timeout.connect(_refresh_room_members)
+	add_child(room_refresh_timer)
 	print("TOBI_BREU_LOBBY_SCREEN_READY")
+
 
 func _build_lobby() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -46,26 +58,31 @@ func _build_lobby() -> void:
 	subtitle.text = "Monte seu grupo e prepare-se para explorar Dark World."
 	subtitle.add_theme_color_override("font_color", Color("c4d4ca"))
 	root.add_child(subtitle)
+
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 16)
 	root.add_child(columns)
+
 	var friends := _panel("AMIGOS")
 	friends.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	friends.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(friends)
 	var friend_stack := friends.get_child(0) as VBoxContainer
 	friend_stack.add_child(_label("Sua lista de amigos aparecerá aqui.", 15))
-	friend_stack.add_child(_label("Status: serviço de amigos ainda não conectado.", 12, Color("e2c58c")))
+	friend_stack.add_child(_label("Solicitações e convites serão conectados na próxima etapa.", 12, Color("e2c58c")))
 	var invite := Button.new()
 	invite.text = "CONVIDAR AMIGO"
 	invite.pressed.connect(_show_backend_notice)
 	friend_stack.add_child(invite)
+
 	var party := _panel("SEU GRUPO  •  ATÉ 4 JOGADORES")
 	party.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	party.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(party)
 	var party_stack := party.get_child(0) as VBoxContainer
+	room_status = _label("Crie uma sala ou entre usando um código.", 12, Color("e2c58c"))
+	party_stack.add_child(room_status)
 	for i in range(MAX_PLAYERS):
 		var slot := PanelContainer.new()
 		var slot_style := StyleBoxFlat.new()
@@ -76,24 +93,100 @@ func _build_lobby() -> void:
 		slot.add_theme_stylebox_override("panel", slot_style)
 		var slot_label := _label("JOGADOR %d  •  VAGA LIVRE" % (i + 1), 13)
 		slot.add_child(slot_label)
+		slot_labels.append(slot_label)
 		party_stack.add_child(slot)
-	var room_row := HBoxContainer.new()
+
 	var create_room := Button.new()
 	create_room.text = "CRIAR SALA"
-	create_room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	create_room.pressed.connect(_show_backend_notice)
-	room_row.add_child(create_room)
+	create_room.custom_minimum_size.y = 44
+	create_room.pressed.connect(_create_room)
+	party_stack.add_child(create_room)
+	var code_row := HBoxContainer.new()
+	room_code_input = LineEdit.new()
+	room_code_input.placeholder_text = "Código da sala"
+	room_code_input.max_length = 12
+	room_code_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	room_code_input.text_submitted.connect(func(_value: String): _join_room())
+	code_row.add_child(room_code_input)
 	var join_room := Button.new()
-	join_room.text = "ENTRAR COM CÓDIGO"
-	join_room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	join_room.pressed.connect(_show_backend_notice)
-	room_row.add_child(join_room)
-	party_stack.add_child(room_row)
-	var footer := _label("ONLINE INDISPONÍVEL NESTA BUILD — nenhum amigo ou jogador fictício será exibido.", 12, Color("e2c58c"))
-	root.add_child(footer)
+	join_room.text = "ENTRAR"
+	join_room.pressed.connect(_join_room)
+	code_row.add_child(join_room)
+	party_stack.add_child(code_row)
+
+	var footer_text := "Salas online usam sua conta Supabase. Amigos, convites e jogadores em movimento ainda serão conectados."
+	if not SupabaseClient.is_authenticated():
+		footer_text = "Entre com e-mail na tela inicial para criar ou entrar em salas online. Visitante continua no modo offline."
+	root.add_child(_label(footer_text, 12, Color("e2c58c")))
+
 	notice = AcceptDialog.new()
 	notice.title = "TOBI & BREU ONLINE"
 	add_child(notice)
+
+
+func _create_room() -> void:
+	if not SupabaseClient.is_authenticated():
+		_show_notice("Entre com sua conta para criar uma sala online. O modo visitante continua disponível para a campanha offline.")
+		return
+	room_status.text = "CRIANDO SALA..."
+	var result: Dictionary = await SupabaseClient.create_game_room("Floresta Corrompida", MAX_PLAYERS)
+	if not result.get("ok", false):
+		_show_notice(str(result.get("message", "Não foi possível criar a sala.")))
+		room_status.text = "Não foi possível criar a sala."
+		return
+	_set_active_room(result.get("room", {}))
+
+
+func _join_room() -> void:
+	if not SupabaseClient.is_authenticated():
+		_show_notice("Entre com sua conta para entrar em uma sala online.")
+		return
+	var code := room_code_input.text.strip_edges().to_upper()
+	if code.length() < 6:
+		_show_notice("Digite um código de sala com pelo menos 6 caracteres.")
+		return
+	room_status.text = "PROCURANDO SALA..."
+	var result: Dictionary = await SupabaseClient.join_room_by_code(code)
+	if not result.get("ok", false):
+		_show_notice(str(result.get("message", "Não foi possível entrar na sala.")))
+		room_status.text = "Não foi possível entrar na sala."
+		return
+	_set_active_room(result.get("room", {}))
+
+
+func _set_active_room(room: Dictionary) -> void:
+	active_room_id = str(room.get("room_id", ""))
+	active_room_code = str(room.get("room_code", ""))
+	if active_room_id.is_empty():
+		_show_notice("O servidor não retornou um identificador válido para a sala.")
+		return
+	room_status.text = "SALA %s • aguardando jogadores..." % active_room_code
+	room_code_input.text = active_room_code
+	room_refresh_timer.start()
+	await _refresh_room_members()
+	_show_notice("Sala criada/aberta! Compartilhe este código com seus amigos: %s" % active_room_code)
+
+
+func _refresh_room_members() -> void:
+	if active_room_id.is_empty() or not SupabaseClient.is_authenticated():
+		return
+	var result: Dictionary = await SupabaseClient.list_room_members(active_room_id)
+	if not result.get("ok", false):
+		room_status.text = "Sala %s • não foi possível atualizar os jogadores." % active_room_code
+		return
+	var members = result.get("data", [])
+	if not members is Array:
+		return
+	for i in range(MAX_PLAYERS):
+		if i < members.size():
+			var member: Dictionary = members[i]
+			var profile = member.get("profiles", {})
+			var username := str(profile.get("username", "Aventureiro")) if profile is Dictionary else "Aventureiro"
+			slot_labels[i].text = "JOGADOR %d  •  %s" % [i + 1, username]
+		else:
+			slot_labels[i].text = "JOGADOR %d  •  VAGA LIVRE" % (i + 1)
+	room_status.text = "SALA %s  •  %d/%d JOGADORES" % [active_room_code, members.size(), MAX_PLAYERS]
+
 
 func _panel(heading: String) -> PanelContainer:
 	var panel := PanelContainer.new()
@@ -112,6 +205,7 @@ func _panel(heading: String) -> PanelContainer:
 	panel.add_child(stack)
 	return panel
 
+
 func _label(value: String, size: int, color := Color("d5e0d7")) -> Label:
 	var label := Label.new()
 	label.text = value
@@ -120,6 +214,11 @@ func _label(value: String, size: int, color := Color("d5e0d7")) -> Label:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
 
+
 func _show_backend_notice() -> void:
-	notice.dialog_text = "A interface do lobby está pronta. Para convites, salas e lista de amigos em tempo real, ainda precisamos conectar um servidor multiplayer e o banco de dados de contas."
+	_show_notice("A lista de amigos e os convites ainda não foram conectados. As salas por código já usam o banco online.")
+
+
+func _show_notice(message: String) -> void:
+	notice.dialog_text = message
 	notice.popup_centered()
