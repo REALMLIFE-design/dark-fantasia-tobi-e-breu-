@@ -146,10 +146,16 @@ func _create_loading_screen() -> void:
 	loading_root.name = "LoadingRoot"
 	loading_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	loading_layer.add_child(loading_root)
-	var backdrop := ColorRect.new()
+	var backdrop := TextureRect.new()
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.color = Color("080b0d")
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	loading_root.add_child(backdrop)
+	var backdrop_shade := ColorRect.new()
+	backdrop_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop_shade.color = Color(0.015, 0.025, 0.035, 0.58)
+	loading_root.add_child(backdrop_shade)
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
 	frame.position = Vector2(-190.0, -205.0)
