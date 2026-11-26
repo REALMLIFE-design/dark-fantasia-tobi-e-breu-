@@ -619,16 +619,6 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('CRÉDITOS', self.world)
         self.assertIn('quest_stage = 30', self.world)
 
-    def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
-        self.assertIn('ForgottenTempleSeal_%d', self.world)
-        self.assertIn('chapter4_seal_ids', self.world)
-        self.assertIn('DawnShard_%d', self.world)
-        self.assertIn('chapter5_dawn_ids', self.world)
-        self.assertIn('ForgottenTempleGuardian', self.world)
-        self.assertIn('Silencio_Cinzento', self.world)
-        self.assertIn('CRÉDITOS', self.world)
-        self.assertIn('quest_stage == 30', self.world)
-
     def test_supabase_lobby_room_and_friend_flows_are_connected(self):
         client = (ROOT / 'scripts/supabase_client.gd').read_text(encoding='utf-8')
         lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
