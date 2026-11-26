@@ -17,7 +17,7 @@ Estas migrações são a cópia versionada do histórico aplicado ao projeto `da
 Com o Supabase CLI instalado e autenticado:
 
 ```sh
-supabase link --project-ref SEU_PROJECT_REF
+supabase link --project-ref wxzvtbfsemwmwjjhqstp
 supabase db push
 ```
 
