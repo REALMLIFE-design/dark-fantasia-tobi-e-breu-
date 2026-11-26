@@ -2689,6 +2689,21 @@ func _process(delta: float) -> void:
 	var ruins_oracle_distance := player.global_position.distance_to(ruins_oracle.global_position) if ruins_oracle else 999.0
 	var dawn_guardian := get_node_or_null("Guardião do Amanhecer")
 	var dawn_guardian_distance := player.global_position.distance_to(dawn_guardian.global_position) if dawn_guardian else 999.0
+	var chapter3_memory_distance := 999.0
+	var chapter4_seal_distance := 999.0
+	var chapter5_dawn_distance := 999.0
+	for memory_id in range(3):
+		var memory_node := get_node_or_null("ChapterThreeMemory_%d" % memory_id)
+		if memory_node and memory_node.visible:
+			chapter3_memory_distance = minf(chapter3_memory_distance, player.global_position.distance_to(memory_node.global_position))
+	for seal_id in range(3):
+		var seal_node := get_node_or_null("ForgottenTempleSeal_%d" % seal_id)
+		if seal_node and seal_node.visible:
+			chapter4_seal_distance = minf(chapter4_seal_distance, player.global_position.distance_to(seal_node.global_position))
+	for dawn_id in range(3):
+		var dawn_node := get_node_or_null("DawnShard_%d" % dawn_id)
+		if dawn_node and dawn_node.visible:
+			chapter5_dawn_distance = minf(chapter5_dawn_distance, player.global_position.distance_to(dawn_node.global_position))
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -2715,6 +2730,9 @@ func _process(delta: float) -> void:
 	elif temple_distance < 4.5 and quest_stage >= 17: prompt_label.text = "E: FALAR COM A GUARDIÃ DO TEMPLO"
 	elif ruins_oracle_distance < 4.5 and quest_stage >= 22 and quest_stage <= 24: prompt_label.text = "E: FALAR COM O ORÁCULO DAS RUÍNAS"
 	elif dawn_guardian_distance < 4.5 and quest_stage >= 27: prompt_label.text = "E: FALAR COM O GUARDIÃO DO AMANHECER"
+	elif chapter3_memory_distance < 3.2: prompt_label.text = "E: RECUPERAR ECO DE MEMÓRIA"
+	elif chapter4_seal_distance < 3.2: prompt_label.text = "E: RECUPERAR SELO DO TEMPLO ESQUECIDO"
+	elif chapter5_dawn_distance < 3.2: prompt_label.text = "E: RECUPERAR FRAGMENTO DO AMANHECER"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
