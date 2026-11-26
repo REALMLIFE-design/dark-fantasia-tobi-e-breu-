@@ -260,6 +260,23 @@ func _enter_boss_enrage(notify_world: bool = true) -> void:
 	if notify_world and get_parent().has_method("river_boss_phase_changed"):
 		get_parent().river_boss_phase_changed()
 
+func _enter_final_boss_enrage() -> void:
+	if boss_enraged:
+		return
+	boss_enraged = true
+	move_speed = 2.42
+	attack_damage = 40
+	attack_range = 3.0
+	boss_slam_radius = 6.2
+	base_visual_scale *= 1.07
+	if is_instance_valid(visual):
+		visual.scale = base_visual_scale
+	if is_instance_valid(attack_telegraph_material):
+		attack_telegraph_material.albedo_color = Color(1.0, 0.16, 0.38, 0.92)
+		attack_telegraph_material.emission = Color("e13e6b")
+		attack_telegraph_material.emission_energy_multiplier = 2.5
+
+
 func _add(mesh: Mesh, pos: Vector3, color: Color) -> void:
 	var mi := MeshInstance3D.new(); mi.mesh = mesh; mi.position = pos
 	var m := StandardMaterial3D.new(); m.albedo_color = color; m.roughness = 0.95; mi.material_override = m; visual.add_child(mi)
@@ -298,16 +315,20 @@ func _create_attack_telegraph() -> void:
 	add_child(attack_telegraph)
 
 func _begin_attack() -> void:
-	var enraged := enemy_kind == 6 and hp <= 340
-	if enemy_kind == 6:
+	var final_boss := enemy_title == "SILÊNCIO CINZENTO"
+	var enraged := (enemy_kind == 6 and hp <= 340) or (final_boss and hp <= 380)
+	if enemy_kind == 6 or final_boss:
 		boss_attack_count += 1
 		boss_slam_active = boss_attack_count % 2 == 0
-		boss_slam_radius = 6.0 if enraged else 5.4
-	if enemy_kind == 6:
-		if boss_slam_active:
-			attack_windup_duration = 1.35 if enraged else 1.05
+		if final_boss:
+			boss_slam_radius = 6.2 if enraged else 5.3
 		else:
-			attack_windup_duration = 0.82 if enraged else 1.05
+			boss_slam_radius = 6.0 if enraged else 5.4
+	if enemy_kind == 6 or final_boss:
+		if boss_slam_active:
+			attack_windup_duration = 1.45 if final_boss and enraged else (1.2 if final_boss else (1.35 if enraged else 1.05))
+		else:
+			attack_windup_duration = 0.88 if final_boss and enraged else (1.0 if final_boss else (0.82 if enraged else 1.05))
 	else:
 		attack_windup_duration = 0.92 if enemy_kind == 8 else (0.78 if enemy_kind >= 3 else (0.38 if enemy_kind == 2 else (0.68 if enemy_kind == 5 else 0.56)))
 	attack_windup_timer = attack_windup_duration
@@ -320,6 +341,8 @@ func _begin_attack() -> void:
 		attack_timer += 0.45
 	if enemy_kind == 6:
 		attack_timer += 0.7 if not enraged else 0.25
+	elif final_boss:
+		attack_timer += 0.65 if not enraged else 0.35
 
 func _resolve_attack() -> void:
 	attack_telegraph.visible = false
@@ -458,6 +481,8 @@ func take_damage(amount: int) -> void:
 			_enter_boss_enrage()
 		if get_parent().has_method("boss_health_changed"):
 			get_parent().boss_health_changed(maxi(0, hp), 680)
+	elif enemy_title == "SILÊNCIO CINZENTO" and hp <= 380:
+		_enter_final_boss_enrage()
 	hit_recoil = 0.16
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
