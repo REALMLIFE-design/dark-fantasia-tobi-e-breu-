@@ -5,14 +5,21 @@
 - A tela inicial oferece criação de conta e login por e-mail/senha.
 - O cadastro envia o nome do aventureiro como metadado; o trigger `handle_new_user` cria o perfil.
 - Se a confirmação de e-mail estiver ativa no Supabase, o jogador precisa confirmar o endereço antes de entrar.
-- O token de acesso fica somente em memória durante a execução atual. Persistência/renovação de sessão ainda precisa ser adicionada.
+- O token de acesso e o refresh token ficam somente em memória durante a execução atual. O cliente renova o token antes de chamadas REST quando ele está perto de expirar, mas não restaura a sessão depois de fechar/reabrir o jogo.
 - A chave `sb_publishable_...` no cliente é pública por definição. Nunca colocar `service_role`, secret key, senha do banco ou OAuth client secret no jogo.
 
 ## Google
 O botão Google continua como aviso. Para ativá-lo, configurar o provedor Google no Supabase Auth e implementar o fluxo OAuth nativo para Android com retorno seguro ao jogo. Não simular login.
 
 ## Amigos e salas
-As tabelas `profiles`, `friend_requests`, `game_rooms` e `room_members` já existem no banco. A interface de lobby ainda não faz operações nessas tabelas. Antes de ativar criação/entrada em salas, validar as políticas RLS, expor as tabelas necessárias na Data API e definir regras de autorização e presença. Não usar a chave administrativa no cliente.
+As tabelas `profiles`, `friend_requests`, `game_rooms` e `room_members` existem com RLS ativo. O lobby já busca perfis, envia solicitações, lista amizades/convites e permite aceitar/recusar. Também cria salas e entra por código usando RPCs seguras; a publicação Realtime inclui salas, membros e pedidos. A lista de jogadores é atualizada por consulta periódica a cada 4 segundos. A presença em tempo real via WebSocket e a sincronização de movimento dos personagens ainda não estão implementadas. Não usar a chave administrativa no cliente.
+
+## Estado verificado em 26/11/2026
+- `project.godot` registra `SupabaseClient` corretamente como autoload.
+- O prólogo narrado "O Coração Roubado" tem três quadros interativos e grava `story.prologue_seen` no save existente.
+- O Supabase tem RPCs `create_game_room` e `join_room_by_code`; as funções privilegiadas ficam no schema não exposto `private`, e os wrappers públicos são `SECURITY INVOKER`. As permissões foram verificadas: sem execução para `anon`, com execução para `authenticated`.
+- O Supabase Security Advisor retornou `lints: []` após essa configuração.
+- A compilação Godot 4.3 e o APK ainda dependem da conclusão do workflow atual; não declarar o jogo testado em aparelho físico.
 
 ## Testes pendentes
 1. Abrir o projeto no Godot 4.3 e verificar erros de parse.
