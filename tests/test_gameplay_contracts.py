@@ -658,6 +658,8 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('_copy_room_code', lobby)
 
     def test_supabase_migrations_are_versioned_in_repository(self):
+        config = (ROOT / 'supabase/config.toml').read_text(encoding='utf-8')
+        self.assertIn('major_version = 17', config)
         migration_dir = ROOT / 'supabase/migrations'
         migrations = sorted(migration_dir.glob('*.sql'))
         self.assertEqual(len(migrations), 7)
