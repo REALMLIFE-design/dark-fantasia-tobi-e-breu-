@@ -609,6 +609,8 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('CAPÍTULO I • O CORAÇÃO ROUBADO', self.world)
         self.assertIn('CAPÍTULO II • A FLORESTA CORROMPIDA', self.world)
         self.assertIn('CAPÍTULO III • O RIO DAS MEMÓRIAS', self.world)
+        self.assertIn('CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos', self.world)
+        self.assertIn('CAPÍTULO IV CONCLUÍDO — fale com Azulan para seguir ao Cume das Nuvens', self.world)
         self.assertNotIn('CAPÍTULO I • A FLORESTA CORROMPIDA', self.world)
         self.assertIn('get_tree().paused = true', self.world)
         self.assertIn('Guardiã do Templo', self.world)
