@@ -10,6 +10,8 @@ var slot_labels: Array[Label] = []
 var active_room_id := ""
 var active_room_code := ""
 var room_refresh_timer: Timer
+var friend_search_input: LineEdit
+var friend_requests_stack: VBoxContainer
 
 func _ready() -> void:
 	_build_lobby()
@@ -17,6 +19,8 @@ func _ready() -> void:
 	room_refresh_timer.wait_time = 4.0
 	room_refresh_timer.timeout.connect(_refresh_room_members)
 	add_child(room_refresh_timer)
+	if SupabaseClient.is_authenticated():
+		await _load_friend_requests()
 	print("TOBI_BREU_LOBBY_SCREEN_READY")
 
 
@@ -69,12 +73,26 @@ func _build_lobby() -> void:
 	friends.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(friends)
 	var friend_stack := friends.get_child(0) as VBoxContainer
-	friend_stack.add_child(_label("Sua lista de amigos aparecerá aqui.", 15))
-	friend_stack.add_child(_label("Solicitações e convites serão conectados na próxima etapa.", 12, Color("e2c58c")))
-	var invite := Button.new()
-	invite.text = "CONVIDAR AMIGO"
-	invite.pressed.connect(_show_backend_notice)
-	friend_stack.add_child(invite)
+	friend_stack.add_child(_label("Encontre aventureiros pelo nome de usuário.", 13))
+	var search_row := HBoxContainer.new()
+	friend_search_input = LineEdit.new()
+	friend_search_input.placeholder_text = "Nome do aventureiro"
+	friend_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	friend_search_input.text_submitted.connect(func(_value: String): _search_and_add_friend())
+	search_row.add_child(friend_search_input)
+	var add_friend := Button.new()
+	add_friend.text = "ADICIONAR"
+	add_friend.pressed.connect(_search_and_add_friend)
+	search_row.add_child(add_friend)
+	friend_stack.add_child(search_row)
+	var refresh_friends := Button.new()
+	refresh_friends.text = "ATUALIZAR AMIGOS"
+	refresh_friends.pressed.connect(_load_friend_requests)
+	friend_stack.add_child(refresh_friends)
+	friend_stack.add_child(_label("AMIGOS E SOLICITAÇÕES", 13, Color("e2c58c")))
+	friend_requests_stack = VBoxContainer.new()
+	friend_requests_stack.add_theme_constant_override("separation", 6)
+	friend_stack.add_child(friend_requests_stack)
 
 	var party := _panel("SEU GRUPO  •  ATÉ 4 JOGADORES")
 	party.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -122,6 +140,102 @@ func _build_lobby() -> void:
 	notice = AcceptDialog.new()
 	notice.title = "TOBI & BREU ONLINE"
 	add_child(notice)
+
+
+func _search_and_add_friend() -> void:
+	if not SupabaseClient.is_authenticated():
+		_show_notice("Entre com sua conta para adicionar amigos.")
+		return
+	var search_name := friend_search_input.text.strip_edges()
+	if search_name.is_empty():
+		_show_notice("Digite o nome de usuário do seu amigo.")
+		return
+	var search_result: Dictionary = await SupabaseClient.find_profile_by_username(search_name)
+	if not search_result.get("ok", false):
+		_show_notice(str(search_result.get("message", "Não foi possível buscar o jogador.")))
+		return
+	var profiles = search_result.get("data", [])
+	if not profiles is Array or profiles.is_empty():
+		_show_notice("Nenhum aventureiro encontrado com esse nome.")
+		return
+	var target: Dictionary = profiles[0]
+	var target_id := str(target.get("id", ""))
+	var requests_result: Dictionary = await SupabaseClient.list_friend_requests()
+	if requests_result.get("ok", false):
+		var existing = requests_result.get("data", [])
+		if existing is Array:
+			for request in existing:
+				var same_pair := (str(request.get("requester_id", "")) == SupabaseClient.user_id and str(request.get("addressee_id", "")) == target_id) or (str(request.get("requester_id", "")) == target_id and str(request.get("addressee_id", "")) == SupabaseClient.user_id)
+				if same_pair and str(request.get("status", "")) in ["pending", "accepted"]:
+					_show_notice("Vocês já têm uma solicitação ou amizade registrada.")
+					return
+	var send_result: Dictionary = await SupabaseClient.send_friend_request(target_id)
+	if send_result.get("ok", false):
+		_show_notice("Solicitação enviada para %s!" % str(target.get("username", "Aventureiro")))
+		friend_search_input.text = ""
+		await _load_friend_requests()
+	else:
+		_show_notice(str(send_result.get("message", "Não foi possível enviar a solicitação.")))
+
+
+func _load_friend_requests() -> void:
+	if not SupabaseClient.is_authenticated() or not is_instance_valid(friend_requests_stack):
+		return
+	for child in friend_requests_stack.get_children():
+		child.queue_free()
+	var result: Dictionary = await SupabaseClient.list_friend_requests()
+	if not result.get("ok", false):
+		friend_requests_stack.add_child(_label("Não foi possível carregar amigos agora.", 12, Color("e2c58c")))
+		return
+	var requests = result.get("data", [])
+	var visible_count := 0
+	if requests is Array:
+		for request in requests:
+			var request_status := str(request.get("status", ""))
+			if request_status not in ["pending", "accepted"]:
+				continue
+			var requester_id := str(request.get("requester_id", ""))
+			var addressee_id := str(request.get("addressee_id", ""))
+			var other_id := addressee_id if requester_id == SupabaseClient.user_id else requester_id
+			var profile_result: Dictionary = await SupabaseClient.get_profile(other_id)
+			var username := "Aventureiro"
+			if profile_result.get("ok", false):
+				var profile_rows = profile_result.get("data", [])
+				if profile_rows is Array and not profile_rows.is_empty():
+					username = str(profile_rows[0].get("username", username))
+			if request_status == "accepted":
+				friend_requests_stack.add_child(_label("AMIGO  •  %s" % username, 12))
+				visible_count += 1
+			elif addressee_id == SupabaseClient.user_id:
+				var request_row := HBoxContainer.new()
+				var request_label := _label("PEDIDO  •  %s" % username, 12, Color("e2c58c"))
+				request_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				request_row.add_child(request_label)
+				var request_id := str(request.get("id", ""))
+				var accept_button := Button.new()
+				accept_button.text = "ACEITAR"
+				accept_button.pressed.connect(func(): _respond_to_friend_request(request_id, true))
+				request_row.add_child(accept_button)
+				var decline_button := Button.new()
+				decline_button.text = "RECUSAR"
+				decline_button.pressed.connect(func(): _respond_to_friend_request(request_id, false))
+				request_row.add_child(decline_button)
+				friend_requests_stack.add_child(request_row)
+				visible_count += 1
+			else:
+				friend_requests_stack.add_child(_label("CONVITE ENVIADO  •  %s" % username, 12))
+				visible_count += 1
+	if visible_count == 0:
+		friend_requests_stack.add_child(_label("Ainda não há amigos ou solicitações.", 12, Color("aebbb0")))
+
+
+func _respond_to_friend_request(request_id: String, accept: bool) -> void:
+	var result: Dictionary = await SupabaseClient.respond_friend_request(request_id, accept)
+	if not result.get("ok", false):
+		_show_notice(str(result.get("message", "Não foi possível atualizar a solicitação.")))
+		return
+	_show_notice("Amizade aceita!" if accept else "Solicitação recusada.")
+	await _load_friend_requests()
 
 
 func _create_room() -> void:
