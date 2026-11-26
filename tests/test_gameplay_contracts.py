@@ -637,6 +637,7 @@ class ProceduralTextureContracts(unittest.TestCase):
 
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
-        self.assertIn('login falso', menu)
-        self.assertIn('ainda não está ativa', menu)
+        self.assertIn('movimento e combate cooperativo ainda estão em desenvolvimento', menu)
+        self.assertIn('Nenhuma conta será simulada', login)
