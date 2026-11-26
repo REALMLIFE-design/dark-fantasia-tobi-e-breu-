@@ -127,7 +127,13 @@ func _ready() -> void:
 	elif quest_stage == 11: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
-	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir as memórias do rio"
+	elif quest_stage == 15: objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % river_relic_ids.size()
+	elif quest_stage == 16: objective_label.text = "Objetivo: retorne a Mestre Azulan"
+	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
+	elif quest_stage == 18: objective_label.text = "Objetivo: derrote o Guardião do Templo"
+	elif quest_stage == 19: objective_label.text = "Objetivo: fale com a Guardiã do Templo"
+	else: objective_label.text = "CAPÍTULO III CONCLUÍDO — O Rio das Memórias"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
@@ -140,6 +146,77 @@ func _ready() -> void:
 		_save_game()
 	print("TOBI_BREU_BOOT_READY")
 
+
+
+func _play_chapter_cutscene(chapter_title: String, heading_text: String, narration_text: String) -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldChapterScene"
+	layer.layer = 120
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.80)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 280)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.97), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 16)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = chapter_title
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.text = heading_text
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.text = narration_text
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 100)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var continue_button := Button.new()
+	continue_button.custom_minimum_size = Vector2(0, 52)
+	continue_button.text = "CONTINUAR"
+	stack.add_child(continue_button)
+	panel.modulate.a = 0.0
+	var fade_in := layer.create_tween()
+	fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+	await fade_in.finished
+	await continue_button.pressed
+	var fade_out := layer.create_tween()
+	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
+	await fade_out.finished
+	layer.queue_free()
 
 
 func _play_prologue_cutscene() -> void:
@@ -1314,6 +1391,15 @@ func _build_npcs() -> void:
 	river_sign.font_size = 42
 	river_sign.modulate = Color("b7e0d9")
 	river_guardian.add_child(river_sign)
+	var temple_keeper := _make_person("Guardiã do Templo", Vector3(165.0, 0.0, -318.0), true)
+	temple_keeper.set_meta("interact_name", "Guardiã do Templo")
+	var temple_sign := Label3D.new()
+	temple_sign.text = "GUARDIÃ DO TEMPLO"
+	temple_sign.position = Vector3(0.0, 3.5, 0.0)
+	temple_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	temple_sign.font_size = 38
+	temple_sign.modulate = Color("e7a1aa")
+	temple_keeper.add_child(temple_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -1395,6 +1481,17 @@ func _build_enemies() -> void:
 		if quest_stage < 9:
 			crab.visible = false
 			crab.set_physics_process(false)
+	var temple_guardian := CharacterBody3D.new()
+	temple_guardian.set_script(ENEMY_SCRIPT)
+	temple_guardian.name = "Guardiao_do_Templo"
+	temple_guardian.position = Vector3(165.0, 0.0, -337.0)
+	temple_guardian.set("enemy_kind", 3)
+	temple_guardian.set("hp", 520)
+	add_child(temple_guardian)
+	enemies.append(temple_guardian)
+	if quest_stage != 18:
+		temple_guardian.visible = false
+		temple_guardian.set_physics_process(false)
 
 func _get_player_level() -> int:
 	return 1 + int(maxi(0, xp) / 100)
@@ -2467,6 +2564,8 @@ func _process(delta: float) -> void:
 	var shrine_distance := player.global_position.distance_to(shrine.global_position) if shrine else 999.0
 	var river_npc := get_node_or_null("Guardião do Rio")
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
+	var temple_npc := get_node_or_null("Guardiã do Templo")
+	var temple_distance := player.global_position.distance_to(temple_npc.global_position) if temple_npc else 999.0
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -2490,6 +2589,7 @@ func _process(delta: float) -> void:
 	elif nearest_guild_relic_distance < 3.8: prompt_label.text = "E: RECUPERAR SELO ANTIGO"
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
+	elif temple_distance < 4.5 and quest_stage >= 17: prompt_label.text = "E: FALAR COM A GUARDIÃ DO TEMPLO"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
@@ -2669,6 +2769,12 @@ func _interact() -> void:
 				_grant_xp(25)
 				dark_essence += 1
 				toast_label.text = "ECO DO RIO RECUPERADO • +25 XP • Essência Sombria +1 (%d/3)" % river_relic_ids.size()
+				if quest_stage == 15 and river_relic_ids.size() >= 3:
+					quest_stage = 16
+					quest_text = "As memórias foram reunidas — retorne a Azulan"
+					objective_label.text = "Objetivo: retorne a Mestre Azulan"
+					toast_label.text = "O RIO SE LEMBRA • As três memórias revelam a trilha até o Templo do Coração."
+					call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O rio se lembra", "As águas devolvem três lembranças: uma voz antiga, uma promessa e o brilho do Coração Rubro. A trilha termina diante do Templo do Coração.")
 				_update_inventory()
 				_save_game()
 			else:
@@ -2741,6 +2847,33 @@ func _interact() -> void:
 			toast_label.text = "O santuário está em silêncio."
 		return
 	var river_npc := get_node_or_null("Guardião do Rio")
+	var temple_npc := get_node_or_null("Guardiã do Templo")
+	if temple_npc and player.global_position.distance_to(temple_npc.global_position) < 4.5 and quest_stage >= 17:
+		if quest_stage == 17:
+			quest_stage = 18
+			quest_text = "O Guardião protege o Coração Rubro"
+			var temple_boss := get_node_or_null("Guardiao_do_Templo")
+			if temple_boss:
+				temple_boss.visible = true
+				temple_boss.set_physics_process(true)
+				player.global_position = Vector3(165.0, 0.0, -326.0)
+			objective_label.text = "Objetivo: derrote o Guardião do Templo"
+			toast_label.text = "Guardiã: o Coração está adiante. Mas primeiro, enfrente quem jurou protegê-lo."
+			_save_game()
+		elif quest_stage == 19:
+			quest_stage = 20
+			quest_text = "O Templo do Coração foi protegido"
+			objective_label.text = "CAPÍTULO III CONCLUÍDO — O Rio das Memórias"
+			toast_label.text = "A Guardiã agradece. O caminho para o Coração Rubro está aberto. +220 XP • 8 Fragmentos Rubros"
+			_grant_xp(220)
+			shards += 8
+			potions += 2
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "Guardiã: o Coração Rubro ainda precisa de proteção."
+		_update_quest()
+		return
 	if river_npc and player.global_position.distance_to(river_npc.global_position) < 4.5:
 		if quest_stage == 9:
 			quest_stage = 10
@@ -2804,6 +2937,25 @@ func _interact() -> void:
 			objective_label.text = "CAPÍTULO I CONCLUÍDO — fale com Azulan para seguir ao Rio Prateado"
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
+			_save_game()
+		elif quest_stage == 14:
+			quest_stage = 15
+			river_relic_ids.clear()
+			for relic_index in range(3):
+				var memory_relic := get_node_or_null("RiverMemoryRelic_%d" % relic_index)
+				if memory_relic:
+					memory_relic.visible = true
+			quest_text = "Recupere os três Ecos de Memória do Rio"
+			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
+			toast_label.text = "Azulan: o rio guarda as lembranças do Coração. Reúna os três ecos e siga a trilha até o templo."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A marca do guardião", "O Guardião do Rio deixou uma marca nas águas. Ela aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
+			_save_game()
+		elif quest_stage == 16:
+			quest_stage = 17
+			quest_text = "Encontre a Guardiã do Templo do Coração"
+			objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
+			toast_label.text = "Azulan: agora que o rio revelou o caminho, procure a Guardiã diante do Templo do Coração."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A porta do templo", "A pedra antiga se abre sob a luz dos três ecos. Além dela, o Coração Rubro aguarda — e algo sombrio protege sua última chama.")
 			_save_game()
 		elif quest_stage == 8:
 			quest_stage = 9
@@ -2910,6 +3062,19 @@ func enemy_defeated(kind: int = 0) -> void:
 			_update_inventory()
 			_update_quest()
 			_save_game()
+		return
+	if kind == 3 and quest_stage == 18:
+		quest_stage = 19
+		quest_text = "O Guardião do Templo foi derrotado — fale com a Guardiã"
+		objective_label.text = "Objetivo: fale com a Guardiã do Templo"
+		toast_label.text = "GUARDIÃO DO TEMPLO DERROTADO • O Coração Rubro está protegido!"
+		_grant_xp(160)
+		shards += 5
+		dark_essence += 4
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O coração e a escolha", "O guardião cai. A Guardiã revela que o Coração Rubro pode restaurar o mundo — mas sua luz também exige uma escolha de quem a carrega.")
+		_update_quest()
+		_save_game()
 		return
 	if kind == 3:
 		if quest_stage == 3:
@@ -3054,7 +3219,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 13)
+	cfg.set_value("meta", "save_version", 14)
 	cfg.set_value("story", "prologue_seen", story_intro_seen)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
@@ -3095,9 +3260,9 @@ func _load_save() -> void:
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 13:
+	if save_version > 14:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
