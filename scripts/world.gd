@@ -143,7 +143,7 @@ func _ready() -> void:
 	elif quest_stage == 22: objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
 	elif quest_stage == 23: objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
 	elif quest_stage == 24: objective_label.text = "Objetivo: retorne ao Oráculo das Ruínas"
-	elif quest_stage == 25: objective_label.text = "CAPÍTULO IV CONCLUÍDO — prepare-se para o último amanhecer"
+	elif quest_stage == 25: objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan para seguir ao Cume das Nuvens"
 	elif quest_stage == 26: objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (%d/3)" % chapter5_dawn_ids.size()
 	elif quest_stage == 27: objective_label.text = "Objetivo: encontre o Guardião do Amanhecer"
 	elif quest_stage == 28: objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
@@ -3179,7 +3179,7 @@ func _interact() -> void:
 			shards += 6
 			potions += 2
 			dark_essence += 4
-			objective_label.text = "LEVIATÃ DERROTADO — fale com Azulan para seguir as memórias do rio"
+			objective_label.text = "CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos"
 			toast_label.text = "O rio está livre! +180 XP • 6 Fragmentos Rubros • 2 Poções"
 			_update_inventory()
 			_save_game()
