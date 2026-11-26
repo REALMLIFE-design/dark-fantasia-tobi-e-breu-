@@ -310,7 +310,7 @@ class GameplayContracts(unittest.TestCase):
     def test_boss_fight_has_a_centered_mobile_health_bar(self):
         self.assertIn('set_anchors_preset(Control.PRESET_CENTER_TOP)', self.world)
         self.assertIn('boss_health_bar.max_value = 680', self.world)
-        self.assertIn('boss_hud_panel.visible = quest_stage == 12', self.world)
+        self.assertIn('boss_hud_panel.visible = quest_stage in [12, 18, 23, 28]', self.world)
         self.assertIn('boss_health_changed(maxi(0, hp), 680)', self.enemy)
         self.assertIn('river_boss_hp = clampi(current, 0, maximum)', self.world)
         self.assertIn('river_boss_hp', self.world)
@@ -607,7 +607,17 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('Guardiao_do_Templo', self.world)
         self.assertIn('quest_stage == 18', self.world)
         self.assertIn('"save_version", 16', self.world)
-        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)', self.world)
+
+    def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
+        self.assertIn('ForgottenTempleSeal_%d', self.world)
+        self.assertIn('chapter4_seal_ids', self.world)
+        self.assertIn('DawnShard_%d', self.world)
+        self.assertIn('chapter5_dawn_ids', self.world)
+        self.assertIn('ForgottenTempleGuardian', self.world)
+        self.assertIn('Silencio_Cinzento', self.world)
+        self.assertIn('CRÉDITOS', self.world)
+        self.assertIn('quest_stage == 30', self.world)
 
     def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
         self.assertIn('ForgottenTempleSeal_%d', self.world)
