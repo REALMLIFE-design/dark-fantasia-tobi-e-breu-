@@ -72,6 +72,7 @@ var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
 var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
+var story_intro_seen := false
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -133,7 +134,91 @@ func _ready() -> void:
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	if quest_stage == 0 and not story_intro_seen:
+		await _play_prologue_cutscene()
+		story_intro_seen = true
+		_save_game()
 	print("TOBI_BREU_BOOT_READY")
+
+
+
+func _play_prologue_cutscene() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldPrologue"
+	layer.layer = 120
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.78)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 260)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.97), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 16)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = "PRÓLOGO  •  O CORAÇÃO ROUBADO"
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 100)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var continue_button := Button.new()
+	continue_button.custom_minimum_size = Vector2(0, 52)
+	continue_button.text = "CONTINUAR"
+	stack.add_child(continue_button)
+	var scenes := [
+		{"title": "Era uma vez, um coração de luz…", "body": "No centro de um mundo de florestas antigas e rios encantados brilhava o Coração Rubro. Sua luz mantinha o equilíbrio entre todas as criaturas."},
+		{"title": "A noite encontrou uma brecha", "body": "Então, uma sombra conhecida como Silêncio Cinzento roubou o coração. As cores começaram a desaparecer, e criaturas antes tranquilas foram tomadas pela corrupção."},
+		{"title": "Dois amigos, uma grande jornada", "body": "Tobi, acompanhado por seu leal amigo Breu, recebe de Mestre Azulan a missão de seguir as pistas, restaurar a luz e descobrir o que aconteceu com o Coração Rubro."}
+	]
+	for index in range(scenes.size()):
+		heading.text = str(scenes[index]["title"])
+		narration.text = str(scenes[index]["body"])
+		continue_button.text = "COMEÇAR A JORNADA" if index == scenes.size() - 1 else "CONTINUAR"
+		panel.modulate.a = 0.0
+		var fade_in := layer.create_tween()
+		fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+		await fade_in.finished
+		await continue_button.pressed
+		if index < scenes.size() - 1:
+			var fade_out := layer.create_tween()
+			fade_out.tween_property(panel, "modulate:a", 0.0, 0.22)
+			await fade_out.finished
+	layer.queue_free()
 
 
 func _create_loading_screen() -> void:
@@ -2970,6 +3055,7 @@ func _use_potion() -> void:
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("meta", "save_version", 13)
+	cfg.set_value("story", "prologue_seen", story_intro_seen)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -3007,6 +3093,7 @@ func _load_save() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
+	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
 	if save_version > 13:
 		return
