@@ -638,11 +638,12 @@ class ProceduralTextureContracts(unittest.TestCase):
     def test_supabase_migrations_are_versioned_in_repository(self):
         migration_dir = ROOT / 'supabase/migrations'
         migrations = sorted(migration_dir.glob('*.sql'))
-        self.assertEqual(len(migrations), 5)
+        self.assertEqual(len(migrations), 6)
         sql = '\\n'.join(path.read_text(encoding='utf-8') for path in migrations)
         self.assertIn('enable row level security', sql.lower())
         self.assertIn('private.join_room_by_code', sql)
         self.assertIn('private.is_room_member', sql)
+        self.assertIn('game_rooms_owner_id_idx', sql)
         self.assertIn('grant execute on function public.create_game_room', sql)
         self.assertIn('supabase_realtime', sql)
 
