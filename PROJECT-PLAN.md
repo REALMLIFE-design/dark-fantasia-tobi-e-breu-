@@ -127,3 +127,14 @@ Function: aprovar mapa, escala, câmera e orçamento. Form: validar modelos, mat
 - [ ] Configurar Google OAuth quando as credenciais forem fornecidas.
 
 **Importante:** “implementado no código” não equivale a gate de runtime aprovado. Não declarar o jogo pronto até os testes do motor e Android terminarem.
+
+
+## Canon narrativo consolidado — cinco capítulos
+
+1. **O Coração Roubado** — prólogo, descoberta do roubo do Coração Rubro, primeira missão com Azulan e Guardião do Silêncio; cena “A Marca do Guardião”.
+2. **A Floresta Corrompida** — Pântano dos Ratos, três totens, Bruxa do Pântano e cena “O Último Totem”.
+3. **O Rio das Memórias** — Rio Prateado, Cavaleiros Afogados, Leviatã do Lodo, três memórias exclusivas, Guardiã do Templo e Guardião do Templo; cenas “O Rio se Lembra” e “A Porta do Templo”.
+4. **O Templo Esquecido** — três selos nas Ruínas Antigas, Oráculo das Ruínas e Guardião das Ruínas.
+5. **O Último Amanhecer** — três fragmentos no Cume das Nuvens, Guardião do Amanhecer, Silêncio Cinzento, escolha final e créditos.
+
+A numeração da campanha no HUD/cenas segue este canon. O Rio Prateado e o Leviatã fazem parte do Capítulo III, não constituem um capítulo extra.
