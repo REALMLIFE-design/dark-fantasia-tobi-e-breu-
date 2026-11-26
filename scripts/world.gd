@@ -138,7 +138,7 @@ func _ready() -> void:
 	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
 	elif quest_stage == 18: objective_label.text = "Objetivo: derrote o Guardião do Templo"
 	elif quest_stage == 19: objective_label.text = "Objetivo: fale com a Guardiã do Templo"
-	elif quest_stage == 20: objective_label.text = "CAPÍTULO III CONCLUÍDO — siga para as Ruínas Antigas"
+	elif quest_stage == 20: objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com a Guardiã para seguir às Ruínas"
 	elif quest_stage == 21: objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (%d/3)" % chapter4_seal_ids.size()
 	elif quest_stage == 22: objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
 	elif quest_stage == 23: objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
@@ -3065,7 +3065,7 @@ func _interact() -> void:
 		elif quest_stage == 19:
 			quest_stage = 20
 			quest_text = "O Templo do Coração foi protegido"
-			objective_label.text = "CAPÍTULO III CONCLUÍDO — O Rio das Memórias"
+			objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com a Guardiã para seguir às Ruínas"
 			toast_label.text = "A Guardiã agradece. O caminho para o Coração Rubro está aberto. +220 XP • 8 Fragmentos Rubros"
 			_grant_xp(220)
 			shards += 8
