@@ -583,6 +583,20 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('AMIGOS', menu)
         self.assertIn('scripts/main_menu.gd', menu_scene)
 
+    def test_supabase_autoload_uses_valid_godot_ini_section(self):
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        self.assertIn('[autoload]\\n', project)
+        self.assertIn('SupabaseClient="*res://scripts/supabase_client.gd"', project)
+        self.assertNotIn('[autoload]\\\\nSupabaseClient', project)
+
+    def test_prologue_cutscene_is_shown_once_and_persisted(self):
+        world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('func _play_prologue_cutscene()', world)
+        self.assertIn('await _play_prologue_cutscene()', world)
+        self.assertIn('cfg.set_value("story", "prologue_seen", story_intro_seen)', world)
+        self.assertIn('Era uma vez, um coração de luz', world)
+        self.assertIn('O CORAÇÃO ROUBADO', world)
+
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
