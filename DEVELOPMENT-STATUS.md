@@ -164,5 +164,7 @@
 - Uma consulta de teste sob o papel `authenticated` encontrou recursão infinita na policy de leitura de `room_members` (PostgreSQL 42P17). Isso poderia impedir o lobby de listar os membros.
 - Criada a migração `20261126233451_fix_room_members_rls_recursion.sql`: helper `private.is_room_member(uuid)` com `SECURITY DEFINER`, `search_path` vazio e execução restrita a `authenticated`; policy de leitura atualizada para usar o helper.
 - Repetidos `EXPLAIN` sob `SET ROLE authenticated` para `room_members` e `game_rooms`: ambos agora planejam sem erro de recursão. Isso valida a policy em nível SQL, mas ainda não substitui um teste de login e lobby com duas contas reais.
-- O histórico agora tem seis migrações versionadas em `supabase/migrations/`; a sexta adiciona índice para `game_rooms.owner_id`. Os testes de contrato verificam os arquivos e o helper.
+- O histórico agora tem sete migrações versionadas em `supabase/migrations/`; a sexta adiciona índice para `game_rooms.owner_id` e a sétima adiciona saída segura de salas/fechamento pelo anfitrião. Os testes de contrato verificam os arquivos e helpers.
 - Advisor de segurança: sem lints. Advisor de performance: o alerta de chave estrangeira sem índice foi resolvido; restam apenas avisos informativos de índices ainda não usados porque as tabelas estão praticamente vazias.
+
+- Lobby: adicionado botão para sair da sala; se o usuário for anfitrião, a RPC fecha a sala e remove os membros. O código de sala fechado deixa de aceitar novas entradas.
