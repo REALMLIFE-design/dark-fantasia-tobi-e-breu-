@@ -147,7 +147,7 @@ func send_friend_request(addressee_id: String) -> Dictionary:
 
 
 func list_friend_requests() -> Dictionary:
-	var endpoint := "friend_requests?select=id,requester_id,addressee_id,status,created_at&or=(requester_id.eq.%s,addressee_id.eq.%s)&order=created_at.desc&limit=50" % [user_id, user_id]
+	var endpoint := "friend_requests?select=id,requester_id,addressee_id,status,created_at,requester:profiles!friend_requests_requester_id_fkey(username,avatar_url),addressee:profiles!friend_requests_addressee_id_fkey(username,avatar_url)&or=(requester_id.eq.%s,addressee_id.eq.%s)&order=created_at.desc&limit=50" % [user_id, user_id]
 	return await _rest_request(endpoint, HTTPClient.METHOD_GET)
 
 
