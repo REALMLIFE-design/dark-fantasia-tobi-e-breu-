@@ -93,3 +93,37 @@ Function: aprovar mapa, escala, câmera e orçamento. Form: validar modelos, mat
 - Raio do esmagamento: 5,4 m na fase normal e 6,0 m na fase enfurecida.
 - Janela de reação ajustada para o golpe especial; sem alteração do formato do save.
 - Espectro Afogado gerado no Thrixel com 9.000 triângulos e textura 1024; arquivo ainda não foi incorporado ao projeto Godot.
+
+
+## Continuação da campanha — 26/11/2026
+
+### Capítulo III — O Rio das Memórias
+- [x] Três memórias exclusivas, com persistência independente das relíquias opcionais do Rio.
+- [x] Retorno a Mestre Azulan, Guardiã do Templo, Guardião do Templo como chefe e recompensa.
+- [x] Cena “O Rio se Lembra”, “O Chamado do Rio” e “A Porta do Templo”.
+
+### Capítulo IV — O Templo Esquecido
+- [x] Três selos colecionáveis nas Ruínas Antigas, salvos individualmente.
+- [x] Oráculo das Ruínas, Guardião das Ruínas, barra de vida, recompensa e cena narrativa.
+
+### Capítulo V — O Último Amanhecer
+- [x] Três fragmentos colecionáveis no Cume das Nuvens, salvos individualmente.
+- [x] Guardião do Amanhecer, Silêncio Cinzento como chefe final, cena de escolha e créditos.
+- [x] Save v16 mantém a leitura dos saves anteriores e amplia a progressão até o estágio 30.
+
+### Serviços online
+- [x] Login/cadastro por e-mail no Supabase Auth.
+- [x] Busca de perfis e solicitações de amizade (enviar, aceitar e recusar).
+- [x] Criar sala, entrar por código, até quatro membros e atualização periódica do lobby.
+- [x] Quatro migrações SQL aplicadas foram copiadas para `supabase/migrations/` e documentadas em `supabase/README.md`.
+- [ ] Google OAuth: requer credenciais do provedor e fluxo nativo Android; não está habilitado.
+- [ ] Multiplayer dentro da partida: movimento, animações e combate sincronizados em tempo real ainda não existem.
+
+### Gates de qualidade ainda abertos
+- [ ] Confirmar a nova execução do workflow: testes, importação, boot headless, exportação APK e teste em emulador.
+- [ ] Testar em aparelho Android físico e ajustar desempenho/controles.
+- [ ] Integrar os modelos GLB já existentes no projeto Thrixel; o download externo não foi transferido para o repositório.
+- [ ] Finalizar áudio, VFX, pathfinding avançado, acessibilidade e opções gráficas.
+- [ ] Configurar Google OAuth quando as credenciais forem fornecidas.
+
+**Importante:** “implementado no código” não equivale a gate de runtime aprovado. Não declarar o jogo pronto até os testes do motor e Android terminarem.
