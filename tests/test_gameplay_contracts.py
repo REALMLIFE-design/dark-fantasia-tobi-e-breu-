@@ -597,6 +597,22 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('Era uma vez, um coração de luz', world)
         self.assertIn('O CORAÇÃO ROUBADO', world)
 
+    def test_supabase_lobby_room_and_friend_flows_are_connected(self):
+        client = (ROOT / 'scripts/supabase_client.gd').read_text(encoding='utf-8')
+        lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
+        self.assertIn('func create_game_room(', client)
+        self.assertIn('func join_room_by_code(', client)
+        self.assertIn('func list_room_members(', client)
+        self.assertIn('func find_profile_by_username(', client)
+        self.assertIn('func send_friend_request(', client)
+        self.assertIn('func list_friend_requests(', client)
+        self.assertIn('func respond_friend_request(', client)
+        self.assertIn('SupabaseClient.create_game_room', lobby)
+        self.assertIn('SupabaseClient.join_room_by_code', lobby)
+        self.assertIn('SupabaseClient.list_room_members', lobby)
+        self.assertIn('_search_and_add_friend', lobby)
+        self.assertIn('_respond_to_friend_request', lobby)
+
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
