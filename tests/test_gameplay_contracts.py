@@ -603,6 +603,7 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)', self.world)
         self.assertIn('ChapterThreeMemory_%d', self.world)
         self.assertIn('func _play_chapter_cutscene(', self.world)
+        self.assertIn('get_tree().paused = true', self.world)
         self.assertIn('Guardiã do Templo', self.world)
         self.assertIn('Guardiao_do_Templo', self.world)
         self.assertIn('quest_stage == 18', self.world)
