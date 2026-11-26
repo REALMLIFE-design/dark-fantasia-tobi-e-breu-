@@ -60,10 +60,14 @@ else
   echo "ERRO: não foi possível verificar a árvore de acessibilidade Android"
   exit 1
 fi
-# Enter the adventure and skip the optional opening story cards.
+# Open Play from the main menu, then advance every prologue page.
+# The Continue button is centered at y=505 on the 1280x720 test display.
 adb shell input tap 640 260
 sleep 2
-adb shell input tap 640 570
+for page in 1 2 3 4; do
+  adb shell input tap 640 505
+  sleep 1
+done
 sleep "$INTERACTION_WAIT"
 APP_PID="$(adb shell pidof "$PACKAGE_ID" 2>/dev/null | tr -d '\r' || true)"
 if [[ -z "$APP_PID" ]]; then

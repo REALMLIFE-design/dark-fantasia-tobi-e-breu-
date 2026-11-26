@@ -41,7 +41,7 @@ if args[:2] == ['shell', 'pidof']:
     raise SystemExit(0)
 if args[:3] == ['shell', 'input', 'tap'] and args[3:] == ['920', '528']:
     hint_state.write_text('dismissed')
-if args[:3] == ['shell', 'input', 'tap'] and args[3:] in (['640', '260'], ['640', '570']) and os.environ.get('FAKE_ADB_EXIT_AFTER_TAP') == '1':
+if args[:3] == ['shell', 'input', 'tap'] and args[3:] in (['640', '260'], ['640', '505']) and os.environ.get('FAKE_ADB_EXIT_AFTER_TAP') == '1':
     state.write_text('no')
 if args[:2] == ['shell', 'dumpsys'] and args[2:4] == ['activity', 'activities']:
     print('mResumedActivity: ActivityRecord{abc com.tobiebreu.darkworld3d/.MainActivity}')
@@ -82,13 +82,15 @@ if args[:2] == ['logcat', '-d']:
         self.assertIn('grep -qi "GOT IT"', script)
         self.assertIn('adb shell input tap 920 528', script)
         self.assertIn('adb shell input tap 640 260', script)
-        self.assertIn('adb shell input tap 640 570', script)
-        self.assertLess(script.index('adb shell input tap 640 260'), script.index('adb shell input tap 640 570'))
+        self.assertIn('for page in 1 2 3 4; do', script)
+        self.assertIn('adb shell input tap 640 505', script)
+        self.assertLess(script.index('adb shell input tap 640 260'), script.index('for page in 1 2 3 4; do'))
+        self.assertNotIn('adb shell input tap 640 570', script)
         self.assertNotIn('adb shell input tap 640 490', script)
 
     def test_capture_occurs_after_entering_the_adventure(self):
         script = SCRIPT.read_text(encoding="utf-8")
-        self.assertLess(script.index("adb shell input tap 640 570"), script.index("adb exec-out screencap -p"))
+        self.assertLess(script.index("for page in 1 2 3 4; do"), script.index("adb exec-out screencap -p"))
 
     def test_verifies_game_remains_the_resumed_android_activity(self):
         script = SCRIPT.read_text(encoding="utf-8")
