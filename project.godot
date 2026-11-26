@@ -9,7 +9,11 @@ config/icon="res://assets/icons/tobi_breu_icon.svg"
 run/main_scene="res://scenes/login.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
-[autoload]\nSupabaseClient="*res://scripts/supabase_client.gd"\n\n[display]
+[autoload]
+
+SupabaseClient="*res://scripts/supabase_client.gd"
+
+[display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/handheld/orientation=0
