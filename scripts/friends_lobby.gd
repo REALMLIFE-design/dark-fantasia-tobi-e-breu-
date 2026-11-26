@@ -12,6 +12,7 @@ var active_room_code := ""
 var room_refresh_timer: Timer
 var friend_search_input: LineEdit
 var friend_requests_stack: VBoxContainer
+var copy_code_button: Button
 
 func _ready() -> void:
 	_build_lobby()
@@ -131,8 +132,13 @@ func _build_lobby() -> void:
 	join_room.pressed.connect(_join_room)
 	code_row.add_child(join_room)
 	party_stack.add_child(code_row)
+	copy_code_button = Button.new()
+	copy_code_button.text = "COPIAR CÓDIGO DA SALA"
+	copy_code_button.disabled = true
+	copy_code_button.pressed.connect(_copy_room_code)
+	party_stack.add_child(copy_code_button)
 
-	var footer_text := "Salas online usam sua conta Supabase. Amigos, convites e jogadores em movimento ainda serão conectados."
+	var footer_text := "Amigos e pedidos usam o Supabase. A lista da sala atualiza a cada 4 segundos; movimento e combate cooperativo ainda não são sincronizados."
 	if not SupabaseClient.is_authenticated():
 		footer_text = "Entre com e-mail na tela inicial para criar ou entrar em salas online. Visitante continua no modo offline."
 	root.add_child(_label(footer_text, 12, Color("e2c58c")))
@@ -271,9 +277,16 @@ func _set_active_room(room: Dictionary) -> void:
 		return
 	room_status.text = "SALA %s • aguardando jogadores..." % active_room_code
 	room_code_input.text = active_room_code
+	copy_code_button.disabled = false
 	room_refresh_timer.start()
 	await _refresh_room_members()
 	_show_notice("Sala criada/aberta! Compartilhe este código com seus amigos: %s" % active_room_code)
+
+
+func _copy_room_code() -> void:
+	if not active_room_code.is_empty():
+		DisplayServer.clipboard_set(active_room_code)
+		_show_notice("Código copiado: %s" % active_room_code)
 
 
 func _refresh_room_members() -> void:
