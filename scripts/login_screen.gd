@@ -6,6 +6,9 @@ const MENU_SCENE := "res://scenes/menu.tscn"
 const GOOGLE_WEB_CLIENT_ID := ""
 
 var notice: AcceptDialog
+var email_input: LineEdit
+var password_input: LineEdit
+var username_input: LineEdit
 
 func _ready() -> void:
 	_build_screen()
@@ -46,6 +49,27 @@ func _build_screen() -> void:
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stack.add_child(subtitle)
+	username_input = LineEdit.new()
+	username_input.placeholder_text = "Nome de aventureiro (para criar conta)"
+	stack.add_child(username_input)
+	email_input = LineEdit.new()
+	email_input.placeholder_text = "Seu e-mail"
+	email_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
+	stack.add_child(email_input)
+	password_input = LineEdit.new()
+	password_input.placeholder_text = "Senha (mínimo 6 caracteres)"
+	password_input.secret = true
+	stack.add_child(password_input)
+	var login_button := Button.new()
+	login_button.text = "ENTRAR COM E-MAIL"
+	login_button.custom_minimum_size = Vector2(0, 48)
+	login_button.pressed.connect(_on_email_login)
+	stack.add_child(login_button)
+	var signup_button := Button.new()
+	signup_button.text = "CRIAR CONTA"
+	signup_button.custom_minimum_size = Vector2(0, 48)
+	signup_button.pressed.connect(_on_email_signup)
+	stack.add_child(signup_button)
 	var google := Button.new()
 	google.text = "G   Entrar com Google"
 	google.custom_minimum_size = Vector2(0, 58)
@@ -65,6 +89,26 @@ func _build_screen() -> void:
 	notice = AcceptDialog.new()
 	notice.title = "CONTA GOOGLE"
 	add_child(notice)
+
+func _on_email_login() -> void:
+	if email_input.text.strip_edges().is_empty() or password_input.text.is_empty():
+		_show_notice("Digite seu e-mail e sua senha.")
+		return
+	var result: Dictionary = await SupabaseClient.sign_in(email_input.text, password_input.text)
+	_show_auth_result(result)
+
+func _on_email_signup() -> void:
+	if email_input.text.strip_edges().is_empty() or password_input.text.length() < 6 or username_input.text.strip_edges().is_empty():
+		_show_notice("Preencha nome, e-mail e uma senha com pelo menos 6 caracteres.")
+		return
+	var result: Dictionary = await SupabaseClient.sign_up(email_input.text, password_input.text, username_input.text)
+	_show_auth_result(result)
+
+func _show_auth_result(result: Dictionary) -> void:
+	_show_notice(str(result.get("message", "Não foi possível concluir a autenticação.")))
+	if result.get("ok", false) and result.get("session", false):
+		await get_tree().create_timer(0.8).timeout
+		get_tree().change_scene_to_file(MENU_SCENE)
 
 func _on_google_pressed() -> void:
 	if GOOGLE_WEB_CLIENT_ID.strip_edges().is_empty():
