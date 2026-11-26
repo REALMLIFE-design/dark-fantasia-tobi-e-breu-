@@ -54,8 +54,7 @@ func _build_lobby() -> void:
 	friends.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	friends.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(friends)
-	var friend_stack := VBoxContainer.new()
-	friends.add_child(friend_stack)
+	var friend_stack := friends.get_child(0) as VBoxContainer
 	friend_stack.add_child(_label("Sua lista de amigos aparecerá aqui.", 15))
 	friend_stack.add_child(_label("Status: serviço de amigos ainda não conectado.", 12, Color("e2c58c")))
 	var invite := Button.new()
@@ -66,8 +65,7 @@ func _build_lobby() -> void:
 	party.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	party.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(party)
-	var party_stack := VBoxContainer.new()
-	party.add_child(party_stack)
+	var party_stack := party.get_child(0) as VBoxContainer
 	for i in range(MAX_PLAYERS):
 		var slot := PanelContainer.new()
 		var slot_style := StyleBoxFlat.new()
