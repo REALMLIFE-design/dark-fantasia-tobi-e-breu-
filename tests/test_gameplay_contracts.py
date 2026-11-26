@@ -641,3 +641,4 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
         self.assertIn('movimento e combate cooperativo ainda estão em desenvolvimento', menu)
         self.assertIn('Nenhuma conta será simulada', login)
+        self.assertIn('TOBI_BREU_BOOT_READY', login)
