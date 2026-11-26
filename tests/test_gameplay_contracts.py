@@ -635,6 +635,16 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('_search_and_add_friend', lobby)
         self.assertIn('_respond_to_friend_request', lobby)
 
+    def test_supabase_migrations_are_versioned_in_repository(self):
+        migration_dir = ROOT / 'supabase/migrations'
+        migrations = sorted(migration_dir.glob('*.sql'))
+        self.assertEqual(len(migrations), 4)
+        sql = '\\n'.join(path.read_text(encoding='utf-8') for path in migrations)
+        self.assertIn('enable row level security', sql.lower())
+        self.assertIn('private.join_room_by_code', sql)
+        self.assertIn('grant execute on function public.create_game_room', sql)
+        self.assertIn('supabase_realtime', sql)
+
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
