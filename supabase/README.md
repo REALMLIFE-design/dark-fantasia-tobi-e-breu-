@@ -9,6 +9,7 @@ Estas migrações são a cópia versionada do histórico aplicado ao projeto `da
 3. `20261126231630_secure_room_creation_join_and_realtime.sql` — RPCs iniciais de sala e publicação Realtime.
 4. `20261126231652_secure_room_rpc_wrappers.sql` — move a lógica privilegiada para o schema privado e expõe wrappers SECURITY INVOKER.
 5. `20261126233451_fix_room_members_rls_recursion.sql` — remove recursão da política de leitura de membros com helper SECURITY DEFINER restrito a usuários autenticados.
+6. `20261126233534_index_game_room_owners.sql` — adiciona índice para a chave estrangeira de proprietário da sala.
 
 ## Aplicar em outro projeto
 
