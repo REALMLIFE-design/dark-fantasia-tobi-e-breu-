@@ -8,6 +8,7 @@ Estas migrações são a cópia versionada do histórico aplicado ao projeto `da
 2. `20261126230114_tighten_friend_and_room_access.sql` — corrige a política de leitura de membros e impede trocar os participantes de uma solicitação.
 3. `20261126231630_secure_room_creation_join_and_realtime.sql` — RPCs iniciais de sala e publicação Realtime.
 4. `20261126231652_secure_room_rpc_wrappers.sql` — move a lógica privilegiada para o schema privado e expõe wrappers SECURITY INVOKER.
+5. `20261126233451_fix_room_members_rls_recursion.sql` — remove recursão da política de leitura de membros com helper SECURITY DEFINER restrito a usuários autenticados.
 
 ## Aplicar em outro projeto
 
