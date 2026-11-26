@@ -63,6 +63,8 @@ var swamp_boss_defeated := false
 var river_knights_defeated := 0
 var river_relic_ids: Array[int] = []
 var chapter3_memory_ids: Array[int] = []
+var chapter4_seal_ids: Array[int] = []
+var chapter5_dawn_ids: Array[int] = []
 var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
@@ -99,6 +101,7 @@ func _ready() -> void:
 	_build_whisper_grove()
 	_build_outer_regions()
 	_build_chapter_three_memories()
+	_build_late_chapter_props()
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
 	_build_world_civilization()
@@ -135,7 +138,17 @@ func _ready() -> void:
 	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
 	elif quest_stage == 18: objective_label.text = "Objetivo: derrote o Guardião do Templo"
 	elif quest_stage == 19: objective_label.text = "Objetivo: fale com a Guardiã do Templo"
-	else: objective_label.text = "CAPÍTULO III CONCLUÍDO — O Rio das Memórias"
+	elif quest_stage == 20: objective_label.text = "CAPÍTULO III CONCLUÍDO — siga para as Ruínas Antigas"
+	elif quest_stage == 21: objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (%d/3)" % chapter4_seal_ids.size()
+	elif quest_stage == 22: objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
+	elif quest_stage == 23: objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
+	elif quest_stage == 24: objective_label.text = "Objetivo: retorne ao Oráculo das Ruínas"
+	elif quest_stage == 25: objective_label.text = "CAPÍTULO IV CONCLUÍDO — prepare-se para o último amanhecer"
+	elif quest_stage == 26: objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (%d/3)" % chapter5_dawn_ids.size()
+	elif quest_stage == 27: objective_label.text = "Objetivo: encontre o Guardião do Amanhecer"
+	elif quest_stage == 28: objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
+	elif quest_stage == 29: objective_label.text = "Objetivo: retorne ao Guardião do Amanhecer"
+	else: objective_label.text = "CAPÍTULO V CONCLUÍDO — O Último Amanhecer"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
@@ -1388,6 +1401,35 @@ func _reveal_chapter_three_memories() -> void:
 			memory.visible = true
 
 
+func _build_late_chapter_props() -> void:
+	var seal_positions := [Vector3(151.0, 1.0, -64.0), Vector3(164.0, 1.0, -81.0), Vector3(177.0, 1.0, -64.0)]
+	for i in range(3):
+		var seal := _sphere(self, "ForgottenTempleSeal_%d" % i, seal_positions[i], 0.82, Color("b9a16d"), 1.6)
+		seal.visible = quest_stage == 21 and not chapter4_seal_ids.has(i)
+		var seal_core := _sphere(seal, "SealCore", Vector3(0.0, 0.55, 0.0), 0.26, Color("f3d9a0"), 0.5)
+		seal_core.material_override = _painter_mat(Color("f3d9a0"), 3.0, 0.06)
+	var dawn_positions := [Vector3(-15.0, 1.0, -324.0), Vector3(0.0, 1.0, -343.0), Vector3(15.0, 1.0, -324.0)]
+	for i in range(3):
+		var shard := _sphere(self, "DawnShard_%d" % i, dawn_positions[i], 0.78, Color("e7c98a"), 1.7)
+		shard.visible = quest_stage == 26 and not chapter5_dawn_ids.has(i)
+		var shard_core := _sphere(shard, "DawnCore", Vector3(0.0, 0.52, 0.0), 0.24, Color("fff0bf"), 0.48)
+		shard_core.material_override = _painter_mat(Color("fff0bf"), 3.0, 0.05)
+
+
+func _reveal_chapter4_seals() -> void:
+	for i in range(3):
+		var seal := get_node_or_null("ForgottenTempleSeal_%d" % i)
+		if seal and not chapter4_seal_ids.has(i):
+			seal.visible = true
+
+
+func _reveal_chapter5_dawn_shards() -> void:
+	for i in range(3):
+		var shard := get_node_or_null("DawnShard_%d" % i)
+		if shard and not chapter5_dawn_ids.has(i):
+			shard.visible = true
+
+
 func _build_npcs() -> void:
 	var npc := _make_person("Mestre Azulan",Vector3(2,0,-4),true)
 	npc.set_meta("interact_name","Mestre Azulan")
@@ -1418,6 +1460,24 @@ func _build_npcs() -> void:
 	temple_sign.font_size = 38
 	temple_sign.modulate = Color("e7a1aa")
 	temple_keeper.add_child(temple_sign)
+	var ruins_oracle := _make_person("Oráculo das Ruínas", Vector3(164.0, 0.0, -47.0), true)
+	ruins_oracle.set_meta("interact_name", "Oráculo das Ruínas")
+	var oracle_sign := Label3D.new()
+	oracle_sign.text = "ORÁCULO DAS RUÍNAS"
+	oracle_sign.position = Vector3(0.0, 3.5, 0.0)
+	oracle_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	oracle_sign.font_size = 38
+	oracle_sign.modulate = Color("d8c79e")
+	ruins_oracle.add_child(oracle_sign)
+	var dawn_guardian := _make_person("Guardião do Amanhecer", Vector3(0.0, 0.0, -315.0), true)
+	dawn_guardian.set_meta("interact_name", "Guardião do Amanhecer")
+	var dawn_sign := Label3D.new()
+	dawn_sign.text = "GUARDIÃO DO AMANHECER"
+	dawn_sign.position = Vector3(0.0, 3.5, 0.0)
+	dawn_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	dawn_sign.font_size = 34
+	dawn_sign.modulate = Color("f0d69b")
+	dawn_guardian.add_child(dawn_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -1510,6 +1570,28 @@ func _build_enemies() -> void:
 	if quest_stage != 18:
 		temple_guardian.visible = false
 		temple_guardian.set_physics_process(false)
+	var forgotten_guardian := CharacterBody3D.new()
+	forgotten_guardian.set_script(ENEMY_SCRIPT)
+	forgotten_guardian.name = "ForgottenTempleGuardian"
+	forgotten_guardian.position = Vector3(164.0, 0.0, -94.0)
+	forgotten_guardian.set("enemy_kind", 3)
+	add_child(forgotten_guardian)
+	forgotten_guardian.set("hp", 560)
+	enemies.append(forgotten_guardian)
+	if quest_stage != 23:
+		forgotten_guardian.visible = false
+		forgotten_guardian.set_physics_process(false)
+	var silence_boss := CharacterBody3D.new()
+	silence_boss.set_script(ENEMY_SCRIPT)
+	silence_boss.name = "Silencio_Cinzento"
+	silence_boss.position = Vector3(0.0, 0.0, -345.0)
+	silence_boss.set("enemy_kind", 3)
+	add_child(silence_boss)
+	silence_boss.set("hp", 760)
+	enemies.append(silence_boss)
+	if quest_stage != 28:
+		silence_boss.visible = false
+		silence_boss.set_physics_process(false)
 
 func _get_player_level() -> int:
 	return 1 + int(maxi(0, xp) / 100)
@@ -2568,7 +2650,7 @@ func _process(delta: float) -> void:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
 		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
 	if boss_hud_panel:
-		boss_hud_panel.visible = quest_stage in [12, 18]
+		boss_hud_panel.visible = quest_stage in [12, 18, 23, 28]
 		if quest_stage == 12:
 			var river_boss := get_node_or_null("Leviata_do_Lodo")
 			if river_boss and boss_health_bar:
@@ -2580,6 +2662,18 @@ func _process(delta: float) -> void:
 				boss_health_bar.max_value = 520
 				boss_health_bar.value = maxf(0.0, float(temple_boss.get("hp")))
 				boss_health_label.text = "GUARDIÃO DO TEMPLO  •  %d/520" % int(temple_boss.get("hp"))
+		elif quest_stage == 23:
+			var ruins_boss := get_node_or_null("ForgottenTempleGuardian")
+			if ruins_boss and boss_health_bar:
+				boss_health_bar.max_value = 560
+				boss_health_bar.value = maxf(0.0, float(ruins_boss.get("hp")))
+				boss_health_label.text = "GUARDIÃO DAS RUÍNAS  •  %d/560" % int(ruins_boss.get("hp"))
+		elif quest_stage == 28:
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss and boss_health_bar:
+				boss_health_bar.max_value = 760
+				boss_health_bar.value = maxf(0.0, float(final_boss.get("hp")))
+				boss_health_label.text = "SILÊNCIO CINZENTO  •  %d/760" % int(final_boss.get("hp"))
 	if not is_instance_valid(player): return
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
@@ -2591,6 +2685,10 @@ func _process(delta: float) -> void:
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
 	var temple_npc := get_node_or_null("Guardiã do Templo")
 	var temple_distance := player.global_position.distance_to(temple_npc.global_position) if temple_npc else 999.0
+	var ruins_oracle := get_node_or_null("Oráculo das Ruínas")
+	var ruins_oracle_distance := player.global_position.distance_to(ruins_oracle.global_position) if ruins_oracle else 999.0
+	var dawn_guardian := get_node_or_null("Guardião do Amanhecer")
+	var dawn_guardian_distance := player.global_position.distance_to(dawn_guardian.global_position) if dawn_guardian else 999.0
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -2615,6 +2713,8 @@ func _process(delta: float) -> void:
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
 	elif temple_distance < 4.5 and quest_stage >= 17: prompt_label.text = "E: FALAR COM A GUARDIÃ DO TEMPLO"
+	elif ruins_oracle_distance < 4.5 and quest_stage >= 22 and quest_stage <= 24: prompt_label.text = "E: FALAR COM O ORÁCULO DAS RUÍNAS"
+	elif dawn_guardian_distance < 4.5 and quest_stage >= 27: prompt_label.text = "E: FALAR COM O GUARDIÃO DO AMANHECER"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
@@ -2784,6 +2884,44 @@ func _interact() -> void:
 			_update_inventory()
 			_save_game()
 		return
+	if quest_stage == 21:
+		for seal_id in range(3):
+			var seal := get_node_or_null("ForgottenTempleSeal_%d" % seal_id)
+			if seal and seal.visible and player.global_position.distance_to(seal.global_position) < 3.2:
+				chapter4_seal_ids.append(seal_id)
+				chapter4_seal_ids.sort()
+				seal.visible = false
+				_grant_xp(35)
+				shards += 1
+				toast_label.text = "SELO DO TEMPLO ESQUECIDO RECUPERADO • %d/3" % chapter4_seal_ids.size()
+				if chapter4_seal_ids.size() >= 3:
+					quest_stage = 22
+					quest_text = "Os selos despertaram — encontre o Oráculo"
+					objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
+					toast_label.text = "Os três selos se alinham. Uma voz antiga chama por você nas Ruínas Antigas."
+					call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "As ruínas despertam", "Os selos revelam que o Templo do Coração foi erguido sobre um santuário ainda mais antigo. O Oráculo conhece a verdade que Azulan não contou.")
+				_update_inventory()
+				_save_game()
+				return
+	if quest_stage == 26:
+		for shard_id in range(3):
+			var dawn_shard := get_node_or_null("DawnShard_%d" % shard_id)
+			if dawn_shard and dawn_shard.visible and player.global_position.distance_to(dawn_shard.global_position) < 3.2:
+				chapter5_dawn_ids.append(shard_id)
+				chapter5_dawn_ids.sort()
+				dawn_shard.visible = false
+				_grant_xp(40)
+				dark_essence += 1
+				toast_label.text = "FRAGMENTO DO AMANHECER RECUPERADO • %d/3" % chapter5_dawn_ids.size()
+				if chapter5_dawn_ids.size() >= 3:
+					quest_stage = 27
+					quest_text = "Os fragmentos foram reunidos — encontre o Guardião do Amanhecer"
+					objective_label.text = "Objetivo: encontre o Guardião do Amanhecer"
+					toast_label.text = "O último amanhecer se aproxima. O Guardião aguarda no Cume das Nuvens."
+					call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A luz que restou", "Três fragmentos se unem e apontam para o Cume das Nuvens. Lá, o Silêncio Cinzento espera pela última chama do mundo.")
+				_update_inventory()
+				_save_game()
+				return
 	if quest_stage == 15:
 		for memory_id in range(3):
 			var chapter_memory := get_node_or_null("ChapterThreeMemory_%d" % memory_id)
@@ -2916,8 +3054,71 @@ func _interact() -> void:
 			potions += 2
 			_update_inventory()
 			_save_game()
+		elif quest_stage == 20:
+			quest_stage = 21
+			_reveal_chapter4_seals()
+			quest_text = "Recupere os três Selos do Templo Esquecido"
+			objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (0/3)"
+			toast_label.text = "Guardiã: o Coração não pode ser tocado antes que as ruínas antigas sejam purificadas. Procure os três selos."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "O templo sob as ruínas", "A Guardiã revela uma passagem esquecida. Três selos antigos protegem o caminho e precisam ser reunidos antes que a última porta se abra.")
+			_save_game()
 		else:
 			toast_label.text = "Guardiã: o Coração Rubro ainda precisa de proteção."
+		_update_quest()
+		return
+	var ruins_oracle := get_node_or_null("Oráculo das Ruínas")
+	if ruins_oracle and player.global_position.distance_to(ruins_oracle.global_position) < 4.5 and quest_stage >= 22 and quest_stage <= 24:
+		if quest_stage == 22:
+			quest_stage = 23
+			var ruins_boss := get_node_or_null("ForgottenTempleGuardian")
+			if ruins_boss:
+				ruins_boss.visible = true
+				ruins_boss.set_physics_process(true)
+				ruins_boss.set("hp", 560)
+			player.global_position = Vector3(164.0, 0.0, -88.0)
+			quest_text = "O Guardião das Ruínas protege o selo final"
+			objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
+			toast_label.text = "Oráculo: prove que sua coragem é maior que o medo. O guardião despertou!"
+			_save_game()
+		elif quest_stage == 24:
+			quest_stage = 25
+			quest_text = "O Templo Esquecido foi purificado"
+			objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan"
+			toast_label.text = "Oráculo: as ruínas estão em paz. O último caminho leva ao Cume das Nuvens."
+			_grant_xp(260)
+			shards += 10
+			potions += 2
+			_update_inventory()
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "A verdade das ruínas", "O Oráculo revela que o Silêncio Cinzento foi um guardião corrompido pelo medo de perder a luz. A última batalha acontecerá ao amanhecer.")
+			_save_game()
+		_update_quest()
+		return
+	var dawn_npc := get_node_or_null("Guardião do Amanhecer")
+	if dawn_npc and player.global_position.distance_to(dawn_npc.global_position) < 4.5 and quest_stage >= 27:
+		if quest_stage == 27:
+			quest_stage = 28
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss:
+				final_boss.visible = true
+				final_boss.set_physics_process(true)
+				final_boss.set("hp", 760)
+			player.global_position = Vector3(0.0, 0.0, -337.0)
+			quest_text = "O Silêncio Cinzento precisa ser derrotado"
+			objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
+			toast_label.text = "Guardião: esta é a última luz. Lute por todos que ainda acreditam no amanhecer."
+			_save_game()
+		elif quest_stage == 29:
+			quest_stage = 30
+			quest_text = "O Último Amanhecer"
+			objective_label.text = "CAPÍTULO V CONCLUÍDO — O mundo voltou a brilhar"
+			toast_label.text = "O Coração Rubro voltou a pulsar! A escuridão recua e a jornada de Tobi e Breu chega ao fim."
+			_grant_xp(500)
+			shards += 15
+			potions += 5
+			_update_inventory()
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "O coração e a escolha", "Tobi escolhe proteger a luz sem apagar as lembranças. Breu permanece ao seu lado enquanto as cores retornam às florestas, aos rios e a cada lar. O mundo tem um novo amanhecer.")
+			_save_game()
+			await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
 		_update_quest()
 		return
 	if river_npc and player.global_position.distance_to(river_npc.global_position) < 4.5:
@@ -2991,6 +3192,14 @@ func _interact() -> void:
 			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
 			toast_label.text = "Azulan: o rio guarda as lembranças do Coração. Reúna os três ecos e siga a trilha até o templo."
 			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A marca do guardião", "O Guardião do Rio deixou uma marca nas águas. Ela aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
+			_save_game()
+		elif quest_stage == 25:
+			quest_stage = 26
+			_reveal_chapter5_dawn_shards()
+			quest_text = "Recupere os três Fragmentos do Amanhecer"
+			objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (0/3)"
+			toast_label.text = "Azulan: o Silêncio Cinzento espera no Cume das Nuvens. Reúna os três fragmentos para despertar o Guardião."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A última jornada", "A luz do Coração Rubro está quase apagada. Tobi e Breu seguem para o Cume das Nuvens, onde tudo começou.")
 			_save_game()
 		elif quest_stage == 16:
 			quest_stage = 17
@@ -3104,6 +3313,31 @@ func enemy_defeated(kind: int = 0) -> void:
 			_update_inventory()
 			_update_quest()
 			_save_game()
+		return
+	if kind == 3 and quest_stage == 23:
+		quest_stage = 24
+		quest_text = "O Guardião das Ruínas caiu — retorne ao Oráculo"
+		objective_label.text = "Objetivo: retorne ao Oráculo das Ruínas"
+		toast_label.text = "GUARDIÃO DAS RUÍNAS DERROTADO • O selo antigo foi purificado!"
+		_grant_xp(190)
+		shards += 6
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "A pedra se lembra", "O guardião se desfaz em poeira dourada. As ruínas finalmente descansam, e o caminho para o Cume das Nuvens está livre.")
+		_update_quest()
+		_save_game()
+		return
+	if kind == 3 and quest_stage == 28:
+		quest_stage = 29
+		quest_text = "O Silêncio Cinzento caiu — retorne ao Guardião"
+		objective_label.text = "Objetivo: retorne ao Guardião do Amanhecer"
+		toast_label.text = "SILÊNCIO CINZENTO DERROTADO • O Coração Rubro voltou a pulsar!"
+		_grant_xp(300)
+		shards += 10
+		dark_essence += 8
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A sombra se desfaz", "O Silêncio Cinzento se ajoelha. Sua voz volta a ser ouvida, e a escuridão finalmente deixa o mundo.")
+		_update_quest()
+		_save_game()
 		return
 	if kind == 3 and quest_stage == 18:
 		quest_stage = 19
@@ -3262,7 +3496,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 15)
+	cfg.set_value("meta", "save_version", 16)
 	cfg.set_value("story", "prologue_seen", story_intro_seen)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
@@ -3283,6 +3517,8 @@ func _save_game() -> void:
 	cfg.set_value("progress", "river_knights_defeated", river_knights_defeated)
 	cfg.set_value("progress", "river_relic_ids", river_relic_ids)
 	cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)
+	cfg.set_value("progress", "chapter4_seal_ids", chapter4_seal_ids)
+	cfg.set_value("progress", "chapter5_dawn_ids", chapter5_dawn_ids)
 	cfg.set_value("progress", "river_chest_ids", river_chest_ids)
 	cfg.set_value("progress", "whisper_lantern_ids", whisper_lantern_ids)
 	cfg.set_value("progress", "whisper_guardian_reward_claimed", whisper_guardian_reward_claimed)
@@ -3304,9 +3540,9 @@ func _load_save() -> void:
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 15:
+	if save_version > 16:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
@@ -3345,6 +3581,20 @@ func _load_save() -> void:
 		if memory_id >= 0 and memory_id < 3 and not chapter3_memory_ids.has(memory_id):
 			chapter3_memory_ids.append(memory_id)
 	chapter3_memory_ids.sort()
+	chapter4_seal_ids.clear()
+	var saved_chapter4_seal_ids: Array = cfg.get_value("progress", "chapter4_seal_ids", [])
+	for saved_seal_id in saved_chapter4_seal_ids:
+		var seal_id := int(saved_seal_id)
+		if seal_id >= 0 and seal_id < 3 and not chapter4_seal_ids.has(seal_id):
+			chapter4_seal_ids.append(seal_id)
+	chapter4_seal_ids.sort()
+	chapter5_dawn_ids.clear()
+	var saved_chapter5_dawn_ids: Array = cfg.get_value("progress", "chapter5_dawn_ids", [])
+	for saved_dawn_id in saved_chapter5_dawn_ids:
+		var dawn_id := int(saved_dawn_id)
+		if dawn_id >= 0 and dawn_id < 3 and not chapter5_dawn_ids.has(dawn_id):
+			chapter5_dawn_ids.append(dawn_id)
+	chapter5_dawn_ids.sort()
 	river_chest_ids.clear()
 	var saved_chest_ids: Array = cfg.get_value("progress", "river_chest_ids", [])
 	for saved_chest_id in saved_chest_ids:
