@@ -132,7 +132,7 @@ func _ready() -> void:
 	elif quest_stage == 11: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
-	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir as memórias do rio"
+	elif quest_stage == 14: objective_label.text = "CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos"
 	elif quest_stage == 15: objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % chapter3_memory_ids.size()
 	elif quest_stage == 16: objective_label.text = "Objetivo: retorne a Mestre Azulan"
 	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
@@ -272,7 +272,7 @@ func _play_prologue_cutscene() -> void:
 	stack.add_theme_constant_override("separation", 16)
 	margin.add_child(stack)
 	var chapter := Label.new()
-	chapter.text = "PRÓLOGO  •  O CORAÇÃO ROUBADO"
+	chapter.text = "CAPÍTULO I  •  O CORAÇÃO ROUBADO"
 	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	chapter.add_theme_font_size_override("font_size", 12)
 	chapter.add_theme_color_override("font_color", Color("c6a66e"))
@@ -3047,7 +3047,7 @@ func _interact() -> void:
 						quest_text = "A Bruxa do Pântano despertou"
 						objective_label.text = "Objetivo: derrote a Bruxa do Pântano no altar ao norte"
 						toast_label.text = "Os três selos se romperam. A Bruxa despertou no altar!"
-						call_deferred("_play_chapter_cutscene", "CAPÍTULO I • A FLORESTA CORROMPIDA", "O último totem", "O último selo se apaga. Do fundo do pântano, a Bruxa desperta e a corrupção se reúne ao redor de seu cajado.")
+						call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "O último totem", "O último selo se apaga. Do fundo do pântano, a Bruxa desperta e a corrupção se reúne ao redor de seu cajado.")
 					_update_quest()
 					_save_game()
 				else:
@@ -3179,7 +3179,7 @@ func _interact() -> void:
 			shards += 6
 			potions += 2
 			dark_essence += 4
-			objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+			objective_label.text = "LEVIATÃ DERROTADO — fale com Azulan para seguir as memórias do rio"
 			toast_label.text = "O rio está livre! +180 XP • 6 Fragmentos Rubros • 2 Poções"
 			_update_inventory()
 			_save_game()
@@ -3217,7 +3217,7 @@ func _interact() -> void:
 			_grant_xp(150)
 			shards += 5
 			potions += 2
-			objective_label.text = "CAPÍTULO I CONCLUÍDO — fale com Azulan para seguir ao Rio Prateado"
+			objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir ao Rio das Memórias"
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
 			_save_game()
@@ -3391,7 +3391,7 @@ func enemy_defeated(kind: int = 0) -> void:
 	if kind == 3:
 		if quest_stage == 3:
 			quest_stage = 4
-			call_deferred("_play_chapter_cutscene", "CAPÍTULO I • A FLORESTA CORROMPIDA", "A marca do guardião", "Ao cair, o Guardião deixa uma marca rubra no chão. Azulan reconhece o símbolo: o Silêncio Cinzento está procurando os fragmentos do Coração.")
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO I • O CORAÇÃO ROUBADO", "A marca do guardião", "Ao cair, o Guardião deixa uma marca rubra no chão. Azulan reconhece o símbolo: o Silêncio Cinzento está procurando os fragmentos do Coração.")
 			quest_text = "A Cicatriz Rubra foi silenciada"
 			objective_label.text = "Objetivo: volte ao Mestre Azulan"
 			_grant_xp(100)
