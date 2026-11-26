@@ -1486,8 +1486,8 @@ func _build_enemies() -> void:
 	temple_guardian.name = "Guardiao_do_Templo"
 	temple_guardian.position = Vector3(165.0, 0.0, -337.0)
 	temple_guardian.set("enemy_kind", 3)
-	temple_guardian.set("hp", 520)
 	add_child(temple_guardian)
+	temple_guardian.set("hp", 520)
 	enemies.append(temple_guardian)
 	if quest_stage != 18:
 		temple_guardian.visible = false
@@ -2550,11 +2550,18 @@ func _process(delta: float) -> void:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
 		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
 	if boss_hud_panel:
-		boss_hud_panel.visible = quest_stage == 12
+		boss_hud_panel.visible = quest_stage in [12, 18]
 		if quest_stage == 12:
 			var river_boss := get_node_or_null("Leviata_do_Lodo")
 			if river_boss and boss_health_bar:
+				boss_health_bar.max_value = 680
 				boss_health_bar.value = maxf(0.0, float(river_boss.get("hp")))
+		elif quest_stage == 18:
+			var temple_boss := get_node_or_null("Guardiao_do_Templo")
+			if temple_boss and boss_health_bar:
+				boss_health_bar.max_value = 520
+				boss_health_bar.value = maxf(0.0, float(temple_boss.get("hp")))
+				boss_health_label.text = "GUARDIÃO DO TEMPLO  •  %d/520" % int(temple_boss.get("hp"))
 	if not is_instance_valid(player): return
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
