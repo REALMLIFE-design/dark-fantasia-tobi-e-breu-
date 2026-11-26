@@ -2912,6 +2912,7 @@ func _interact() -> void:
 				_grant_xp(35)
 				shards += 1
 				toast_label.text = "SELO DO TEMPLO ESQUECIDO RECUPERADO • %d/3" % chapter4_seal_ids.size()
+				objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (%d/3)" % chapter4_seal_ids.size()
 				if chapter4_seal_ids.size() >= 3:
 					quest_stage = 22
 					quest_text = "Os selos despertaram — encontre o Oráculo"
@@ -2931,6 +2932,7 @@ func _interact() -> void:
 				_grant_xp(40)
 				dark_essence += 1
 				toast_label.text = "FRAGMENTO DO AMANHECER RECUPERADO • %d/3" % chapter5_dawn_ids.size()
+				objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (%d/3)" % chapter5_dawn_ids.size()
 				if chapter5_dawn_ids.size() >= 3:
 					quest_stage = 27
 					quest_text = "Os fragmentos foram reunidos — encontre o Guardião do Amanhecer"
@@ -2951,6 +2953,7 @@ func _interact() -> void:
 					_grant_xp(30)
 					dark_essence += 1
 					toast_label.text = "MEMÓRIA DO CORAÇÃO RECUPERADA • +30 XP • Essência +1 (%d/3)" % chapter3_memory_ids.size()
+					objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % chapter3_memory_ids.size()
 					if chapter3_memory_ids.size() >= 3:
 						quest_stage = 16
 						quest_text = "As três memórias foram reunidas — retorne a Azulan"
