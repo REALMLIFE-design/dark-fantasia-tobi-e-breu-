@@ -2828,6 +2828,7 @@ func _interact() -> void:
 						quest_text = "A Bruxa do Pântano despertou"
 						objective_label.text = "Objetivo: derrote a Bruxa do Pântano no altar ao norte"
 						toast_label.text = "Os três selos se romperam. A Bruxa despertou no altar!"
+						call_deferred("_play_chapter_cutscene", "CAPÍTULO I • A FLORESTA CORROMPIDA", "O último totem", "O último selo se apaga. Do fundo do pântano, a Bruxa desperta e a corrupção se reúne ao redor de seu cajado.")
 					_update_quest()
 					_save_game()
 				else:
@@ -3079,6 +3080,7 @@ func enemy_defeated(kind: int = 0) -> void:
 	if kind == 3:
 		if quest_stage == 3:
 			quest_stage = 4
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO I • A FLORESTA CORROMPIDA", "A marca do guardião", "Ao cair, o Guardião deixa uma marca rubra no chão. Azulan reconhece o símbolo: o Silêncio Cinzento está procurando os fragmentos do Coração.")
 			quest_text = "A Cicatriz Rubra foi silenciada"
 			objective_label.text = "Objetivo: volte ao Mestre Azulan"
 			_grant_xp(100)
