@@ -196,7 +196,6 @@ func _load_friend_requests() -> void:
 				continue
 			var requester_id := str(request.get("requester_id", ""))
 			var addressee_id := str(request.get("addressee_id", ""))
-			var other_id := addressee_id if requester_id == SupabaseClient.user_id else requester_id
 			var profile = request.get("addressee", {}) if requester_id == SupabaseClient.user_id else request.get("requester", {})
 			var username := str(profile.get("username", "Aventureiro")) if profile is Dictionary else "Aventureiro"
 			if request_status == "accepted":
