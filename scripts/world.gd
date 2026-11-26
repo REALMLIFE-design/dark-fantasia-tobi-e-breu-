@@ -148,7 +148,7 @@ func _create_loading_screen() -> void:
 	loading_layer.add_child(loading_root)
 	var backdrop := TextureRect.new()
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.texture = load("res://assets/ui/loading_art.svg")
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	loading_root.add_child(backdrop)
