@@ -12,7 +12,7 @@ func _build_lobby() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var art := TextureRect.new()
 	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	art.texture = load("res://assets/ui/dark_world_key_art.svg")
+	art.texture = load("res://assets/ui/lobby_art.svg")
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	add_child(art)
