@@ -13,6 +13,7 @@ var username_input: LineEdit
 func _ready() -> void:
 	_build_screen()
 	print("TOBI_BREU_LOGIN_SCREEN_READY")
+	print("TOBI_BREU_BOOT_READY")
 
 func _build_screen() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
