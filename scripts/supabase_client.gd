@@ -120,6 +120,12 @@ func join_room_by_code(room_code: String) -> Dictionary:
 	return {"ok": false, "message": "O servidor não retornou os dados da sala."}
 
 
+func leave_game_room(room_id: String) -> Dictionary:
+	if room_id.strip_edges().is_empty():
+		return {"ok": false, "message": "Sala inválida."}
+	return await _rest_request("rpc/leave_game_room", HTTPClient.METHOD_POST, {"p_room_id": room_id})
+
+
 func list_room_members(room_id: String) -> Dictionary:
 	return await _rest_request("room_members?select=user_id,joined_at,profiles(username,avatar_url)&room_id=eq." + room_id + "&order=joined_at.asc", HTTPClient.METHOD_GET)
 
