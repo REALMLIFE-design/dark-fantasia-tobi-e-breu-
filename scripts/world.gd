@@ -133,7 +133,7 @@ func _ready() -> void:
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir as memórias do rio"
-	elif quest_stage == 15: objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % river_relic_ids.size()
+	elif quest_stage == 15: objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % chapter3_memory_ids.size()
 	elif quest_stage == 16: objective_label.text = "Objetivo: retorne a Mestre Azulan"
 	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
 	elif quest_stage == 18: objective_label.text = "Objetivo: derrote o Guardião do Templo"
