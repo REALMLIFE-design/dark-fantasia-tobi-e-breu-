@@ -3116,8 +3116,8 @@ func _interact() -> void:
 			shards += 15
 			potions += 5
 			_update_inventory()
-			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "O coração e a escolha", "Tobi escolhe proteger a luz sem apagar as lembranças. Breu permanece ao seu lado enquanto as cores retornam às florestas, aos rios e a cada lar. O mundo tem um novo amanhecer.")
 			_save_game()
+			await _play_chapter_cutscene("CAPÍTULO V • O ÚLTIMO AMANHECER", "O coração e a escolha", "Tobi escolhe proteger a luz sem apagar as lembranças. Breu permanece ao seu lado enquanto as cores retornam às florestas, aos rios e a cada lar. O mundo tem um novo amanhecer.")
 			await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
 		_update_quest()
 		return
