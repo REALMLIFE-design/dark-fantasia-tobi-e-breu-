@@ -124,6 +124,41 @@ func list_room_members(room_id: String) -> Dictionary:
 	return await _rest_request("room_members?select=user_id,joined_at,profiles(username,avatar_url)&room_id=eq." + room_id + "&order=joined_at.asc", HTTPClient.METHOD_GET)
 
 
+func find_profile_by_username(username: String) -> Dictionary:
+	var clean_name := username.strip_edges()
+	if clean_name.is_empty():
+		return {"ok": false, "message": "Digite o nome do aventureiro."}
+	var encoded_name := clean_name.uri_encode()
+	return await _rest_request("profiles?select=id,username,avatar_url&username=ilike." + encoded_name + "&id=neq." + user_id + "&limit=5", HTTPClient.METHOD_GET)
+
+
+func get_profile(profile_id: String) -> Dictionary:
+	return await _rest_request("profiles?select=id,username,avatar_url&id=eq." + profile_id + "&limit=1", HTTPClient.METHOD_GET)
+
+
+func send_friend_request(addressee_id: String) -> Dictionary:
+	if addressee_id.is_empty() or addressee_id == user_id:
+		return {"ok": false, "message": "Escolha outro jogador para adicionar."}
+	return await _rest_request("friend_requests", HTTPClient.METHOD_POST, {
+		"requester_id": user_id,
+		"addressee_id": addressee_id,
+		"status": "pending"
+	})
+
+
+func list_friend_requests() -> Dictionary:
+	var endpoint := "friend_requests?select=id,requester_id,addressee_id,status,created_at&or=(requester_id.eq.%s,addressee_id.eq.%s)&order=created_at.desc&limit=50" % [user_id, user_id]
+	return await _rest_request(endpoint, HTTPClient.METHOD_GET)
+
+
+func respond_friend_request(request_id: String, accept: bool) -> Dictionary:
+	if request_id.is_empty():
+		return {"ok": false, "message": "Solicitação inválida."}
+	var status := "accepted" if accept else "declined"
+	var endpoint := "friend_requests?id=eq." + request_id + "&addressee_id=eq." + user_id + "&status=eq.pending"
+	return await _rest_request(endpoint, HTTPClient.METHOD_PATCH, {"status": status})
+
+
 func _rest_request(endpoint: String, method: int, payload: Dictionary = {}) -> Dictionary:
 	if not is_authenticated():
 		return {"ok": false, "message": "Entre na sua conta para usar os recursos online."}
