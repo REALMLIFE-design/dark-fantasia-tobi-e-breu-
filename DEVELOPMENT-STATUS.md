@@ -158,3 +158,10 @@
 - Thrixel: projeto existente com 18 assets; o modelo rigado do Cervo Ancião tem 14.064 triângulos. Saldo consultado: 0 créditos; não gerar novos modelos até os assets existentes serem aproveitados. O download GLB forneceu URL externa, mas a transferência para o repositório não foi concluída.
 - Testes: os contratos automatizados estão sendo alinhados com save v16 e capítulos IV/V. A última execução observada falhou apenas por uma asserção de teste que procurava `quest_stage == 30` em vez da atribuição `quest_stage = 30`; a asserção foi corrigida e uma nova execução foi disparada.
 - Ainda não declarar APK aprovado: a importação Godot, boot headless, exportação e teste em emulador precisam concluir com sucesso; nenhum teste em aparelho físico foi realizado nesta sessão.
+
+
+## Correção adicional de RLS — 26/11/2026
+- Uma consulta de teste sob o papel `authenticated` encontrou recursão infinita na policy de leitura de `room_members` (PostgreSQL 42P17). Isso poderia impedir o lobby de listar os membros.
+- Criada a migração `20261126233451_fix_room_members_rls_recursion.sql`: helper `private.is_room_member(uuid)` com `SECURITY DEFINER`, `search_path` vazio e execução restrita a `authenticated`; policy de leitura atualizada para usar o helper.
+- Repetidos `EXPLAIN` sob `SET ROLE authenticated` para `room_members` e `game_rooms`: ambos agora planejam sem erro de recursão. Isso valida a policy em nível SQL, mas ainda não substitui um teste de login e lobby com duas contas reais.
+- O histórico agora tem cinco migrações versionadas em `supabase/migrations/`; os testes de contrato verificam os arquivos e o helper.
