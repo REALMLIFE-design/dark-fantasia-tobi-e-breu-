@@ -648,6 +648,9 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('SupabaseClient.create_game_room', lobby)
         self.assertIn('SupabaseClient.join_room_by_code', lobby)
         self.assertIn('SupabaseClient.list_room_members', lobby)
+        self.assertIn('SupabaseClient.leave_game_room', lobby)
+        self.assertIn('_leave_active_room', lobby)
+        self.assertIn('SAIR / FECHAR SALA', lobby)
         self.assertIn('_search_and_add_friend', lobby)
         self.assertIn('_respond_to_friend_request', lobby)
         self.assertIn('CAPÍTULO DA SALA', lobby)
@@ -657,12 +660,13 @@ class ProceduralTextureContracts(unittest.TestCase):
     def test_supabase_migrations_are_versioned_in_repository(self):
         migration_dir = ROOT / 'supabase/migrations'
         migrations = sorted(migration_dir.glob('*.sql'))
-        self.assertEqual(len(migrations), 6)
+        self.assertEqual(len(migrations), 7)
         sql = '\\n'.join(path.read_text(encoding='utf-8') for path in migrations)
         self.assertIn('enable row level security', sql.lower())
         self.assertIn('private.join_room_by_code', sql)
         self.assertIn('private.is_room_member', sql)
         self.assertIn('game_rooms_owner_id_idx', sql)
+        self.assertIn('private.leave_game_room', sql)
         self.assertIn('grant execute on function public.create_game_room', sql)
         self.assertIn('supabase_realtime', sql)
 
