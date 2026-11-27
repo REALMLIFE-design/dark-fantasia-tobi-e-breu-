@@ -121,7 +121,18 @@ var nature_models_stream_requested := false
 const ITCH_DUNGEON_MODEL_PATHS := [
 	"res://assets/external_packs/itch_dark_dungeon/cracked-runic-circle.glb",
 	"res://assets/external_packs/itch_dark_dungeon/crimson-obsidian-sentinel.glb",
-	"res://assets/external_packs/itch_dark_dungeon/cursed-codex.glb"
+	"res://assets/external_packs/itch_dark_dungeon/cursed-codex.glb",
+	"res://assets/external_packs/itch_dark_dungeon/cracked-gold-chalice.glb",
+	"res://assets/external_packs/itch_dark_dungeon/emberbound-cauldron.glb",
+	"res://assets/external_packs/itch_dark_dungeon/embercrystal-citadel.glb",
+	"res://assets/external_packs/itch_dark_dungeon/emberstone-throne.glb",
+	"res://assets/external_packs/itch_dark_dungeon/embervault-reliquary.glb",
+	"res://assets/external_packs/itch_dark_dungeon/nethergate-ruins.glb",
+	"res://assets/external_packs/itch_dark_dungeon/shattered-knight.glb",
+	"res://assets/external_packs/itch_dark_dungeon/skullbound-obelisk.glb",
+	"res://assets/external_packs/itch_dark_dungeon/spiral-stone-dragon.glb",
+	"res://assets/external_packs/itch_dark_dungeon/tendrils-of-the-crack.glb",
+	"res://assets/external_packs/itch_dark_dungeon/verdant-spiral-obelisk.glb"
 ]
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
@@ -316,40 +327,11 @@ func _build_downloaded_nature_models() -> void:
 		if community_placed >= 12:
 			break
 
-	# 3DAssets.dev: GLBs CC0 autocontidos, filtrados por natureza e cenário medieval.
-	var curated_models := EXTERNAL_ASSET_LOADER.list_models("3dassets_dev")
-	var curated_rng := RandomNumberGenerator.new()
-	curated_rng.seed = 20261123
-	var nature_count := 0
-	var ruin_count := 0
-	for model_path in curated_models:
-		var file_name := model_path.get_file().to_lower()
-		var is_nature := "tree" in file_name or "forest" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "mushroom" in file_name or "crystal" in file_name
-		# O pack inclui peças submersas; só usar estruturas e props que também funcionem no Rio Prateado.
-		var is_ruin_prop := "doorway-frame" in file_name or "standing-column" in file_name or "fountain-basin" in file_name or "glowing-crystal-clust" in file_name or "cargo-crate" in file_name or "shipwreck-hull" in file_name or "wreck-on-the-sand" in file_name
-		if not is_nature and not is_ruin_prop:
-			continue
-		var position := Vector3.ZERO
-		var scale_factor := curated_rng.randf_range(0.8, 1.2)
-		if is_nature and nature_count < 12:
-			position = Vector3(-235.0 + float(nature_count % 4) * 12.0, 0.0, -225.0 + float(nature_count / 4) * 12.0)
-		elif is_ruin_prop and ruin_count < 8:
-			position = Vector3(72.0 + float(ruin_count % 4) * 9.0, 0.0, -142.0 - float(ruin_count / 4) * 9.0)
-		else:
-			continue
-		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, position, Vector3.ONE * scale_factor)
-		if instance != null:
-			instance.rotation.y = curated_rng.randf_range(0.0, TAU)
-			if is_nature:
-				nature_count += 1
-			else:
-				ruin_count += 1
-			await get_tree().process_frame
+	# 3DAssets.dev is placed as a complete pack by _build_visible_3dassets_showcase().
 
 
 func _build_visible_3dassets_showcase() -> void:
-	# Mostra os GLBs CC0 perto do início da aventura; antes eles ficavam
-	# apenas em regiões distantes e o jogador podia terminar o jogo sem vê-los.
+	# Mantém os sete modelos já expostos perto do começo da aventura.
 	var showcase := [
 		{"file": "low-poly-character-figures-knight-sword-raised-5e8b7e11.glb", "position": Vector3(-6.5, 0.0, -8.0), "scale": 1.25},
 		{"file": "low-poly-character-figures-villager-man-bfcdf400.glb", "position": Vector3(7.0, 0.0, -8.5), "scale": 1.25},
@@ -359,20 +341,52 @@ func _build_visible_3dassets_showcase() -> void:
 		{"file": "sunken-city-and-underwater-ruins-glowing-crystal-clust-897febc9.glb", "position": Vector3(-5.5, 0.0, -14.0), "scale": 1.8},
 		{"file": "sunken-city-and-underwater-ruins-fountain-basin-0149d19f.glb", "position": Vector3(0.0, 0.0, -23.0), "scale": 1.2}
 	]
-	var placed := 0
+	var already_showcased := PackedStringArray()
+	var initial_placed := 0
 	for item in showcase:
+		already_showcased.append(str(item.file))
 		var model_path: String = "res://assets/external_packs/3dassets_dev/" + str(item.file)
-		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, item.position, Vector3.ONE * item.scale)
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, item.position, Vector3.ONE * float(item.scale))
 		if instance != null:
-			instance.rotation.y = 0.35 if placed % 2 == 0 else -0.25
-			placed += 1
+			instance.rotation.y = 0.35 if initial_placed % 2 == 0 else -0.25
+			initial_placed += 1
 			await get_tree().process_frame
-	if placed == 0:
-		push_warning("Nenhum GLB do pacote 3DAssets.dev foi carregado no cenário inicial.")
-	print("3DASSETS_SHOWCASE_LOADED: ", placed, "/", showcase.size())
+
+	# Os demais treze GLBs formam uma área explorável de ruínas submersas.
+	# Assim todos os arquivos do pacote aparecem sem empilhar modelos na vila inicial.
+	var ruins := Node3D.new()
+	ruins.name = "RuinasSubmersasModelos3D"
+	ruins.position = Vector3(112.0, 0.0, -190.0)
+	add_child(ruins)
+	var model_paths := EXTERNAL_ASSET_LOADER.list_models("3dassets_dev")
+	var additional_placed := 0
+	for model_path in model_paths:
+		if already_showcased.has(model_path.get_file()):
+			continue
+		var column := additional_placed % 4
+		var row := floori(float(additional_placed) / 4.0)
+		var local_position := Vector3((float(column) - 1.5) * 9.0, 0.0, (float(row) - 1.5) * 9.0)
+		var filename := model_path.get_file().to_lower()
+		var scale_factor := 0.82
+		if filename.contains("starter-scene"):
+			scale_factor = 0.28
+		elif filename.contains("wreck-on-the-sand"):
+			scale_factor = 0.48
+		elif filename.contains("coral") or filename.contains("anemone") or filename.contains("kelp") or filename.contains("sea-grass") or filename.contains("sea-fan"):
+			scale_factor = 1.2
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(ruins, model_path, local_position, Vector3.ONE * scale_factor)
+		if instance != null:
+			instance.rotation.y = float(additional_placed % 4) * 0.27
+			additional_placed += 1
+			await get_tree().process_frame
+	_add_region_title("RUÍNAS SUBMERSAS", ruins.position + Vector3(0.0, 15.0, 0.0), Color("8fc4c5"))
+	var total_placed := initial_placed + additional_placed
+	print("3DASSETS_FULL_PACK_LOADED: ", total_placed, "/", model_paths.size())
+	if total_placed != model_paths.size():
+		push_warning("Nem todos os modelos 3DAssets.dev foram instanciados.")
 
 func _build_imported_plugin_models() -> void:
-	# Assets originais do Thrixel, com materiais preservados e filtro Aqueduct de musgo discreto.
+	# Modelos Thrixel e materiais Aqueduct preservados, com fallbacks para os assets Meshy.
 	var imported_count := 0
 	var plugin_colliders := 0
 	var ancient_tree := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
@@ -390,13 +404,37 @@ func _build_imported_plugin_models() -> void:
 		_animate_plugin_obelisk(rune_obelisk)
 	await get_tree().process_frame
 
-	# O altar Thrixel é montado dentro do puzzle do Rio Prateado, sem duplicar a estrutura.
+	# Criaturas Thrixel ficam como marcos visuais junto dos encontros do Rio Prateado.
+	var extra_creatures_loaded := 0
+	var wraith_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_drowned_wraith")
+	if wraith_scene != null:
+		var wraith_root := Node3D.new()
+		wraith_root.name = "ThrixelDrownedWraithLandmark"
+		wraith_root.position = Vector3(82.0, 0.0, -157.0)
+		add_child(wraith_root)
+		var wraith_model := wraith_scene.instantiate() as Node3D
+		if wraith_model != null:
+			wraith_model.scale = Vector3.ONE * 0.72
+			wraith_root.add_child(wraith_model)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(wraith_model, 0.10)
+			extra_creatures_loaded += 1
 	await get_tree().process_frame
 
-	# Os três baús de recompensa usam o cofre Thrixel em _build_river_treasure_chests().
+	var crab_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_river_crab")
+	if crab_scene != null:
+		var crab_root := Node3D.new()
+		crab_root.name = "ThrixelSilverRiverCrabLandmark"
+		crab_root.position = Vector3(31.0, 0.0, -113.0)
+		add_child(crab_root)
+		var crab_model := crab_scene.instantiate() as Node3D
+		if crab_model != null:
+			crab_model.scale = Vector3.ONE * 0.52
+			crab_root.add_child(crab_model)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(crab_model, 0.12)
+			extra_creatures_loaded += 1
 	await get_tree().process_frame
 
-	# Assets Meshy continuam com fallback local quando o plano impede exportar os GLBs.
+	# O altar Thrixel é montado dentro do puzzle do Rio Prateado; os baús usam o cofre original.
 	var meshy_gate := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
 	if meshy_gate == null:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
@@ -408,8 +446,8 @@ func _build_imported_plugin_models() -> void:
 		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
 
 	print("THRIXEL_WORLD_MODELS_LOADED: %d/2" % imported_count)
+	print("THRIXEL_ADDITIONAL_CREATURE_MODELS_LOADED: %d/2" % extra_creatures_loaded)
 	print("THRIXEL_STATIC_COLLIDERS: %d" % plugin_colliders)
-
 
 func _animate_plugin_obelisk(root: Node3D) -> int:
 	if root == null:
@@ -1342,6 +1380,7 @@ func _poll_itch_dungeon_streaming() -> void:
 	var all_finished := true
 	for model_path in ITCH_DUNGEON_MODEL_PATHS:
 		if not ResourceLoader.exists(model_path):
+			push_warning("Asset do itch.io ausente no pacote exportado: " + model_path)
 			continue
 		var status := ResourceLoader.load_threaded_get_status(model_path)
 		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
@@ -1350,16 +1389,27 @@ func _poll_itch_dungeon_streaming() -> void:
 			push_warning("Falha ao importar modelo do itch.io: " + model_path)
 	if not all_finished:
 		return
-	# Bloqueia reentrada do _process enquanto as três cenas são instanciadas.
 	itch_dungeon_assets_loaded = true
 	var dungeon := get_node_or_null("MasmorraDasCinzas") as Node3D
 	if not is_instance_valid(dungeon):
 		return
 	var placements := [
 		{"path": ITCH_DUNGEON_MODEL_PATHS[0], "name": "ItchRunicCircle", "position": Vector3(0.0, 0.18, -20.0), "scale": 0.72},
-		{"path": ITCH_DUNGEON_MODEL_PATHS[1], "name": "ItchObsidianSentinel", "position": Vector3(0.0, 0.0, -39.0), "scale": 0.78},
-		{"path": ITCH_DUNGEON_MODEL_PATHS[2], "name": "ItchCursedCodex", "position": Vector3(0.0, 1.8, -58.0), "scale": 0.62}
+		{"path": ITCH_DUNGEON_MODEL_PATHS[1], "name": "ItchObsidianSentinel", "position": Vector3(0.0, 0.0, -39.0), "scale": 0.62},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[2], "name": "ItchCursedCodex", "position": Vector3(0.0, 1.8, -58.0), "scale": 0.58},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[3], "name": "ItchCrackedGoldChalice", "position": Vector3(-7.0, 0.0, -20.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[4], "name": "ItchEmberboundCauldron", "position": Vector3(7.0, 0.0, -20.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[5], "name": "ItchEmbercrystalCitadel", "position": Vector3(-7.0, 0.0, -39.0), "scale": 0.42},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[6], "name": "ItchEmberstoneThrone", "position": Vector3(7.0, 0.0, -39.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[7], "name": "ItchEmbervaultReliquary", "position": Vector3(-7.0, 0.0, -58.0), "scale": 0.46},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[8], "name": "ItchNethergateRuins", "position": Vector3(7.0, 0.0, -58.0), "scale": 0.42},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[9], "name": "ItchShatteredKnight", "position": Vector3(-4.0, 0.0, -27.0), "scale": 0.58},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[10], "name": "ItchSkullboundObelisk", "position": Vector3(4.0, 0.0, -27.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[11], "name": "ItchSpiralStoneDragon", "position": Vector3(-4.0, 0.0, -46.0), "scale": 0.44},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[12], "name": "ItchTendrilsOfTheCrack", "position": Vector3(4.0, 0.0, -46.0), "scale": 0.50},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[13], "name": "ItchVerdantSpiralObelisk", "position": Vector3(0.0, 0.0, -63.0), "scale": 0.44}
 	]
+	var placed := 0
 	for placement in placements:
 		var packed := ResourceLoader.load_threaded_get(placement.path) as PackedScene
 		if packed == null:
@@ -1371,8 +1421,11 @@ func _poll_itch_dungeon_streaming() -> void:
 		instance.position = placement.position
 		instance.scale = Vector3.ONE * float(placement.scale)
 		dungeon.add_child(instance)
-	print("ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED: ", ITCH_DUNGEON_MODEL_PATHS.size())
-
+		placed += 1
+		await get_tree().process_frame
+	print("ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED: ", placed, "/", ITCH_DUNGEON_MODEL_PATHS.size())
+	if placed != ITCH_DUNGEON_MODEL_PATHS.size():
+		push_warning("Nem todos os modelos da masmorra foram instanciados.")
 
 func _build_ancient_dungeon() -> void:
 	var dungeon := Node3D.new()
@@ -2049,8 +2102,24 @@ func _spawn_whisper_stag_guardian() -> void:
 
 
 func _request_whisper_stag_model(guardian: Node3D) -> void:
-	# Existing Thrixel model is fetched once and cached locally; the procedural
-	# guardian remains visible if the player is offline or the service is down.
+	# Prefere o GLB já versionado no jogo: funciona offline e não depende do serviço.
+	const LOCAL_STAG_PATH := "res://assets/plugin_imports/thrixel/ancient_stag_guardian.glb"
+	if ResourceLoader.exists(LOCAL_STAG_PATH):
+		var local_scene := load(LOCAL_STAG_PATH) as PackedScene
+		if local_scene != null:
+			var local_instance := local_scene.instantiate() as Node3D
+			if local_instance != null:
+				local_instance.name = "ThrixelWhisperStag"
+				local_instance.position = Vector3(0.0, 0.54, 0.0)
+				local_instance.scale = Vector3.ONE * 0.72
+				guardian.add_child(local_instance)
+				PLUGIN_ASSET_LOADER.apply_biome_moss_filter(local_instance, 0.08)
+				for child in guardian.get_children():
+					if child is MeshInstance3D and child.name not in ["StagPedestal", "StagPedestalTrim"]:
+						child.visible = false
+				print("THRIXEL_STAG_LOCAL_MODEL_LOADED")
+				return
+	# Fallback online para instalações antigas que ainda não possuem o GLB local.
 	const STAG_URL := "https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024"
 	const CACHE_PATH := "user://cache/whisper_stag.glb"
 	if FileAccess.file_exists(CACHE_PATH):
@@ -2066,7 +2135,6 @@ func _request_whisper_stag_model(guardian: Node3D) -> void:
 	if request_error != OK:
 		push_warning("Não foi possível iniciar o download do Guardião Cervo: %s" % request_error)
 		request.queue_free()
-
 
 func _on_whisper_stag_model_downloaded(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, guardian: Node3D, request: HTTPRequest) -> void:
 	if is_instance_valid(request):

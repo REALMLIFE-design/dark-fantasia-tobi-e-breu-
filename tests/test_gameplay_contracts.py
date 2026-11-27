@@ -232,8 +232,13 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"MOCHILA"', self.world)
 
     def test_itch_io_dungeon_models_are_streamed_into_gameplay(self):
-        for model in ('cracked-runic-circle.glb', 'crimson-obsidian-sentinel.glb', 'cursed-codex.glb'):
+        for model in ('cracked-runic-circle.glb', 'crimson-obsidian-sentinel.glb', 'cursed-codex.glb',
+                      'cracked-gold-chalice.glb', 'emberbound-cauldron.glb', 'embercrystal-citadel.glb',
+                      'emberstone-throne.glb', 'embervault-reliquary.glb', 'nethergate-ruins.glb',
+                      'shattered-knight.glb', 'skullbound-obelisk.glb', 'spiral-stone-dragon.glb',
+                      'tendrils-of-the-crack.glb', 'verdant-spiral-obelisk.glb'):
             self.assertIn(model, self.world)
+        self.assertIn('ITCH_DUNGEON_MODEL_PATHS.size()', self.world)
         self.assertIn('func _start_itch_dungeon_streaming()', self.world)
         self.assertIn('ResourceLoader.load_threaded_request', self.world)
         self.assertIn('ResourceLoader.load_threaded_get', self.world)
@@ -1387,6 +1392,9 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("instantiate_by_name(", world)
         self.assertIn("list_models(pack_id)", loader)
         self.assertIn('print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")', world)
+        self.assertIn('EXTERNAL_ASSET_LOADER.list_models("3dassets_dev")', world)
+        self.assertIn('3DASSETS_FULL_PACK_LOADED', world)
+        self.assertIn('RuinasSubmersasModelos3D', world)
         self.assertIn("_apply_dream_biome_tint(instance)", world)
         self.assertIn("_apply_dream_biome_tint(bridge)", world)
         self.assertIn("_build_chestnut_grove(hamlet)", world)
@@ -1468,6 +1476,10 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn('"thrixel_river_coffer": "res://assets/plugin_imports/thrixel/silver_river_coffer.glb"', catalog)
         self.assertIn("fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512", workflow)
         self.assertIn('load_optional_scene("thrixel_river_coffer")', world)
+        self.assertIn('load_optional_scene("thrixel_drowned_wraith")', world)
+        self.assertIn('load_optional_scene("thrixel_river_crab")', world)
+        self.assertIn("THRIXEL_ADDITIONAL_CREATURE_MODELS_LOADED", world)
+        self.assertIn("THRIXEL_STAG_LOCAL_MODEL_LOADED", world)
         self.assertIn("plugin_coffers_loaded += 1", world)
         self.assertIn("THRIXEL_SILVER_RIVER_COFFER_PLACED", world)
         self.assertIn("THRIXEL_SILVER_RIVER_COFFER_PLACED: 3", workflow)
