@@ -24,8 +24,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 13', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -235,10 +235,10 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 13', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('save_version > 16', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
-        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)', self.world)
 
     def test_river_knights_have_a_distinct_silhouette_and_combat_profile(self):
         self.assertIn('elif enemy_kind == 5:', self.enemy)
@@ -310,7 +310,7 @@ class GameplayContracts(unittest.TestCase):
     def test_boss_fight_has_a_centered_mobile_health_bar(self):
         self.assertIn('set_anchors_preset(Control.PRESET_CENTER_TOP)', self.world)
         self.assertIn('boss_health_bar.max_value = 680', self.world)
-        self.assertIn('boss_hud_panel.visible = quest_stage == 12', self.world)
+        self.assertIn('boss_hud_panel.visible = quest_stage in [12, 18, 23, 28]', self.world)
         self.assertIn('boss_health_changed(maxi(0, hp), 680)', self.enemy)
         self.assertIn('river_boss_hp = clampi(current, 0, maximum)', self.world)
         self.assertIn('river_boss_hp', self.world)
@@ -352,7 +352,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 13', self.world)
+        self.assertIn('save_version > 16', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -564,7 +564,17 @@ class ProceduralTextureContracts(unittest.TestCase):
         project = (ROOT / 'project.godot').read_text(encoding='utf-8')
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         menu_scene = (ROOT / 'scenes/menu.tscn').read_text(encoding='utf-8')
-        self.assertIn('run/main_scene="res://scenes/menu.tscn"', project)
+        self.assertIn('run/main_scene="res://scenes/login.tscn"', project)
+        login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
+        lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
+        self.assertIn('MENU_SCENE := "res://scenes/menu.tscn"', login)
+        self.assertIn('Entrar com Google', login)
+        self.assertIn('JOGAR OFFLINE COMO VISITANTE', login)
+        self.assertIn('res://assets/ui/dark_world_key_art.svg', login)
+        self.assertIn('SALÃO DOS AVENTUREIROS', lobby)
+        self.assertIn('MAX_PLAYERS := 4', lobby)
+        self.assertIn('res://assets/ui/lobby_art.svg', lobby)
+        self.assertIn('res://assets/ui/loading_art.svg', (ROOT / 'scripts/world.gd').read_text(encoding='utf-8'))
         self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
         self.assertIn('func _start_story()', menu)
         self.assertIn('MODO HISTÓRIA', menu)
@@ -573,8 +583,99 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('AMIGOS', menu)
         self.assertIn('scripts/main_menu.gd', menu_scene)
 
+    def test_supabase_autoload_uses_valid_godot_ini_section(self):
+        project = (ROOT / 'project.godot').read_text(encoding='utf-8')
+        self.assertIn('[autoload]\n', project)
+        self.assertIn('SupabaseClient="*res://scripts/supabase_client.gd"', project)
+        self.assertNotIn(r'[autoload]\nSupabaseClient', project)
+
+    def test_prologue_cutscene_is_shown_once_and_persisted(self):
+        world = (ROOT / 'scripts/world.gd').read_text(encoding='utf-8')
+        self.assertIn('func _play_prologue_cutscene()', world)
+        self.assertIn('await _play_prologue_cutscene()', world)
+        self.assertIn('cfg.set_value("story", "prologue_seen", story_intro_seen)', world)
+        self.assertIn('Era uma vez, um coração de luz', world)
+        self.assertIn('O CORAÇÃO ROUBADO', world)
+
+    def test_chapter_three_memory_quest_and_temple_boss_are_persisted(self):
+        self.assertIn('quest_stage = 15', self.world)
+        self.assertIn('chapter3_memory_ids.size() >= 3', self.world)
+        self.assertIn('(%d/3)" % chapter3_memory_ids.size()', self.world)
+        self.assertNotIn('if quest_stage == 15 and river_relic_ids.size() >= 3', self.world)
+        self.assertIn('fale com a Guardiã para seguir às Ruínas', self.world)
+        self.assertIn('cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)', self.world)
+        self.assertIn('ChapterThreeMemory_%d', self.world)
+        self.assertIn('func _play_chapter_cutscene(', self.world)
+        self.assertIn('CAPÍTULO I • O CORAÇÃO ROUBADO', self.world)
+        self.assertIn('CAPÍTULO II • A FLORESTA CORROMPIDA', self.world)
+        self.assertIn('CAPÍTULO III • O RIO DAS MEMÓRIAS', self.world)
+        self.assertIn('CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos', self.world)
+        self.assertIn('CAPÍTULO IV CONCLUÍDO — fale com Azulan para seguir ao Cume das Nuvens', self.world)
+        self.assertNotIn('CAPÍTULO I • A FLORESTA CORROMPIDA', self.world)
+        self.assertIn('get_tree().paused = true', self.world)
+        self.assertIn('Guardiã do Templo', self.world)
+        self.assertIn('Guardiao_do_Templo', self.world)
+        self.assertIn('quest_stage == 18', self.world)
+        self.assertIn('"save_version", 16', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)', self.world)
+
+    def test_chapters_four_and_five_have_persistent_collectibles_and_final_boss(self):
+        self.assertIn('ForgottenTempleSeal_%d', self.world)
+        self.assertIn('chapter4_seal_ids', self.world)
+        self.assertIn('DawnShard_%d', self.world)
+        self.assertIn('chapter5_dawn_ids', self.world)
+        self.assertIn('ForgottenTempleGuardian', self.world)
+        self.assertIn('Silencio_Cinzento', self.world)
+        enemy = (ROOT / 'scripts/enemy.gd').read_text(encoding='utf-8')
+        self.assertIn('var enemy_title := ""', enemy)
+        self.assertIn('custom_boss_color', enemy)
+        self.assertIn('func _enter_final_boss_enrage()', enemy)
+        self.assertIn('var final_boss := enemy_title == "SILÊNCIO CINZENTO"', enemy)
+        self.assertIn('enemy_title", "SILÊNCIO CINZENTO"', self.world)
+        self.assertIn('CRÉDITOS', self.world)
+        self.assertIn('quest_stage = 30', self.world)
+
+    def test_supabase_lobby_room_and_friend_flows_are_connected(self):
+        client = (ROOT / 'scripts/supabase_client.gd').read_text(encoding='utf-8')
+        lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
+        self.assertIn('func create_game_room(', client)
+        self.assertIn('func join_room_by_code(', client)
+        self.assertIn('func list_room_members(', client)
+        self.assertIn('func find_profile_by_username(', client)
+        self.assertIn('func send_friend_request(', client)
+        self.assertIn('func list_friend_requests(', client)
+        self.assertIn('func respond_friend_request(', client)
+        self.assertIn('SupabaseClient.create_game_room', lobby)
+        self.assertIn('SupabaseClient.join_room_by_code', lobby)
+        self.assertIn('SupabaseClient.list_room_members', lobby)
+        self.assertIn('SupabaseClient.leave_game_room', lobby)
+        self.assertIn('_leave_active_room', lobby)
+        self.assertIn('SAIR / FECHAR SALA', lobby)
+        self.assertIn('_search_and_add_friend', lobby)
+        self.assertIn('_respond_to_friend_request', lobby)
+        self.assertIn('CAPÍTULO DA SALA', lobby)
+        self.assertIn('chapter_option.get_item_text', lobby)
+        self.assertIn('_copy_room_code', lobby)
+
+    def test_supabase_migrations_are_versioned_in_repository(self):
+        config = (ROOT / 'supabase/config.toml').read_text(encoding='utf-8')
+        self.assertIn('major_version = 17', config)
+        migration_dir = ROOT / 'supabase/migrations'
+        migrations = sorted(migration_dir.glob('*.sql'))
+        self.assertEqual(len(migrations), 7)
+        sql = '\\n'.join(path.read_text(encoding='utf-8') for path in migrations)
+        self.assertIn('enable row level security', sql.lower())
+        self.assertIn('private.join_room_by_code', sql)
+        self.assertIn('private.is_room_member', sql)
+        self.assertIn('game_rooms_owner_id_idx', sql)
+        self.assertIn('private.leave_game_room', sql)
+        self.assertIn('grant execute on function public.create_game_room', sql)
+        self.assertIn('supabase_realtime', sql)
+
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
+        login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
-        self.assertIn('login falso', menu)
-        self.assertIn('ainda não está ativa', menu)
+        self.assertIn('movimento e combate cooperativo ainda estão em desenvolvimento', menu)
+        self.assertIn('Nenhuma conta será simulada', login)
+        self.assertIn('TOBI_BREU_BOOT_READY', login)

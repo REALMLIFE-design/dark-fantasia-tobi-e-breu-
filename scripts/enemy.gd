@@ -13,6 +13,9 @@ var target: Node3D
 var patrol_origin := Vector3.ZERO
 var phase := 0.0
 var enemy_kind := 0
+var enemy_title := ""
+var custom_boss_color := Color(0.0, 0.0, 0.0, 0.0)
+var custom_boss_accent := Color(0.0, 0.0, 0.0, 0.0)
 var move_speed := 2.25
 var attack_damage := 9
 var attack_range := 1.65
@@ -79,6 +82,8 @@ func _ready() -> void:
 	_create_attack_telegraph()
 	var body := CapsuleMesh.new(); body.radius = 0.36; body.height = 0.88
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
+	if custom_boss_color.a > 0.0:
+		body_color = custom_boss_color
 	_add(body, Vector3(0, 0.78, 0), body_color)
 	var chest := SphereMesh.new(); chest.radius = 0.39; chest.height = 0.52
 	_add(chest, Vector3(0, 1.02, 0), body_color.lightened(0.12))
@@ -106,11 +111,11 @@ func _ready() -> void:
 	if enemy_kind == 1 or enemy_kind == 3:
 		for side in [-1.0, 1.0]:
 			var shoulder := SphereMesh.new(); shoulder.radius = 0.22 if enemy_kind == 1 else 0.29
-			_add_to(visual, shoulder, Vector3(side * 0.43, 1.18, 0.0), Color("59483c") if enemy_kind == 1 else Color("382d39"))
+			_add_to(visual, shoulder, Vector3(side * 0.43, 1.18, 0.0), Color("59483c") if enemy_kind == 1 else (custom_boss_color.darkened(0.22) if custom_boss_color.a > 0.0 else Color("382d39")))
 	if enemy_kind == 3 or enemy_kind == 4:
 		for side in [-1.0, 1.0]:
 			var horn: CylinderMesh = CylinderMesh.new(); horn.top_radius = 0.0; horn.bottom_radius = 0.13; horn.height = 0.48
-			_add_to(head_pivot, horn, Vector3(side * 0.25, 0.30, -0.02), Color("3b3035") if enemy_kind == 3 else Color("263f3b"))
+			_add_to(head_pivot, horn, Vector3(side * 0.25, 0.30, -0.02), (custom_boss_color.darkened(0.35) if custom_boss_color.a > 0.0 else Color("3b3035")) if enemy_kind == 3 else Color("263f3b"))
 	if enemy_kind == 4:
 		var crystal := SphereMesh.new(); crystal.radius = 0.12; crystal.height = 0.24
 		var crystal_m := StandardMaterial3D.new(); crystal_m.albedo_color = Color("8ce4b2"); crystal_m.emission_enabled = true; crystal_m.emission = Color("3ba879"); crystal_m.emission_energy_multiplier = 1.8
@@ -124,9 +129,9 @@ func _ready() -> void:
 			_add_to(visual, shard, Vector3(cos(float(shard_index) * TAU / 5.0) * 0.35, 0.20, sin(float(shard_index) * TAU / 5.0) * 0.35), Color("416b58"))
 	elif enemy_kind == 3:
 		var chest_plate := BoxMesh.new(); chest_plate.size = Vector3(0.58, 0.58, 0.16)
-		_add(chest_plate, Vector3(0, 0.94, 0.25), Color("3a303a"))
+		_add(chest_plate, Vector3(0, 0.94, 0.25), custom_boss_color.darkened(0.30) if custom_boss_color.a > 0.0 else Color("3a303a"))
 		var crest := SphereMesh.new(); crest.radius = 0.13
-		_add(crest, Vector3(0, 1.08, 0.35), Color("b45c55"))
+		_add(crest, Vector3(0, 1.08, 0.35), custom_boss_accent if custom_boss_accent.a > 0.0 else Color("b45c55"))
 	elif enemy_kind == 6:
 		var shell := SphereMesh.new(); shell.radius = 0.52; shell.height = 0.72
 		_add(shell, Vector3(0, 1.12, -0.10), Color("304b45"))
@@ -215,7 +220,8 @@ func _ready() -> void:
 	visual.set_meta("left_leg_node", left_leg); visual.set_meta("right_leg_node", right_leg)
 	visual.set_meta("head", head_pivot)
 	var label := Label3D.new()
-	if enemy_kind == 6: label.text = "LEVIATÃ DO LODO"
+	if not enemy_title.is_empty(): label.text = enemy_title
+	elif enemy_kind == 6: label.text = "LEVIATÃ DO LODO"
 	elif enemy_kind == 3: label.text = "GUARDIÃO DO SILÊNCIO"
 	elif enemy_kind == 4: label.text = "BRUXA DO PÂNTANO"
 	elif enemy_kind == 5: label.text = "CAVALEIRO AFOGADO"
@@ -253,6 +259,23 @@ func _enter_boss_enrage(notify_world: bool = true) -> void:
 		attack_telegraph_material.albedo_color = Color(1.0, 0.24, 0.035, 0.9)
 	if notify_world and get_parent().has_method("river_boss_phase_changed"):
 		get_parent().river_boss_phase_changed()
+
+func _enter_final_boss_enrage() -> void:
+	if boss_enraged:
+		return
+	boss_enraged = true
+	move_speed = 2.42
+	attack_damage = 40
+	attack_range = 3.0
+	boss_slam_radius = 6.2
+	base_visual_scale *= 1.07
+	if is_instance_valid(visual):
+		visual.scale = base_visual_scale
+	if is_instance_valid(attack_telegraph_material):
+		attack_telegraph_material.albedo_color = Color(1.0, 0.16, 0.38, 0.92)
+		attack_telegraph_material.emission = Color("e13e6b")
+		attack_telegraph_material.emission_energy_multiplier = 2.5
+
 
 func _add(mesh: Mesh, pos: Vector3, color: Color) -> void:
 	var mi := MeshInstance3D.new(); mi.mesh = mesh; mi.position = pos
@@ -292,16 +315,20 @@ func _create_attack_telegraph() -> void:
 	add_child(attack_telegraph)
 
 func _begin_attack() -> void:
-	var enraged := enemy_kind == 6 and hp <= 340
-	if enemy_kind == 6:
+	var final_boss := enemy_title == "SILÊNCIO CINZENTO"
+	var enraged := (enemy_kind == 6 and hp <= 340) or (final_boss and hp <= 380)
+	if enemy_kind == 6 or final_boss:
 		boss_attack_count += 1
 		boss_slam_active = boss_attack_count % 2 == 0
-		boss_slam_radius = 6.0 if enraged else 5.4
-	if enemy_kind == 6:
-		if boss_slam_active:
-			attack_windup_duration = 1.35 if enraged else 1.05
+		if final_boss:
+			boss_slam_radius = 6.2 if enraged else 5.3
 		else:
-			attack_windup_duration = 0.82 if enraged else 1.05
+			boss_slam_radius = 6.0 if enraged else 5.4
+	if enemy_kind == 6 or final_boss:
+		if boss_slam_active:
+			attack_windup_duration = 1.45 if final_boss and enraged else (1.2 if final_boss else (1.35 if enraged else 1.05))
+		else:
+			attack_windup_duration = 0.88 if final_boss and enraged else (1.0 if final_boss else (0.82 if enraged else 1.05))
 	else:
 		attack_windup_duration = 0.92 if enemy_kind == 8 else (0.78 if enemy_kind >= 3 else (0.38 if enemy_kind == 2 else (0.68 if enemy_kind == 5 else 0.56)))
 	attack_windup_timer = attack_windup_duration
@@ -314,6 +341,8 @@ func _begin_attack() -> void:
 		attack_timer += 0.45
 	if enemy_kind == 6:
 		attack_timer += 0.7 if not enraged else 0.25
+	elif final_boss:
+		attack_timer += 0.65 if not enraged else 0.35
 
 func _resolve_attack() -> void:
 	attack_telegraph.visible = false
@@ -385,8 +414,16 @@ func _physics_process(delta: float) -> void:
 			if attack_timer <= 0.0:
 				_begin_attack()
 		else:
-			velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
-			velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
+			var home_offset := patrol_origin - global_position
+			home_offset.y = 0.0
+			if d.length() >= 15.0 and home_offset.length() > 1.25:
+				var home_direction := home_offset.normalized()
+				velocity.x = move_toward(velocity.x, home_direction.x * move_speed * 0.72, 6.0 * delta)
+				velocity.z = move_toward(velocity.z, home_direction.z * move_speed * 0.72, 6.0 * delta)
+				look_at(Vector3(patrol_origin.x, global_position.y, patrol_origin.z))
+			else:
+				velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
+				velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
 	if crab_lunge_timer > 0.0:
 		crab_lunge_timer = maxf(0.0, crab_lunge_timer - delta)
 		velocity.x = crab_lunge_velocity.x
@@ -452,6 +489,8 @@ func take_damage(amount: int) -> void:
 			_enter_boss_enrage()
 		if get_parent().has_method("boss_health_changed"):
 			get_parent().boss_health_changed(maxi(0, hp), 680)
+	elif enemy_title == "SILÊNCIO CINZENTO" and hp <= 380:
+		_enter_final_boss_enrage()
 	hit_recoil = 0.16
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:

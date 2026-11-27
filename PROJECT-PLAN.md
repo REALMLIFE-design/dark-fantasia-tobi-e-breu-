@@ -93,3 +93,60 @@ Function: aprovar mapa, escala, câmera e orçamento. Form: validar modelos, mat
 - Raio do esmagamento: 5,4 m na fase normal e 6,0 m na fase enfurecida.
 - Janela de reação ajustada para o golpe especial; sem alteração do formato do save.
 - Espectro Afogado gerado no Thrixel com 9.000 triângulos e textura 1024; arquivo ainda não foi incorporado ao projeto Godot.
+
+
+## Continuação da campanha — 26/11/2026
+
+### Capítulo III — O Rio das Memórias
+- [x] Três memórias exclusivas, com persistência independente das relíquias opcionais do Rio.
+- [x] Retorno a Mestre Azulan, Guardiã do Templo, Guardião do Templo como chefe e recompensa.
+- [x] Cena “O Rio se Lembra”, “O Chamado do Rio” e “A Porta do Templo”.
+
+### Capítulo IV — O Templo Esquecido
+- [x] Três selos colecionáveis nas Ruínas Antigas, salvos individualmente.
+- [x] Oráculo das Ruínas, Guardião das Ruínas, barra de vida, recompensa e cena narrativa.
+
+### Capítulo V — O Último Amanhecer
+- [x] Três fragmentos colecionáveis no Cume das Nuvens, salvos individualmente.
+- [x] Guardião do Amanhecer, Silêncio Cinzento como chefe final, cena de escolha e créditos.
+- [x] Save v16 mantém a leitura dos saves anteriores e amplia a progressão até o estágio 30.
+
+### Serviços online
+- [x] Login/cadastro por e-mail no Supabase Auth.
+- [x] Busca de perfis e solicitações de amizade (enviar, aceitar e recusar).
+- [x] Criar sala, entrar por código, até quatro membros e atualização periódica do lobby.
+- [x] Quatro migrações SQL aplicadas foram copiadas para `supabase/migrations/` e documentadas em `supabase/README.md`.
+- [ ] Google OAuth: requer credenciais do provedor e fluxo nativo Android; não está habilitado.
+- [ ] Multiplayer dentro da partida: movimento, animações e combate sincronizados em tempo real ainda não existem.
+
+### Gates de qualidade ainda abertos
+- [ ] Confirmar a nova execução do workflow: testes, importação, boot headless, exportação APK e teste em emulador.
+- [ ] Testar em aparelho Android físico e ajustar desempenho/controles.
+- [ ] Integrar os modelos GLB já existentes no projeto Thrixel; o download externo não foi transferido para o repositório.
+- [ ] Finalizar áudio, VFX, pathfinding avançado, acessibilidade e opções gráficas.
+- [ ] Configurar Google OAuth quando as credenciais forem fornecidas.
+
+**Importante:** “implementado no código” não equivale a gate de runtime aprovado. Não declarar o jogo pronto até os testes do motor e Android terminarem.
+
+
+## Canon narrativo consolidado — cinco capítulos
+
+1. **O Coração Roubado** — prólogo, descoberta do roubo do Coração Rubro, primeira missão com Azulan e Guardião do Silêncio; cena “A Marca do Guardião”.
+2. **A Floresta Corrompida** — Pântano dos Ratos, três totens, Bruxa do Pântano e cena “O Último Totem”.
+3. **O Rio das Memórias** — Rio Prateado, Cavaleiros Afogados, Leviatã do Lodo, três memórias exclusivas, Guardiã do Templo e Guardião do Templo; cenas “O Rio se Lembra” e “A Porta do Templo”.
+4. **O Templo Esquecido** — três selos nas Ruínas Antigas, Oráculo das Ruínas e Guardião das Ruínas.
+5. **O Último Amanhecer** — três fragmentos no Cume das Nuvens, Guardião do Amanhecer, Silêncio Cinzento, escolha final e créditos.
+
+A numeração da campanha no HUD/cenas segue este canon. O Rio Prateado e o Leviatã fazem parte do Capítulo III, não constituem um capítulo extra.
+
+
+### Roteiro cinematográfico e encerramento com escolha — 26/11/2026
+- [x] Capítulo I: “A Marca do Guardião” após a queda do primeiro guardião.
+- [x] Capítulo II: cena de abertura ao receber a missão dos totens, “O Último Totem” ao purificar o terceiro totem e encerramento ao derrotar a Bruxa e retornar a Azulan.
+- [x] Capítulo III: “O Chamado do Rio”, “A Porta do Templo” e “A Verdade do Coração”.
+- [x] Capítulo IV: abertura do templo, queda do Guardião das Ruínas e revelação do Oráculo.
+- [x] Capítulo V: partida para o Cume, queda do Silêncio Cinzento e decisão final.
+- [x] A decisão final oferece dois epílogos diferentes e grava a escolha no save; saves antigos recebem escolha vazia e podem concluir a cena normalmente.
+- [ ] Revisar ritmo, legibilidade e execução de todas as cenas no Godot quando a etapa de testes for autorizada.
+
+**Nota desta rodada:** as alterações foram gravadas na branch de desenvolvimento sem executar testes, conforme solicitação. Os itens marcados como implementados descrevem código adicionado, não validação em runtime.

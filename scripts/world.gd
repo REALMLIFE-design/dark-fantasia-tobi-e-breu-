@@ -62,6 +62,9 @@ var swamp_totem_ids: Array[int] = []
 var swamp_boss_defeated := false
 var river_knights_defeated := 0
 var river_relic_ids: Array[int] = []
+var chapter3_memory_ids: Array[int] = []
+var chapter4_seal_ids: Array[int] = []
+var chapter5_dawn_ids: Array[int] = []
 var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
@@ -72,6 +75,8 @@ var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
 var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
+var story_intro_seen := false
+var final_choice := ""
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -96,6 +101,8 @@ func _ready() -> void:
 	_build_river_region()
 	_build_whisper_grove()
 	_build_outer_regions()
+	_build_chapter_three_memories()
+	_build_late_chapter_props()
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
 	_build_world_civilization()
@@ -126,14 +133,283 @@ func _ready() -> void:
 	elif quest_stage == 11: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
-	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+	elif quest_stage == 14: objective_label.text = "CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos"
+	elif quest_stage == 15: objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % chapter3_memory_ids.size()
+	elif quest_stage == 16: objective_label.text = "Objetivo: retorne a Mestre Azulan"
+	elif quest_stage == 17: objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
+	elif quest_stage == 18: objective_label.text = "Objetivo: derrote o Guardião do Templo"
+	elif quest_stage == 19: objective_label.text = "Objetivo: fale com a Guardiã do Templo"
+	elif quest_stage == 20: objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com a Guardiã para seguir às Ruínas"
+	elif quest_stage == 21: objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (%d/3)" % chapter4_seal_ids.size()
+	elif quest_stage == 22: objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
+	elif quest_stage == 23: objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
+	elif quest_stage == 24: objective_label.text = "Objetivo: retorne ao Oráculo das Ruínas"
+	elif quest_stage == 25: objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan para seguir ao Cume das Nuvens"
+	elif quest_stage == 26: objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (%d/3)" % chapter5_dawn_ids.size()
+	elif quest_stage == 27: objective_label.text = "Objetivo: encontre o Guardião do Amanhecer"
+	elif quest_stage == 28: objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
+	elif quest_stage == 29: objective_label.text = "Objetivo: retorne ao Guardião do Amanhecer"
+	else: objective_label.text = "CAPÍTULO V CONCLUÍDO — O Último Amanhecer"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	if quest_stage == 0 and not story_intro_seen:
+		await _play_prologue_cutscene()
+		story_intro_seen = true
+		_save_game()
+	if quest_stage == 30 and final_choice.is_empty():
+		await _play_final_choice_cutscene()
+		if final_choice == "memorias":
+			await _play_chapter_cutscene("EPÍLOGO • AS MEMÓRIAS VIVEM", "A luz que não esquece", "Tobi guarda as lembranças no Coração Rubro. Cada voz, cada amizade e cada perda passa a iluminar o mundo. Breu se aconchega ao lado dele, e juntos prometem proteger todas as histórias.")
+		else:
+			await _play_chapter_cutscene("EPÍLOGO • A LUZ LIBERTADA", "Um novo começo", "Tobi liberta a luz do Coração Rubro para que ela alcance cada canto do mundo. As memórias deixam de pertencer a um único coração e passam a viver nas árvores, nas águas e nas pessoas. Breu acompanha Tobi rumo a um futuro novo.")
+		await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
 	print("TOBI_BREU_BOOT_READY")
+
+
+
+func _play_chapter_cutscene(chapter_title: String, heading_text: String, narration_text: String) -> void:
+	var was_paused := get_tree().paused
+	get_tree().paused = true
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldChapterScene"
+	layer.layer = 120
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.80)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 280)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.97), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 16)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = chapter_title
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.text = heading_text
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.text = narration_text
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 100)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var continue_button := Button.new()
+	continue_button.custom_minimum_size = Vector2(0, 52)
+	continue_button.text = "CONTINUAR"
+	stack.add_child(continue_button)
+	panel.modulate.a = 0.0
+	var fade_in := layer.create_tween()
+	fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+	await fade_in.finished
+	await continue_button.pressed
+	var fade_out := layer.create_tween()
+	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
+	await fade_out.finished
+	layer.queue_free()
+	get_tree().paused = was_paused
+
+
+
+func _play_final_choice_cutscene() -> void:
+	var was_paused := get_tree().paused
+	get_tree().paused = true
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldFinalChoice"
+	layer.layer = 121
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.84)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 340)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.98), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 14)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = "CAPÍTULO V • O ÚLTIMO AMANHECER"
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.text = "O coração e a escolha"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.text = "O Coração Rubro voltou a pulsar. Tobi percebe que sua luz pode restaurar o mundo, mas as lembranças guardadas nele pertencem a todos. O que ele deve fazer?"
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 92)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var choices := HBoxContainer.new()
+	choices.add_theme_constant_override("separation", 12)
+	stack.add_child(choices)
+	var result := {"value": ""}
+	var preserve_button := Button.new()
+	preserve_button.text = "GUARDAR AS MEMÓRIAS"
+	preserve_button.custom_minimum_size = Vector2(0, 58)
+	preserve_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preserve_button.pressed.connect(func(): result["value"] = "memorias")
+	choices.add_child(preserve_button)
+	var release_button := Button.new()
+	release_button.text = "LIBERTAR A LUZ"
+	release_button.custom_minimum_size = Vector2(0, 58)
+	release_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	release_button.pressed.connect(func(): result["value"] = "luz")
+	choices.add_child(release_button)
+	panel.modulate.a = 0.0
+	var fade_in := layer.create_tween()
+	fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+	await fade_in.finished
+	while str(result["value"]).is_empty():
+		await get_tree().process_frame
+	final_choice = str(result["value"])
+	_save_game()
+	var fade_out := layer.create_tween()
+	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
+	await fade_out.finished
+	layer.queue_free()
+	get_tree().paused = was_paused
+
+
+func _play_prologue_cutscene() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldPrologue"
+	layer.layer = 120
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.78)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 260)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.97), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 16)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = "CAPÍTULO I  •  O CORAÇÃO ROUBADO"
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 100)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var continue_button := Button.new()
+	continue_button.custom_minimum_size = Vector2(0, 52)
+	continue_button.text = "CONTINUAR"
+	stack.add_child(continue_button)
+	var scenes := [
+		{"title": "Era uma vez, um coração de luz…", "body": "No centro de um mundo de florestas antigas e rios encantados brilhava o Coração Rubro. Sua luz mantinha o equilíbrio entre todas as criaturas."},
+		{"title": "A noite encontrou uma brecha", "body": "Então, uma sombra conhecida como Silêncio Cinzento roubou o coração. As cores começaram a desaparecer, e criaturas antes tranquilas foram tomadas pela corrupção."},
+		{"title": "Dois amigos, uma grande jornada", "body": "Tobi, acompanhado por seu leal amigo Breu, recebe de Mestre Azulan a missão de seguir as pistas, restaurar a luz e descobrir o que aconteceu com o Coração Rubro."}
+	]
+	for index in range(scenes.size()):
+		heading.text = str(scenes[index]["title"])
+		narration.text = str(scenes[index]["body"])
+		continue_button.text = "COMEÇAR A JORNADA" if index == scenes.size() - 1 else "CONTINUAR"
+		panel.modulate.a = 0.0
+		var fade_in := layer.create_tween()
+		fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+		await fade_in.finished
+		await continue_button.pressed
+		if index < scenes.size() - 1:
+			var fade_out := layer.create_tween()
+			fade_out.tween_property(panel, "modulate:a", 0.0, 0.22)
+			await fade_out.finished
+	layer.queue_free()
 
 
 func _create_loading_screen() -> void:
@@ -146,10 +422,16 @@ func _create_loading_screen() -> void:
 	loading_root.name = "LoadingRoot"
 	loading_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	loading_layer.add_child(loading_root)
-	var backdrop := ColorRect.new()
+	var backdrop := TextureRect.new()
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.color = Color("080b0d")
+	backdrop.texture = load("res://assets/ui/loading_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	loading_root.add_child(backdrop)
+	var backdrop_shade := ColorRect.new()
+	backdrop_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop_shade.color = Color(0.015, 0.025, 0.035, 0.58)
+	loading_root.add_child(backdrop_shade)
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
 	frame.position = Vector2(-190.0, -205.0)
@@ -1202,6 +1484,51 @@ func _make_person(label: String, pos: Vector3, is_master := false) -> Node3D:
 	_box(root,"Legs",Vector3(0,0.28,0),Vector3(0.55,0.55,0.42),Color("403a38"))
 	return root
 
+func _build_chapter_three_memories() -> void:
+	var positions := [Vector3(42.0, 1.2, -158.0), Vector3(58.0, 1.2, -167.0), Vector3(73.0, 1.2, -158.0)]
+	for i in range(3):
+		var memory := _sphere(self, "ChapterThreeMemory_%d" % i, positions[i], 0.72, Color("75b9c2"), 1.8)
+		memory.visible = quest_stage == 15 and not chapter3_memory_ids.has(i)
+		var glow := _sphere(memory, "MemoryCore", Vector3(0.0, 0.55, 0.0), 0.28, Color("c8f0d8"), 0.6)
+		glow.material_override = _painter_mat(Color("c8f0d8"), 3.0, 0.08)
+
+
+func _reveal_chapter_three_memories() -> void:
+	for i in range(3):
+		var memory := get_node_or_null("ChapterThreeMemory_%d" % i)
+		if memory and not chapter3_memory_ids.has(i):
+			memory.visible = true
+
+
+func _build_late_chapter_props() -> void:
+	var seal_positions := [Vector3(151.0, 1.0, -64.0), Vector3(164.0, 1.0, -81.0), Vector3(177.0, 1.0, -64.0)]
+	for i in range(3):
+		var seal := _sphere(self, "ForgottenTempleSeal_%d" % i, seal_positions[i], 0.82, Color("b9a16d"), 1.6)
+		seal.visible = quest_stage == 21 and not chapter4_seal_ids.has(i)
+		var seal_core := _sphere(seal, "SealCore", Vector3(0.0, 0.55, 0.0), 0.26, Color("f3d9a0"), 0.5)
+		seal_core.material_override = _painter_mat(Color("f3d9a0"), 3.0, 0.06)
+	var dawn_positions := [Vector3(-15.0, 1.0, -324.0), Vector3(0.0, 1.0, -343.0), Vector3(15.0, 1.0, -324.0)]
+	for i in range(3):
+		var shard := _sphere(self, "DawnShard_%d" % i, dawn_positions[i], 0.78, Color("e7c98a"), 1.7)
+		shard.visible = quest_stage == 26 and not chapter5_dawn_ids.has(i)
+		var shard_core := _sphere(shard, "DawnCore", Vector3(0.0, 0.52, 0.0), 0.24, Color("fff0bf"), 0.48)
+		shard_core.material_override = _painter_mat(Color("fff0bf"), 3.0, 0.05)
+
+
+func _reveal_chapter4_seals() -> void:
+	for i in range(3):
+		var seal := get_node_or_null("ForgottenTempleSeal_%d" % i)
+		if seal and not chapter4_seal_ids.has(i):
+			seal.visible = true
+
+
+func _reveal_chapter5_dawn_shards() -> void:
+	for i in range(3):
+		var shard := get_node_or_null("DawnShard_%d" % i)
+		if shard and not chapter5_dawn_ids.has(i):
+			shard.visible = true
+
+
 func _build_npcs() -> void:
 	var npc := _make_person("Mestre Azulan",Vector3(2,0,-4),true)
 	npc.set_meta("interact_name","Mestre Azulan")
@@ -1223,6 +1550,33 @@ func _build_npcs() -> void:
 	river_sign.font_size = 42
 	river_sign.modulate = Color("b7e0d9")
 	river_guardian.add_child(river_sign)
+	var temple_keeper := _make_person("Guardiã do Templo", Vector3(165.0, 0.0, -318.0), true)
+	temple_keeper.set_meta("interact_name", "Guardiã do Templo")
+	var temple_sign := Label3D.new()
+	temple_sign.text = "GUARDIÃ DO TEMPLO"
+	temple_sign.position = Vector3(0.0, 3.5, 0.0)
+	temple_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	temple_sign.font_size = 38
+	temple_sign.modulate = Color("e7a1aa")
+	temple_keeper.add_child(temple_sign)
+	var ruins_oracle := _make_person("Oráculo das Ruínas", Vector3(164.0, 0.0, -47.0), true)
+	ruins_oracle.set_meta("interact_name", "Oráculo das Ruínas")
+	var oracle_sign := Label3D.new()
+	oracle_sign.text = "ORÁCULO DAS RUÍNAS"
+	oracle_sign.position = Vector3(0.0, 3.5, 0.0)
+	oracle_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	oracle_sign.font_size = 38
+	oracle_sign.modulate = Color("d8c79e")
+	ruins_oracle.add_child(oracle_sign)
+	var dawn_guardian := _make_person("Guardião do Amanhecer", Vector3(0.0, 0.0, -315.0), true)
+	dawn_guardian.set_meta("interact_name", "Guardião do Amanhecer")
+	var dawn_sign := Label3D.new()
+	dawn_sign.text = "GUARDIÃO DO AMANHECER"
+	dawn_sign.position = Vector3(0.0, 3.5, 0.0)
+	dawn_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	dawn_sign.font_size = 34
+	dawn_sign.modulate = Color("f0d69b")
+	dawn_guardian.add_child(dawn_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -1304,6 +1658,57 @@ func _build_enemies() -> void:
 		if quest_stage < 9:
 			crab.visible = false
 			crab.set_physics_process(false)
+	var temple_guardian := CharacterBody3D.new()
+	temple_guardian.set_script(ENEMY_SCRIPT)
+	temple_guardian.name = "Guardiao_do_Templo"
+	temple_guardian.position = Vector3(165.0, 0.0, -337.0)
+	temple_guardian.set("enemy_kind", 3)
+	temple_guardian.set("enemy_title", "GUARDIÃO DO TEMPLO")
+	temple_guardian.set("custom_boss_color", Color("6f7764"))
+	temple_guardian.set("custom_boss_accent", Color("d3b979"))
+	add_child(temple_guardian)
+	temple_guardian.set("hp", 520)
+	temple_guardian.set("attack_damage", 24)
+	temple_guardian.set("move_speed", 1.8)
+	temple_guardian.set("attack_range", 2.4)
+	enemies.append(temple_guardian)
+	if quest_stage != 18:
+		temple_guardian.visible = false
+		temple_guardian.set_physics_process(false)
+	var forgotten_guardian := CharacterBody3D.new()
+	forgotten_guardian.set_script(ENEMY_SCRIPT)
+	forgotten_guardian.name = "ForgottenTempleGuardian"
+	forgotten_guardian.position = Vector3(164.0, 0.0, -94.0)
+	forgotten_guardian.set("enemy_kind", 3)
+	forgotten_guardian.set("enemy_title", "GUARDIÃO DAS RUÍNAS")
+	forgotten_guardian.set("custom_boss_color", Color("79664d"))
+	forgotten_guardian.set("custom_boss_accent", Color("d9b66c"))
+	add_child(forgotten_guardian)
+	forgotten_guardian.set("hp", 560)
+	forgotten_guardian.set("attack_damage", 26)
+	forgotten_guardian.set("move_speed", 1.85)
+	forgotten_guardian.set("attack_range", 2.5)
+	enemies.append(forgotten_guardian)
+	if quest_stage != 23:
+		forgotten_guardian.visible = false
+		forgotten_guardian.set_physics_process(false)
+	var silence_boss := CharacterBody3D.new()
+	silence_boss.set_script(ENEMY_SCRIPT)
+	silence_boss.name = "Silencio_Cinzento"
+	silence_boss.position = Vector3(0.0, 0.0, -345.0)
+	silence_boss.set("enemy_kind", 3)
+	silence_boss.set("enemy_title", "SILÊNCIO CINZENTO")
+	silence_boss.set("custom_boss_color", Color("343443"))
+	silence_boss.set("custom_boss_accent", Color("bb5367"))
+	add_child(silence_boss)
+	silence_boss.set("hp", 760)
+	silence_boss.set("attack_damage", 32)
+	silence_boss.set("move_speed", 2.05)
+	silence_boss.set("attack_range", 2.75)
+	enemies.append(silence_boss)
+	if quest_stage != 28:
+		silence_boss.visible = false
+		silence_boss.set_physics_process(false)
 
 func _get_player_level() -> int:
 	return 1 + int(maxi(0, xp) / 100)
@@ -1611,10 +2016,12 @@ func _build_hud() -> void:
 	prompt_label.add_theme_color_override("font_color", Color("f0d39a"))
 	ui_root.add_child(prompt_label)
 	toast_label = Label.new()
-	toast_label.position = Vector2(18, 350)
-	toast_label.size = Vector2(440, 42)
+	var toast_viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	toast_label.position = Vector2(18, toast_viewport_size.y * 0.48)
+	toast_label.size = Vector2(minf(440.0, toast_viewport_size.x - 36.0), minf(104.0, toast_viewport_size.y * 0.20))
 	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	toast_label.add_theme_font_size_override("font_size", 11)
+	toast_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	toast_label.add_theme_font_size_override("font_size", 13)
 	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
 	ui_root.add_child(toast_label)
 
@@ -2362,11 +2769,30 @@ func _process(delta: float) -> void:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
 		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
 	if boss_hud_panel:
-		boss_hud_panel.visible = quest_stage == 12
+		boss_hud_panel.visible = quest_stage in [12, 18, 23, 28]
 		if quest_stage == 12:
 			var river_boss := get_node_or_null("Leviata_do_Lodo")
 			if river_boss and boss_health_bar:
+				boss_health_bar.max_value = 680
 				boss_health_bar.value = maxf(0.0, float(river_boss.get("hp")))
+		elif quest_stage == 18:
+			var temple_boss := get_node_or_null("Guardiao_do_Templo")
+			if temple_boss and boss_health_bar:
+				boss_health_bar.max_value = 520
+				boss_health_bar.value = maxf(0.0, float(temple_boss.get("hp")))
+				boss_health_label.text = "GUARDIÃO DO TEMPLO  •  %d/520" % int(temple_boss.get("hp"))
+		elif quest_stage == 23:
+			var ruins_boss := get_node_or_null("ForgottenTempleGuardian")
+			if ruins_boss and boss_health_bar:
+				boss_health_bar.max_value = 560
+				boss_health_bar.value = maxf(0.0, float(ruins_boss.get("hp")))
+				boss_health_label.text = "GUARDIÃO DAS RUÍNAS  •  %d/560" % int(ruins_boss.get("hp"))
+		elif quest_stage == 28:
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss and boss_health_bar:
+				boss_health_bar.max_value = 760
+				boss_health_bar.value = maxf(0.0, float(final_boss.get("hp")))
+				boss_health_label.text = "SILÊNCIO CINZENTO  •  %d/760" % int(final_boss.get("hp"))
 	if not is_instance_valid(player): return
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
@@ -2376,6 +2802,27 @@ func _process(delta: float) -> void:
 	var shrine_distance := player.global_position.distance_to(shrine.global_position) if shrine else 999.0
 	var river_npc := get_node_or_null("Guardião do Rio")
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
+	var temple_npc := get_node_or_null("Guardiã do Templo")
+	var temple_distance := player.global_position.distance_to(temple_npc.global_position) if temple_npc else 999.0
+	var ruins_oracle := get_node_or_null("Oráculo das Ruínas")
+	var ruins_oracle_distance := player.global_position.distance_to(ruins_oracle.global_position) if ruins_oracle else 999.0
+	var dawn_guardian := get_node_or_null("Guardião do Amanhecer")
+	var dawn_guardian_distance := player.global_position.distance_to(dawn_guardian.global_position) if dawn_guardian else 999.0
+	var chapter3_memory_distance := 999.0
+	var chapter4_seal_distance := 999.0
+	var chapter5_dawn_distance := 999.0
+	for memory_id in range(3):
+		var memory_node := get_node_or_null("ChapterThreeMemory_%d" % memory_id)
+		if memory_node and memory_node.visible:
+			chapter3_memory_distance = minf(chapter3_memory_distance, player.global_position.distance_to(memory_node.global_position))
+	for seal_id in range(3):
+		var seal_node := get_node_or_null("ForgottenTempleSeal_%d" % seal_id)
+		if seal_node and seal_node.visible:
+			chapter4_seal_distance = minf(chapter4_seal_distance, player.global_position.distance_to(seal_node.global_position))
+	for dawn_id in range(3):
+		var dawn_node := get_node_or_null("DawnShard_%d" % dawn_id)
+		if dawn_node and dawn_node.visible:
+			chapter5_dawn_distance = minf(chapter5_dawn_distance, player.global_position.distance_to(dawn_node.global_position))
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -2399,6 +2846,12 @@ func _process(delta: float) -> void:
 	elif nearest_guild_relic_distance < 3.8: prompt_label.text = "E: RECUPERAR SELO ANTIGO"
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
+	elif temple_distance < 4.5 and quest_stage >= 17: prompt_label.text = "E: FALAR COM A GUARDIÃ DO TEMPLO"
+	elif ruins_oracle_distance < 4.5 and quest_stage >= 22 and quest_stage <= 24: prompt_label.text = "E: FALAR COM O ORÁCULO DAS RUÍNAS"
+	elif dawn_guardian_distance < 4.5 and quest_stage >= 27: prompt_label.text = "E: FALAR COM O GUARDIÃO DO AMANHECER"
+	elif chapter3_memory_distance < 3.2: prompt_label.text = "E: RECUPERAR ECO DE MEMÓRIA"
+	elif chapter4_seal_distance < 3.2: prompt_label.text = "E: RECUPERAR SELO DO TEMPLO ESQUECIDO"
+	elif chapter5_dawn_distance < 3.2: prompt_label.text = "E: RECUPERAR FRAGMENTO DO AMANHECER"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
@@ -2518,7 +2971,7 @@ func _interact() -> void:
 	if guild_board and player.global_position.distance_to(guild_board.global_position) < 4.5:
 		if not guild_contract_started:
 			guild_contract_started = true
-			toast_label.text = "Guilda: recupere os três selos perdidos na Caverna, na Masmorra e no Castelo."
+			toast_label.text = "Mestre da Guilda: Três selos desapareceram quando o Silêncio Cinzento atravessou estas terras. Um ecoa na Caverna do Eco, outro repousa na Masmorra das Cinzas e o último está no Castelo do Silêncio. Traga os três de volta e a Guilda recompensará sua coragem."
 		elif guild_relic_ids.size() >= 3 and not guild_contract_claimed:
 			guild_contract_claimed = true
 			_grant_xp(240)
@@ -2528,14 +2981,14 @@ func _interact() -> void:
 			toast_label.text = "CONTRATO DA GUILDA CONCLUÍDO! +240 XP • 8 Fragmentos • 5 Essências • 3 Poções"
 			_update_inventory()
 		else:
-			toast_label.text = "Guilda: selos recuperados %d/3. Explore as regiões marcadas no mapa." % guild_relic_ids.size()
+			toast_label.text = "Mestre da Guilda: Você encontrou %d de 3 selos. Cada um guarda a lembrança de um lugar que resistiu à escuridão. Continue explorando; nenhum selo deve ficar para trás." % guild_relic_ids.size()
 		_save_game()
 		return
 	for relic_id in range(3):
 		var guild_relic := get_node_or_null("GuildRelic_%d" % relic_id)
 		if guild_relic and guild_relic.visible and player.global_position.distance_to(guild_relic.global_position) < 3.8:
 			if not guild_contract_started:
-				toast_label.text = "Um selo antigo. A Guilda dos Vigias pode saber o que fazer com ele."
+				toast_label.text = "Breu sente uma lembrança presa dentro do selo. Talvez a Guilda dos Vigias saiba como libertá-la. Leve-o ao quadro na Cidade de Pedra."
 				return
 			guild_relic_ids.append(relic_id)
 			guild_relic_ids.sort()
@@ -2555,9 +3008,9 @@ func _interact() -> void:
 	var stag_guardian := get_node_or_null("WhisperStagGuardian")
 	if stag_guardian and player.global_position.distance_to(stag_guardian.global_position) < 4.5:
 		if whisper_lantern_ids.size() < 3:
-			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
+			toast_label.text = "O Guardião Cervo permanece adormecido. Três lanternas guardam as lembranças do bosque. Acenda cada uma e deixe que a luz encontre o caminho de volta até ele."
 		elif whisper_guardian_reward_claimed:
-			toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
+			toast_label.text = "O Guardião Cervo inclina a cabeça. Uma brisa atravessa o bosque e, por um instante, Tobi ouve o som de uma floresta que ainda não foi corrompida. A bênção antiga já vive em você."
 		else:
 			whisper_guardian_reward_claimed = true
 			_grant_xp(90)
@@ -2568,6 +3021,67 @@ func _interact() -> void:
 			_update_inventory()
 			_save_game()
 		return
+	if quest_stage == 21:
+		for seal_id in range(3):
+			var seal := get_node_or_null("ForgottenTempleSeal_%d" % seal_id)
+			if seal and seal.visible and player.global_position.distance_to(seal.global_position) < 3.2:
+				chapter4_seal_ids.append(seal_id)
+				chapter4_seal_ids.sort()
+				seal.visible = false
+				_grant_xp(35)
+				shards += 1
+				toast_label.text = "SELO DO TEMPLO ESQUECIDO RECUPERADO • %d/3" % chapter4_seal_ids.size()
+				objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (%d/3)" % chapter4_seal_ids.size()
+				if chapter4_seal_ids.size() >= 3:
+					quest_stage = 22
+					quest_text = "Os selos despertaram — encontre o Oráculo"
+					objective_label.text = "Objetivo: encontre o Oráculo das Ruínas"
+					toast_label.text = "Os três selos se alinham. Uma voz antiga chama por você nas Ruínas Antigas."
+					call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "As ruínas despertam", "Os selos revelam que o Templo do Coração foi erguido sobre um santuário ainda mais antigo. O Oráculo conhece a verdade que Azulan não contou.")
+				_update_inventory()
+				_save_game()
+				return
+	if quest_stage == 26:
+		for shard_id in range(3):
+			var dawn_shard := get_node_or_null("DawnShard_%d" % shard_id)
+			if dawn_shard and dawn_shard.visible and player.global_position.distance_to(dawn_shard.global_position) < 3.2:
+				chapter5_dawn_ids.append(shard_id)
+				chapter5_dawn_ids.sort()
+				dawn_shard.visible = false
+				_grant_xp(40)
+				dark_essence += 1
+				toast_label.text = "FRAGMENTO DO AMANHECER RECUPERADO • %d/3" % chapter5_dawn_ids.size()
+				objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (%d/3)" % chapter5_dawn_ids.size()
+				if chapter5_dawn_ids.size() >= 3:
+					quest_stage = 27
+					quest_text = "Os fragmentos foram reunidos — encontre o Guardião do Amanhecer"
+					objective_label.text = "Objetivo: encontre o Guardião do Amanhecer"
+					toast_label.text = "O último amanhecer se aproxima. O Guardião aguarda no Cume das Nuvens."
+					call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A luz que restou", "Três fragmentos se unem e apontam para o Cume das Nuvens. Lá, o Silêncio Cinzento espera pela última chama do mundo.")
+				_update_inventory()
+				_save_game()
+				return
+	if quest_stage == 15:
+		for memory_id in range(3):
+			var chapter_memory := get_node_or_null("ChapterThreeMemory_%d" % memory_id)
+			if chapter_memory and chapter_memory.visible and player.global_position.distance_to(chapter_memory.global_position) < 3.2:
+				if not chapter3_memory_ids.has(memory_id):
+					chapter3_memory_ids.append(memory_id)
+					chapter3_memory_ids.sort()
+					chapter_memory.visible = false
+					_grant_xp(30)
+					dark_essence += 1
+					toast_label.text = "MEMÓRIA DO CORAÇÃO RECUPERADA • +30 XP • Essência +1 (%d/3)" % chapter3_memory_ids.size()
+					objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (%d/3)" % chapter3_memory_ids.size()
+					if chapter3_memory_ids.size() >= 3:
+						quest_stage = 16
+						quest_text = "As três memórias foram reunidas — retorne a Azulan"
+						objective_label.text = "Objetivo: retorne a Mestre Azulan"
+						toast_label.text = "O RIO SE LEMBRA • As três memórias revelam a trilha até o Templo do Coração."
+						call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O rio se lembra", "As águas devolvem três lembranças: uma voz antiga, uma promessa e o brilho do Coração Rubro. A trilha termina diante do Templo do Coração.")
+					_update_inventory()
+					_save_game()
+				return
 	for i in range(3):
 		var relic := get_node_or_null("RiverMemoryRelic_%d" % i)
 		if relic and relic.visible and player.global_position.distance_to(relic.global_position) < 3.2:
@@ -2631,6 +3145,7 @@ func _interact() -> void:
 						quest_text = "A Bruxa do Pântano despertou"
 						objective_label.text = "Objetivo: derrote a Bruxa do Pântano no altar ao norte"
 						toast_label.text = "Os três selos se romperam. A Bruxa despertou no altar!"
+						call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "O último totem", "O último selo se apaga. Do fundo do pântano, a Bruxa desperta e a corrupção se reúne ao redor de seu cajado.")
 					_update_quest()
 					_save_game()
 				else:
@@ -2650,20 +3165,117 @@ func _interact() -> void:
 			toast_label.text = "O santuário está em silêncio."
 		return
 	var river_npc := get_node_or_null("Guardião do Rio")
+	var temple_npc := get_node_or_null("Guardiã do Templo")
+	if temple_npc and player.global_position.distance_to(temple_npc.global_position) < 4.5 and quest_stage >= 17:
+		if quest_stage == 17:
+			quest_stage = 18
+			quest_text = "O Guardião protege o Coração Rubro"
+			var temple_boss := get_node_or_null("Guardiao_do_Templo")
+			if temple_boss:
+				temple_boss.visible = true
+				temple_boss.set_physics_process(true)
+				player.global_position = Vector3(165.0, 0.0, -326.0)
+			objective_label.text = "Objetivo: derrote o Guardião do Templo"
+			toast_label.text = "Guardiã: o Coração está adiante. Mas primeiro, enfrente quem jurou protegê-lo."
+			_save_game()
+		elif quest_stage == 19:
+			quest_stage = 20
+			quest_text = "O Templo do Coração foi protegido"
+			objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com a Guardiã para seguir às Ruínas"
+			toast_label.text = "A Guardiã agradece. O caminho para o Coração Rubro está aberto. +220 XP • 8 Fragmentos Rubros"
+			_grant_xp(220)
+			shards += 8
+			potions += 2
+			_update_inventory()
+			_save_game()
+		elif quest_stage == 20:
+			quest_stage = 21
+			_reveal_chapter4_seals()
+			quest_text = "Recupere os três Selos do Templo Esquecido"
+			objective_label.text = "Objetivo: recupere os 3 Selos do Templo Esquecido (0/3)"
+			toast_label.text = "Guardiã: o Coração não pode ser tocado antes que as ruínas antigas sejam purificadas. Procure os três selos."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "O templo sob as ruínas", "A Guardiã revela uma passagem esquecida. Três selos antigos protegem o caminho e precisam ser reunidos antes que a última porta se abra.")
+			_save_game()
+		else:
+			toast_label.text = "Guardiã: o Coração Rubro ainda precisa de proteção."
+		_update_quest()
+		return
+	var ruins_oracle := get_node_or_null("Oráculo das Ruínas")
+	if ruins_oracle and player.global_position.distance_to(ruins_oracle.global_position) < 4.5 and quest_stage >= 22 and quest_stage <= 24:
+		if quest_stage == 22:
+			quest_stage = 23
+			var ruins_boss := get_node_or_null("ForgottenTempleGuardian")
+			if ruins_boss:
+				ruins_boss.visible = true
+				ruins_boss.set_physics_process(true)
+				ruins_boss.set("hp", 560)
+			player.global_position = Vector3(164.0, 0.0, -88.0)
+			quest_text = "O Guardião das Ruínas protege o selo final"
+			objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
+			toast_label.text = "Oráculo das Ruínas: A pedra se lembra de todos que passaram por aqui. O guardião não é mau; apenas cumpre uma promessa antiga. Vença-o sem esquecer por que ele luta."
+			_save_game()
+		elif quest_stage == 24:
+			quest_stage = 25
+			quest_text = "O Templo Esquecido foi purificado"
+			objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan"
+			toast_label.text = "Oráculo: as ruínas estão em paz. O último caminho leva ao Cume das Nuvens."
+			_grant_xp(260)
+			shards += 10
+			potions += 2
+			_update_inventory()
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "A verdade das ruínas", "O Oráculo revela que o Silêncio Cinzento foi um guardião corrompido pelo medo de perder a luz. A última batalha acontecerá ao amanhecer.")
+			_save_game()
+		_update_quest()
+		return
+	var dawn_npc := get_node_or_null("Guardião do Amanhecer")
+	if dawn_npc and player.global_position.distance_to(dawn_npc.global_position) < 4.5 and quest_stage >= 27:
+		if quest_stage == 27:
+			quest_stage = 28
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss:
+				final_boss.visible = true
+				final_boss.set_physics_process(true)
+				final_boss.set("hp", 760)
+			player.global_position = Vector3(0.0, 0.0, -337.0)
+			quest_text = "O Silêncio Cinzento precisa ser derrotado"
+			objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
+			toast_label.text = "Guardião do Amanhecer: O Silêncio Cinzento já foi como nós. Não permita que o medo escolha por você. Lute por Tobi, por Breu e por cada lembrança que ainda merece viver."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A última batalha", "No alto do Cume, o antigo guardião ergue sua sombra. Tobi e Breu sabem que não estão lutando apenas por um coração, mas por todas as histórias que ainda podem ser contadas.")
+			_save_game()
+		elif quest_stage == 29:
+			quest_stage = 30
+			quest_text = "O Último Amanhecer"
+			objective_label.text = "CAPÍTULO V CONCLUÍDO — O mundo voltou a brilhar"
+			toast_label.text = "O Coração Rubro voltou a pulsar! A escuridão recua e a jornada de Tobi e Breu chega ao fim."
+			_grant_xp(500)
+			shards += 15
+			potions += 5
+			_update_inventory()
+			_save_game()
+			await _play_final_choice_cutscene()
+			if final_choice == "memorias":
+				await _play_chapter_cutscene("EPÍLOGO • AS MEMÓRIAS VIVEM", "A luz que não esquece", "Tobi guarda as lembranças no Coração Rubro. Cada voz, cada amizade e cada perda passa a iluminar o mundo. Breu se aconchega ao lado dele, e juntos prometem proteger todas as histórias.")
+			else:
+				await _play_chapter_cutscene("EPÍLOGO • A LUZ LIBERTADA", "Um novo começo", "Tobi liberta a luz do Coração Rubro para que ela alcance cada canto do mundo. As memórias deixam de pertencer a um único coração e passam a viver nas árvores, nas águas e nas pessoas. Breu acompanha Tobi rumo a um futuro novo.")
+			await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
+		_update_quest()
+		return
 	if river_npc and player.global_position.distance_to(river_npc.global_position) < 4.5:
 		if quest_stage == 9:
 			quest_stage = 10
 			river_knights_defeated = 0
 			quest_text = "Cavaleiros Afogados (0/3)"
 			objective_label.text = "Objetivo: derrote 3 Cavaleiros Afogados (%d/3)" % river_knights_defeated
-			toast_label.text = "Guardião: os cavaleiros presos sob a água protegem a passagem. Liberte o rio!"
+			toast_label.text = "Guardião do Rio: Esses cavaleiros juraram proteger a correnteza, mas a sombra os acorrentou. Não lute por vingança, Tobi. Quebre a maldição e permita que encontrem descanso."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "Os que dormem sob as águas", "Três armaduras antigas ainda caminham no leito do rio. O Guardião pede que Tobi liberte os cavaleiros, pois suas promessas continuam presas à correnteza.")
 			_save_game()
 		elif quest_stage == 11:
 			quest_stage = 12
 			_activate_river_boss()
 			quest_text = "O Leviatã do Lodo despertou"
 			objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
-			toast_label.text = "Guardião: a correnteza escondia uma criatura antiga. Ela despertou!"
+			toast_label.text = "Guardião do Rio: O fundo está se movendo... O Leviatã do Lodo despertou. Espere o sinal de seus golpes e não deixe que a correnteza os separe."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O despertar do Leviatã", "Quando o último cavaleiro encontra descanso, a água escurece. Uma criatura imensa rompe a superfície: o Leviatã do Lodo protege a lembrança mais antiga do rio.")
 			_save_game()
 		elif quest_stage == 13:
 			quest_stage = 14
@@ -2672,8 +3284,9 @@ func _interact() -> void:
 			shards += 6
 			potions += 2
 			dark_essence += 4
-			objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+			objective_label.text = "CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos"
 			toast_label.text = "O rio está livre! +180 XP • 6 Fragmentos Rubros • 2 Poções"
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A água volta a cantar", "O Leviatã afunda em paz e a correnteza recupera seu brilho. Entre as pedras, três ecos começam a pulsar. Azulan saberá o que fazer com eles.")
 			_update_inventory()
 			_save_game()
 		else:
@@ -2687,9 +3300,9 @@ func _interact() -> void:
 			quest_text = "Derrote os goblins corrompidos (0/3)"
 			_save_game()
 			objective_label.text = "Objetivo: derrote 3 goblins corrompidos"
-			toast_label.text = "Azulan: O Coração Rubro foi roubado. A floresta está perdendo suas cores!"
+			toast_label.text = "Azulan: O Coração Rubro foi levado durante a noite. Desde então, as flores se fecham e até os pássaros esqueceram suas canções. Tobi, a floresta precisa de você. Breu, fique ao lado dele."
 		elif quest_stage == 1:
-			toast_label.text = "Azulan: Afaste os goblins da trilha e volte quando terminar."
+			toast_label.text = "Azulan: Os goblins não estão agindo por vontade própria. A sombra os conduz pela trilha. Afaste os três e observe se deixam alguma pista."
 		elif quest_stage == 2:
 			quest_stage = 3
 			_grant_xp(40)
@@ -2697,22 +3310,47 @@ func _interact() -> void:
 			objective_label.text = "Objetivo: derrote o Guardião do Silêncio ao norte"
 			_save_game()
 			_update_inventory()
-			toast_label.text = "Azulan: A corrupção tem um coração. Vá até a cicatriz ao norte e destrua seu guardião!"
+			toast_label.text = "Azulan: Aquelas marcas no chão são feridas da própria floresta. No centro da Cicatriz Rubra, um guardião protege a corrupção. Encontre-o ao norte e tenha cuidado com seus golpes."
 		elif quest_stage == 4:
 			quest_stage = 5
 			quest_text = "Os selos do Pântano"
 			objective_label.text = "Objetivo: purifique os 3 totens do Pântano dos Ratos"
 			_save_game()
-			toast_label.text = "Azulan: Siga ao norte. Purifique os três totens antes que a Bruxa desperte!"
+			toast_label.text = "Azulan: Cada totem é uma antiga promessa feita para proteger estas árvores. Purifique os três. Se o último selo cair, a Bruxa do Pântano sentirá a mudança e virá atrás de vocês."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "A floresta pede ajuda", "Além da clareira, o Pântano dos Ratos está coberto por raízes escuras. Três totens mantêm a corrupção presa à terra. Se Tobi e Breu conseguirem purificá-los, talvez descubram quem está envenenando a floresta.")
 		elif quest_stage == 7:
 			quest_stage = 8
 			quest_text = "O primeiro fragmento do Coração Rubro"
 			_grant_xp(150)
 			shards += 5
 			potions += 2
-			objective_label.text = "CAPÍTULO I CONCLUÍDO — fale com Azulan para seguir ao Rio Prateado"
+			objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir ao Rio das Memórias"
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
+			_save_game()
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "A floresta volta a respirar", "Quando a Bruxa cai, as raízes negras se soltam das árvores e pequenos pontos de luz reaparecem entre as folhas. Azulan encontra um fragmento rubro entre as cinzas: ele aponta para o Rio Prateado, onde antigas memórias ainda guardam o caminho do Coração.")
+		elif quest_stage == 14:
+			quest_stage = 15
+			_reveal_chapter_three_memories()
+			quest_text = "Recupere os três Ecos de Memória do Rio"
+			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
+			toast_label.text = "Azulan: O Rio Prateado não guarda ouro, mas lembranças. Três ecos mostram o caminho que a água tenta esconder. Reúna-os com cuidado; cada memória pertence a alguém que o mundo quase esqueceu."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O chamado do rio", "O Guardião do Rio deixou um sinal nas águas. Ele aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
+			_save_game()
+		elif quest_stage == 25:
+			quest_stage = 26
+			_reveal_chapter5_dawn_shards()
+			quest_text = "Recupere os três Fragmentos do Amanhecer"
+			objective_label.text = "Objetivo: recupere os 3 Fragmentos do Amanhecer (0/3)"
+			toast_label.text = "Azulan: o Silêncio Cinzento espera no Cume das Nuvens. Reúna os três fragmentos para despertar o Guardião."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A última jornada", "A luz do Coração Rubro está quase apagada. Tobi e Breu seguem para o Cume das Nuvens, onde tudo começou.")
+			_save_game()
+		elif quest_stage == 16:
+			quest_stage = 17
+			quest_text = "Encontre a Guardiã do Templo do Coração"
+			objective_label.text = "Objetivo: encontre a Guardiã do Templo do Coração"
+			toast_label.text = "Azulan: agora que o rio revelou o caminho, procure a Guardiã diante do Templo do Coração."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A porta do templo", "A pedra antiga se abre sob a luz dos três ecos. Além dela, o Coração Rubro aguarda — e algo sombrio protege sua última chama.")
 			_save_game()
 		elif quest_stage == 8:
 			quest_stage = 9
@@ -2721,6 +3359,7 @@ func _interact() -> void:
 			_grant_xp(30)
 			objective_label.text = "Objetivo: encontre o Guardião do Rio Prateado a leste"
 			toast_label.text = "Azulan: atravesse a trilha de pedra para leste. O Guardião conhece a passagem submersa."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A correnteza chama", "Ao longe, o Rio Prateado reflete um céu que já não existe. O Guardião espera na margem e conhece os nomes daqueles que desapareceram sob as águas.")
 			_update_inventory()
 			_save_game()
 		else:
@@ -2820,9 +3459,48 @@ func enemy_defeated(kind: int = 0) -> void:
 			_update_quest()
 			_save_game()
 		return
+	if kind == 3 and quest_stage == 23:
+		quest_stage = 24
+		quest_text = "O Guardião das Ruínas caiu — retorne ao Oráculo"
+		objective_label.text = "Objetivo: retorne ao Oráculo das Ruínas"
+		toast_label.text = "GUARDIÃO DAS RUÍNAS DERROTADO • O selo antigo foi purificado!"
+		_grant_xp(190)
+		shards += 6
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO IV • O TEMPLO ESQUECIDO", "A pedra se lembra", "O guardião se desfaz em poeira dourada. As ruínas finalmente descansam, e o caminho para o Cume das Nuvens está livre.")
+		_update_quest()
+		_save_game()
+		return
+	if kind == 3 and quest_stage == 28:
+		quest_stage = 29
+		quest_text = "O Silêncio Cinzento caiu — retorne ao Guardião"
+		objective_label.text = "Objetivo: retorne ao Guardião do Amanhecer"
+		toast_label.text = "SILÊNCIO CINZENTO DERROTADO • O Coração Rubro voltou a pulsar!"
+		_grant_xp(300)
+		shards += 10
+		dark_essence += 8
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A sombra se desfaz", "O Silêncio Cinzento se ajoelha. Sua voz volta a ser ouvida, e a escuridão finalmente deixa o mundo.")
+		_update_quest()
+		_save_game()
+		return
+	if kind == 3 and quest_stage == 18:
+		quest_stage = 19
+		quest_text = "O Guardião do Templo foi derrotado — fale com a Guardiã"
+		objective_label.text = "Objetivo: fale com a Guardiã do Templo"
+		toast_label.text = "GUARDIÃO DO TEMPLO DERROTADO • O Coração Rubro está protegido!"
+		_grant_xp(160)
+		shards += 5
+		dark_essence += 4
+		_update_inventory()
+		call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A verdade do Coração", "O guardião cai. A Guardiã revela que o Coração Rubro pode restaurar o mundo — mas sua luz também exige uma escolha de quem a carrega.")
+		_update_quest()
+		_save_game()
+		return
 	if kind == 3:
 		if quest_stage == 3:
 			quest_stage = 4
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO I • O CORAÇÃO ROUBADO", "A marca do guardião", "Ao cair, o Guardião deixa uma marca rubra no chão. Azulan reconhece o símbolo: o Silêncio Cinzento está procurando os fragmentos do Coração.")
 			quest_text = "A Cicatriz Rubra foi silenciada"
 			objective_label.text = "Objetivo: volte ao Mestre Azulan"
 			_grant_xp(100)
@@ -2963,7 +3641,9 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 13)
+	cfg.set_value("meta", "save_version", 16)
+	cfg.set_value("story", "prologue_seen", story_intro_seen)
+	cfg.set_value("story", "final_choice", final_choice)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -2982,6 +3662,9 @@ func _save_game() -> void:
 	cfg.set_value("progress", "swamp_boss_defeated", swamp_boss_defeated)
 	cfg.set_value("progress", "river_knights_defeated", river_knights_defeated)
 	cfg.set_value("progress", "river_relic_ids", river_relic_ids)
+	cfg.set_value("progress", "chapter3_memory_ids", chapter3_memory_ids)
+	cfg.set_value("progress", "chapter4_seal_ids", chapter4_seal_ids)
+	cfg.set_value("progress", "chapter5_dawn_ids", chapter5_dawn_ids)
 	cfg.set_value("progress", "river_chest_ids", river_chest_ids)
 	cfg.set_value("progress", "whisper_lantern_ids", whisper_lantern_ids)
 	cfg.set_value("progress", "whisper_guardian_reward_claimed", whisper_guardian_reward_claimed)
@@ -2992,7 +3675,13 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	var save_error := cfg.save(save_path)
+	if save_error != OK:
+		push_warning("Dark World: não foi possível salvar o progresso (%s)." % error_string(save_error))
+		if toast_label:
+			toast_label.text = "Falha ao salvar. Verifique o espaço disponível."
+			save_toast_timer = 3.0
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
 		save_toast_timer = 1.6
@@ -3002,13 +3691,18 @@ func _load_save() -> void:
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 13:
+	# Check before reading any fields so a newer save cannot partially alter this session.
+	if save_version < 1 or save_version > 16:
+		push_warning("Dark World: versão de save não suportada (%d); progresso atual preservado." % save_version)
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
-	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
-	xp = int(cfg.get_value("progress", "xp", 0))
-	shards = int(cfg.get_value("progress", "shards", 0))
-	potions = int(cfg.get_value("progress", "potions", 3))
+	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
+	var loaded_choice := str(cfg.get_value("story", "final_choice", ""))
+	final_choice = loaded_choice if loaded_choice in ["memorias", "luz"] else ""
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)
+	defeated_count = clampi(int(cfg.get_value("progress", "defeated_count", 0)), 0, 10000)
+	xp = clampi(int(cfg.get_value("progress", "xp", 0)), 0, 1000000000)
+	shards = clampi(int(cfg.get_value("progress", "shards", 0)), 0, 1000000)
+	potions = clampi(int(cfg.get_value("progress", "potions", 3)), 0, 99)
 	weapon_level = clampi(int(cfg.get_value("progress", "weapon_level", 0)), 0, 3)
 	goblin_ears = maxi(0, int(cfg.get_value("inventory", "goblin_ears", 0)))
 	swamp_herbs = maxi(0, int(cfg.get_value("inventory", "swamp_herbs", 0)))
@@ -3036,6 +3730,27 @@ func _load_save() -> void:
 		if relic_id >= 0 and relic_id < 3 and not river_relic_ids.has(relic_id):
 			river_relic_ids.append(relic_id)
 	river_relic_ids.sort()
+	chapter3_memory_ids.clear()
+	var saved_chapter3_memory_ids: Array = cfg.get_value("progress", "chapter3_memory_ids", [])
+	for saved_memory_id in saved_chapter3_memory_ids:
+		var memory_id := int(saved_memory_id)
+		if memory_id >= 0 and memory_id < 3 and not chapter3_memory_ids.has(memory_id):
+			chapter3_memory_ids.append(memory_id)
+	chapter3_memory_ids.sort()
+	chapter4_seal_ids.clear()
+	var saved_chapter4_seal_ids: Array = cfg.get_value("progress", "chapter4_seal_ids", [])
+	for saved_seal_id in saved_chapter4_seal_ids:
+		var seal_id := int(saved_seal_id)
+		if seal_id >= 0 and seal_id < 3 and not chapter4_seal_ids.has(seal_id):
+			chapter4_seal_ids.append(seal_id)
+	chapter4_seal_ids.sort()
+	chapter5_dawn_ids.clear()
+	var saved_chapter5_dawn_ids: Array = cfg.get_value("progress", "chapter5_dawn_ids", [])
+	for saved_dawn_id in saved_chapter5_dawn_ids:
+		var dawn_id := int(saved_dawn_id)
+		if dawn_id >= 0 and dawn_id < 3 and not chapter5_dawn_ids.has(dawn_id):
+			chapter5_dawn_ids.append(dawn_id)
+	chapter5_dawn_ids.sort()
 	river_chest_ids.clear()
 	var saved_chest_ids: Array = cfg.get_value("progress", "river_chest_ids", [])
 	for saved_chest_id in saved_chest_ids:
@@ -3066,7 +3781,7 @@ func _load_save() -> void:
 	guild_relic_ids.sort()
 	guild_contract_started = bool(cfg.get_value("progress", "guild_contract_started", false))
 	guild_contract_claimed = bool(cfg.get_value("progress", "guild_contract_claimed", false))
-	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
+	saved_player_hp = clampi(int(cfg.get_value("progress", "player_hp", 100)), 1, 10000)
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
 	# Migrate old saves that had activated the shrine before checkpoints existed.
