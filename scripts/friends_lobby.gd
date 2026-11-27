@@ -107,7 +107,7 @@ func _build_lobby() -> void:
 	room_row.add_child(join_room)
 
 	var footer := Label.new()
-	footer.text = "O servidor de amigos e salas já tem estrutura no Supabase. A conexão só será liberada após autenticação Google real."
+	footer.text = "A conexão multiplayer ainda não está ativa nesta versão. As salas e amizades já têm regras seguras no Supabase; as ações serão liberadas após autenticação Google."
 	footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	footer.add_theme_color_override("font_color", Color("9aadaa"))
 	footer.add_theme_font_size_override("font_size", 10)
