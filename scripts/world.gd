@@ -2456,6 +2456,26 @@ func _build_npcs() -> void:
 	herbalist_sign.font_size = 38
 	herbalist_sign.modulate = Color("c7e0ad")
 	herbalist.add_child(herbalist_sign)
+	# A compact alchemy bench turns gathered swamp herbs into a useful field potion.
+	var alchemy_bench := Node3D.new()
+	alchemy_bench.name = "BancadaDeAlquimia"
+	alchemy_bench.position = Vector3(-104.0, 0.0, 84.0)
+	alchemy_bench.set_meta("interact_name", "Bancada de Alquimia")
+	add_child(alchemy_bench)
+	_box(alchemy_bench, "AlchemyBenchTop", Vector3(0.0, 1.0, 0.0), Vector3(2.8, 0.22, 1.5), Color("594b3e"))
+	for leg_x in [-1.1, 1.1]:
+		for leg_z in [-0.5, 0.5]:
+			_box(alchemy_bench, "AlchemyBenchLeg", Vector3(leg_x, 0.48, leg_z), Vector3(0.18, 0.95, 0.18), Color("40372f"))
+	var alchemy_flask := _sphere(alchemy_bench, "AlchemyFlask", Vector3(0.0, 1.48, 0.0), 0.38, Color("78b68c"), 1.8)
+	alchemy_flask.scale = Vector3(0.72, 1.0, 0.72)
+	alchemy_flask.material_override = _painter_mat(Color("78b68c"), 3.0, 0.18)
+	var alchemy_sign := Label3D.new()
+	alchemy_sign.text = "ALQUIMIA"
+	alchemy_sign.position = Vector3(0.0, 2.35, 0.0)
+	alchemy_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	alchemy_sign.font_size = 34
+	alchemy_sign.modulate = Color("b8dfc0")
+	alchemy_bench.add_child(alchemy_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -3801,6 +3821,8 @@ func _process(delta: float) -> void:
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
 	var herbalist_npc := get_node_or_null("Nara Herbalista")
 	var herbalist_distance := player.global_position.distance_to(herbalist_npc.global_position) if herbalist_npc else 999.0
+	var alchemy_bench := get_node_or_null("BancadaDeAlquimia")
+	var alchemy_distance := player.global_position.distance_to(alchemy_bench.global_position) if alchemy_bench else 999.0
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -3837,6 +3859,7 @@ func _process(delta: float) -> void:
 	if guild_distance < 4.5: prompt_label.text = "E: QUADRO DA GUILDA DOS VIGIAS"
 	elif nearest_guild_relic_distance < 3.8: prompt_label.text = "E: RECUPERAR SELO ANTIGO"
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
+	elif alchemy_distance < 4.0: prompt_label.text = "E: PREPARAR POÇÃO  •  2 ERVAS + 1 ESSÊNCIA"
 	elif herbalist_distance < 4.5: prompt_label.text = "E: FALAR COM NARA  •  POÇÃO: 2 FRAGMENTOS"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
@@ -4364,6 +4387,19 @@ func _interact() -> void:
 			_save_game()
 		else:
 			toast_label.text = "O santuário está em silêncio."
+		return
+	var alchemy_bench := get_node_or_null("BancadaDeAlquimia")
+	if alchemy_bench and player.global_position.distance_to(alchemy_bench.global_position) < 4.0:
+		if swamp_herbs >= 2 and dark_essence >= 1:
+			swamp_herbs -= 2
+			dark_essence -= 1
+			potions += 1
+			_grant_xp(15)
+			toast_label.text = "ALQUIMIA CONCLUÍDA • Poção +1 • 2 Ervas e 1 Essência usados • +15 XP"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "A receita exige 2 Ervas do Pântano e 1 Essência Sombria. Você tem %d ervas e %d essências." % [swamp_herbs, dark_essence]
 		return
 	var herbalist_npc := get_node_or_null("Nara Herbalista")
 	if herbalist_npc and player.global_position.distance_to(herbalist_npc.global_position) < 4.5:
