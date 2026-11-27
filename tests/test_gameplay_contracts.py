@@ -359,8 +359,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 16', self.world)
-        self.assertIn('save_version > 16', self.world)
+        self.assertIn('"save_version", 19', self.world)
+        self.assertIn('save_version > 19', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)', self.world)
 
@@ -452,7 +452,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('var warning_radius := boss_slam_radius if boss_slam_active else (2.75 if enemy_kind == 8 else attack_range)', self.enemy)
 
     def test_leviathan_slam_has_long_warning_and_area_damage_resolution(self):
-        self.assertIn('attack_windup_duration = 1.35 if enraged else 1.05', self.enemy)
+        self.assertIn('attack_windup_duration = (1.35 if enraged else 1.05) if enemy_kind == 6 else (1.55 if enraged else 1.28)', self.enemy)
         self.assertIn('var reach := (boss_slam_radius + 0.35) if slam_resolved', self.enemy)
         self.assertIn('boss_slam_active = false', self.enemy)
 
@@ -460,7 +460,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('func sync_boss_phase() -> void:', self.enemy)
         self.assertIn('leviathan.call("sync_boss_phase")', self.world)
         self.assertIn('river_boss.call("sync_boss_phase")', self.world)
-        self.assertIn('if enemy_kind == 6 and hp <= 340:', self.enemy)
+        self.assertIn('if (enemy_kind == 6 and hp <= 340) or (enemy_kind == 11 and hp <= 600):', self.enemy)
 
     def test_leviathan_enrage_changes_combat_and_visual_feedback(self):
         self.assertIn('func _enter_boss_enrage(', self.enemy)
@@ -476,7 +476,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 16', self.world)
+        self.assertIn('save_version > 19', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -706,7 +706,9 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
         login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
         lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
-        self.assertIn('Client Secret', login)
+        self.assertIn('GOOGLE • DEPOIS', login)
+        self.assertIn('SupabaseAuth.sign_in', login)
+        self.assertNotIn('service_role', login.lower())
         self.assertIn('ainda não está ativa', lobby)
         self.assertIn('MAX_ADVENTURE_PLAYERS := 4', menu)
 
@@ -822,7 +824,7 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn("AS TRÊS PEDRAS-ÂNCORA DESPERTARAM!", world)
         self.assertIn('cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)', world)
         self.assertIn('cfg.get_value("progress", "ancient_waystone_ids", [])', world)
-        self.assertIn('cfg.set_value("meta", "save_version", 16)', world)
+        self.assertIn('cfg.set_value("meta", "save_version", 19)', world)
 
 
     def test_android_auto_update_bootstrap_is_registered(self):
