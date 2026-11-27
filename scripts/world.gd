@@ -3211,6 +3211,7 @@ func _interact() -> void:
 			objective_label.text = "Objetivo: purifique os 3 totens do Pântano dos Ratos"
 			_save_game()
 			toast_label.text = "Azulan: Siga ao norte. Purifique os três totens antes que a Bruxa desperte!"
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "A floresta pede ajuda", "Além da clareira, o Pântano dos Ratos está coberto por raízes escuras. Três totens mantêm a corrupção presa à terra. Se Tobi e Breu conseguirem purificá-los, talvez descubram quem está envenenando a floresta.")
 		elif quest_stage == 7:
 			quest_stage = 8
 			quest_text = "O primeiro fragmento do Coração Rubro"
@@ -3221,6 +3222,7 @@ func _interact() -> void:
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
 			_save_game()
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "A floresta volta a respirar", "Quando a Bruxa cai, as raízes negras se soltam das árvores e pequenos pontos de luz reaparecem entre as folhas. Azulan encontra um fragmento rubro entre as cinzas: ele aponta para o Rio Prateado, onde antigas memórias ainda guardam o caminho do Coração.")
 		elif quest_stage == 14:
 			quest_stage = 15
 			_reveal_chapter_three_memories()
