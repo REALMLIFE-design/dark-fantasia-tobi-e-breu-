@@ -170,3 +170,10 @@
 - Lobby: adicionado botão para sair da sala; se o usuário for anfitrião, a RPC fecha a sala e remove os membros. O código de sala fechado deixa de aceitar novas entradas.
 
 - Reprodutibilidade: adicionado `supabase/config.toml` com PostgreSQL 17 (versão consultada no projeto) e instruções `supabase link` / `supabase db push`; nenhuma chave secreta foi adicionada ao repositório.
+
+
+## Continuação narrativa — 26/11/2026 (sem testes nesta rodada)
+- Adicionada uma cutscene de abertura do Capítulo II quando Azulan libera a missão dos três totens: “A floresta pede ajuda”, com contexto para a corrupção do Pântano dos Ratos.
+- Adicionada uma cutscene de encerramento do Capítulo II ao retornar a Azulan após derrotar a Bruxa: “A floresta volta a respirar”, conectando a purificação da floresta ao fragmento que aponta para o Rio Prateado.
+- As cenas usam o sistema cinematográfico já existente, preservam o estágio da missão e não alteram o formato do save.
+- Esta alteração foi gravada na branch de trabalho. Conforme solicitado, não foram executados testes; a compilação GDScript e a reprodução das cutscenes permanecem sem validação nesta rodada.
