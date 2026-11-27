@@ -2016,10 +2016,12 @@ func _build_hud() -> void:
 	prompt_label.add_theme_color_override("font_color", Color("f0d39a"))
 	ui_root.add_child(prompt_label)
 	toast_label = Label.new()
-	toast_label.position = Vector2(18, 350)
-	toast_label.size = Vector2(440, 42)
+	var toast_viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	toast_label.position = Vector2(18, toast_viewport_size.y * 0.48)
+	toast_label.size = Vector2(minf(440.0, toast_viewport_size.x - 36.0), minf(104.0, toast_viewport_size.y * 0.20))
 	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	toast_label.add_theme_font_size_override("font_size", 11)
+	toast_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	toast_label.add_theme_font_size_override("font_size", 13)
 	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
 	ui_root.add_child(toast_label)
 
