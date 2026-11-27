@@ -2488,9 +2488,9 @@ func _build_enemies() -> void:
 	final_boss.name = "Silencio_Cinzento"
 	final_boss.position = Vector3(112.0, 0.0, -382.0)
 	final_boss.set("enemy_kind", 11)
+	add_child(final_boss)
 	final_boss.set("hp", final_boss_hp)
 	final_boss.call("sync_boss_phase")
-	add_child(final_boss)
 	enemies.append(final_boss)
 	if quest_stage != 21:
 		final_boss.visible = false
@@ -4724,7 +4724,7 @@ func _play_final_ending() -> void:
 	if is_instance_valid(player):
 		player.set_physics_process(false)
 	var fade := create_tween()
-	fade.tween_property(backdrop, "color:a", 0.88, 1.6)
+	fade.tween_property(backdrop, "color", Color(0.012, 0.018, 0.026, 0.88), 1.6)
 func _update_quest() -> void:
 	if quest_label: quest_label.text = "MISSÃO: " + quest_text
 
