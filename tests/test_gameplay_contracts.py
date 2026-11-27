@@ -102,8 +102,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('defeated_count += 1', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 16', self.world)
-        self.assertIn('save_version > 16', self.world)
+        self.assertIn('"save_version", 19', self.world)
+        self.assertIn('save_version > 19', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -362,7 +362,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('"save_version", 16', self.world)
         self.assertIn('save_version > 16', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
-        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)', self.world)
 
     def test_river_knights_have_a_distinct_silhouette_and_combat_profile(self):
         self.assertIn('elif enemy_kind == 5:', self.enemy)
@@ -391,7 +391,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('elif quest_stage == 13:', self.world)
         self.assertIn('quest_stage = 14', self.world)
         self.assertIn('"quest_stage", quest_stage', self.world)
-        self.assertIn('0, 14)', self.world)
+        self.assertIn('0, 23)', self.world)
 
     def test_leviathan_health_is_restored_from_save_and_saved_on_hit(self):
         self.assertIn('river_boss.set("hp", river_boss_hp)', self.world)
