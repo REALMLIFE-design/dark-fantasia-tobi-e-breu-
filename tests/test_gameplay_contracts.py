@@ -709,7 +709,7 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('GOOGLE • DEPOIS', login)
         self.assertIn('SupabaseAuth.sign_in', login)
         self.assertNotIn('service_role', login.lower())
-        self.assertIn('ainda não está ativa', lobby)
+        self.assertIn('ainda será conectada', lobby)
         self.assertIn('MAX_ADVENTURE_PLAYERS := 4', menu)
 
 class CombatFeedbackIntegrationContracts(unittest.TestCase):
