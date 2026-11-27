@@ -211,3 +211,13 @@
 - O menu principal agora usa largura calculada pela tela, rolagem vertical em aparelhos baixos, botões expansíveis e quebra automática no subtítulo/rodapé. Em telas estreitas, os itens deixam de depender de uma largura fixa de 520 px.
 
 - IA básica dos inimigos: quando o jogador se afasta além do raio de perseguição de 15 m, o inimigo agora retorna gradualmente à posição inicial de patrulha em vez de ficar parado no ponto distante. O comportamento mantém a perseguição e o combate existentes; navegação para contornar obstáculos continua pendente.
+
+
+## Correções online com Supabase — 27/11/2026
+- Corrigido o trigger `public.handle_new_user()`: agora executa como `SECURITY DEFINER`, mantém `search_path` vazio e revoga execução direta por `PUBLIC`, `anon` e `authenticated`. Isso permite que o trigger crie o perfil durante o cadastro sem conceder INSERT público na tabela de perfis.
+- Migração aplicada ao projeto Supabase e versionada no repositório: `20261127092518_fix_auth_profile_trigger_security.sql`.
+- Corrigida a reentrada de jogadores: quem já pertence a uma sala pode voltar usando o mesmo código mesmo depois de a partida mudar para `playing`; novos jogadores continuam bloqueados após o início e salas fechadas continuam inacessíveis.
+- Migração aplicada e versionada: `20261127092550_allow_existing_members_to_rejoin_started_rooms.sql`.
+- Verificação SQL do trigger confirmou `SECURITY DEFINER`, proprietário `postgres`, `search_path` vazio e ausência de EXECUTE para `anon` e `authenticated`. Advisor de segurança retornou zero lints.
+- O advisor de performance ainda lista quatro índices sem uso; são avisos informativos esperados enquanto as tabelas estão vazias, não falhas de segurança.
+- Não foram executados testes Godot, builds, APK ou testes de cadastro/reentrada com contas reais. O login Google segue pendente e o lobby ainda não sincroniza movimento/combate.
