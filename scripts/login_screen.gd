@@ -98,6 +98,11 @@ func _build_screen() -> void:
 	recovery_button.custom_minimum_size = Vector2(0, 46)
 	recovery_button.pressed.connect(_on_password_recovery)
 	stack.add_child(recovery_button)
+	var resend_button := Button.new()
+	resend_button.text = "REENVIAR CONFIRMAÇÃO DO E-MAIL"
+	resend_button.custom_minimum_size = Vector2(0, 46)
+	resend_button.pressed.connect(_on_resend_confirmation)
+	stack.add_child(resend_button)
 	var google := Button.new()
 	google.text = "G   Entrar com Google"
 	google.custom_minimum_size = Vector2(0, 58)
@@ -143,6 +148,13 @@ func _on_password_recovery() -> void:
 		return
 	var result: Dictionary = await SupabaseClient.request_password_recovery(email_input.text)
 	_show_notice(str(result.get("message", "Não foi possível solicitar a recuperação agora.")))
+
+func _on_resend_confirmation() -> void:
+	if email_input.text.strip_edges().is_empty():
+		_show_notice("Digite o e-mail usado no cadastro.")
+		return
+	var result: Dictionary = await SupabaseClient.resend_signup_confirmation(email_input.text)
+	_show_notice(str(result.get("message", "Não foi possível reenviar a confirmação agora.")))
 
 func _show_auth_result(result: Dictionary) -> void:
 	_show_notice(str(result.get("message", "Não foi possível concluir a autenticação.")))
