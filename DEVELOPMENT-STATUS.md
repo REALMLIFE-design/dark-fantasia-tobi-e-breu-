@@ -223,3 +223,6 @@
 - Não foram executados testes Godot, builds, APK ou testes de cadastro/reentrada com contas reais. O login Google segue pendente e o lobby ainda não sincroniza movimento/combate.
 
 - Tela de login: incluído pedido de recuperação de senha por e-mail usando o endpoint oficial `/auth/v1/recover`; a resposta não revela se o e-mail existe, evitando enumeração de contas. A conclusão da troca de senha dentro do app ainda depende do fluxo de deep link Android e da tela para definir a nova senha.
+
+- Tela de login: adicionados pedidos de recuperação de senha e reenvio da confirmação de cadastro por e-mail, usando os endpoints oficiais do Supabase Auth. As respostas são genéricas para não revelar se um endereço possui conta.
+- Limitação mantida explícita: o app ainda não processa o link de recuperação/confirmacão por deep link Android; a solicitação por e-mail está conectada, mas a conclusão desses fluxos dentro do jogo ainda precisa da integração nativa.
