@@ -45,27 +45,27 @@ static func play_intro(world: Node) -> void:
 
 	var content := VBoxContainer.new()
 	content.set_anchors_preset(Control.PRESET_CENTER)
-	content.anchor_left = 0.12
-	content.anchor_right = 0.88
-	content.anchor_top = 0.22
-	content.anchor_bottom = 0.80
+	content.anchor_left = 0.06
+	content.anchor_right = 0.94
+	content.anchor_top = 0.06
+	content.anchor_bottom = 0.94
 	content.offset_left = 0
 	content.offset_right = 0
 	content.offset_top = 0
 	content.offset_bottom = 0
-	content.add_theme_constant_override("separation", 22)
+	content.add_theme_constant_override("separation", 10)
 	root.add_child(content)
 
 	var chapter := Label.new()
 	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chapter.add_theme_font_size_override("font_size", 15)
+	chapter.add_theme_font_size_override("font_size", 12)
 	chapter.add_theme_color_override("font_color", Color("c7a66b"))
 	content.add_child(chapter)
 
 	var title := Label.new()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color("f0e5ce"))
 	content.add_child(title)
 
@@ -79,14 +79,14 @@ static func play_intro(world: Node) -> void:
 	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	body.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_font_size_override("font_size", 20)
+	body.add_theme_font_size_override("font_size", 16)
 	body.add_theme_color_override("font_color", Color("d9d0bf"))
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(body)
 
 	var hint := Label.new()
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 13)
+	hint.add_theme_font_size_override("font_size", 11)
 	hint.add_theme_color_override("font_color", Color("a99a80"))
 	content.add_child(hint)
 
@@ -101,7 +101,7 @@ static func play_intro(world: Node) -> void:
 	button_style.content_margin_bottom = 12
 
 	var next_button := Button.new()
-	next_button.custom_minimum_size = Vector2(220, 54)
+	next_button.custom_minimum_size = Vector2(220, 48)
 	next_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	next_button.text = "CONTINUAR"
 	next_button.add_theme_font_size_override("font_size", 17)
@@ -109,7 +109,7 @@ static func play_intro(world: Node) -> void:
 	content.add_child(next_button)
 
 	var skip_button := Button.new()
-	skip_button.custom_minimum_size = Vector2(180, 42)
+	skip_button.custom_minimum_size = Vector2(180, 40)
 	skip_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	skip_button.text = "PULAR INTRODUÇÃO"
 	skip_button.add_theme_font_size_override("font_size", 13)
