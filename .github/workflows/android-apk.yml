@@ -227,8 +227,8 @@ jobs:
             echo "ERRO: a cena principal apresentou falha durante a inicialização"
             exit 1
           fi
-          if ! grep -q "DARK_WORLD_LEGEND_BOOT_READY" "$RUNNER_TEMP/godot-startup.log"; then
-            echo "ERRO: a cena principal não concluiu a inicialização"
+          if ! grep -q "DARK_WORLD_LOGIN_GATE_READY" "$RUNNER_TEMP/godot-startup.log"; then
+            echo "ERRO: a tela de login não concluiu a inicialização"
             exit 1
           fi
 
