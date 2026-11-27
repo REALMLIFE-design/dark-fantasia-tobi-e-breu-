@@ -44,6 +44,7 @@ const HUD_STYLE = preload("res://scripts/hud_style.gd")
 const ASHEN_VILLAGE = preload("res://scripts/ashen_village.gd")
 const STORY_CUTSCENES = preload("res://scripts/story_cutscenes.gd")
 var player: CharacterBody3D
+var low_memory_android := false
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
 var hud: CanvasLayer
@@ -144,9 +145,14 @@ const ITCH_DUNGEON_MODEL_PATHS := [
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _configure_adaptive_4k() -> void:
-	# Render at native 4K only on a 4K desktop display. Mobile keeps its native
-	# viewport resolution to avoid forcing 4K rendering on phone GPUs.
-	if OS.has_feature("pc"):
+	# Android de entrada recebe uma resolução interna menor e limite de FPS,
+	# sem alterar a resolução física da tela ou remover conteúdo do projeto.
+	low_memory_android = OS.get_name() == "Android"
+	if low_memory_android:
+		get_window().content_scale_size = Vector2i(960, 540)
+		Engine.max_fps = 30
+		print("TOBI_BREU_LOW_MEMORY_ANDROID_PROFILE: 960x540, 30 FPS, decorative GLBs deferred")
+	elif OS.has_feature("pc"):
 		var screen_size := DisplayServer.screen_get_size()
 		if screen_size.x >= 3840 and screen_size.y >= 2160:
 			get_window().content_scale_size = Vector2i(3840, 2160)
@@ -184,12 +190,18 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_build_plugin_world_expansion()
 	await get_tree().process_frame
-	await _build_imported_plugin_models()
-	await get_tree().process_frame
+	if not low_memory_android:
+		await _build_imported_plugin_models()
+		await get_tree().process_frame
+	else:
+		print("TOBI_BREU_ANDROID_OPTIONAL_PLUGIN_MODELS_DEFERRED")
 	DARK_FANTASY_PROP_PACK.build_all(self)
 	await get_tree().process_frame
-	await _build_visible_3dassets_showcase()
-	await get_tree().process_frame
+	if not low_memory_android:
+		await _build_visible_3dassets_showcase()
+		await get_tree().process_frame
+	else:
+		print("TOBI_BREU_ANDROID_3DASSETS_SHOWCASE_DEFERRED")
 	_set_loading_progress(40.0, "Despertando as regiões...")
 	_build_swamp_region()
 	await get_tree().process_frame
@@ -205,7 +217,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
-	await _build_imported_medieval_hamlet()
+	if not low_memory_android:
+		await _build_imported_medieval_hamlet()
+	else:
+		print("TOBI_BREU_ANDROID_IMPORTED_HAMLET_DEFERRED")
 	ASHEN_VILLAGE.build(self, ashen_relic_ids)
 	await get_tree().process_frame
 	_build_npcs()
@@ -256,6 +271,7 @@ func _ready() -> void:
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	print("TOBI_BREU_WORLD_READY low_memory_android=", low_memory_android, " quest_stage=", quest_stage)
 	if quest_stage == 0 and not STORY_CUTSCENES.intro_was_seen():
 		await STORY_CUTSCENES.play_intro(self)
 	print("TOBI_BREU_BOOT_READY")
@@ -775,7 +791,7 @@ func _build_environment() -> void:
 	e.adjustment_brightness = 1.025
 	e.adjustment_contrast = 1.045
 	e.adjustment_saturation = 1.10
-	e.glow_enabled = true
+	e.glow_enabled = not low_memory_android
 	e.glow_intensity = 0.28
 	e.glow_strength = 0.62
 	e.glow_bloom = 0.08
@@ -792,7 +808,7 @@ func _build_environment() -> void:
 	sun_light.rotation_degrees = Vector3(-42, -28, 0)
 	sun_light.light_color = Color("ffe0b5")
 	sun_light.light_energy = 1.12
-	sun_light.shadow_enabled = true
+	sun_light.shadow_enabled = not low_memory_android
 	add_child(sun_light)
 
 func _build_landscape() -> void:
@@ -3833,12 +3849,12 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(player): return
 	# Modelos opcionais entram somente quando o jogador alcança a área correspondente.
 	# A carga em thread mantém a exploração jogável enquanto GLBs e texturas são preparados.
-	if not nature_models_stream_requested and player.global_position.distance_to(Vector3(-145.0, 0.0, -145.0)) < 90.0:
+	if not low_memory_android and not nature_models_stream_requested and player.global_position.distance_to(Vector3(-145.0, 0.0, -145.0)) < 90.0:
 		nature_models_stream_requested = true
 		_build_downloaded_nature_models()
-	if not itch_dungeon_stream_requested and player.global_position.distance_to(Vector3(226.0, 0.0, 89.0)) < 82.0:
+	if not low_memory_android and not itch_dungeon_stream_requested and player.global_position.distance_to(Vector3(226.0, 0.0, 89.0)) < 82.0:
 		_start_itch_dungeon_streaming()
-	if itch_dungeon_stream_requested and not itch_dungeon_assets_loaded:
+	if not low_memory_android and itch_dungeon_stream_requested and not itch_dungeon_assets_loaded:
 		_poll_itch_dungeon_streaming()
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
