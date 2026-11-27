@@ -4055,6 +4055,9 @@ func _open_river_chest(chest_id: int) -> void:
 func _interact() -> void:
 	var final_altar := get_node_or_null("TronoObsidiano/FinalCheckpointAltar")
 	if final_altar and player.global_position.distance_to(final_altar.global_position) < 5.0:
+		if quest_stage < 21:
+			toast_label.text = "O altar ainda está adormecido. Fale com Azulan para abrir a última jornada."
+			return
 		checkpoint_position = final_altar.global_position + Vector3(0.0, 0.0, 5.0)
 		player.hp = player.max_hp
 		player_health_changed(player.hp, player.max_hp)
