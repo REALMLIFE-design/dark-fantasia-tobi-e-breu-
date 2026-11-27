@@ -3675,7 +3675,13 @@ func _save_game() -> void:
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	var save_error := cfg.save(save_path)
+	if save_error != OK:
+		push_warning("Dark World: não foi possível salvar o progresso (%s)." % error_string(save_error))
+		if toast_label:
+			toast_label.text = "Falha ao salvar. Verifique o espaço disponível."
+			save_toast_timer = 3.0
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
 		save_toast_timer = 1.6
@@ -3684,16 +3690,19 @@ func _load_save() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
-	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
-	final_choice = str(cfg.get_value("story", "final_choice", ""))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 16:
+	# Check before reading any fields so a newer save cannot partially alter this session.
+	if save_version < 1 or save_version > 16:
+		push_warning("Dark World: versão de save não suportada (%d); progresso atual preservado." % save_version)
 		return
+	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
+	var loaded_choice := str(cfg.get_value("story", "final_choice", ""))
+	final_choice = loaded_choice if loaded_choice in ["memorias", "luz"] else ""
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 30)
-	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
-	xp = int(cfg.get_value("progress", "xp", 0))
-	shards = int(cfg.get_value("progress", "shards", 0))
-	potions = int(cfg.get_value("progress", "potions", 3))
+	defeated_count = clampi(int(cfg.get_value("progress", "defeated_count", 0)), 0, 10000)
+	xp = clampi(int(cfg.get_value("progress", "xp", 0)), 0, 1000000000)
+	shards = clampi(int(cfg.get_value("progress", "shards", 0)), 0, 1000000)
+	potions = clampi(int(cfg.get_value("progress", "potions", 3)), 0, 99)
 	weapon_level = clampi(int(cfg.get_value("progress", "weapon_level", 0)), 0, 3)
 	goblin_ears = maxi(0, int(cfg.get_value("inventory", "goblin_ears", 0)))
 	swamp_herbs = maxi(0, int(cfg.get_value("inventory", "swamp_herbs", 0)))
@@ -3772,7 +3781,7 @@ func _load_save() -> void:
 	guild_relic_ids.sort()
 	guild_contract_started = bool(cfg.get_value("progress", "guild_contract_started", false))
 	guild_contract_claimed = bool(cfg.get_value("progress", "guild_contract_claimed", false))
-	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
+	saved_player_hp = clampi(int(cfg.get_value("progress", "player_hp", 100)), 1, 10000)
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
 	# Migrate old saves that had activated the shrine before checkpoints existed.
