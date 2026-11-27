@@ -232,3 +232,10 @@
 - Lobby: protegidas as atualizações periódicas para impedir chamadas simultâneas de listagem de membros e de amigos; uma resposta atrasada de uma sala anterior não sobrescreve a sala atual. Mensagens de falha na lista de amigos agora orientam o jogador a tentar atualizar novamente.
 - Cliente Supabase: falhas de transporte HTTP agora retornam uma mensagem de conexão em vez de serem confundidas com erro de autenticação. Erros de limite de e-mail e de destinatário não autorizado recebem orientação específica, pois o SMTP integrado do projeto hospedado tem restrições de teste.
 - Não foram executados testes, builds, APK ou chamadas de cadastro reais.
+
+
+## Proteção adicional do progresso local — 27/11/2026
+- A leitura do save agora verifica a versão antes de alterar qualquer estado da sessão; saves de versões futuras ou inválidas são recusados sem aplicar parcialmente os seus dados.
+- Valores persistidos de XP, fragmentos, poções, contagem de derrotas e vida são limitados a intervalos seguros; a escolha final aceita apenas os dois valores previstos.
+- A gravação agora verifica o retorno de `ConfigFile.save`; em caso de falha, registra aviso e informa o jogador em vez de exibir falsamente a confirmação de sucesso.
+- Alteração feita na branch de desenvolvimento; nenhum teste, execução Godot, build, CI ou exportação APK foi iniciado.
