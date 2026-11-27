@@ -1,13 +1,28 @@
-# Login Google e lobby online — Dark World
+# Login por e-mail e lobby online — Dark World
 
 ## Estado da integração
+
+- O cadastro e o login por e-mail/senha estão implementados na tela inicial usando a chave pública `sb_publishable` do projeto.
+- A sessão JWT fica em memória durante a execução e o refresh token é renovado enquanto o jogo estiver aberto. O armazenamento seguro e persistência da sessão após fechar o app ainda precisam ser concluídos.
+- O lobby chama as RPCs autenticadas para listar amigos aceitos, enviar pedido, criar sala privada e entrar por código.
+- Pedidos recebidos e sincronização da partida em tempo real ainda não estão conectados.
 
 - O projeto Supabase `dark-world-online` já existe.
 - O banco já possui `profiles`, `friend_requests`, `game_rooms` e `room_members`, com RLS habilitado.
 - O APK nunca deve conter a chave `service_role` nem o Client Secret do Google.
-- A tela inicial e o lobby visual estão no jogo; o acesso Google real permanece bloqueado até o proprietário concluir as credenciais OAuth e o retorno Android.
+- A tela inicial aceita cadastro/login por e-mail e senha. Google fica deliberadamente para uma etapa posterior.
 
-## Configuração necessária do Google
+## Google (etapa posterior)
+
+O botão Google permanece reservado para uma etapa futura. Nenhuma credencial Google é necessária para usar cadastro/login por e-mail.
+
+## Configuração de e-mail
+
+- O provedor de e-mail/senha do Supabase é usado pelo jogo.
+- Com confirmação de e-mail habilitada, o jogador precisa abrir a mensagem de confirmação antes de entrar.
+- O provedor SMTP padrão do Supabase pode ter limites baixos de envio; para produção, configurar SMTP próprio e revisar limites/rate limits.
+
+## Configuração necessária do Google (quando retomarmos)
 
 1. No Google Cloud Console, crie/seleciona um projeto e configure a tela de consentimento OAuth.
 2. Crie um OAuth Client ID do tipo **Web application**.
@@ -42,4 +57,4 @@ Migração aplicada ao projeto Supabase e versionada em `supabase/migrations/202
 - `dark_world_list_friends()`: lista apenas amizades aceitas da conta atual.
 - Trigger de criação automática do perfil quando uma conta Auth é criada.
 
-Todas as RPCs exigem papel `authenticated`; execução por `anon` e `public` foi revogada. O banco foi conferido após a aplicação. A interface do jogo ainda precisa receber uma sessão OAuth válida e chamar essas RPCs antes de liberar os botões.
+Todas as RPCs exigem papel `authenticated`; execução por `anon` e `public` foi revogada. O banco foi conferido após a aplicação. A interface do jogo agora usa uma sessão de e-mail/senha para chamar as RPCs de amigos e salas. A partida multiplayer em tempo real ainda precisa de sincronização de estado, presença, reconexão e testes com contas diferentes.
