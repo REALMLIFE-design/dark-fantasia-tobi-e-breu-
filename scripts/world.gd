@@ -2600,6 +2600,7 @@ func _refresh_player_stats(levels_gained: int = 0) -> void:
 	if not is_instance_valid(player): return
 	var level := _get_player_level()
 	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
+	player.armor_level = armor_level
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	if levels_gained > 0:
 		player.hp = mini(player.max_hp, player.hp + 25 * levels_gained)
@@ -2624,6 +2625,7 @@ func _build_player() -> void:
 	player.set("world", self)
 	var level := _get_player_level()
 	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
+	player.armor_level = armor_level
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	add_child(player)
 
