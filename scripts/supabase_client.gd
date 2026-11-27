@@ -29,10 +29,13 @@ func sign_in(email: String, password: String) -> Dictionary:
 	})
 
 func sign_up(email: String, password: String, username: String) -> Dictionary:
+	var clean_username := username.strip_edges()
+	if clean_username.is_empty() or clean_username.length() > 24:
+		return {"ok": false, "message": "O nome de aventureiro deve ter entre 1 e 24 caracteres."}
 	return await _auth_request("signup", {
 		"email": email.strip_edges(),
 		"password": password,
-		"data": {"name": username.strip_edges()}
+		"data": {"name": clean_username}
 	})
 
 func sign_out() -> void:
