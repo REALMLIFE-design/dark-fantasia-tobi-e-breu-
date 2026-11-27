@@ -67,10 +67,15 @@ func _build_lobby() -> void:
 	subtitle.add_theme_color_override("font_color", Color("c4d4ca"))
 	root.add_child(subtitle)
 
-	var columns := HBoxContainer.new()
-	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var columns_scroll := ScrollContainer.new()
+	columns_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(columns_scroll)
+	var columns := BoxContainer.new()
+	columns.vertical = get_viewport_rect().size.x < 820.0
+	columns.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 16)
-	root.add_child(columns)
+	columns_scroll.add_child(columns)
 
 	var friends := _panel("AMIGOS")
 	friends.size_flags_horizontal = Control.SIZE_EXPAND_FILL
