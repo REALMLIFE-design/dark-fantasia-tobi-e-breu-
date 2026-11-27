@@ -47,7 +47,7 @@ func _ready() -> void:
 	var fade := create_tween()
 	fade.tween_property(self, "modulate:a", 0.0, 0.22)
 	await fade.finished
-	var error := get_tree().change_scene_to_file("res://scenes/menu.tscn")
+	var error := get_tree().change_scene_to_file("res://scenes/login.tscn")
 	if error != OK:
 		push_error("Não foi possível abrir o menu principal: %s" % error)
 
