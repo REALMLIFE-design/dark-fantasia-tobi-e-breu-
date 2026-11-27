@@ -164,8 +164,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('player.global_position = checkpoint_position', self.world)
 
     def test_checkpoint_coordinates_are_validated_on_load(self):
-        self.assertIn('absf(checkpoint_x) <= 300.0', self.world)
-        self.assertIn('absf(checkpoint_z) <= 300.0', self.world)
+        self.assertIn('absf(checkpoint_x) <= 520.0', self.world)
+        self.assertIn('absf(checkpoint_z) <= 520.0', self.world)
 
     def test_river_treasure_chests_are_interactive_and_persistent(self):
         self.assertIn('func _build_river_treasure_chests()', self.world)
@@ -1557,7 +1557,7 @@ class FinalChapterContracts(unittest.TestCase):
         self.assertIn('region.name = "TronoObsidiano"', self.world)
         self.assertIn('altar.name = "FinalCheckpointAltar"', self.world)
         self.assertIn('checkpoint_position = final_altar.global_position + Vector3(0.0, 0.0, 5.0)', self.world)
-        self.assertIn('absf(checkpoint_z) <= 300.0', self.world)
+        self.assertIn('absf(checkpoint_z) <= 520.0', self.world)
 
     def test_grey_silence_final_boss_has_two_phases_and_saved_health(self):
         self.assertIn('final_boss.name = "Silencio_Cinzento"', self.world)
