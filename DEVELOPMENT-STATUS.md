@@ -209,3 +209,5 @@
 - O salão de amigos agora empilha os painéis de amigos e grupo em telas abaixo de 820 px e mantém a área de conteúdo em rolagem vertical; em telas maiores, preserva as duas colunas lado a lado.
 
 - O menu principal agora usa largura calculada pela tela, rolagem vertical em aparelhos baixos, botões expansíveis e quebra automática no subtítulo/rodapé. Em telas estreitas, os itens deixam de depender de uma largura fixa de 520 px.
+
+- IA básica dos inimigos: quando o jogador se afasta além do raio de perseguição de 15 m, o inimigo agora retorna gradualmente à posição inicial de patrulha em vez de ficar parado no ponto distante. O comportamento mantém a perseguição e o combate existentes; navegação para contornar obstáculos continua pendente.
