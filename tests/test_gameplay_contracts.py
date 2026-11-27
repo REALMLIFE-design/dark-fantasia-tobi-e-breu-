@@ -164,8 +164,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('player.global_position = checkpoint_position', self.world)
 
     def test_checkpoint_coordinates_are_validated_on_load(self):
-        self.assertIn('absf(checkpoint_x) <= 140.0', self.world)
-        self.assertIn('absf(checkpoint_z) <= 140.0', self.world)
+        self.assertIn('absf(checkpoint_x) <= 300.0', self.world)
+        self.assertIn('absf(checkpoint_z) <= 300.0', self.world)
 
     def test_river_treasure_chests_are_interactive_and_persistent(self):
         self.assertIn('func _build_river_treasure_chests()', self.world)
@@ -1535,3 +1535,43 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn('_build_settlement("VilaDoCarvalho"', world)
         self.assertIn('_build_settlement("CidadeDePedra"', world)
         self.assertIn('village.name = "VilaDoMoinho"', world)
+
+
+class FinalChapterContracts(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
+        cls.enemy = (ROOT / "scripts/enemy.gd").read_text(encoding="utf-8")
+
+    def test_chapter_five_unlocks_after_chapter_four_and_returns_to_azulan(self):
+        self.assertIn('elif quest_stage == 20:', self.world)
+        self.assertIn('quest_stage = 21', self.world)
+        self.assertIn('elif quest_stage == 22:', self.world)
+        self.assertIn('quest_stage = 23', self.world)
+        self.assertIn('func _play_final_ending() -> void:', self.world)
+
+    def test_obsidian_throne_region_and_checkpoint_are_persistent(self):
+        self.assertIn('func _build_final_region() -> void:', self.world)
+        self.assertIn('region.name = "TronoObsidiano"', self.world)
+        self.assertIn('altar.name = "FinalCheckpointAltar"', self.world)
+        self.assertIn('checkpoint_position = final_altar.global_position + Vector3(0.0, 0.0, 5.0)', self.world)
+        self.assertIn('absf(checkpoint_z) <= 300.0', self.world)
+
+    def test_grey_silence_final_boss_has_two_phases_and_saved_health(self):
+        self.assertIn('final_boss.name = "Silencio_Cinzento"', self.world)
+        self.assertIn('final_boss.set("enemy_kind", 11)', self.world)
+        self.assertIn('cfg.set_value("progress", "final_boss_hp", final_boss_hp)', self.world)
+        self.assertIn('cfg.get_value("progress", "final_boss_hp", 1200)', self.world)
+        self.assertIn('hp = 1200', self.enemy)
+        self.assertIn('enemy_kind == 11 and hp <= 600', self.enemy)
+        self.assertIn('func final_boss_health_changed(current: int, maximum: int)', self.world)
+
+    def test_final_boss_is_locked_to_the_final_quest_stage(self):
+        self.assertIn('enemy_kind == 11 and int(get_parent().get("quest_stage")) != 21', self.enemy)
+        self.assertIn('if quest_stage == 21 and kind == 11:', self.world)
+        self.assertIn('quest_stage = 22', self.world)
+
+    def test_existing_saves_migrate_to_the_extended_quest_range(self):
+        self.assertIn('cfg.set_value("meta", "save_version", 19)', self.world)
+        self.assertIn('if save_version > 19:', self.world)
+        self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)', self.world)
