@@ -30,3 +30,16 @@ Não coloque Client Secret, service-role key ou refresh token em arquivos versio
 ## Backend de amigos e salas
 
 O banco já contém as tabelas e políticas RLS para perfis, pedidos de amizade e salas de até quatro jogadores. A interface atual mantém essas ações bloqueadas no modo convidado; elas devem ser ligadas à sessão autenticada antes de aceitar convites ou criar salas.
+
+## Operações online preparadas no backend
+
+Migração aplicada ao projeto Supabase e versionada em `supabase/migrations/202611270001_dark_world_social_rooms.sql`:
+
+- `dark_world_create_room(chapter)`: cria sala privada e insere o anfitrião como primeiro membro, com limite de quatro jogadores.
+- `dark_world_join_room(room_code)`: valida código, sala aberta e vagas disponíveis; bloqueia concorrência ao entrar.
+- `dark_world_send_friend_request(username)`: procura o jogador pelo nome e impede auto-convite e pedidos duplicados.
+- `dark_world_respond_friend_request(request_id, accept)`: só permite que o destinatário responda a um pedido pendente.
+- `dark_world_list_friends()`: lista apenas amizades aceitas da conta atual.
+- Trigger de criação automática do perfil quando uma conta Auth é criada.
+
+Todas as RPCs exigem papel `authenticated`; execução por `anon` e `public` foi revogada. O banco foi conferido após a aplicação. A interface do jogo ainda precisa receber uma sessão OAuth válida e chamar essas RPCs antes de liberar os botões.
