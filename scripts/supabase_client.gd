@@ -77,6 +77,8 @@ func _auth_request(endpoint: String, payload: Dictionary) -> Dictionary:
 		return {"ok": false, "message": _error_message(data, response_code)}
 	if endpoint == "recover":
 		return {"ok": true, "session": false, "message": "Se esse e-mail estiver cadastrado, enviaremos as instruções de recuperação. Confira sua caixa de entrada e o spam."}
+	if endpoint == "resend":
+		return {"ok": true, "session": false, "message": "Se a conta existir e precisar de confirmação, enviaremos outro e-mail. Confira também o spam."}
 	if data.has("access_token"):
 		access_token = str(data.get("access_token", ""))
 		refresh_token = str(data.get("refresh_token", ""))
@@ -101,6 +103,12 @@ func request_password_recovery(email: String) -> Dictionary:
 	if clean_email.is_empty():
 		return {"ok": false, "message": "Digite seu e-mail para recuperar a senha."}
 	return await _auth_request("recover", {"email": clean_email})
+
+func resend_signup_confirmation(email: String) -> Dictionary:
+	var clean_email := email.strip_edges()
+	if clean_email.is_empty():
+		return {"ok": false, "message": "Digite seu e-mail para reenviar a confirmação."}
+	return await _auth_request("resend", {"type": "signup", "email": clean_email})
 
 
 func create_game_room(chapter: String = "Floresta Corrompida", max_players: int = 4) -> Dictionary:
