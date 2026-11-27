@@ -1581,6 +1581,14 @@ class FinalChapterContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 11 and hp <= 600', self.enemy)
         self.assertIn('func final_boss_health_changed(current: int, maximum: int)', self.world)
 
+    def test_settlement_herbalist_sells_persistent_potions_for_shards(self):
+        self.assertIn('_make_person("Nara Herbalista", Vector3(-112.0, 0.0, 78.0)', self.world)
+        self.assertIn('E: FALAR COM NARA  •  POÇÃO: 2 FRAGMENTOS', self.world)
+        self.assertIn('shards -= 2', self.world)
+        self.assertIn('potions += 1', self.world)
+        self.assertIn('_update_inventory()', self.world)
+        self.assertIn('_save_game()', self.world)
+
     def test_final_boss_is_locked_to_the_final_quest_stage(self):
         self.assertIn('enemy_kind == 11 and int(get_parent().get("quest_stage")) != 21', self.enemy)
         self.assertIn('if quest_stage == 21 and kind == 11:', self.world)
