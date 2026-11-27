@@ -3240,6 +3240,7 @@ func _interact() -> void:
 			quest_text = "O Silêncio Cinzento precisa ser derrotado"
 			objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
 			toast_label.text = "Guardião do Amanhecer: O Silêncio Cinzento já foi como nós. Não permita que o medo escolha por você. Lute por Tobi, por Breu e por cada lembrança que ainda merece viver."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO V • O ÚLTIMO AMANHECER", "A última batalha", "No alto do Cume, o antigo guardião ergue sua sombra. Tobi e Breu sabem que não estão lutando apenas por um coração, mas por todas as histórias que ainda podem ser contadas.")
 			_save_game()
 		elif quest_stage == 29:
 			quest_stage = 30
@@ -3266,6 +3267,7 @@ func _interact() -> void:
 			quest_text = "Cavaleiros Afogados (0/3)"
 			objective_label.text = "Objetivo: derrote 3 Cavaleiros Afogados (%d/3)" % river_knights_defeated
 			toast_label.text = "Guardião do Rio: Esses cavaleiros juraram proteger a correnteza, mas a sombra os acorrentou. Não lute por vingança, Tobi. Quebre a maldição e permita que encontrem descanso."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "Os que dormem sob as águas", "Três armaduras antigas ainda caminham no leito do rio. O Guardião pede que Tobi liberte os cavaleiros, pois suas promessas continuam presas à correnteza.")
 			_save_game()
 		elif quest_stage == 11:
 			quest_stage = 12
@@ -3273,6 +3275,7 @@ func _interact() -> void:
 			quest_text = "O Leviatã do Lodo despertou"
 			objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 			toast_label.text = "Guardião do Rio: O fundo está se movendo... O Leviatã do Lodo despertou. Espere o sinal de seus golpes e não deixe que a correnteza os separe."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O despertar do Leviatã", "Quando o último cavaleiro encontra descanso, a água escurece. Uma criatura imensa rompe a superfície: o Leviatã do Lodo protege a lembrança mais antiga do rio.")
 			_save_game()
 		elif quest_stage == 13:
 			quest_stage = 14
@@ -3283,6 +3286,7 @@ func _interact() -> void:
 			dark_essence += 4
 			objective_label.text = "CAPÍTULO III • O RIO DAS MEMÓRIAS — fale com Azulan para reunir os ecos"
 			toast_label.text = "O rio está livre! +180 XP • 6 Fragmentos Rubros • 2 Poções"
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A água volta a cantar", "O Leviatã afunda em paz e a correnteza recupera seu brilho. Entre as pedras, três ecos começam a pulsar. Azulan saberá o que fazer com eles.")
 			_update_inventory()
 			_save_game()
 		else:
@@ -3355,6 +3359,7 @@ func _interact() -> void:
 			_grant_xp(30)
 			objective_label.text = "Objetivo: encontre o Guardião do Rio Prateado a leste"
 			toast_label.text = "Azulan: atravesse a trilha de pedra para leste. O Guardião conhece a passagem submersa."
+			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "A correnteza chama", "Ao longe, o Rio Prateado reflete um céu que já não existe. O Guardião espera na margem e conhece os nomes daqueles que desapareceram sob as águas.")
 			_update_inventory()
 			_save_game()
 		else:
