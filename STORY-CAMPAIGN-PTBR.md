@@ -106,3 +106,6 @@ No Bosque dos Sussurros, três lanternas preservam as lembranças da floresta. A
 
 ### Direção de diálogo
 Os diálogos de Azulan, Guardião do Rio, Oráculo das Ruínas e Guardião do Amanhecer foram ampliados no código para explicar motivações, antecipar perigos e reforçar o papel de Breu. As missões paralelas também receberam falas com contexto e propósito, sem torná-las obrigatórias para concluir a campanha.
+
+### Cenas de passagem adicionais
+O Capítulo III agora prevê cenas de chegada ao Rio Prateado, libertação dos Cavaleiros Afogados, despertar do Leviatã e libertação da correnteza. O Capítulo V também apresenta uma cena imediatamente antes da batalha contra o Silêncio Cinzento. Essas cenas reforçam a passagem entre objetivos sem alterar a ordem das missões.
