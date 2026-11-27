@@ -5,6 +5,8 @@ const MENU_SCENE := "res://scenes/menu.tscn"
 var notice: AcceptDialog
 var status_label: Label
 var friends_body: Label
+var requests_body: Label
+var requests_content: VBoxContainer
 var friend_username_input: LineEdit
 var room_code_input: LineEdit
 var room_status_label: Label
@@ -93,10 +95,12 @@ func _build_lobby() -> void:
 	friends_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(friends_panel)
 	friends_body = friends_panel.get_node("PanelContent/PanelBody") as Label
-	var requests_panel := _make_panel("PEDIDOS DE AMIZADE", "A lista de pedidos recebidos será ligada na próxima etapa.")
+	var requests_panel := _make_panel("PEDIDOS DE AMIZADE", "Carregando pedidos...")
 	requests_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	requests_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(requests_panel)
+	requests_content = requests_panel.get_node("PanelContent") as VBoxContainer
+	requests_body = requests_panel.get_node("PanelContent/PanelBody") as Label
 
 	var invite_row := HBoxContainer.new()
 	invite_row.add_theme_constant_override("separation", 8)
@@ -195,9 +199,11 @@ func _refresh_auth_state() -> void:
 	if authenticated:
 		status_label.text = "CONECTADO • Conta autenticada pelo Supabase."
 		_load_friends()
+		_load_friend_requests()
 	else:
 		status_label.text = "MODO CONVIDADO • Entre com e-mail e senha para usar amigos e salas."
 		friends_body.text = "Sua lista aparecerá aqui depois do login."
+		requests_body.text = "Entre na conta para ver pedidos pendentes."
 		room_status_label.text = ""
 
 func _on_session_changed(_user: Dictionary) -> void:
@@ -205,6 +211,9 @@ func _on_session_changed(_user: Dictionary) -> void:
 
 func _load_friends() -> void:
 	SupabaseAuth.rpc_call("dark_world_list_friends", {}, "list_friends")
+
+func _load_friend_requests() -> void:
+	SupabaseAuth.rpc_call("dark_world_list_friend_requests", {}, "list_requests")
 
 func _send_friend_request() -> void:
 	var username := friend_username_input.text.strip_edges()
@@ -237,6 +246,7 @@ func _on_rpc_completed(tag: String, data: Variant) -> void:
 	elif tag == "send_friend":
 		status_label.text = "Pedido de amizade enviado!"
 		friend_username_input.clear()
+		_load_friend_requests()
 	elif tag == "create_room":
 		var rows: Array = data if data is Array else []
 		if not rows.is_empty() and rows[0] is Dictionary:
@@ -244,6 +254,13 @@ func _on_rpc_completed(tag: String, data: Variant) -> void:
 			room_status_label.text = "SALA CRIADA • Código: %s • Compartilhe com seus amigos." % str(room.get("room_code", ""))
 		else:
 			room_status_label.text = "Sala criada, mas o código não veio na resposta."
+	elif tag == "list_requests":
+		var rows: Array = data if data is Array else []
+		_render_friend_requests(rows)
+	elif tag == "respond_friend":
+		status_label.text = "Pedido de amizade atualizado."
+		_load_friends()
+		_load_friend_requests()
 	elif tag == "join_room":
 		var rows: Array = data if data is Array else []
 		if not rows.is_empty() and rows[0] is Dictionary:
@@ -252,9 +269,59 @@ func _on_rpc_completed(tag: String, data: Variant) -> void:
 		else:
 			room_status_label.text = "Entrada confirmada. A sincronização da partida será conectada em seguida."
 
+func _render_friend_requests(rows: Array) -> void:
+	for child in requests_content.get_children():
+		if child.name.begins_with("FriendRequest_"):
+			child.queue_free()
+	var incoming: PackedStringArray = []
+	var outgoing: PackedStringArray = []
+	var incoming_count := 0
+	for row in rows:
+		if not row is Dictionary:
+			continue
+		var username := str(row.get("username", "Aventureiro"))
+		var direction := str(row.get("direction", ""))
+		if direction == "received":
+			incoming_count += 1
+			incoming.append(username)
+			var request_id := str(row.get("request_id", ""))
+			var request_row := HBoxContainer.new()
+			request_row.name = "FriendRequest_%d" % incoming_count
+			request_row.add_theme_constant_override("separation", 5)
+			var name_label := Label.new()
+			name_label.text = username
+			name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			name_label.add_theme_color_override("font_color", Color("d7e0d8"))
+			request_row.add_child(name_label)
+			var accept_button := Button.new()
+			accept_button.text = "ACEITAR"
+			accept_button.pressed.connect(_respond_friend_request.bind(request_id, true))
+			request_row.add_child(accept_button)
+			var decline_button := Button.new()
+			decline_button.text = "RECUSAR"
+			decline_button.pressed.connect(_respond_friend_request.bind(request_id, false))
+			request_row.add_child(decline_button)
+			requests_content.add_child(request_row)
+		elif direction == "sent":
+			outgoing.append(username)
+	var summary := ""
+	if incoming.is_empty():
+		summary = "Nenhum pedido recebido."
+	else:
+		summary = "Pedidos recebidos: " + ", ".join(incoming)
+	if not outgoing.is_empty():
+		summary += "\nEnviados: " + ", ".join(outgoing)
+	requests_body.text = summary
+
+func _respond_friend_request(request_id: String, accept: bool) -> void:
+	SupabaseAuth.rpc_call("dark_world_respond_friend_request", {"p_request_id": request_id, "p_accept": accept}, "respond_friend")
+
 func _on_rpc_failed(tag: String, message: String) -> void:
 	if tag == "list_friends":
 		friends_body.text = "Não foi possível carregar a lista agora."
+	elif tag == "list_requests":
+		requests_body.text = "Não foi possível carregar os pedidos agora."
 	elif tag == "create_room" or tag == "join_room":
 		room_status_label.text = message
 	else:
