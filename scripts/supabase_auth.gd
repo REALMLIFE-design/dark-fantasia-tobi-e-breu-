@@ -3,6 +3,8 @@ extends Node
 signal session_changed(user: Dictionary)
 signal auth_message(message: String)
 signal auth_failed(message: String)
+signal rpc_completed(tag: String, data: Variant)
+signal rpc_failed(tag: String, message: String)
 
 const SUPABASE_URL := "https://wxzvtbfsemwmwjjhqstp.supabase.co"
 const SUPABASE_PUBLISHABLE_KEY := "sb_publishable_vhP03uo8hlslL44Nv0o0kA_4Wkp59yL"
@@ -49,6 +51,48 @@ func refresh_session() -> void:
 		return
 	_refresh_in_flight = true
 	_request_auth("refresh", "/auth/v1/token?grant_type=refresh_token", {"refresh_token": refresh_token})
+
+func rpc_call(function_name: String, payload: Dictionary, tag: String) -> void:
+	if not is_authenticated():
+		rpc_failed.emit(tag, "Entre na sua conta para usar este recurso.")
+		return
+	var allowed_functions := [
+		"dark_world_create_room",
+		"dark_world_join_room",
+		"dark_world_send_friend_request",
+		"dark_world_respond_friend_request",
+		"dark_world_list_friends"
+	]
+	if not allowed_functions.has(function_name):
+		rpc_failed.emit(tag, "Operação não permitida.")
+		return
+	var request := HTTPRequest.new()
+	request.timeout = 25.0
+	add_child(request)
+	request.request_completed.connect(_on_rpc_completed.bind(tag, request))
+	var headers := PackedStringArray([
+		"apikey: " + SUPABASE_PUBLISHABLE_KEY,
+		"Authorization: Bearer " + access_token,
+		"Content-Type: application/json"
+	])
+	var error := request.request(SUPABASE_URL + "/rest/v1/rpc/" + function_name, headers, HTTPClient.METHOD_POST, JSON.stringify(payload))
+	if error != OK:
+		request.queue_free()
+		rpc_failed.emit(tag, "Não foi possível iniciar a operação online.")
+
+func _on_rpc_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, tag: String, request: HTTPRequest) -> void:
+	if is_instance_valid(request):
+		request.queue_free()
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if result != HTTPRequest.RESULT_SUCCESS:
+		rpc_failed.emit(tag, "A conexão com o lobby falhou. Tente novamente.")
+		return
+	if response_code < 200 or response_code >= 300:
+		var details: Dictionary = parsed if parsed is Dictionary else {}
+		var message := str(details.get("message", details.get("hint", details.get("details", "A operação não foi concluída."))))
+		rpc_failed.emit(tag, message)
+		return
+	rpc_completed.emit(tag, parsed)
 
 func sign_out() -> void:
 	var old_token := access_token
