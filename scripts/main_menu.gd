@@ -35,10 +35,17 @@ func _build_menu() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 
+	var viewport_size := get_viewport_rect().size
+	var content_width := minf(560.0, maxf(280.0, viewport_size.x - 32.0))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(content_width, maxf(260.0, viewport_size.y - 32.0))
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	center.add_child(scroll)
 	var layout := VBoxContainer.new()
-	layout.custom_minimum_size = Vector2(560, 0)
+	layout.custom_minimum_size = Vector2(content_width, 0)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_theme_constant_override("separation", 12)
-	center.add_child(layout)
+	scroll.add_child(layout)
 
 	var eyebrow := Label.new()
 	eyebrow.text = "UMA AVENTURA EM DARK FANTASY"
@@ -57,6 +64,7 @@ func _build_menu() -> void:
 	var subtitle := Label.new()
 	subtitle.text = "DARK WORLD  •  ESCOLHA COMO JOGAR"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.add_theme_color_override("font_color", Color("a9b5a9"))
 	subtitle.add_theme_font_size_override("font_size", 13)
 	layout.add_child(subtitle)
@@ -75,6 +83,7 @@ func _build_menu() -> void:
 	var footer := Label.new()
 	footer.text = "A campanha original continua sendo a base da aventura.\nOnline: amigos e salas estão conectados; movimento e combate cooperativo ainda estão em desenvolvimento."
 	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	footer.add_theme_color_override("font_color", Color("788984"))
 	footer.add_theme_font_size_override("font_size", 12)
 	layout.add_child(footer)
@@ -87,7 +96,8 @@ func _build_menu() -> void:
 
 func _add_menu_button(parent: VBoxContainer, heading: String, detail: String, action: Callable, primary := false) -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(520, 56)
+	button.custom_minimum_size = Vector2(0, 56)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.text = heading + "\n" + detail
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
