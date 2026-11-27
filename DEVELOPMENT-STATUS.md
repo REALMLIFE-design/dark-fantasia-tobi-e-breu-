@@ -201,3 +201,5 @@
 - Campos de nome, e-mail e senha receberam altura mínima de toque de 46 px; botões de entrar e criar conta passaram para 52 px.
 - A mudança é de layout e não altera autenticação, saves ou fluxo de visitante.
 - Não foi executado teste visual ou runtime, conforme pedido; a aparência ainda precisa ser conferida no Godot em diferentes resoluções.
+
+- O painel de login também foi colocado em um contêiner com rolagem vertical e sem rolagem horizontal, para que os campos e botões continuem acessíveis em aparelhos com pouca altura disponível.
