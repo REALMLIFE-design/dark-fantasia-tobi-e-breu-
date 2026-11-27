@@ -1581,6 +1581,15 @@ class FinalChapterContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 11 and hp <= 600', self.enemy)
         self.assertIn('func final_boss_health_changed(current: int, maximum: int)', self.world)
 
+    def test_alchemy_bench_crafts_potions_from_gathered_materials(self):
+        self.assertIn('alchemy_bench.name = "BancadaDeAlquimia"', self.world)
+        self.assertIn('E: PREPARAR POÇÃO  •  2 ERVAS + 1 ESSÊNCIA', self.world)
+        self.assertIn('if swamp_herbs >= 2 and dark_essence >= 1:', self.world)
+        self.assertIn('swamp_herbs -= 2', self.world)
+        self.assertIn('dark_essence -= 1', self.world)
+        self.assertIn('potions += 1', self.world)
+        self.assertIn('_save_game()', self.world)
+
     def test_settlement_herbalist_sells_persistent_potions_for_shards(self):
         self.assertIn('_make_person("Nara Herbalista", Vector3(-112.0, 0.0, 78.0)', self.world)
         self.assertIn('E: FALAR COM NARA  •  POÇÃO: 2 FRAGMENTOS', self.world)
