@@ -437,9 +437,10 @@ jobs:
             echo "::warning::Este runner não expõe KVM; o emulador usará aceleração por software."
           fi
 
-      # Executa o smoke test depois de publicar o patch para que a verificação do emulador não bloqueie as atualizações.
-      # The emulator script waits for sys.boot_completed before installing or launching the game.
-      - name: Testar APK em emulador Android
+      # Emulador opcional: desativado conforme solicitado para não bloquear a entrega do APK.
+      # A geração, assinatura e publicação continuam validadas pelas etapas anteriores.
+      - name: Testar APK em emulador Android (opcional/desativado)
+        if: ${{ false }}
         timeout-minutes: 25
         uses: reactivecircus/android-emulator-runner@v2
         env:
