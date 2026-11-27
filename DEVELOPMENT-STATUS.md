@@ -177,3 +177,7 @@
 - Adicionada uma cutscene de encerramento do Capítulo II ao retornar a Azulan após derrotar a Bruxa: “A floresta volta a respirar”, conectando a purificação da floresta ao fragmento que aponta para o Rio Prateado.
 - As cenas usam o sistema cinematográfico já existente, preservam o estágio da missão e não alteram o formato do save.
 - Esta alteração foi gravada na branch de trabalho. Conforme solicitado, não foram executados testes; a compilação GDScript e a reprodução das cutscenes permanecem sem validação nesta rodada.
+
+- O final da campanha agora apresenta uma escolha real ao jogador: guardar as memórias no Coração Rubro ou libertar sua luz pelo mundo. Cada decisão tem um epílogo narrativo próprio; a escolha é salva e, se o jogo for fechado antes dela, a tela de decisão reaparece ao carregar o save.
+- A escolha usa a chave `story.final_choice` no save existente; não exige reset nem alteração destrutiva dos saves antigos. A versão do save permanece v16.
+- Não foram executados testes nem compilação nesta rodada, conforme pedido.
