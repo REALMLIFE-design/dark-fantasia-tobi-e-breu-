@@ -21,6 +21,7 @@ class LoginAndLobbyContractTests(unittest.TestCase):
         menu = (ROOT / "scripts/main_menu.gd").read_text(encoding="utf-8")
         lobby = (ROOT / "scripts/friends_lobby.gd").read_text(encoding="utf-8")
         self.assertIn('res://scenes/friends_lobby.tscn', menu)
+        self.assertIn("change_scene_to_packed(lobby)", menu)
         self.assertIn("SEUS AMIGOS", lobby)
         self.assertIn("PEDIDOS DE AMIZADE", lobby)
         self.assertIn("CRIAR SALA PRIVADA", lobby)
