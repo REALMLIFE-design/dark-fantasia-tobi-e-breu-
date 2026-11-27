@@ -12,6 +12,7 @@ var camera: Camera3D
 var hp := 100
 var max_hp := 100
 var attack_damage := 35
+var armor_level := 0
 var attack_flash := 0.0
 var hit_targets: Array[Node] = []
 var attack_visual: Node3D
@@ -532,7 +533,8 @@ func take_damage(amount: int) -> void:
 			if world and world.has_method("player_perfect_dodge"):
 				world.player_perfect_dodge()
 		return
-	hp = maxi(0, hp - amount)
+	var reduced_damage := maxi(1, amount - armor_level * 2)
+	hp = maxi(0, hp - reduced_damage)
 	hit_reaction = 0.22
 	damage_flash = 0.16
 	invulnerable = 0.65
