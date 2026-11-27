@@ -691,7 +691,8 @@ class ProceduralTextureContracts(unittest.TestCase):
         menu_scene = (ROOT / 'scenes/menu.tscn').read_text(encoding='utf-8')
         self.assertIn('run/main_scene="res://scenes/update_bootstrap.tscn"', project)
         bootstrap = (ROOT / 'scripts/update_bootstrap.gd').read_text(encoding='utf-8')
-        self.assertIn('res://scenes/menu.tscn', bootstrap)
+        self.assertIn('res://scenes/login.tscn', bootstrap)
+        self.assertIn('res://scenes/menu.tscn', (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8'))
         self.assertIn('const STORY_SCENE := "res://scenes/main.tscn"', menu)
         self.assertIn('func _start_story()', menu)
         self.assertIn('CONTINUAR A JORNADA', menu)
@@ -703,8 +704,11 @@ class ProceduralTextureContracts(unittest.TestCase):
     def test_online_menu_is_honest_about_unconfigured_services_and_four_player_cap(self):
         menu = (ROOT / 'scripts/main_menu.gd').read_text(encoding='utf-8')
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
-        self.assertIn('login falso', menu)
-        self.assertIn('ainda não está ativa', menu)
+        login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
+        lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
+        self.assertIn('login falso', login.lower())
+        self.assertIn('ainda não está ativa', lobby)
+        self.assertIn('MAX_ADVENTURE_PLAYERS := 4', menu)
 
 class CombatFeedbackIntegrationContracts(unittest.TestCase):
     @classmethod
@@ -1296,7 +1300,7 @@ class StartupAndHudRegressionTests(unittest.TestCase):
         bootstrap = (ROOT / "scripts/update_bootstrap.gd").read_text(encoding="utf-8")
         self.assertIn("UpdateManager.check_for_updates()", bootstrap)
         self.assertNotIn("await UpdateManager.check_for_updates()", bootstrap)
-        self.assertIn('change_scene_to_file("res://scenes/menu.tscn")', bootstrap)
+        self.assertIn('change_scene_to_file("res://scenes/login.tscn")', bootstrap)
         self.assertIn("status_changed.connect(_on_update_status_changed)", bootstrap)
 
     def test_mobile_hud_has_live_touch_actions_and_resize_reflow(self):
