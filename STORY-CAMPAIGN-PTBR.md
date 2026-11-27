@@ -94,3 +94,15 @@ As duas escolhas encerram a ameaça e recebem um epílogo próprio. A decisão �
 ## Estado de implementação
 
 Este roteiro acompanha o conteúdo atualmente representado nos estágios da campanha e nas cenas cinematográficas do projeto. A abertura e o encerramento do Capítulo II e a escolha com dois epílogos foram adicionados ao código na branch `feature/google-login-loading-friends-lobby`. A existência de código não significa que as cenas tenham sido validadas no Godot: testes e execução do jogo foram deixados para depois, conforme solicitado.
+
+
+## Histórias paralelas — conteúdo opcional
+
+### A Guilda dos Vigias: Os Três Selos Perdidos
+Na Cidade de Pedra, o quadro da Guilda conta que três selos desapareceram quando o Silêncio Cinzento atravessou aquelas terras. Um ecoa na Caverna do Eco, outro repousa na Masmorra das Cinzas e o último está no Castelo do Silêncio. O jogador pode aceitar o contrato, explorar as três regiões, recuperar os selos e voltar ao quadro para receber experiência, Fragmentos Rubros, Essências Sombrias e poções. Breu percebe que cada selo guarda a lembrança de um lugar que resistiu à escuridão.
+
+### O Guardião Cervo: As Três Lanternas do Bosque
+No Bosque dos Sussurros, três lanternas preservam as lembranças da floresta. Ao acendê-las, o jogador desperta o Guardião Cervo e recebe sua bênção. A cena reforça que nem toda criatura encontrada na jornada é inimiga: algumas só precisam que suas memórias sejam devolvidas.
+
+### Direção de diálogo
+Os diálogos de Azulan, Guardião do Rio, Oráculo das Ruínas e Guardião do Amanhecer foram ampliados no código para explicar motivações, antecipar perigos e reforçar o papel de Breu. As missões paralelas também receberam falas com contexto e propósito, sem torná-las obrigatórias para concluir a campanha.
