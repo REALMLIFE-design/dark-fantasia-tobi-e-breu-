@@ -102,7 +102,7 @@ func _ready() -> void:
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
 	if enemy_kind == 9: body_color = Color("4b5d3c")
 	elif enemy_kind == 10: body_color = Color("7c9da8")
-		elif enemy_kind == 11: body_color = Color("292b35")
+	elif enemy_kind == 11: body_color = Color("292b35")
 	_add(body, Vector3(0, 0.78, 0), body_color)
 	var chest := SphereMesh.new(); chest.radius = 0.39; chest.height = 0.52
 	_add(chest, Vector3(0, 1.02, 0), body_color.lightened(0.12))
