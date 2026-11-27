@@ -134,7 +134,7 @@ func _build_lobby() -> void:
 	room_code_input.editable = false
 	room_row.add_child(room_code_input)
 	join_room_button = Button.new()
-	join_room_button.text = "ENTRAR"
+	join_room_button.text = "ENTRAR COM CÓDIGO"
 	join_room_button.custom_minimum_size = Vector2(90, 50)
 	join_room_button.disabled = true
 	join_room_button.pressed.connect(_join_room)
