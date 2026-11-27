@@ -2442,6 +2442,20 @@ func _build_npcs() -> void:
 	river_sign.font_size = 42
 	river_sign.modulate = Color("b7e0d9")
 	river_guardian.add_child(river_sign)
+	# A herbalist gives the first settlement a useful, repeatable supply stop.
+	var herbalist := _make_person("Nara Herbalista", Vector3(-112.0, 0.0, 78.0), false)
+	var herbalist_body := herbalist.get_node_or_null("Body") as MeshInstance3D
+	if herbalist_body:
+		herbalist_body.material_override = _painter_mat(Color("718b65"), 0.0, 0.82)
+	herbalist.set_meta("interact_name", "Nara Herbalista")
+	_box(herbalist, "HerbSatchel", Vector3(0.42, 0.9, -0.12), Vector3(0.42, 0.58, 0.34), Color("8c7048"))
+	var herbalist_sign := Label3D.new()
+	herbalist_sign.text = "NARA • ERVAS E POÇÕES"
+	herbalist_sign.position = Vector3(0.0, 3.5, 0.0)
+	herbalist_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	herbalist_sign.font_size = 38
+	herbalist_sign.modulate = Color("c7e0ad")
+	herbalist.add_child(herbalist_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -3785,6 +3799,8 @@ func _process(delta: float) -> void:
 	var shrine_distance := player.global_position.distance_to(shrine.global_position) if shrine else 999.0
 	var river_npc := get_node_or_null("Guardião do Rio")
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
+	var herbalist_npc := get_node_or_null("Nara Herbalista")
+	var herbalist_distance := player.global_position.distance_to(herbalist_npc.global_position) if herbalist_npc else 999.0
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -3821,6 +3837,7 @@ func _process(delta: float) -> void:
 	if guild_distance < 4.5: prompt_label.text = "E: QUADRO DA GUILDA DOS VIGIAS"
 	elif nearest_guild_relic_distance < 3.8: prompt_label.text = "E: RECUPERAR SELO ANTIGO"
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
+	elif herbalist_distance < 4.5: prompt_label.text = "E: FALAR COM NARA  •  POÇÃO: 2 FRAGMENTOS"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
@@ -4347,6 +4364,17 @@ func _interact() -> void:
 			_save_game()
 		else:
 			toast_label.text = "O santuário está em silêncio."
+		return
+	var herbalist_npc := get_node_or_null("Nara Herbalista")
+	if herbalist_npc and player.global_position.distance_to(herbalist_npc.global_position) < 4.5:
+		if shards >= 2:
+			shards -= 2
+			potions += 1
+			toast_label.text = "Nara: ervas frescas para sua jornada. Poção +1 • Fragmentos -2"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "Nara: preciso de 2 Fragmentos Rubros por uma poção. Você tem %d." % shards
 		return
 	var river_npc := get_node_or_null("Guardião do Rio")
 	if river_npc and player.global_position.distance_to(river_npc.global_position) < 4.5:
