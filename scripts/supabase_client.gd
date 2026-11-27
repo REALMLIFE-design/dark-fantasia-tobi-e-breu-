@@ -75,6 +75,8 @@ func _auth_request(endpoint: String, payload: Dictionary) -> Dictionary:
 	var data: Dictionary = parsed if parsed is Dictionary else {}
 	if response_code < 200 or response_code >= 300:
 		return {"ok": false, "message": _error_message(data, response_code)}
+	if endpoint == "recover":
+		return {"ok": true, "session": false, "message": "Se esse e-mail estiver cadastrado, enviaremos as instruções de recuperação. Confira sua caixa de entrada e o spam."}
 	if data.has("access_token"):
 		access_token = str(data.get("access_token", ""))
 		refresh_token = str(data.get("refresh_token", ""))
@@ -93,6 +95,12 @@ func refresh_session() -> Dictionary:
 	if refresh_token.is_empty():
 		return {"ok": false, "message": "A sessão expirou. Entre novamente."}
 	return await _auth_request("token?grant_type=refresh_token", {"refresh_token": refresh_token})
+
+func request_password_recovery(email: String) -> Dictionary:
+	var clean_email := email.strip_edges()
+	if clean_email.is_empty():
+		return {"ok": false, "message": "Digite seu e-mail para recuperar a senha."}
+	return await _auth_request("recover", {"email": clean_email})
 
 
 func create_game_room(chapter: String = "Floresta Corrompida", max_players: int = 4) -> Dictionary:
