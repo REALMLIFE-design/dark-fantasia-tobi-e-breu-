@@ -55,6 +55,8 @@ Migração aplicada ao projeto Supabase e versionada em `supabase/migrations/202
 - `dark_world_send_friend_request(username)`: procura o jogador pelo nome e impede auto-convite e pedidos duplicados.
 - `dark_world_respond_friend_request(request_id, accept)`: só permite que o destinatário responda a um pedido pendente.
 - `dark_world_list_friends()`: lista apenas amizades aceitas da conta atual.
+- `dark_world_list_friend_requests()`: lista pedidos pendentes recebidos e enviados da conta atual.
+- A interface permite aceitar ou recusar pedidos recebidos.
 - Trigger de criação automática do perfil quando uma conta Auth é criada.
 
 Todas as RPCs exigem papel `authenticated`; execução por `anon` e `public` foi revogada. O banco foi conferido após a aplicação. A interface do jogo agora usa uma sessão de e-mail/senha para chamar as RPCs de amigos e salas. A partida multiplayer em tempo real ainda precisa de sincronização de estado, presença, reconexão e testes com contas diferentes.
