@@ -109,8 +109,16 @@ static func play_intro(world: Node) -> void:
 	content.add_child(next_button)
 
 	var skip_button := Button.new()
-	skip_button.custom_minimum_size = Vector2(180, 40)
-	skip_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	skip_button.custom_minimum_size = Vector2(190, 46)
+	skip_button.anchor_left = 1.0
+	skip_button.anchor_right = 1.0
+	skip_button.anchor_top = 0.0
+	skip_button.anchor_bottom = 0.0
+	skip_button.offset_left = -206.0
+	skip_button.offset_right = -16.0
+	skip_button.offset_top = 16.0
+	skip_button.offset_bottom = 62.0
+	skip_button.z_index = 10
 	skip_button.text = "PULAR INTRODUÇÃO"
 	skip_button.add_theme_font_size_override("font_size", 13)
 	var skip_style := StyleBoxFlat.new()
@@ -119,7 +127,7 @@ static func play_intro(world: Node) -> void:
 	skip_style.set_border_width_all(1)
 	skip_style.set_corner_radius_all(6)
 	skip_button.add_theme_stylebox_override("normal", skip_style)
-	content.add_child(skip_button)
+	root.add_child(skip_button)
 
 	var pages := [
 		{"chapter":"PRÓLOGO  •  UMA HISTÓRIA ANTIGA","title":"Era uma vez…","body":"Era uma vez um mundo costurado por rios brilhantes, florestas antigas e pequenas luzes que dançavam no céu. No coração desse lugar pulsava o Coração Rubro, uma joia mágica que mantinha o equilíbrio entre todas as coisas. Dizem que, enquanto sua luz brilhasse, até a noite teria sonhos tranquilos.","hint":"Mas toda história guarda um dia que muda tudo…"},
