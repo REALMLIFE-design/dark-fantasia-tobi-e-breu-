@@ -203,3 +203,5 @@
 - Não foi executado teste visual ou runtime, conforme pedido; a aparência ainda precisa ser conferida no Godot em diferentes resoluções.
 
 - O painel de login também foi colocado em um contêiner com rolagem vertical e sem rolagem horizontal, para que os campos e botões continuem acessíveis em aparelhos com pouca altura disponível.
+
+- A tela de login ganhou controle para mostrar/ocultar a senha digitada, sem enviar o valor a nenhum serviço até o jogador tocar em entrar ou criar conta.
