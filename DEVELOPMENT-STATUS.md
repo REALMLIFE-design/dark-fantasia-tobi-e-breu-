@@ -194,3 +194,10 @@
 
 - Ampliadas as transições cinematográficas do Capítulo III: chegada ao Rio Prateado, libertação dos Cavaleiros Afogados, despertar do Leviatã do Lodo e libertação do rio. O início do confronto final no Cume das Nuvens também ganhou cena própria.
 - As cenas são chamadas nos pontos de progressão já existentes e não alteram os estágios de missão ou o formato do save. Não foram executados testes, compilação ou validação visual.
+
+
+## Ajuste de interface — login em telas estreitas (26/11/2026)
+- O painel de autenticação agora calcula sua largura a partir da largura disponível da tela, respeitando margens laterais e o limite de 430 px em dispositivos maiores.
+- Campos de nome, e-mail e senha receberam altura mínima de toque de 46 px; botões de entrar e criar conta passaram para 52 px.
+- A mudança é de layout e não altera autenticação, saves ou fluxo de visitante.
+- Não foi executado teste visual ou runtime, conforme pedido; a aparência ainda precisa ser conferida no Godot em diferentes resoluções.
