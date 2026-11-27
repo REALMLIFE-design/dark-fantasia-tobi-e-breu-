@@ -1,7 +1,7 @@
 extends Control
 
 const MENU_SCENE := "res://scenes/menu.tscn"
-# Set this to the OAuth Web Client ID after configuring Google Identity/Firebase.
+# Set this to the Google OAuth Web Client ID after configuring the provider in Supabase.
 # Never put a private client secret in the game.
 const GOOGLE_WEB_CLIENT_ID := ""
 
@@ -164,7 +164,7 @@ func _show_auth_result(result: Dictionary) -> void:
 
 func _on_google_pressed() -> void:
 	if GOOGLE_WEB_CLIENT_ID.strip_edges().is_empty():
-		_show_notice("O botão e a tela já estão prontos, mas a autenticação real ainda não foi ligada. Falta configurar o OAuth do Google/Firebase e o cliente Android. Nenhuma conta será simulada.")
+		_show_notice("O botão e a tela já estão prontos, mas a autenticação real ainda não foi ligada. Falta configurar o provedor Google no Supabase e o fluxo nativo Android. Nenhuma conta será simulada.")
 		return
 	_show_notice("O Client ID foi preenchido, mas o fluxo nativo de autenticação ainda precisa ser integrado e validado no Android antes de aceitar contas.")
 
