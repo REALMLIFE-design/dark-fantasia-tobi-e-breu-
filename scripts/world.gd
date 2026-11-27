@@ -3210,7 +3210,7 @@ func _interact() -> void:
 			player.global_position = Vector3(164.0, 0.0, -88.0)
 			quest_text = "O Guardião das Ruínas protege o selo final"
 			objective_label.text = "Objetivo: derrote o Guardião das Ruínas"
-			toast_label.text = "Oráculo: prove que sua coragem é maior que o medo. O guardião despertou!"
+			toast_label.text = "Oráculo das Ruínas: A pedra se lembra de todos que passaram por aqui. O guardião não é mau; apenas cumpre uma promessa antiga. Vença-o sem esquecer por que ele luta."
 			_save_game()
 		elif quest_stage == 24:
 			quest_stage = 25
@@ -3237,7 +3237,7 @@ func _interact() -> void:
 			player.global_position = Vector3(0.0, 0.0, -337.0)
 			quest_text = "O Silêncio Cinzento precisa ser derrotado"
 			objective_label.text = "Objetivo: derrote o Silêncio Cinzento"
-			toast_label.text = "Guardião: esta é a última luz. Lute por todos que ainda acreditam no amanhecer."
+			toast_label.text = "Guardião do Amanhecer: O Silêncio Cinzento já foi como nós. Não permita que o medo escolha por você. Lute por Tobi, por Breu e por cada lembrança que ainda merece viver."
 			_save_game()
 		elif quest_stage == 29:
 			quest_stage = 30
@@ -3263,14 +3263,14 @@ func _interact() -> void:
 			river_knights_defeated = 0
 			quest_text = "Cavaleiros Afogados (0/3)"
 			objective_label.text = "Objetivo: derrote 3 Cavaleiros Afogados (%d/3)" % river_knights_defeated
-			toast_label.text = "Guardião: os cavaleiros presos sob a água protegem a passagem. Liberte o rio!"
+			toast_label.text = "Guardião do Rio: Esses cavaleiros juraram proteger a correnteza, mas a sombra os acorrentou. Não lute por vingança, Tobi. Quebre a maldição e permita que encontrem descanso."
 			_save_game()
 		elif quest_stage == 11:
 			quest_stage = 12
 			_activate_river_boss()
 			quest_text = "O Leviatã do Lodo despertou"
 			objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
-			toast_label.text = "Guardião: a correnteza escondia uma criatura antiga. Ela despertou!"
+			toast_label.text = "Guardião do Rio: O fundo está se movendo... O Leviatã do Lodo despertou. Espere o sinal de seus golpes e não deixe que a correnteza os separe."
 			_save_game()
 		elif quest_stage == 13:
 			quest_stage = 14
@@ -3294,9 +3294,9 @@ func _interact() -> void:
 			quest_text = "Derrote os goblins corrompidos (0/3)"
 			_save_game()
 			objective_label.text = "Objetivo: derrote 3 goblins corrompidos"
-			toast_label.text = "Azulan: O Coração Rubro foi roubado. A floresta está perdendo suas cores!"
+			toast_label.text = "Azulan: O Coração Rubro foi levado durante a noite. Desde então, as flores se fecham e até os pássaros esqueceram suas canções. Tobi, a floresta precisa de você. Breu, fique ao lado dele."
 		elif quest_stage == 1:
-			toast_label.text = "Azulan: Afaste os goblins da trilha e volte quando terminar."
+			toast_label.text = "Azulan: Os goblins não estão agindo por vontade própria. A sombra os conduz pela trilha. Afaste os três e observe se deixam alguma pista."
 		elif quest_stage == 2:
 			quest_stage = 3
 			_grant_xp(40)
@@ -3304,13 +3304,13 @@ func _interact() -> void:
 			objective_label.text = "Objetivo: derrote o Guardião do Silêncio ao norte"
 			_save_game()
 			_update_inventory()
-			toast_label.text = "Azulan: A corrupção tem um coração. Vá até a cicatriz ao norte e destrua seu guardião!"
+			toast_label.text = "Azulan: Aquelas marcas no chão são feridas da própria floresta. No centro da Cicatriz Rubra, um guardião protege a corrupção. Encontre-o ao norte e tenha cuidado com seus golpes."
 		elif quest_stage == 4:
 			quest_stage = 5
 			quest_text = "Os selos do Pântano"
 			objective_label.text = "Objetivo: purifique os 3 totens do Pântano dos Ratos"
 			_save_game()
-			toast_label.text = "Azulan: Siga ao norte. Purifique os três totens antes que a Bruxa desperte!"
+			toast_label.text = "Azulan: Cada totem é uma antiga promessa feita para proteger estas árvores. Purifique os três. Se o último selo cair, a Bruxa do Pântano sentirá a mudança e virá atrás de vocês."
 			call_deferred("_play_chapter_cutscene", "CAPÍTULO II • A FLORESTA CORROMPIDA", "A floresta pede ajuda", "Além da clareira, o Pântano dos Ratos está coberto por raízes escuras. Três totens mantêm a corrupção presa à terra. Se Tobi e Breu conseguirem purificá-los, talvez descubram quem está envenenando a floresta.")
 		elif quest_stage == 7:
 			quest_stage = 8
@@ -3328,7 +3328,7 @@ func _interact() -> void:
 			_reveal_chapter_three_memories()
 			quest_text = "Recupere os três Ecos de Memória do Rio"
 			objective_label.text = "Objetivo: recupere os 3 Ecos de Memória do Rio (0/3)"
-			toast_label.text = "Azulan: o rio guarda as lembranças do Coração. Reúna os três ecos e siga a trilha até o templo."
+			toast_label.text = "Azulan: O Rio Prateado não guarda ouro, mas lembranças. Três ecos mostram o caminho que a água tenta esconder. Reúna-os com cuidado; cada memória pertence a alguém que o mundo quase esqueceu."
 			call_deferred("_play_chapter_cutscene", "CAPÍTULO III • O RIO DAS MEMÓRIAS", "O chamado do rio", "O Guardião do Rio deixou um sinal nas águas. Ele aponta para três ecos esquecidos, capazes de revelar a porta do Templo do Coração.")
 			_save_game()
 		elif quest_stage == 25:
