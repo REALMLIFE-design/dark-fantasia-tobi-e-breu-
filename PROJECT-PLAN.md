@@ -138,3 +138,15 @@ Function: aprovar mapa, escala, câmera e orçamento. Form: validar modelos, mat
 5. **O Último Amanhecer** — três fragmentos no Cume das Nuvens, Guardião do Amanhecer, Silêncio Cinzento, escolha final e créditos.
 
 A numeração da campanha no HUD/cenas segue este canon. O Rio Prateado e o Leviatã fazem parte do Capítulo III, não constituem um capítulo extra.
+
+
+### Roteiro cinematográfico e encerramento com escolha — 26/11/2026
+- [x] Capítulo I: “A Marca do Guardião” após a queda do primeiro guardião.
+- [x] Capítulo II: cena de abertura ao receber a missão dos totens, “O Último Totem” ao purificar o terceiro totem e encerramento ao derrotar a Bruxa e retornar a Azulan.
+- [x] Capítulo III: “O Chamado do Rio”, “A Porta do Templo” e “A Verdade do Coração”.
+- [x] Capítulo IV: abertura do templo, queda do Guardião das Ruínas e revelação do Oráculo.
+- [x] Capítulo V: partida para o Cume, queda do Silêncio Cinzento e decisão final.
+- [x] A decisão final oferece dois epílogos diferentes e grava a escolha no save; saves antigos recebem escolha vazia e podem concluir a cena normalmente.
+- [ ] Revisar ritmo, legibilidade e execução de todas as cenas no Godot quando a etapa de testes for autorizada.
+
+**Nota desta rodada:** as alterações foram gravadas na branch de desenvolvimento sem executar testes, conforme solicitação. Os itens marcados como implementados descrevem código adicionado, não validação em runtime.
