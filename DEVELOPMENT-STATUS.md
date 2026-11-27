@@ -191,3 +191,6 @@
 - Não foram executados testes, compilação ou validação visual nesta rodada, conforme solicitado.
 
 - Ajustado o balão de diálogo/toast do HUD para acomodar falas maiores: largura responsiva à tela, altura ampliada, quebra automática e alinhamento vertical. A alteração busca evitar que os novos diálogos longos fiquem cortados em celulares; a aparência final permanece sem validação visual até a rodada de testes.
+
+- Ampliadas as transições cinematográficas do Capítulo III: chegada ao Rio Prateado, libertação dos Cavaleiros Afogados, despertar do Leviatã do Lodo e libertação do rio. O início do confronto final no Cume das Nuvens também ganhou cena própria.
+- As cenas são chamadas nos pontos de progressão já existentes e não alteram os estágios de missão ou o formato do save. Não foram executados testes, compilação ou validação visual.
