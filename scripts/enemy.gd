@@ -439,7 +439,7 @@ func _enter_boss_enrage(notify_world: bool = true) -> void:
 		boss_core_material.emission = Color("b52c26") if enemy_kind == 6 else Color("a14f9c")
 		boss_core_material.emission_energy_multiplier = 2.8
 	if is_instance_valid(attack_telegraph_material):
-		attack_telegraph_material.albedo_color = Color(1.0, 0.24, 0.035, 0.9)
+		attack_telegraph_material.albedo_color = Color(1.0, 0.24, 0.035, 0.9) if enemy_kind == 6 else Color(0.88, 0.32, 0.78, 0.9)
 	if notify_world:
 		if enemy_kind == 6 and get_parent().has_method("river_boss_phase_changed"):
 			get_parent().river_boss_phase_changed()
