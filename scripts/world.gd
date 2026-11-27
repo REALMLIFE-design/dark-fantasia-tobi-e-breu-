@@ -4452,6 +4452,7 @@ func _upgrade_weapon() -> void:
 	_update_inventory()
 	_save_game()
 
+func enemy_defeated(kind: int = 0) -> void:
 	if quest_stage == 21 and kind == 11:
 		quest_stage = 22
 		final_boss_hp = 0
@@ -4467,7 +4468,6 @@ func _upgrade_weapon() -> void:
 		_update_quest()
 		_save_game()
 		return
-func enemy_defeated(kind: int = 0) -> void:
 	if quest_stage == 12 and kind == 6:
 		quest_stage = 13
 		quest_text = "O Leviatã caiu — volte ao Guardião do Rio"
