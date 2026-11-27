@@ -16,6 +16,8 @@ var copy_code_button: Button
 var leave_room_button: Button
 var chapter_option: OptionButton
 var active_room_chapter := "Floresta Corrompida"
+var _friend_load_busy := false
+var _room_refresh_busy := false
 
 func _ready() -> void:
 	_build_lobby()
@@ -203,13 +205,18 @@ func _search_and_add_friend() -> void:
 
 
 func _load_friend_requests() -> void:
-	if not SupabaseClient.is_authenticated() or not is_instance_valid(friend_requests_stack):
+	if _friend_load_busy or not SupabaseClient.is_authenticated() or not is_instance_valid(friend_requests_stack):
 		return
+	_friend_load_busy = true
 	for child in friend_requests_stack.get_children():
 		child.queue_free()
 	var result: Dictionary = await SupabaseClient.list_friend_requests()
+	if not is_instance_valid(friend_requests_stack):
+		_friend_load_busy = false
+		return
 	if not result.get("ok", false):
-		friend_requests_stack.add_child(_label("Não foi possível carregar amigos agora.", 12, Color("e2c58c")))
+		friend_requests_stack.add_child(_label("Não foi possível carregar amigos agora. Toque em atualizar para tentar novamente.", 12, Color("e2c58c")))
+		_friend_load_busy = false
 		return
 	var requests = result.get("data", [])
 	var visible_count := 0
@@ -246,6 +253,7 @@ func _load_friend_requests() -> void:
 				visible_count += 1
 	if visible_count == 0:
 		friend_requests_stack.add_child(_label("Ainda não há amigos ou solicitações.", 12, Color("aebbb0")))
+	_friend_load_busy = false
 
 
 func _respond_to_friend_request(request_id: String, accept: bool) -> void:
@@ -340,11 +348,16 @@ func _copy_room_code() -> void:
 
 
 func _refresh_room_members() -> void:
-	if active_room_id.is_empty() or not SupabaseClient.is_authenticated():
+	if _room_refresh_busy or active_room_id.is_empty() or not SupabaseClient.is_authenticated():
 		return
-	var result: Dictionary = await SupabaseClient.list_room_members(active_room_id)
+	_room_refresh_busy = true
+	var room_id_at_request := active_room_id
+	var result: Dictionary = await SupabaseClient.list_room_members(room_id_at_request)
+	_room_refresh_busy = false
+	if not is_instance_valid(room_status) or room_id_at_request != active_room_id:
+		return
 	if not result.get("ok", false):
-		room_status.text = "Sala %s • não foi possível atualizar os jogadores." % active_room_code
+		room_status.text = "Sala %s • não foi possível atualizar os jogadores. Tentando novamente..." % active_room_code
 		return
 	var members = result.get("data", [])
 	if not members is Array:
