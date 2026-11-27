@@ -88,6 +88,11 @@ func _ready() -> void:
 		move_speed = 2.75
 		attack_damage = 12
 		attack_range = 1.75
+	elif enemy_kind == 11:
+		hp = 1200
+		move_speed = 1.85
+		attack_damage = 30
+		attack_range = 3.0
 	var capsule := CapsuleShape3D.new(); capsule.radius = 0.42; capsule.height = 1.5
 	var col := CollisionShape3D.new(); col.shape = capsule; col.position.y = 0.75; add_child(col)
 	visual = Node3D.new(); add_child(visual)
@@ -97,6 +102,7 @@ func _ready() -> void:
 	var body_color := Color("68744b") if enemy_kind == 0 else (Color("6c5268") if enemy_kind == 1 else (Color("7e7047") if enemy_kind == 2 else (Color("542f3d") if enemy_kind == 3 else (Color("365c52") if enemy_kind == 4 else (Color("477b88") if enemy_kind == 5 else (Color("456a5f") if enemy_kind == 6 else (Color("536d82") if enemy_kind == 7 else Color("536f78"))))))))
 	if enemy_kind == 9: body_color = Color("4b5d3c")
 	elif enemy_kind == 10: body_color = Color("7c9da8")
+		elif enemy_kind == 11: body_color = Color("292b35")
 	_add(body, Vector3(0, 0.78, 0), body_color)
 	var chest := SphereMesh.new(); chest.radius = 0.39; chest.height = 0.52
 	_add(chest, Vector3(0, 1.02, 0), body_color.lightened(0.12))
@@ -107,6 +113,7 @@ func _ready() -> void:
 	elif enemy_kind == 7: visual.scale = Vector3(1.18, 1.55, 1.18)
 	elif enemy_kind == 8: visual.scale = Vector3(1.38, 0.92, 1.38)
 	elif enemy_kind == 10: visual.scale = Vector3(1.12, 1.0, 1.12)
+	elif enemy_kind == 11: visual.scale = Vector3(2.35, 2.45, 2.25)
 	base_visual_scale = visual.scale
 	var head_pivot := Node3D.new(); head_pivot.name = "HeadPivot"; head_pivot.position = Vector3(0, 1.34, 0); visual.add_child(head_pivot)
 	var head := SphereMesh.new(); head.radius = 0.29 if enemy_kind < 3 else 0.34; head.height = 0.58; head.radial_segments = 12
@@ -203,6 +210,40 @@ func _ready() -> void:
 		var core_material := StandardMaterial3D.new(); core_material.albedo_color = Color("9bc6a0"); core_material.emission_enabled = true; core_material.emission = Color("477b63"); core_material.emission_energy_multiplier = 1.7
 		boss_core_material = core_material
 		var core_instance := MeshInstance3D.new(); core_instance.mesh = core; core_instance.position = Vector3(0, 1.12, 0.38); core_instance.material_override = core_material; visual.add_child(core_instance)
+	elif enemy_kind == 11:
+		var mantle := CylinderMesh.new()
+		mantle.top_radius = 0.34
+		mantle.bottom_radius = 0.92
+		mantle.height = 1.28
+		mantle.radial_segments = 9
+		_add(mantle, Vector3(0.0, 0.62, 0.0), Color("252630"))
+		for side in [-1.0, 1.0]:
+			var crown_horn := CylinderMesh.new()
+			crown_horn.top_radius = 0.0
+			crown_horn.bottom_radius = 0.24
+			crown_horn.height = 1.42
+			var horn_node := _add_to(head_pivot, crown_horn, Vector3(side * 0.38, 0.62, -0.04), Color("77717b"))
+			horn_node.rotation.z = side * -0.36
+			var shoulder_spike := CylinderMesh.new()
+			shoulder_spike.top_radius = 0.0
+			shoulder_spike.bottom_radius = 0.22
+			shoulder_spike.height = 0.9
+			var spike_node := _add_to(visual, shoulder_spike, Vector3(side * 0.66, 1.32, -0.08), Color("5d5361"))
+			spike_node.rotation.z = side * -0.9
+		var final_core := SphereMesh.new()
+		final_core.radius = 0.30
+		final_core.height = 0.58
+		var final_core_mat := StandardMaterial3D.new()
+		final_core_mat.albedo_color = Color("8d617f")
+		final_core_mat.emission_enabled = true
+		final_core_mat.emission = Color("5a315e")
+		final_core_mat.emission_energy_multiplier = 2.1
+		boss_core_material = final_core_mat
+		var final_core_instance := MeshInstance3D.new()
+		final_core_instance.mesh = final_core
+		final_core_instance.position = Vector3(0.0, 1.15, 0.55)
+		final_core_instance.material_override = final_core_mat
+		visual.add_child(final_core_instance)
 	elif enemy_kind == 7:
 		var shroud := CylinderMesh.new(); shroud.top_radius = 0.12; shroud.bottom_radius = 0.48; shroud.height = 1.22; shroud.radial_segments = 7
 		var shroud_material := StandardMaterial3D.new(); shroud_material.albedo_color = Color("526d83", 0.72); shroud_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA; shroud_material.roughness = 1.0
@@ -379,28 +420,31 @@ func _set_enemy_fallback_meshes_visible(node: Node, should_be_visible: bool) -> 
 		_set_enemy_fallback_meshes_visible(child, should_be_visible)
 
 func sync_boss_phase() -> void:
-	if enemy_kind == 6 and hp <= 340:
+	if (enemy_kind == 6 and hp <= 340) or (enemy_kind == 11 and hp <= 600):
 		_enter_boss_enrage(false)
 
 func _enter_boss_enrage(notify_world: bool = true) -> void:
 	if boss_enraged:
 		return
 	boss_enraged = true
-	move_speed = 2.35
-	attack_damage = 31
-	attack_range = 3.1
-	boss_slam_radius = 6.0
+	move_speed = 2.35 if enemy_kind == 6 else 2.65
+	attack_damage = 31 if enemy_kind == 6 else 38
+	attack_range = 3.1 if enemy_kind == 6 else 3.35
+	boss_slam_radius = 6.0 if enemy_kind == 6 else 7.2
 	base_visual_scale *= 1.06
 	if is_instance_valid(visual):
 		visual.scale = base_visual_scale
 	if is_instance_valid(boss_core_material):
-		boss_core_material.albedo_color = Color("d85a4d")
-		boss_core_material.emission = Color("b52c26")
+		boss_core_material.albedo_color = Color("d85a4d") if enemy_kind == 6 else Color("d59bc7")
+		boss_core_material.emission = Color("b52c26") if enemy_kind == 6 else Color("a14f9c")
 		boss_core_material.emission_energy_multiplier = 2.8
 	if is_instance_valid(attack_telegraph_material):
 		attack_telegraph_material.albedo_color = Color(1.0, 0.24, 0.035, 0.9)
-	if notify_world and get_parent().has_method("river_boss_phase_changed"):
-		get_parent().river_boss_phase_changed()
+	if notify_world:
+		if enemy_kind == 6 and get_parent().has_method("river_boss_phase_changed"):
+			get_parent().river_boss_phase_changed()
+		elif enemy_kind == 11 and get_parent().has_method("final_boss_phase_changed"):
+			get_parent().final_boss_phase_changed()
 
 func _add(mesh: Mesh, pos: Vector3, color: Color) -> void:
 	var mi := MeshInstance3D.new(); mi.mesh = mesh; mi.position = pos
@@ -442,6 +486,8 @@ func _create_attack_telegraph() -> void:
 func _attack_warning_color() -> Color:
 	if enemy_kind == 6:
 		return Color("ff4d32") if boss_enraged else Color("f08a43")
+	if enemy_kind == 11:
+		return Color("ff8bd5") if boss_enraged else Color("9564a8")
 	if enemy_kind == 8:
 		return Color("62d8c8")
 	if enemy_kind == 9:
@@ -455,16 +501,17 @@ func _attack_warning_color() -> Color:
 	return Color("ef765f")
 
 func _begin_attack() -> void:
-	var enraged := enemy_kind == 6 and hp <= 340
-	if enemy_kind == 6:
+	var is_boss := enemy_kind == 6 or enemy_kind == 11
+	var enraged := (enemy_kind == 6 and hp <= 340) or (enemy_kind == 11 and hp <= 600)
+	if is_boss:
 		boss_attack_count += 1
 		boss_slam_active = boss_attack_count % 2 == 0
-		boss_slam_radius = 6.0 if enraged else 5.4
-	if enemy_kind == 6:
+		boss_slam_radius = (6.0 if enemy_kind == 6 else 7.2) if enraged else (5.4 if enemy_kind == 6 else 6.2)
+	if is_boss:
 		if boss_slam_active:
-			attack_windup_duration = 1.35 if enraged else 1.05
+			attack_windup_duration = (1.35 if enraged else 1.05) if enemy_kind == 6 else (1.55 if enraged else 1.28)
 		else:
-			attack_windup_duration = 0.82 if enraged else 1.05
+			attack_windup_duration = (0.82 if enraged else 1.05) if enemy_kind == 6 else (0.92 if enraged else 1.15)
 	else:
 		attack_windup_duration = 0.92 if enemy_kind == 8 else (0.62 if enemy_kind == 10 else (0.78 if enemy_kind >= 3 else (0.38 if enemy_kind == 2 else (0.68 if enemy_kind == 5 else 0.56))))
 	attack_windup_timer = attack_windup_duration
@@ -480,6 +527,8 @@ func _begin_attack() -> void:
 		attack_timer += 0.45
 	if enemy_kind == 6:
 		attack_timer += 0.7 if not enraged else 0.25
+	elif enemy_kind == 11:
+		attack_timer += 0.9 if not enraged else 0.35
 
 func _resolve_attack() -> void:
 	attack_telegraph.visible = false
@@ -519,6 +568,7 @@ func _physics_process(delta: float) -> void:
 	if enemy_kind == 4 and int(get_parent().get("quest_stage")) < 6: return
 	if enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10: return
 	if enemy_kind == 6 and int(get_parent().get("quest_stage")) != 12: return
+	if enemy_kind == 11 and int(get_parent().get("quest_stage")) != 21: return
 	if enemy_kind == 7 and int(get_parent().get("quest_stage")) < 9: return
 	if enemy_kind == 8 and int(get_parent().get("quest_stage")) < 9: return
 	idle_time += delta
@@ -618,6 +668,7 @@ func take_damage(amount: int) -> void:
 	if enemy_kind == 4 and int(get_parent().get("quest_stage")) < 6: return
 	if enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10: return
 	if enemy_kind == 6 and int(get_parent().get("quest_stage")) != 12: return
+	if enemy_kind == 11 and int(get_parent().get("quest_stage")) != 21: return
 	if enemy_kind == 7 and int(get_parent().get("quest_stage")) < 9: return
 	if enemy_kind == 8 and int(get_parent().get("quest_stage")) < 9: return
 	hp -= amount
@@ -628,6 +679,11 @@ func take_damage(amount: int) -> void:
 			_enter_boss_enrage()
 		if get_parent().has_method("boss_health_changed"):
 			get_parent().boss_health_changed(maxi(0, hp), 680)
+	elif enemy_kind == 11:
+		if hp <= 600:
+			_enter_boss_enrage()
+		if get_parent().has_method("final_boss_health_changed"):
+			get_parent().final_boss_health_changed(maxi(0, hp), 1200)
 	hit_recoil = 0.16
 	visual.scale = Vector3(1.12,0.88,1.12)
 	if hp <= 0:
@@ -684,6 +740,7 @@ func _spawn_death_burst() -> void:
 	burst.global_position = global_position
 	var burst_color := Color("d7c7a0")
 	if enemy_kind == 6: burst_color = Color("d85a4d")
+	elif enemy_kind == 11: burst_color = Color("a96a9c")
 	elif enemy_kind == 7: burst_color = Color("79c9f2")
 	elif enemy_kind == 8: burst_color = Color("62d8c8")
 	elif enemy_kind == 9: burst_color = Color("8dc86a")
