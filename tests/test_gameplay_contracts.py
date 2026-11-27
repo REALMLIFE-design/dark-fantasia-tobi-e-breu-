@@ -837,7 +837,7 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn("UpdateManager.check_for_updates()", bootstrap)
         self.assertNotIn("await UpdateManager.check_for_updates()", bootstrap)
         self.assertIn("status_changed.connect(_on_update_status_changed)", bootstrap)
-        self.assertIn('res://scenes/menu.tscn', bootstrap)
+        self.assertIn('res://scenes/login.tscn', bootstrap)
         self.assertIn('ProjectSettings.load_resource_pack', updater)
         self.assertIn('HashingContext.HASH_SHA256', updater)
         self.assertIn('user://tobi_breu_save.cfg', world)
