@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#101b2b"/><stop offset=".6" stop-color="#163b42"/><stop offset="1" stop-color="#07151b"/></linearGradient><radialGradient id="moon"><stop stop-color="#f1d6a0" stop-opacity=".7"/><stop offset="1" stop-color="#8dc8be" stop-opacity="0"/></radialGradient></defs>
+<rect width="1600" height="900" fill="url(#bg)"/><circle cx="1150" cy="240" r="270" fill="url(#moon)"/><circle cx="1150" cy="240" r="92" fill="#d9d3b7" opacity=".65"/>
+<path d="M0 620 150 410 280 610 430 330 600 630 760 400 920 650 1090 360 1250 620 1430 390 1600 620V900H0Z" fill="#0a2028"/>
+<path d="M0 760 180 580 350 740 520 530 710 770 900 550 1080 760 1260 540 1450 760 1600 620V900H0Z" fill="#0b2b31"/>
+<path d="M0 820Q260 740 500 810T1000 810T1600 800V900H0Z" fill="#061319"/>
+<g fill="#d8b77c" opacity=".7"><circle cx="240" cy="210" r="3"/><circle cx="390" cy="140" r="2"/><circle cx="720" cy="230" r="2"/><circle cx="920" cy="120" r="3"/><circle cx="1400" cy="450" r="2"/></g>
+<g fill="#07151b"><path d="M570 760v-160l-30-55 40 20 28-90 20 90 42-20-30 55v160z"/><path d="M690 760v-120l-22-45 30 15 22-70 20 70 32-15-23 45v120z"/></g>
+<g fill="#9bc8c7" opacity=".45"><path d="M200 650q-40-80 0-150 40 70 0 150"/><path d="M300 700q-55-110 0-210 55 100 0 210"/><path d="M1360 680q-45-95 0-180 45 85 0 180"/></g>
+</svg>
