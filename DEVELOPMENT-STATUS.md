@@ -205,3 +205,5 @@
 - O painel de login também foi colocado em um contêiner com rolagem vertical e sem rolagem horizontal, para que os campos e botões continuem acessíveis em aparelhos com pouca altura disponível.
 
 - A tela de login ganhou controle para mostrar/ocultar a senha digitada, sem enviar o valor a nenhum serviço até o jogador tocar em entrar ou criar conta.
+
+- O salão de amigos agora empilha os painéis de amigos e grupo em telas abaixo de 820 px e mantém a área de conteúdo em rolagem vertical; em telas maiores, preserva as duas colunas lado a lado.
