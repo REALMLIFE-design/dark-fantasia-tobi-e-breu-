@@ -160,6 +160,13 @@ func _ready() -> void:
 		await _play_prologue_cutscene()
 		story_intro_seen = true
 		_save_game()
+	if quest_stage == 30 and final_choice.is_empty():
+		await _play_final_choice_cutscene()
+		if final_choice == "memorias":
+			await _play_chapter_cutscene("EPÍLOGO • AS MEMÓRIAS VIVEM", "A luz que não esquece", "Tobi guarda as lembranças no Coração Rubro. Cada voz, cada amizade e cada perda passa a iluminar o mundo. Breu se aconchega ao lado dele, e juntos prometem proteger todas as histórias.")
+		else:
+			await _play_chapter_cutscene("EPÍLOGO • A LUZ LIBERTADA", "Um novo começo", "Tobi liberta a luz do Coração Rubro para que ela alcance cada canto do mundo. As memórias deixam de pertencer a um único coração e passam a viver nas árvores, nas águas e nas pessoas. Breu acompanha Tobi rumo a um futuro novo.")
+		await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
 	print("TOBI_BREU_BOOT_READY")
 
 
