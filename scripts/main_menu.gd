@@ -435,8 +435,7 @@ func _open_friends_lobby() -> void:
 	if lobby == null:
 		_show_notice("Lobby indisponível", "Não foi possível carregar o lobby de amigos.")
 		return
-	get_tree().root.add_child(lobby.instantiate())
-	queue_free()
+	get_tree().change_scene_to_packed(lobby)
 
 func _show_settings() -> void:
 	_show_notice("Configurações", "As opções de áudio, gráficos e controles serão adicionadas aqui. Os controles atuais da aventura continuam disponíveis.")
