@@ -106,6 +106,7 @@ var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
 var river_boss_hp := 680
 var final_boss_hp := 1200
+var final_boss_saved_band := -1
 var river_boss_saved_band := -1
 var river_shrine_solved := false
 var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
@@ -160,6 +161,7 @@ func _ready() -> void:
 	_load_save()
 	_load_settings()
 	river_boss_saved_band = floori(float(river_boss_hp) / 68.0)
+	final_boss_saved_band = floori(float(final_boss_hp) / 120.0)
 	_set_loading_progress(10.0, "Moldando o mundo...")
 	await get_tree().process_frame
 	_build_environment()
@@ -4382,6 +4384,7 @@ func _interact() -> void:
 			quest_stage = 21
 			quest_text = "O Trono Obsidiano"
 			final_boss_hp = 1200
+			final_boss_saved_band = 10
 			var final_boss := get_node_or_null("Silencio_Cinzento")
 			if final_boss:
 				final_boss.set("hp", final_boss_hp)
@@ -4691,6 +4694,10 @@ func final_boss_health_changed(current: int, maximum: int) -> void:
 		boss_health_bar.value = current
 	if boss_health_label:
 		boss_health_label.text = ("SILÊNCIO CINZENTO • FÚRIA • %d/%d" % [current, maximum]) if final_boss_hp <= 600 else ("SILÊNCIO CINZENTO • %d/%d" % [current, maximum])
+	var health_band := floori(float(final_boss_hp) / 120.0)
+	if health_band != final_boss_saved_band or final_boss_hp <= 0:
+		final_boss_saved_band = health_band
+		_save_game()
 
 func _play_final_ending() -> void:
 	var ending := CanvasLayer.new()
