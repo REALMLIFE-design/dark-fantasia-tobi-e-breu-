@@ -3,9 +3,21 @@ extends Control
 const MENU_SCENE := "res://scenes/menu.tscn"
 
 var notice: AcceptDialog
+var status_label: Label
+var friends_body: Label
+var friend_username_input: LineEdit
+var room_code_input: LineEdit
+var room_status_label: Label
+var invite_button: Button
+var create_room_button: Button
+var join_room_button: Button
 
 func _ready() -> void:
 	_build_lobby()
+	SupabaseAuth.session_changed.connect(_on_session_changed)
+	SupabaseAuth.rpc_completed.connect(_on_rpc_completed)
+	SupabaseAuth.rpc_failed.connect(_on_rpc_failed)
+	_refresh_auth_state()
 	print("DARK_WORLD_FRIENDS_LOBBY_READY")
 
 func _build_lobby() -> void:
@@ -23,15 +35,20 @@ func _build_lobby() -> void:
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_theme_constant_override("margin_left", 22)
 	margin.add_theme_constant_override("margin_right", 22)
 	margin.add_theme_constant_override("margin_top", 18)
 	margin.add_theme_constant_override("margin_bottom", 18)
-	add_child(margin)
+	scroll.add_child(margin)
 	var layout := VBoxContainer.new()
-	layout.add_theme_constant_override("separation", 14)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_theme_constant_override("separation", 12)
 	margin.add_child(layout)
 
 	var header := HBoxContainer.new()
@@ -48,6 +65,11 @@ func _build_lobby() -> void:
 	heading.add_theme_color_override("font_color", Color("f1eee5"))
 	heading.add_theme_font_size_override("font_size", 22)
 	header.add_child(heading)
+	var logout := Button.new()
+	logout.text = "SAIR"
+	logout.custom_minimum_size = Vector2(76, 46)
+	logout.pressed.connect(_on_sign_out_pressed)
+	header.add_child(logout)
 
 	var subtitle := Label.new()
 	subtitle.text = "Convide seus amigos para explorar Azulan • até 4 jogadores por sala"
@@ -55,22 +77,22 @@ func _build_lobby() -> void:
 	subtitle.add_theme_color_override("font_color", Color("b5c4c2"))
 	layout.add_child(subtitle)
 
-	var status := Label.new()
-	status.text = "MODO CONVIDADO  •  Entre com sua conta Dark World usando e-mail e senha para acessar a lista de amigos."
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status.add_theme_color_override("font_color", Color("d8b77c"))
-	status.add_theme_font_size_override("font_size", 12)
-	layout.add_child(status)
+	status_label = Label.new()
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.add_theme_color_override("font_color", Color("d8b77c"))
+	status_label.add_theme_font_size_override("font_size", 12)
+	layout.add_child(status_label)
 
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_theme_constant_override("separation", 14)
 	layout.add_child(columns)
-	var friends_panel := _make_panel("SEUS AMIGOS", "Sua lista aparecerá aqui depois do login.")
+	var friends_panel := _make_panel("SEUS AMIGOS", "Entre na sua conta para carregar sua lista.")
 	friends_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	friends_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(friends_panel)
-	var requests_panel := _make_panel("PEDIDOS DE AMIZADE", "Convites recebidos e enviados aparecerão aqui.")
+	friends_body = friends_panel.get_node("PanelContent/PanelBody") as Label
+	var requests_panel := _make_panel("PEDIDOS DE AMIZADE", "A lista de pedidos recebidos será ligada na próxima etapa.")
 	requests_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	requests_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	columns.add_child(requests_panel)
@@ -78,36 +100,48 @@ func _build_lobby() -> void:
 	var invite_row := HBoxContainer.new()
 	invite_row.add_theme_constant_override("separation", 8)
 	layout.add_child(invite_row)
-	var friend_code := LineEdit.new()
-	friend_code.placeholder_text = "Digite o nome do aventureiro"
-	friend_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	friend_code.custom_minimum_size.y = 48
-	friend_code.editable = false
-	invite_row.add_child(friend_code)
-	var invite := Button.new()
-	invite.text = "ADICIONAR AMIGO"
-	invite.custom_minimum_size = Vector2(160, 48)
-	invite.disabled = true
-	invite_row.add_child(invite)
+	friend_username_input = LineEdit.new()
+	friend_username_input.placeholder_text = "Nome do aventureiro"
+	friend_username_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	friend_username_input.custom_minimum_size.y = 48
+	friend_username_input.editable = false
+	invite_row.add_child(friend_username_input)
+	invite_button = Button.new()
+	invite_button.text = "ADICIONAR AMIGO"
+	invite_button.custom_minimum_size = Vector2(160, 48)
+	invite_button.disabled = true
+	invite_button.pressed.connect(_send_friend_request)
+	invite_row.add_child(invite_button)
 
 	var room_row := HBoxContainer.new()
 	room_row.add_theme_constant_override("separation", 8)
 	layout.add_child(room_row)
-	var create_room := Button.new()
-	create_room.text = "CRIAR SALA PRIVADA"
-	create_room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	create_room.custom_minimum_size.y = 50
-	create_room.disabled = true
-	room_row.add_child(create_room)
-	var join_room := Button.new()
-	join_room.text = "ENTRAR COM CÓDIGO"
-	join_room.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	join_room.custom_minimum_size.y = 50
-	join_room.disabled = true
-	room_row.add_child(join_room)
+	create_room_button = Button.new()
+	create_room_button.text = "CRIAR SALA PRIVADA"
+	create_room_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	create_room_button.custom_minimum_size.y = 50
+	create_room_button.disabled = true
+	create_room_button.pressed.connect(_create_room)
+	room_row.add_child(create_room_button)
+	room_code_input = LineEdit.new()
+	room_code_input.placeholder_text = "Código da sala"
+	room_code_input.custom_minimum_size = Vector2(140, 50)
+	room_code_input.editable = false
+	room_row.add_child(room_code_input)
+	join_room_button = Button.new()
+	join_room_button.text = "ENTRAR"
+	join_room_button.custom_minimum_size = Vector2(90, 50)
+	join_room_button.disabled = true
+	join_room_button.pressed.connect(_join_room)
+	room_row.add_child(join_room_button)
+
+	room_status_label = Label.new()
+	room_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	room_status_label.add_theme_color_override("font_color", Color("e4d0a6"))
+	layout.add_child(room_status_label)
 
 	var footer := Label.new()
-	footer.text = "A conexão multiplayer ainda não está ativa nesta versão. As salas e amizades já têm regras seguras no Supabase; as ações serão liberadas após o login por e-mail e senha."
+	footer.text = "Amizades e criação/entrada em salas usam as funções protegidas do Supabase. A partida multiplayer em tempo real ainda será conectada; por enquanto, a sessão fica ativa enquanto o jogo estiver aberto."
 	footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	footer.add_theme_color_override("font_color", Color("9aadaa"))
 	footer.add_theme_font_size_override("font_size", 10)
@@ -128,6 +162,7 @@ func _make_panel(title_text: String, empty_text: String) -> PanelContainer:
 	style.content_margin_bottom = 16
 	panel.add_theme_stylebox_override("panel", style)
 	var content := VBoxContainer.new()
+	content.name = "PanelContent"
 	content.add_theme_constant_override("separation", 12)
 	panel.add_child(content)
 	var heading := Label.new()
@@ -140,12 +175,92 @@ func _make_panel(title_text: String, empty_text: String) -> PanelContainer:
 	rule.custom_minimum_size.y = 1
 	content.add_child(rule)
 	var empty := Label.new()
+	empty.name = "PanelBody"
 	empty.text = empty_text
 	empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	empty.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	empty.add_theme_color_override("font_color", Color("b5c4c2"))
 	content.add_child(empty)
 	return panel
+
+func _refresh_auth_state() -> void:
+	var authenticated := SupabaseAuth.is_authenticated()
+	friend_username_input.editable = authenticated
+	room_code_input.editable = authenticated
+	invite_button.disabled = not authenticated
+	create_room_button.disabled = not authenticated
+	join_room_button.disabled = not authenticated
+	if authenticated:
+		status_label.text = "CONECTADO • Conta autenticada pelo Supabase."
+		_load_friends()
+	else:
+		status_label.text = "MODO CONVIDADO • Entre com e-mail e senha para usar amigos e salas."
+		friends_body.text = "Sua lista aparecerá aqui depois do login."
+		room_status_label.text = ""
+
+func _on_session_changed(_user: Dictionary) -> void:
+	_refresh_auth_state()
+
+func _load_friends() -> void:
+	SupabaseAuth.rpc_call("dark_world_list_friends", {}, "list_friends")
+
+func _send_friend_request() -> void:
+	var username := friend_username_input.text.strip_edges()
+	if username.is_empty():
+		status_label.text = "Digite o nome do aventureiro que deseja adicionar."
+		return
+	SupabaseAuth.rpc_call("dark_world_send_friend_request", {"p_username": username}, "send_friend")
+
+func _create_room() -> void:
+	SupabaseAuth.rpc_call("dark_world_create_room", {"p_chapter": "A Lenda de Tobi e Breu"}, "create_room")
+
+func _join_room() -> void:
+	var code := room_code_input.text.strip_edges().to_upper()
+	if code.is_empty():
+		room_status_label.text = "Digite o código da sala."
+		return
+	SupabaseAuth.rpc_call("dark_world_join_room", {"p_room_code": code}, "join_room")
+
+func _on_rpc_completed(tag: String, data: Variant) -> void:
+	if tag == "list_friends":
+		var rows: Array = data if data is Array else []
+		if rows.is_empty():
+			friends_body.text = "Ainda não há amigos adicionados."
+		else:
+			var names: PackedStringArray = []
+			for row in rows:
+				if row is Dictionary:
+					names.append("• " + str(row.get("username", "Aventureiro")))
+			friends_body.text = "\n".join(names)
+	elif tag == "send_friend":
+		status_label.text = "Pedido de amizade enviado!"
+		friend_username_input.clear()
+	elif tag == "create_room":
+		var rows: Array = data if data is Array else []
+		if not rows.is_empty() and rows[0] is Dictionary:
+			var room: Dictionary = rows[0]
+			room_status_label.text = "SALA CRIADA • Código: %s • Compartilhe com seus amigos." % str(room.get("room_code", ""))
+		else:
+			room_status_label.text = "Sala criada, mas o código não veio na resposta."
+	elif tag == "join_room":
+		var rows: Array = data if data is Array else []
+		if not rows.is_empty() and rows[0] is Dictionary:
+			var room: Dictionary = rows[0]
+			room_status_label.text = "VOCÊ ENTROU NA SALA • %s • Jogadores: %s/%s" % [str(room.get("room_code", "")), str(room.get("player_count", "?")), str(room.get("max_players", "4"))]
+		else:
+			room_status_label.text = "Entrada confirmada. A sincronização da partida será conectada em seguida."
+
+func _on_rpc_failed(tag: String, message: String) -> void:
+	if tag == "list_friends":
+		friends_body.text = "Não foi possível carregar a lista agora."
+	elif tag == "create_room" or tag == "join_room":
+		room_status_label.text = message
+	else:
+		status_label.text = message
+
+func _on_sign_out_pressed() -> void:
+	SupabaseAuth.sign_out()
+	get_tree().change_scene_to_file("res://scenes/login.tscn")
 
 func _go_back() -> void:
 	get_tree().change_scene_to_file(MENU_SCENE)
