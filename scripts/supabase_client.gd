@@ -72,6 +72,8 @@ func _auth_request(endpoint: String, payload: Dictionary) -> Dictionary:
 		return {"ok": false, "message": "Não foi possível iniciar a conexão com o servidor."}
 	var response: Array = await _http.request_completed
 	_request_busy = false
+	if int(response[0]) != HTTPRequest.RESULT_SUCCESS:
+		return {"ok": false, "message": "A conexão foi interrompida. Verifique sua internet e tente novamente."}
 	var response_code: int = response[1]
 	var body_text: String = response[3].get_string_from_utf8()
 	var parsed = JSON.parse_string(body_text)
@@ -203,6 +205,8 @@ func _rest_request(endpoint: String, method: int, payload: Dictionary = {}) -> D
 		return {"ok": false, "message": "Não foi possível iniciar a conexão com o servidor."}
 	var response: Array = await _http.request_completed
 	_request_busy = false
+	if int(response[0]) != HTTPRequest.RESULT_SUCCESS:
+		return {"ok": false, "message": "A conexão foi interrompida. Verifique sua internet e tente novamente."}
 	var response_code: int = response[1]
 	var parsed = JSON.parse_string(response[3].get_string_from_utf8())
 	if response_code < 200 or response_code >= 300:
@@ -225,4 +229,10 @@ func _error_message(data: Dictionary, status_code: int) -> String:
 		message = "Confirme seu e-mail antes de entrar."
 	elif message == "User already registered":
 		message = "Este e-mail já possui uma conta. Tente entrar."
+	elif str(data.get("code", "")) == "email_address_not_authorized":
+		message = "O e-mail de teste do Supabase só envia mensagens para endereços autorizados da equipe do projeto. Para liberar outros destinatários, será necessário configurar um serviço SMTP próprio."
+	elif str(data.get("code", "")) == "over_email_send_rate_limit" or message.to_lower().contains("email rate limit exceeded"):
+		message = "O limite de envio de e-mails do Supabase foi atingido. Aguarde antes de tentar novamente."
+	elif status_code == 429 or message.to_lower().contains("too many requests"):
+		message = "Muitas tentativas em pouco tempo. Aguarde um pouco e tente novamente."
 	return "%s (código %d)" % [message, status_code]
