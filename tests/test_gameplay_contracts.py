@@ -1511,6 +1511,18 @@ class ImportedMedievalPackContracts(unittest.TestCase):
         self.assertIn("apply_biome_moss_filter(coffer_instance, 0.16)", world)
         self.assertIn('ChestBase', world)  # Original procedural fallback remains available.
 
+    def test_android_low_memory_profile_defers_decorative_glbs_and_reduces_render_cost(self):
+        world = (ROOT / "scripts" / "world.gd").read_text(encoding="utf-8")
+        self.assertIn('low_memory_android = OS.get_name() == "Android"', world)
+        self.assertIn('Vector2i(960, 540)', world)
+        self.assertIn('Engine.max_fps = 30', world)
+        self.assertIn('e.glow_enabled = not low_memory_android', world)
+        self.assertIn('sun_light.shadow_enabled = not low_memory_android', world)
+        self.assertIn('TOBI_BREU_ANDROID_OPTIONAL_PLUGIN_MODELS_DEFERRED', world)
+        self.assertIn('TOBI_BREU_ANDROID_3DASSETS_SHOWCASE_DEFERRED', world)
+        self.assertIn('TOBI_BREU_ANDROID_IMPORTED_HAMLET_DEFERRED', world)
+        self.assertIn('TOBI_BREU_WORLD_READY', world)
+
     def test_android_ci_loads_the_actual_3d_world_and_imported_assets(self):
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("res://scenes/main.tscn", workflow)
