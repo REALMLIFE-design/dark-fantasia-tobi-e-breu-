@@ -105,6 +105,7 @@ var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
 var river_boss_hp := 680
+var final_boss_hp := 1200
 var river_boss_saved_band := -1
 var river_shrine_solved := false
 var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
@@ -193,6 +194,7 @@ func _ready() -> void:
 	_build_wandering_lighthouse()
 	await get_tree().process_frame
 	_build_ancient_waystones()
+	_build_final_region()
 	await get_tree().process_frame
 	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
@@ -213,6 +215,9 @@ func _ready() -> void:
 	if quest_stage == 12:
 		boss_hud_panel.visible = true
 		boss_health_changed(river_boss_hp, 680)
+	elif quest_stage == 21:
+		boss_hud_panel.visible = true
+		final_boss_health_changed(final_boss_hp, 1200)
 	_update_quest()
 	if quest_stage == 0: objective_label.text = "Objetivo: encontre Mestre Azulan"
 	elif quest_stage == 1: objective_label.text = "Objetivo: derrote 3 goblins corrompidos"
@@ -234,7 +239,10 @@ func _ready() -> void:
 	elif quest_stage == 17: objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com Azulan para iniciar a próxima jornada"
 	elif quest_stage == 18: objective_label.text = "Objetivo: desperte as 3 Pedras-Âncora antigas (%d/3)" % ancient_waystone_ids.size()
 	elif quest_stage == 19: objective_label.text = "Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count
-	else: objective_label.text = "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
+	elif quest_stage == 20: objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan para iniciar a última jornada"
+	elif quest_stage == 21: objective_label.text = "Objetivo: encontre o Trono Obsidiano e derrote o Silêncio Cinzento"
+	elif quest_stage == 22: objective_label.text = "Objetivo: retorne a Mestre Azulan para encerrar a lenda"
+	else: objective_label.text = "Lenda concluída — Tobi e Breu salvaram Azulan"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
@@ -2475,6 +2483,18 @@ func _build_enemies() -> void:
 		ice_raven.set("enemy_kind", 10)
 		add_child(ice_raven)
 		enemies.append(ice_raven)
+	var final_boss := CharacterBody3D.new()
+	final_boss.set_script(ENEMY_SCRIPT)
+	final_boss.name = "Silencio_Cinzento"
+	final_boss.position = Vector3(112.0, 0.0, -382.0)
+	final_boss.set("enemy_kind", 11)
+	final_boss.set("hp", final_boss_hp)
+	final_boss.call("sync_boss_phase")
+	add_child(final_boss)
+	enemies.append(final_boss)
+	if quest_stage != 21:
+		final_boss.visible = false
+		final_boss.set_physics_process(false)
 	# Espectros opcionais guardam as margens do Rio Prateado; não contam para a missão dos cavaleiros.
 	for i in range(2):
 		var wraith := CharacterBody3D.new()
@@ -3891,6 +3911,61 @@ func _nearest_ancient_waystone() -> int:
 				best_id = i
 	return best_id
 
+func _build_final_region() -> void:
+	var region := Node3D.new()
+	region.name = "TronoObsidiano"
+	region.position = Vector3(112.0, 0.0, -382.0)
+	add_child(region)
+	_build_biome_patch("AshenThroneGround", region.position, Vector2(112.0, 94.0), Color("373c40"))
+	var approach := _box(self, "AshenThroneRoad", Vector3(112.0, 0.025, -320.0), Vector3(8.0, 0.05, 118.0), Color("4e4948"))
+	approach.material_override = _painter_mat(Color("4e4948"), 4.0, 0.18, 2, Color("292d32"))
+	# A broken gate frames the last ascent from the Red Gorge.
+	for side in [-1.0, 1.0]:
+		var gate_pillar := _box(region, "ThroneGatePillar", Vector3(side * 16.0, 5.0, 37.0), Vector3(3.0, 10.0, 3.0), Color("55565a"))
+		gate_pillar.rotation.z = side * -0.06
+		_box(region, "ThroneGateRune", Vector3(side * 16.0, 6.0, 35.35), Vector3(0.55, 3.4, 0.16), Color("9b777f"))
+	_box(region, "ThroneGateLintel", Vector3(0.0, 10.2, 37.0), Vector3(36.0, 2.0, 3.0), Color("66636a"))
+	# Wide arena dais, fractured black pillars and restrained ash-violet light.
+	var dais := _sphere(region, "ThroneArenaDais", Vector3(0.0, 0.12, 0.0), 1.0, Color("292d33"), 0.25)
+	dais.scale = Vector3(31.0, 0.22, 25.0)
+	for i in range(10):
+		var angle := TAU * float(i) / 10.0
+		var pillar_pos := Vector3(cos(angle) * 25.0, 0.0, sin(angle) * 20.0)
+		var pillar := _box(region, "AshenPillar_%02d" % i, pillar_pos + Vector3(0.0, 3.0, 0.0), Vector3(2.1, 6.0 + float(i % 3), 2.1), Color("4c5054"))
+		pillar.rotation.z = randf_range(-0.08, 0.08)
+		var rune := _box(region, "AshenPillarRune_%02d" % i, pillar_pos + Vector3(0.0, 3.0, 1.08), Vector3(0.18, 1.9, 0.08), Color("8e657a"))
+		rune.material_override = _painter_mat(Color("8e657a"), 7.0, 0.16, 8, Color("56384f"))
+	var throne := _box(region, "ObsidianThroneBack", Vector3(0.0, 4.0, -17.0), Vector3(8.0, 8.0, 2.2), Color("33383f"))
+	_box(region, "ObsidianThroneSeat", Vector3(0.0, 1.3, -14.5), Vector3(9.0, 1.2, 6.0), Color("45414a"))
+	for side in [-1.0, 1.0]:
+		var spire := _box(region, "ThroneSpire", Vector3(side * 5.0, 7.0, -17.0), Vector3(1.0, 14.0, 1.0), Color("57505b"))
+		spire.rotation.z = side * 0.13
+	var heart := _sphere(region, "AshenHeart", Vector3(0.0, 5.0, -18.0), 1.1, Color("8b526f"), 1.5)
+	heart.material_override = _painter_mat(Color("8b526f"), 8.0, 0.22, 8, Color("4b314d"))
+	var heart_light := OmniLight3D.new()
+	heart_light.name = "AshenHeartGlow"
+	heart_light.position = Vector3(0.0, 5.0, -18.0)
+	heart_light.light_color = Color("9a6c91")
+	heart_light.light_energy = 1.25
+	heart_light.omni_range = 18.0
+	region.add_child(heart_light)
+	# A rest altar before the arena becomes a persistent checkpoint.
+	var altar := Node3D.new()
+	altar.name = "FinalCheckpointAltar"
+	altar.position = Vector3(0.0, 0.0, 29.0)
+	altar.set_meta("interact_name", "Altar da Última Vigília")
+	region.add_child(altar)
+	_box(altar, "AltarBase", Vector3(0.0, 0.45, 0.0), Vector3(4.2, 0.9, 3.2), Color("55504a"))
+	var altar_rune := _sphere(altar, "AltarRune", Vector3(0.0, 1.25, 0.25), 0.42, Color("c5a77a"), 1.2)
+	altar_rune.material_override = _painter_mat(Color("c5a77a"), 8.0, 0.15)
+	var altar_light := OmniLight3D.new()
+	altar_light.position = Vector3(0.0, 2.0, 0.0)
+	altar_light.light_color = Color("d4b17b")
+	altar_light.light_energy = 0.75
+	altar_light.omni_range = 9.0
+	altar.add_child(altar_light)
+	_add_region_title("TRONO OBSIDIANO", region.position + Vector3(0.0, 17.0, 0.0), Color("c5a4b6"))
+
 func _build_ancient_waystones() -> void:
 	var positions := [Vector3(-158.0, 0.0, -91.0), Vector3(-166.0, 0.0, -247.0), Vector3(158.0, 0.0, -91.0)]
 	var labels := ["Raiz", "Geada", "Brasa"]
@@ -3971,6 +4046,14 @@ func _open_river_chest(chest_id: int) -> void:
 	_save_game()
 
 func _interact() -> void:
+	var final_altar := get_node_or_null("TronoObsidiano/FinalCheckpointAltar")
+	if final_altar and player.global_position.distance_to(final_altar.global_position) < 5.0:
+		checkpoint_position = final_altar.global_position + Vector3(0.0, 0.0, 5.0)
+		player.hp = player.max_hp
+		player_health_changed(player.hp, player.max_hp)
+		toast_label.text = "ALTAR DA ÚLTIMA VIGÍLIA ATIVADO • Vida restaurada • Ponto de retorno salvo"
+		_save_game()
+		return
 	var ashen_relic_id := _nearest_ashen_relic()
 	if ashen_relic_id >= 0:
 		var ashen_relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % ashen_relic_id)
@@ -4285,6 +4368,35 @@ func _interact() -> void:
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
 			_save_game()
+		elif quest_stage == 20:
+			quest_stage = 21
+			quest_text = "O Trono Obsidiano"
+			final_boss_hp = 1200
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss:
+				final_boss.set("hp", final_boss_hp)
+				final_boss.visible = true
+				final_boss.set_physics_process(true)
+			boss_hud_panel.visible = true
+			final_boss_health_changed(final_boss_hp, 1200)
+			objective_label.text = "Objetivo: siga ao norte do Desfiladeiro Rubro, ative o altar e derrote o Silêncio Cinzento"
+			toast_label.text = "Azulan: as pedras e o sino abriram a última passagem. O Silêncio Cinzento espera no Trono Obsidiano. Esta batalha decidirá o destino de todas as lembranças."
+			_save_game()
+		elif quest_stage == 22:
+			quest_stage = 23
+			quest_text = "A Lenda de Tobi e Breu"
+			_grant_xp(500)
+			shards += 15
+			dark_essence += 10
+			potions += 5
+			boss_hud_panel.visible = false
+			objective_label.text = "Lenda concluída — Azulan foi salvo"
+			toast_label.text = "A Lenda de Tobi e Breu chegou ao fim. O Coração Rubro voltou a brilhar, e Azulan jamais esquecerá os dois heróis."
+			_update_inventory()
+			_update_quest()
+			_save_game()
+			_play_final_ending()
+			return
 		elif quest_stage == 17:
 			quest_stage = 18
 			if ancient_waystone_ids.size() >= 3:
@@ -4340,6 +4452,21 @@ func _upgrade_weapon() -> void:
 	_update_inventory()
 	_save_game()
 
+	if quest_stage == 21 and kind == 11:
+		quest_stage = 22
+		final_boss_hp = 0
+		boss_hud_panel.visible = false
+		quest_text = "O Silêncio Cinzento foi vencido — volte a Azulan"
+		_grant_xp(350)
+		shards += 10
+		dark_essence += 8
+		potions += 3
+		objective_label.text = "Objetivo: retorne a Mestre Azulan para encerrar a lenda"
+		toast_label.text = "SILÊNCIO CINZENTO DERROTADO! O Coração Rubro voltou a pulsar. +350 XP • 10 Fragmentos • 8 Essências • 3 Poções"
+		_update_inventory()
+		_update_quest()
+		_save_game()
+		return
 func enemy_defeated(kind: int = 0) -> void:
 	if quest_stage == 12 and kind == 6:
 		quest_stage = 13
@@ -4543,6 +4670,61 @@ func player_defeated() -> void:
 		player_health_changed(player.hp, player.max_hp)
 		toast_label.text = "Breu protegeu Tobi. Continue a missão!"
 
+func final_boss_phase_changed() -> void:
+	if is_instance_valid(boss_health_label):
+		boss_health_label.text = "SILÊNCIO CINZENTO • FÚRIA"
+
+func final_boss_health_changed(current: int, maximum: int) -> void:
+	final_boss_hp = clampi(current, 0, maximum)
+	if boss_health_bar:
+		boss_health_bar.max_value = maximum
+		boss_health_bar.value = current
+	if boss_health_label:
+		boss_health_label.text = ("SILÊNCIO CINZENTO • FÚRIA • %d/%d" % [current, maximum]) if final_boss_hp <= 600 else ("SILÊNCIO CINZENTO • %d/%d" % [current, maximum])
+
+func _play_final_ending() -> void:
+	var ending := CanvasLayer.new()
+	ending.name = "FinalEndingSequence"
+	ending.layer = 125
+	add_child(ending)
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0.012, 0.018, 0.026, 0.0)
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ending.add_child(backdrop)
+	var panel := CenterContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ending.add_child(panel)
+	var copy := VBoxContainer.new()
+	copy.custom_minimum_size = Vector2(0.0, 250.0)
+	copy.add_theme_constant_override("separation", 18)
+	panel.add_child(copy)
+	var title := Label.new()
+	title.text = "A LENDA DE TOBI E BREU"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color("e7c99a"))
+	copy.add_child(title)
+	var story := Label.new()
+	story.text = "O Coração Rubro voltou a brilhar.\nAs cores regressaram às terras de Azulan.\n\nTobi e Breu caminharam juntos para casa.\nA coragem deles tornou-se uma lenda."
+	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.add_theme_font_size_override("font_size", 17)
+	story.add_theme_color_override("font_color", Color("e5e4dc"))
+	copy.add_child(story)
+	var continue_button := Button.new()
+	continue_button.text = "CONTINUAR EXPLORANDO"
+	continue_button.custom_minimum_size = Vector2(240.0, 52.0)
+	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	continue_button.pressed.connect(func() -> void:
+		ending.queue_free()
+		if is_instance_valid(player):
+			player.set_physics_process(true)
+	)
+	copy.add_child(continue_button)
+	if is_instance_valid(player):
+		player.set_physics_process(false)
+	var fade := create_tween()
+	fade.tween_property(backdrop, "color:a", 0.88, 1.6)
 func _update_quest() -> void:
 	if quest_label: quest_label.text = "MISSÃO: " + quest_text
 
@@ -4577,7 +4759,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 18)
+	cfg.set_value("meta", "save_version", 19)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -4602,6 +4784,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "river_shrine_solved", river_shrine_solved)
 	cfg.set_value("progress", "river_puzzle_ring_steps", river_puzzle_ring_steps)
 	cfg.set_value("progress", "river_boss_hp", river_boss_hp)
+	cfg.set_value("progress", "final_boss_hp", final_boss_hp)
 	cfg.set_value("progress", "guild_relic_ids", guild_relic_ids)
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
@@ -4661,7 +4844,7 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 18:
+	if save_version > 19:
 		return
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
@@ -4716,6 +4899,7 @@ func _load_save() -> void:
 	for ring_id in range(mini(3, saved_ring_steps.size())):
 		river_puzzle_ring_steps[ring_id] = posmod(int(saved_ring_steps[ring_id]), 4)
 	river_boss_hp = clampi(int(cfg.get_value("progress", "river_boss_hp", 680)), 0, 680)
+	final_boss_hp = clampi(int(cfg.get_value("progress", "final_boss_hp", 1200)), 0, 1200)
 	guild_relic_ids.clear()
 	var saved_guild_relic_ids: Array = cfg.get_value("progress", "guild_relic_ids", [])
 	for saved_guild_id in saved_guild_relic_ids:
@@ -4749,7 +4933,7 @@ func _load_save() -> void:
 		checkpoint_x = 15.0
 		checkpoint_z = 29.0
 	# Reject corrupted or out-of-world checkpoint coordinates before using them.
-	if absf(checkpoint_x) <= 140.0 and absf(checkpoint_z) <= 140.0:
+	if absf(checkpoint_x) <= 300.0 and absf(checkpoint_z) <= 300.0:
 		checkpoint_position = Vector3(checkpoint_x, 0.0, checkpoint_z)
 
 func _notification(what: int) -> void:
