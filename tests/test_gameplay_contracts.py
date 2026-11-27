@@ -194,7 +194,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('whisper_guardian_reward_claimed', self.world)
         self.assertIn('Bênção do Cervo Ancião', self.world)
 
-    def test_whisper_guardian_uses_procedural_geometry_until_asset_vendoring_is_available(self):
+    def test_whisper_guardian_prefers_local_thrixel_model_and_keeps_procedural_fallback(self):
         self.assertIn('func _spawn_whisper_stag_guardian()', self.world)
         self.assertIn('WhisperStagGuardian', self.world)
         self.assertIn('StagAntlerLeftMain', self.world)
@@ -205,7 +205,9 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('StagAncientCollar', self.world)
         self.assertIn('StagCollarGem', self.world)
         self.assertIn('func _add_stag_antler_segment', self.world)
-        self.assertNotIn('ancient_stag_guardian.glb', self.world)
+        self.assertIn('ancient_stag_guardian.glb', self.world)
+        self.assertIn('ResourceLoader.exists(LOCAL_STAG_PATH)', self.world)
+        self.assertIn('THRIXEL_STAG_LOCAL_MODEL_LOADED', self.world)
         workflow = (ROOT / ".github/workflows/android-apk.yml").read_text(encoding="utf-8")
         self.assertIn("Validar e baixar os sete modelos Thrixel do jogo", workflow)
         self.assertIn("10f1f722-53d8-4ca0-b99b-e0e687bc8fec", workflow)
