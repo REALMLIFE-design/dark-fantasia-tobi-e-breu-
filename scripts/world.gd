@@ -3723,11 +3723,15 @@ func _process(delta: float) -> void:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
 		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
 	if boss_hud_panel:
-		boss_hud_panel.visible = quest_stage == 12
+		boss_hud_panel.visible = quest_stage == 12 or quest_stage == 21
 		if quest_stage == 12:
 			var river_boss := get_node_or_null("Leviata_do_Lodo")
 			if river_boss and boss_health_bar:
 				boss_health_bar.value = maxf(0.0, float(river_boss.get("hp")))
+		elif quest_stage == 21:
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss and boss_health_bar:
+				boss_health_bar.value = maxf(0.0, float(final_boss.get("hp")))
 	if not is_instance_valid(player): return
 	# Modelos opcionais entram somente quando o jogador alcança a área correspondente.
 	# A carga em thread mantém a exploração jogável enquanto GLBs e texturas são preparados.
@@ -3762,6 +3766,8 @@ func _process(delta: float) -> void:
 	var guild_distance := player.global_position.distance_to(guild_board.global_position) if guild_board else 999.0
 	var bell_tower := get_node_or_null("EchoingBellTower")
 	var bell_tower_distance := player.global_position.distance_to(bell_tower.global_position) if bell_tower else 999.0
+	var final_altar := get_node_or_null("TronoObsidiano/FinalCheckpointAltar")
+	var final_altar_distance := player.global_position.distance_to(final_altar.global_position) if final_altar else 999.0
 	var nearest_waystone_id := _nearest_ancient_waystone()
 	var waystone_node := get_node_or_null("AncientWaystone_%d" % nearest_waystone_id) if nearest_waystone_id >= 0 else null
 	var waystone_distance := player.global_position.distance_to(waystone_node.global_position) if waystone_node else 999.0
@@ -3792,6 +3798,7 @@ func _process(delta: float) -> void:
 	elif waystone_distance < 4.0: prompt_label.text = "E: ATIVAR PEDRA-ÂNCORA ANTIGA  •  (%d/3)" % ancient_waystone_ids.size()
 	elif bell_tower_distance < 5.0 and bell_tower_ring_count < 3: prompt_label.text = "E: TOCAR O SINO ANTIGO  •  (%d/3)" % bell_tower_ring_count
 	elif bell_tower_distance < 5.0: prompt_label.text = "SINO DO ÚLTIMO VIGIA — CONCLUÍDO"
+	elif final_altar_distance < 5.0 and quest_stage >= 21: prompt_label.text = "E: ATIVAR ALTAR DA ÚLTIMA VIGÍLIA"
 	elif river_puzzle_distance < 4.8 and not river_shrine_solved: prompt_label.text = "E: GIRAR O ANEL DO ASTROLÁBIO  •  (%d/3)" % (mini(_river_puzzle_current_ring() + 1, 3))
 	elif river_puzzle_distance < 4.8 and river_shrine_solved: prompt_label.text = "ASTROLÁBIO RESTAURADO — RECOMPENSA COLETADA"
 	elif shrine_distance < 3.8: prompt_label.text = "INTERAGIR — Santuário Esquecido"
