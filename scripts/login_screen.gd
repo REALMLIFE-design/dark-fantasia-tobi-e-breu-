@@ -31,7 +31,8 @@ func _build_screen() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(430, 0)
+	var viewport_width := get_viewport_rect().size.x
+	panel.custom_minimum_size = Vector2(minf(430.0, maxf(280.0, viewport_width - 32.0)), 0)
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	center.add_child(panel)
 	var stack := VBoxContainer.new()
@@ -52,23 +53,26 @@ func _build_screen() -> void:
 	stack.add_child(subtitle)
 	username_input = LineEdit.new()
 	username_input.placeholder_text = "Nome de aventureiro (para criar conta)"
+	username_input.custom_minimum_size.y = 46
 	stack.add_child(username_input)
 	email_input = LineEdit.new()
 	email_input.placeholder_text = "Seu e-mail"
 	email_input.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_EMAIL_ADDRESS
+	email_input.custom_minimum_size.y = 46
 	stack.add_child(email_input)
 	password_input = LineEdit.new()
 	password_input.placeholder_text = "Senha (mínimo 6 caracteres)"
 	password_input.secret = true
+	password_input.custom_minimum_size.y = 46
 	stack.add_child(password_input)
 	var login_button := Button.new()
 	login_button.text = "ENTRAR COM E-MAIL"
-	login_button.custom_minimum_size = Vector2(0, 48)
+	login_button.custom_minimum_size = Vector2(0, 52)
 	login_button.pressed.connect(_on_email_login)
 	stack.add_child(login_button)
 	var signup_button := Button.new()
 	signup_button.text = "CRIAR CONTA"
-	signup_button.custom_minimum_size = Vector2(0, 48)
+	signup_button.custom_minimum_size = Vector2(0, 52)
 	signup_button.pressed.connect(_on_email_signup)
 	stack.add_child(signup_button)
 	var google := Button.new()
