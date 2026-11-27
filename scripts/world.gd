@@ -4950,7 +4950,7 @@ func _load_save() -> void:
 		checkpoint_x = 15.0
 		checkpoint_z = 29.0
 	# Reject corrupted or out-of-world checkpoint coordinates before using them.
-	if absf(checkpoint_x) <= 300.0 and absf(checkpoint_z) <= 300.0:
+	if absf(checkpoint_x) <= 520.0 and absf(checkpoint_z) <= 520.0:
 		checkpoint_position = Vector3(checkpoint_x, 0.0, checkpoint_z)
 
 func _notification(what: int) -> void:
