@@ -31,10 +31,18 @@ func _build_screen() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var panel := PanelContainer.new()
-	var viewport_width := get_viewport_rect().size.x
-	panel.custom_minimum_size = Vector2(minf(430.0, maxf(280.0, viewport_width - 32.0)), 0)
+	var viewport_size := get_viewport_rect().size
+	var panel_width := minf(430.0, maxf(280.0, viewport_size.x - 32.0))
+	panel.custom_minimum_size = Vector2(panel_width, 0)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.add_theme_stylebox_override("panel", _panel_style())
-	center.add_child(panel)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(panel_width, maxf(260.0, viewport_size.y - 32.0))
+	scroll.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	scroll.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	center.add_child(scroll)
+	scroll.add_child(panel)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 14)
 	stack.add_theme_constant_override("margin_left", 24)
