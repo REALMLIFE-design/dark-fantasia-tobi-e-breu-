@@ -2969,7 +2969,7 @@ func _interact() -> void:
 	if guild_board and player.global_position.distance_to(guild_board.global_position) < 4.5:
 		if not guild_contract_started:
 			guild_contract_started = true
-			toast_label.text = "Guilda: recupere os três selos perdidos na Caverna, na Masmorra e no Castelo."
+			toast_label.text = "Mestre da Guilda: Três selos desapareceram quando o Silêncio Cinzento atravessou estas terras. Um ecoa na Caverna do Eco, outro repousa na Masmorra das Cinzas e o último está no Castelo do Silêncio. Traga os três de volta e a Guilda recompensará sua coragem."
 		elif guild_relic_ids.size() >= 3 and not guild_contract_claimed:
 			guild_contract_claimed = true
 			_grant_xp(240)
@@ -2979,14 +2979,14 @@ func _interact() -> void:
 			toast_label.text = "CONTRATO DA GUILDA CONCLUÍDO! +240 XP • 8 Fragmentos • 5 Essências • 3 Poções"
 			_update_inventory()
 		else:
-			toast_label.text = "Guilda: selos recuperados %d/3. Explore as regiões marcadas no mapa." % guild_relic_ids.size()
+			toast_label.text = "Mestre da Guilda: Você encontrou %d de 3 selos. Cada um guarda a lembrança de um lugar que resistiu à escuridão. Continue explorando; nenhum selo deve ficar para trás." % guild_relic_ids.size()
 		_save_game()
 		return
 	for relic_id in range(3):
 		var guild_relic := get_node_or_null("GuildRelic_%d" % relic_id)
 		if guild_relic and guild_relic.visible and player.global_position.distance_to(guild_relic.global_position) < 3.8:
 			if not guild_contract_started:
-				toast_label.text = "Um selo antigo. A Guilda dos Vigias pode saber o que fazer com ele."
+				toast_label.text = "Breu sente uma lembrança presa dentro do selo. Talvez a Guilda dos Vigias saiba como libertá-la. Leve-o ao quadro na Cidade de Pedra."
 				return
 			guild_relic_ids.append(relic_id)
 			guild_relic_ids.sort()
@@ -3006,9 +3006,9 @@ func _interact() -> void:
 	var stag_guardian := get_node_or_null("WhisperStagGuardian")
 	if stag_guardian and player.global_position.distance_to(stag_guardian.global_position) < 4.5:
 		if whisper_lantern_ids.size() < 3:
-			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
+			toast_label.text = "O Guardião Cervo permanece adormecido. Três lanternas guardam as lembranças do bosque. Acenda cada uma e deixe que a luz encontre o caminho de volta até ele."
 		elif whisper_guardian_reward_claimed:
-			toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
+			toast_label.text = "O Guardião Cervo inclina a cabeça. Uma brisa atravessa o bosque e, por um instante, Tobi ouve o som de uma floresta que ainda não foi corrompida. A bênção antiga já vive em você."
 		else:
 			whisper_guardian_reward_claimed = true
 			_grant_xp(90)
