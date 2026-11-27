@@ -1593,6 +1593,10 @@ class FinalChapterContracts(unittest.TestCase):
     def test_guardian_armor_forge_upgrades_and_persists_max_health(self):
         world = (ROOT / "scripts/world.gd").read_text(encoding="utf-8")
         self.assertIn("const ARMOR_SHARD_COSTS := [2, 4, 7]", world)
+        player = (ROOT / "scripts/player.gd").read_text(encoding="utf-8")
+        self.assertIn("var armor_level := 0", player)
+        self.assertIn("var reduced_damage := maxi(1, amount - armor_level * 2)", player)
+        self.assertIn("player.armor_level = armor_level", world)
         self.assertIn("const ARMOR_ESSENCE_COSTS := [1, 2, 4]", world)
         self.assertIn('func _upgrade_armor() -> void:', world)
         self.assertIn('armor_level += 1', world)
