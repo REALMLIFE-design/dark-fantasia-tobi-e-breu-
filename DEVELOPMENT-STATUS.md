@@ -221,3 +221,5 @@
 - Verificação SQL do trigger confirmou `SECURITY DEFINER`, proprietário `postgres`, `search_path` vazio e ausência de EXECUTE para `anon` e `authenticated`. Advisor de segurança retornou zero lints.
 - O advisor de performance ainda lista quatro índices sem uso; são avisos informativos esperados enquanto as tabelas estão vazias, não falhas de segurança.
 - Não foram executados testes Godot, builds, APK ou testes de cadastro/reentrada com contas reais. O login Google segue pendente e o lobby ainda não sincroniza movimento/combate.
+
+- Tela de login: incluído pedido de recuperação de senha por e-mail usando o endpoint oficial `/auth/v1/recover`; a resposta não revela se o e-mail existe, evitando enumeração de contas. A conclusão da troca de senha dentro do app ainda depende do fluxo de deep link Android e da tela para definir a nova senha.
