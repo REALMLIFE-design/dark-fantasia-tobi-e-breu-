@@ -39,7 +39,7 @@ begin
   if char_length(safe_chapter) > 80 then raise exception 'CHAPTER_NAME_TOO_LONG' using errcode = '22023'; end if;
   insert into public.profiles(id) values (current_user_id) on conflict (id) do nothing;
   loop
-    new_room_code := upper(substr(encode(gen_random_bytes(8), 'hex'), 1, 8));
+    new_room_code := upper(substr(encode(extensions.gen_random_bytes(8), 'hex'), 1, 8));
     exit when not exists (select 1 from public.game_rooms r where r.room_code = new_room_code);
   end loop;
   insert into public.game_rooms(owner_id, room_code, chapter, max_players, status)
