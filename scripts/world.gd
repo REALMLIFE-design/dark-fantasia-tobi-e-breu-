@@ -4776,8 +4776,9 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 19)
+	cfg.set_value("meta", "save_version", 20)
 	cfg.set_value("progress", "quest_stage", quest_stage)
+	cfg.set_value("progress", "day_clock", day_clock)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
 	cfg.set_value("progress", "xp", xp)
@@ -4861,8 +4862,9 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 19:
+	if save_version > 20:
 		return
+	day_clock = fposmod(float(cfg.get_value("progress", "day_clock", 0.0)), TAU)
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
