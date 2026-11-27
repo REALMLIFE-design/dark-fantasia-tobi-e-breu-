@@ -207,3 +207,5 @@
 - A tela de login ganhou controle para mostrar/ocultar a senha digitada, sem enviar o valor a nenhum serviço até o jogador tocar em entrar ou criar conta.
 
 - O salão de amigos agora empilha os painéis de amigos e grupo em telas abaixo de 820 px e mantém a área de conteúdo em rolagem vertical; em telas maiores, preserva as duas colunas lado a lado.
+
+- O menu principal agora usa largura calculada pela tela, rolagem vertical em aparelhos baixos, botões expansíveis e quebra automática no subtítulo/rodapé. Em telas estreitas, os itens deixam de depender de uma largura fixa de 520 px.
