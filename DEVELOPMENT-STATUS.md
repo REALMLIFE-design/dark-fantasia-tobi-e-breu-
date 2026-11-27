@@ -181,3 +181,11 @@
 - O final da campanha agora apresenta uma escolha real ao jogador: guardar as memórias no Coração Rubro ou libertar sua luz pelo mundo. Cada decisão tem um epílogo narrativo próprio; a escolha é salva e, se o jogo for fechado antes dela, a tela de decisão reaparece ao carregar o save.
 - A escolha usa a chave `story.final_choice` no save existente; não exige reset nem alteração destrutiva dos saves antigos. A versão do save permanece v16.
 - Não foram executados testes nem compilação nesta rodada, conforme pedido.
+
+
+## Continuação de conteúdo — diálogos e histórias paralelas (26/11/2026)
+- Expandido o texto narrativo dos NPCs principais: Mestre Azulan, Guardião do Rio, Oráculo das Ruínas e Guardião do Amanhecer. As falas agora contextualizam a corrupção, explicam os perigos e reforçam o vínculo de Tobi e Breu.
+- A Guilda dos Vigias recebeu falas de contrato mais completas, contexto dos três selos perdidos e orientação de retorno para resgate da recompensa.
+- O Guardião Cervo e as três lanternas do Bosque dos Sussurros receberam falas que explicam o despertar e o sentido da bênção.
+- Roteiro paralelo documentado em STORY-CAMPAIGN-PTBR.md. O conteúdo continua opcional e não bloqueia os cinco capítulos.
+- Não foram executados testes, compilação ou validação visual nesta rodada, conforme solicitado.
