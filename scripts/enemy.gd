@@ -414,8 +414,16 @@ func _physics_process(delta: float) -> void:
 			if attack_timer <= 0.0:
 				_begin_attack()
 		else:
-			velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
-			velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
+			var home_offset := patrol_origin - global_position
+			home_offset.y = 0.0
+			if d.length() >= 15.0 and home_offset.length() > 1.25:
+				var home_direction := home_offset.normalized()
+				velocity.x = move_toward(velocity.x, home_direction.x * move_speed * 0.72, 6.0 * delta)
+				velocity.z = move_toward(velocity.z, home_direction.z * move_speed * 0.72, 6.0 * delta)
+				look_at(Vector3(patrol_origin.x, global_position.y, patrol_origin.z))
+			else:
+				velocity.x = move_toward(velocity.x, 0.0, 8.0 * delta)
+				velocity.z = move_toward(velocity.z, 0.0, 8.0 * delta)
 	if crab_lunge_timer > 0.0:
 		crab_lunge_timer = maxf(0.0, crab_lunge_timer - delta)
 		velocity.x = crab_lunge_velocity.x
