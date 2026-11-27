@@ -11,10 +11,12 @@ class LoginAndLobbyContractTests(unittest.TestCase):
 
     def test_login_has_guest_path_and_google_setup_is_honest(self):
         source = (ROOT / "scripts/login_screen.gd").read_text(encoding="utf-8")
-        self.assertIn("CONTINUAR COM GOOGLE", source)
+        self.assertIn("GOOGLE • DEPOIS", source)
+        self.assertIn("SupabaseAuth.sign_in", source)
+        self.assertIn("SupabaseAuth.sign_up", source)
         self.assertIn("JOGAR COMO CONVIDADO", source)
-        self.assertIn("GOOGLE_REDIRECT_URI", source)
-        self.assertIn("Client Secret", source)
+        self.assertIn("O login Google ficará para uma etapa posterior", source)
+        self.assertNotIn("service_role", source.lower())
         self.assertNotIn("service_role", source.lower())
 
     def test_lobby_is_connected_from_menu_and_has_friend_room_sections(self):
