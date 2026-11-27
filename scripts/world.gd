@@ -3838,6 +3838,7 @@ func _activate_whisper_lantern(lantern_id: int) -> void:
 			quest_text = "Acorde o Cervo Guardião"
 			objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
 			toast_label.text = "AS TRÊS LUZES RETORNARAM! O Cervo Guardião despertou. Vá até o altar central."
+			_update_quest()
 		else:
 			toast_label.text = "BOSQUE DESPERTOU! +22 XP • Essência +1 • Fragmento Rubro +1"
 	else:
@@ -4100,6 +4101,7 @@ func _interact() -> void:
 				quest_text = "Capítulo III concluído"
 				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
 				toast_label.text = "O Cervo reconhece sua coragem. A memória da floresta está restaurada!"
+				_update_quest()
 				_save_game()
 			else:
 				toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
@@ -4114,6 +4116,7 @@ func _interact() -> void:
 				quest_text = "Capítulo III concluído"
 				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
 				toast_label.text = "CAPÍTULO III CONCLUÍDO! O Cervo devolveu as lembranças à floresta. +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+				_update_quest()
 			else:
 				toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
 			_update_inventory()
