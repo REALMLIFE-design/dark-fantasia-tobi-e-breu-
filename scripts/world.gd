@@ -4846,7 +4846,7 @@ func _load_save() -> void:
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
 	if save_version > 19:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
