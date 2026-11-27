@@ -330,6 +330,15 @@ func _start_story() -> void:
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(veil)
 
+	var loading_art := TextureRect.new()
+	loading_art.texture = load("res://assets/art/loading_azulan.svg")
+	loading_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	loading_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	loading_art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	loading_art.modulate = Color(1, 1, 1, 0.72)
+	loading_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(loading_art)
+
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -413,13 +422,21 @@ func _start_story() -> void:
 	_loading_story = false
 
 func _show_coop_info() -> void:
-	_show_notice("História cooperativa", "A aventura será compartilhada por até 4 jogadores. A campanha atual será preservada. O servidor gratuito e a sincronização da história ainda precisam ser configurados.")
+	_open_friends_lobby()
 
 func _show_multiplayer_info() -> void:
-	_show_notice("Multiplayer", "As salas privadas e os convites de amigos fazem parte de Dark World: A Lenda de Tobi e Breu. A conexão multiplayer ainda não está ativa nesta versão.")
+	_open_friends_lobby()
 
 func _show_google_info() -> void:
-	_show_notice("Conta Google", "O login Google será usado para identificar sua conta e adicionar amigos. A integração depende da configuração segura do OAuth e do servidor; nenhum login falso será exibido.")
+	_open_friends_lobby()
+
+func _open_friends_lobby() -> void:
+	var lobby := load("res://scenes/friends_lobby.tscn") as PackedScene
+	if lobby == null:
+		_show_notice("Lobby indisponível", "Não foi possível carregar o lobby de amigos.")
+		return
+	get_tree().root.add_child(lobby.instantiate())
+	queue_free()
 
 func _show_settings() -> void:
 	_show_notice("Configurações", "As opções de áudio, gráficos e controles serão adicionadas aqui. Os controles atuais da aventura continuam disponíveis.")
