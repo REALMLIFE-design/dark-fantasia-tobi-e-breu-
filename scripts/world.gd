@@ -228,7 +228,10 @@ func _ready() -> void:
 	elif quest_stage == 11: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
-	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir ao Bosque dos Sussurros"
+	elif quest_stage == 15: objective_label.text = "Objetivo: acenda as 3 lanternas do Bosque dos Sussurros (%d/3)" % whisper_lantern_ids.size()
+	elif quest_stage == 16: objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
+	else: objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
@@ -3830,7 +3833,13 @@ func _activate_whisper_lantern(lantern_id: int) -> void:
 	dark_essence += 1
 	if whisper_lantern_ids.size() == 3:
 		shards += 1
-		toast_label.text = "BOSQUE DESPERTOU! +22 XP • Essência +1 • Fragmento Rubro +1"
+		if quest_stage == 15:
+			quest_stage = 16
+			quest_text = "Acorde o Cervo Guardião"
+			objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
+			toast_label.text = "AS TRÊS LUZES RETORNARAM! O Cervo Guardião despertou. Vá até o altar central."
+		else:
+			toast_label.text = "BOSQUE DESPERTOU! +22 XP • Essência +1 • Fragmento Rubro +1"
 	else:
 		toast_label.text = "LANTERNA ACESA (%d/3) • +22 XP • Essência Sombria +1" % whisper_lantern_ids.size()
 	_update_inventory()
@@ -4086,14 +4095,27 @@ func _interact() -> void:
 		if whisper_lantern_ids.size() < 3:
 			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
 		elif whisper_guardian_reward_claimed:
-			toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
+			if quest_stage == 16:
+				quest_stage = 17
+				quest_text = "Capítulo III concluído"
+				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
+				toast_label.text = "O Cervo reconhece sua coragem. A memória da floresta está restaurada!"
+				_save_game()
+			else:
+				toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
 		else:
 			whisper_guardian_reward_claimed = true
 			_grant_xp(90)
 			shards += 3
 			dark_essence += 2
 			potions += 1
-			toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+			if quest_stage == 16:
+				quest_stage = 17
+				quest_text = "Capítulo III concluído"
+				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
+				toast_label.text = "CAPÍTULO III CONCLUÍDO! O Cervo devolveu as lembranças à floresta. +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+			else:
+				toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
 			_update_inventory()
 			_save_game()
 		return
@@ -4242,6 +4264,14 @@ func _interact() -> void:
 			objective_label.text = "CAPÍTULO I CONCLUÍDO — fale com Azulan para seguir ao Rio Prateado"
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
+			_save_game()
+		elif quest_stage == 14:
+			quest_stage = 15
+			quest_text = "As três luzes esquecidas"
+			if whisper_lantern_ids.size() >= 3:
+				quest_stage = 16 if not whisper_guardian_reward_claimed else 17
+			objective_label.text = "Objetivo: acenda as 3 lanternas do Bosque dos Sussurros (%d/3)" % whisper_lantern_ids.size() if quest_stage == 15 else ("Objetivo: receba a bênção do Cervo Guardião no bosque" if quest_stage == 16 else "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada")
+			toast_label.text = "Azulan: o rio voltou a cantar, mas a floresta ainda esquece os próprios nomes. Siga para o Bosque dos Sussurros, acenda suas três lanternas e peça ao Cervo Ancião que devolva as memórias perdidas."
 			_save_game()
 		elif quest_stage == 8:
 			quest_stage = 9
@@ -4518,7 +4548,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 16)
+	cfg.set_value("meta", "save_version", 17)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -4602,9 +4632,9 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 16:
+	if save_version > 17:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 17)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
