@@ -136,8 +136,9 @@ func _on_email_login() -> void:
 	_show_auth_result(result)
 
 func _on_email_signup() -> void:
-	if email_input.text.strip_edges().is_empty() or password_input.text.length() < 6 or username_input.text.strip_edges().is_empty():
-		_show_notice("Preencha nome, e-mail e uma senha com pelo menos 6 caracteres.")
+	var clean_username := username_input.text.strip_edges()
+	if email_input.text.strip_edges().is_empty() or password_input.text.length() < 6 or clean_username.is_empty() or clean_username.length() > 24:
+		_show_notice("Preencha e-mail, nome de aventureiro (até 24 caracteres) e uma senha com pelo menos 6 caracteres.")
 		return
 	var result: Dictionary = await SupabaseClient.sign_up(email_input.text, password_input.text, username_input.text)
 	_show_auth_result(result)
