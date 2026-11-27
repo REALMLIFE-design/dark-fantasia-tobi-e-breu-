@@ -93,6 +93,11 @@ func _build_screen() -> void:
 	signup_button.custom_minimum_size = Vector2(0, 52)
 	signup_button.pressed.connect(_on_email_signup)
 	stack.add_child(signup_button)
+	var recovery_button := Button.new()
+	recovery_button.text = "ESQUECI MINHA SENHA"
+	recovery_button.custom_minimum_size = Vector2(0, 46)
+	recovery_button.pressed.connect(_on_password_recovery)
+	stack.add_child(recovery_button)
 	var google := Button.new()
 	google.text = "G   Entrar com Google"
 	google.custom_minimum_size = Vector2(0, 58)
@@ -131,6 +136,13 @@ func _on_email_signup() -> void:
 		return
 	var result: Dictionary = await SupabaseClient.sign_up(email_input.text, password_input.text, username_input.text)
 	_show_auth_result(result)
+
+func _on_password_recovery() -> void:
+	if email_input.text.strip_edges().is_empty():
+		_show_notice("Digite o e-mail da sua conta no campo acima.")
+		return
+	var result: Dictionary = await SupabaseClient.request_password_recovery(email_input.text)
+	_show_notice(str(result.get("message", "Não foi possível solicitar a recuperação agora.")))
 
 func _show_auth_result(result: Dictionary) -> void:
 	_show_notice(str(result.get("message", "Não foi possível concluir a autenticação.")))
