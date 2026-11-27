@@ -11,6 +11,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 UpdateManager="*res://scripts/update_manager.gd"
+SupabaseAuth="*res://scripts/supabase_auth.gd"
 
 [display]
 window/size/viewport_width=1280
