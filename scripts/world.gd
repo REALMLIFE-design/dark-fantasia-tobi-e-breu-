@@ -231,7 +231,10 @@ func _ready() -> void:
 	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir ao Bosque dos Sussurros"
 	elif quest_stage == 15: objective_label.text = "Objetivo: acenda as 3 lanternas do Bosque dos Sussurros (%d/3)" % whisper_lantern_ids.size()
 	elif quest_stage == 16: objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
-	else: objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
+	elif quest_stage == 17: objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com Azulan para iniciar a próxima jornada"
+	elif quest_stage == 18: objective_label.text = "Objetivo: desperte as 3 Pedras-Âncora antigas (%d/3)" % ancient_waystone_ids.size()
+	elif quest_stage == 19: objective_label.text = "Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count
+	else: objective_label.text = "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
@@ -4025,7 +4028,14 @@ func _interact() -> void:
 					_grant_xp(120)
 					shards += 4
 					potions += 2
-					toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! +120 XP • 4 Fragmentos • 2 Poções"
+					if quest_stage == 18:
+						quest_stage = 19 if bell_tower_ring_count < 3 else 20
+						quest_text = "O Sino do Último Vigia" if quest_stage == 19 else "Capítulo IV concluído"
+						objective_label.text = "Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
+						toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! O Sino do Último Vigia respondeu ao chamado. Siga para a torre." if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO! As antigas pedras e o sino já estão despertos."
+						_update_quest()
+					else:
+						toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! +120 XP • 4 Fragmentos • 2 Poções"
 				else:
 					toast_label.text = "PEDRA-ÂNCORA DESPERTADA • +30 XP • Essência +1 (%d/3)" % ancient_waystone_ids.size()
 				_update_inventory()
@@ -4045,7 +4055,14 @@ func _interact() -> void:
 				shards += 4
 				dark_essence += 2
 				potions += 1
-				toast_label.text = "SINO DO ÚLTIMO VIGIA! +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
+				if quest_stage == 19:
+					quest_stage = 20
+					quest_text = "Capítulo IV concluído"
+					objective_label.text = "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
+					toast_label.text = "CAPÍTULO IV CONCLUÍDO! O Sino do Último Vigia rompeu o silêncio entre as regiões. +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
+					_update_quest()
+				else:
+					toast_label.text = "SINO DO ÚLTIMO VIGIA! +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
 				_update_inventory()
 			else:
 				toast_label.text = "O sino antigo ecoa pela névoa... (%d/3)" % bell_tower_ring_count
@@ -4267,6 +4284,15 @@ func _interact() -> void:
 			objective_label.text = "CAPÍTULO I CONCLUÍDO — fale com Azulan para seguir ao Rio Prateado"
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
+			_save_game()
+		elif quest_stage == 17:
+			quest_stage = 18
+			if ancient_waystone_ids.size() >= 3:
+				quest_stage = 19 if bell_tower_ring_count < 3 else 20
+			quest_text = "As três Pedras-Âncora" if quest_stage == 18 else ("O Sino do Último Vigia" if quest_stage == 19 else "Capítulo IV concluído")
+			objective_label.text = "Objetivo: desperte as 3 Pedras-Âncora antigas (%d/3)" % ancient_waystone_ids.size() if quest_stage == 18 else ("Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido")
+			toast_label.text = "Azulan: as lembranças da floresta retornaram, mas as antigas pedras ainda dormem. Desperte as três Pedras-Âncora — Raiz, Geada e Brasa — e faça o Sino do Último Vigia ecoar."
+			_update_quest()
 			_save_game()
 		elif quest_stage == 14:
 			quest_stage = 15
@@ -4551,7 +4577,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 17)
+	cfg.set_value("meta", "save_version", 18)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -4635,9 +4661,9 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 17:
+	if save_version > 18:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 17)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 20)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
