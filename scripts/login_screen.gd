@@ -9,6 +9,7 @@ var notice: AcceptDialog
 var email_input: LineEdit
 var password_input: LineEdit
 var username_input: LineEdit
+var password_visible := false
 
 func _ready() -> void:
 	_build_screen()
@@ -72,7 +73,16 @@ func _build_screen() -> void:
 	password_input.placeholder_text = "Senha (mínimo 6 caracteres)"
 	password_input.secret = true
 	password_input.custom_minimum_size.y = 46
-	stack.add_child(password_input)
+	password_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var password_row := HBoxContainer.new()
+	password_row.add_theme_constant_override("separation", 8)
+	password_row.add_child(password_input)
+	var password_toggle := Button.new()
+	password_toggle.text = "MOSTRAR"
+	password_toggle.custom_minimum_size = Vector2(92, 46)
+	password_toggle.pressed.connect(_toggle_password_visibility.bind(password_toggle))
+	password_row.add_child(password_toggle)
+	stack.add_child(password_row)
 	var login_button := Button.new()
 	login_button.text = "ENTRAR COM E-MAIL"
 	login_button.custom_minimum_size = Vector2(0, 52)
@@ -102,6 +112,11 @@ func _build_screen() -> void:
 	notice = AcceptDialog.new()
 	notice.title = "CONTA GOOGLE"
 	add_child(notice)
+
+func _toggle_password_visibility(button: Button) -> void:
+	password_visible = not password_visible
+	password_input.secret = not password_visible
+	button.text = "OCULTAR" if password_visible else "MOSTRAR"
 
 func _on_email_login() -> void:
 	if email_input.text.strip_edges().is_empty() or password_input.text.is_empty():
