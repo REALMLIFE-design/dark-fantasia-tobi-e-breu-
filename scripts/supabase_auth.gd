@@ -61,7 +61,8 @@ func rpc_call(function_name: String, payload: Dictionary, tag: String) -> void:
 		"dark_world_join_room",
 		"dark_world_send_friend_request",
 		"dark_world_respond_friend_request",
-		"dark_world_list_friends"
+		"dark_world_list_friends",
+		"dark_world_list_friend_requests"
 	]
 	if not allowed_functions.has(function_name):
 		rpc_failed.emit(tag, "Operação não permitida.")
