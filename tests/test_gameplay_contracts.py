@@ -706,7 +706,7 @@ class ProceduralTextureContracts(unittest.TestCase):
         self.assertIn('const MAX_ADVENTURE_PLAYERS := 4', menu)
         login = (ROOT / 'scripts/login_screen.gd').read_text(encoding='utf-8')
         lobby = (ROOT / 'scripts/friends_lobby.gd').read_text(encoding='utf-8')
-        self.assertIn('login falso', login.lower())
+        self.assertIn('Client Secret', login)
         self.assertIn('ainda não está ativa', lobby)
         self.assertIn('MAX_ADVENTURE_PLAYERS := 4', menu)
 
