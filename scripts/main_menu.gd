@@ -167,7 +167,7 @@ func _build_menu() -> void:
 	_add_menu_button(layout, "CONTINUAR A JORNADA", "Retome sua aventura", _start_story, true)
 	_add_menu_button(layout, "HISTÓRIA COOPERATIVA", "Aventura com até %d jogadores" % MAX_ADVENTURE_PLAYERS, _show_coop_info)
 	_add_menu_button(layout, "MULTIPLAYER", "Explore com seus amigos", _show_multiplayer_info)
-	_add_menu_button(layout, "AMIGOS  •  CONTA GOOGLE", "Conta e lista de amigos", _show_google_info)
+	_add_menu_button(layout, "AMIGOS  •  CONTA DARK WORLD", "Conta e lista de amigos", _show_google_info)
 	_add_menu_button(layout, "CONFIGURAÇÕES", "Áudio, imagem e controles", _show_settings)
 
 	var footer := Label.new()
