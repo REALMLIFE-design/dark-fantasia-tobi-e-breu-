@@ -62,7 +62,10 @@ var xp := 0
 var shards := 0
 var potions := 3
 var weapon_level := 0
+var armor_level := 0
 const WEAPON_UPGRADE_COSTS := [3, 6, 10]
+const ARMOR_SHARD_COSTS := [2, 4, 7]
+const ARMOR_ESSENCE_COSTS := [1, 2, 4]
 var save_path := "user://tobi_breu_save.cfg"
 var settings_path := "user://tobi_breu_settings.cfg"
 var camera_sensitivity_setting := 0.006
@@ -2596,7 +2599,7 @@ func _xp_needed_for_next_level() -> int:
 func _refresh_player_stats(levels_gained: int = 0) -> void:
 	if not is_instance_valid(player): return
 	var level := _get_player_level()
-	player.max_hp = 100 + (level - 1) * 12
+	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	if levels_gained > 0:
 		player.hp = mini(player.max_hp, player.hp + 25 * levels_gained)
@@ -2620,7 +2623,7 @@ func _build_player() -> void:
 	player.position = Vector3(0,0,15)
 	player.set("world", self)
 	var level := _get_player_level()
-	player.max_hp = 100 + (level - 1) * 12
+	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	add_child(player)
 
@@ -3314,7 +3317,21 @@ func _show_menu_page(page: String) -> void:
 					_menu_add_card(content, "FALTAM FRAGMENTOS", "Você precisa de mais %d Fragmentos Rubros." % (cost - shards))
 			else:
 				_menu_add_card(content, "FORJA", "Sua espada já alcançou o nível máximo disponível nesta versão.")
-			_menu_add_card(content, "PROTEÇÃO", "Vida máxima atual: %d. Poções disponíveis: %d." % [player.max_hp, potions])
+			_menu_add_section_label(content, "ARMADURA DO GUARDIÃO", "Proteção permanente para Tobi")
+			_menu_add_card(content, "ARMADURA  •  NÍVEL %d/3" % armor_level, "Vida máxima: %d  •  Bônus da armadura: +%d\nEssência Sombria: %d  •  Fragmentos Rubros: %d" % [player.max_hp, armor_level * 20, dark_essence, shards])
+			if armor_level < ARMOR_SHARD_COSTS.size():
+				var armor_shards: int = ARMOR_SHARD_COSTS[armor_level]
+				var armor_essence: int = ARMOR_ESSENCE_COSTS[armor_level]
+				var master_for_armor := get_node_or_null("Mestre Azulan")
+				var near_armor_forge := is_instance_valid(master_for_armor) and player.global_position.distance_to(master_for_armor.global_position) <= 5.0
+				var armor_caption := "FORJAR ARMADURA  •  %d FRAGMENTOS + %d ESSÊNCIA" % [armor_shards, armor_essence] if near_armor_forge else "ARMADURA  •  VISITE MESTRE AZULAN"
+				var armor_button := _menu_add_button(content, armor_caption, _upgrade_armor_from_menu, true)
+				armor_button.disabled = not near_armor_forge or shards < armor_shards or dark_essence < armor_essence
+				if near_armor_forge and (shards < armor_shards or dark_essence < armor_essence):
+					_menu_add_card(content, "MATERIAIS INSUFICIENTES", "Faltam %d Fragmentos Rubros e %d Essências Sombrias." % [maxi(0, armor_shards - shards), maxi(0, armor_essence - dark_essence)])
+			else:
+				_menu_add_card(content, "ARMADURA MÁXIMA", "A armadura do Guardião alcançou o nível máximo.")
+			_menu_add_card(content, "PROTEÇÃO", "Poções disponíveis: %d." % potions)
 		"skills":
 			title.text = "TÉCNICAS & VÍNCULO"
 			subtitle.text = "As habilidades reais disponíveis para Tobi e Breu."
@@ -3681,6 +3698,16 @@ func _upgrade_from_menu() -> void:
 	_show_menu_page("equipment")
 	if weapon_level > previous_level:
 		menu_feedback.text = "ESPADA APRIMORADA • NÍVEL +%d" % weapon_level
+	elif is_instance_valid(toast_label):
+		menu_feedback.text = toast_label.text
+
+
+func _upgrade_armor_from_menu() -> void:
+	var previous_level := armor_level
+	_upgrade_armor()
+	_show_menu_page("equipment")
+	if armor_level > previous_level:
+		menu_feedback.text = "ARMADURA APRIMORADA • NÍVEL %d/3" % armor_level
 	elif is_instance_valid(toast_label):
 		menu_feedback.text = toast_label.text
 
@@ -4562,6 +4589,30 @@ func _upgrade_weapon() -> void:
 	_update_inventory()
 	_save_game()
 
+func _upgrade_armor() -> void:
+	var master := get_node_or_null("Mestre Azulan")
+	if not is_instance_valid(player) or not is_instance_valid(master) or player.global_position.distance_to(master.global_position) > 5.0:
+		toast_label.text = "A armadura só pode ser forjada perto de Mestre Azulan."
+		return
+	if armor_level >= ARMOR_SHARD_COSTS.size():
+		toast_label.text = "A armadura já alcançou o nível máximo."
+		return
+	var shard_cost: int = ARMOR_SHARD_COSTS[armor_level]
+	var essence_cost: int = ARMOR_ESSENCE_COSTS[armor_level]
+	if shards < shard_cost or dark_essence < essence_cost:
+		toast_label.text = "Faltam %d Fragmentos e %d Essências Sombrias." % [maxi(0, shard_cost - shards), maxi(0, essence_cost - dark_essence)]
+		return
+	shards -= shard_cost
+	dark_essence -= essence_cost
+	armor_level += 1
+	_refresh_player_stats(0)
+	player.hp = mini(player.max_hp, player.hp + 20)
+	player_health_changed(player.hp, player.max_hp)
+	toast_label.text = "ARMADURA APRIMORADA • Nível %d • +%d vida máxima" % [armor_level, armor_level * 20]
+	_update_inventory()
+	_save_game()
+
+
 func enemy_defeated(kind: int = 0) -> void:
 	if quest_stage == 21 and kind == 11:
 		quest_stage = 22
@@ -4855,7 +4906,7 @@ func _update_inventory() -> void:
 	if inventory_label:
 		inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
 	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
+		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nArmadura do Guardião: nível %d — bônus +%d vida\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, armor_level, armor_level * 20, 100 + (level - 1) * 12 + armor_level * 20, level, current_level_xp, xp_needed - ((level - 1) * 100)]
 
 func _use_potion() -> void:
 	if not is_instance_valid(player) or potions <= 0:
@@ -4873,7 +4924,7 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 21)
+	cfg.set_value("meta", "save_version", 22)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "day_clock", day_clock)
 	cfg.set_value("progress", "weather_clock", weather_clock)
@@ -4883,6 +4934,7 @@ func _save_game() -> void:
 	cfg.set_value("progress", "shards", shards)
 	cfg.set_value("progress", "potions", potions)
 	cfg.set_value("progress", "weapon_level", weapon_level)
+	cfg.set_value("progress", "armor_level", armor_level)
 	cfg.set_value("inventory", "goblin_ears", goblin_ears)
 	cfg.set_value("inventory", "swamp_herbs", swamp_herbs)
 	cfg.set_value("inventory", "dark_essence", dark_essence)
@@ -4960,7 +5012,7 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 21:
+	if save_version > 22:
 		return
 	day_clock = fposmod(float(cfg.get_value("progress", "day_clock", 0.0)), TAU)
 	weather_clock = fposmod(float(cfg.get_value("progress", "weather_clock", 0.0)), 240.0)
@@ -4970,6 +5022,7 @@ func _load_save() -> void:
 	shards = int(cfg.get_value("progress", "shards", 0))
 	potions = int(cfg.get_value("progress", "potions", 3))
 	weapon_level = clampi(int(cfg.get_value("progress", "weapon_level", 0)), 0, 3)
+	armor_level = clampi(int(cfg.get_value("progress", "armor_level", 0)), 0, 3)
 	goblin_ears = maxi(0, int(cfg.get_value("inventory", "goblin_ears", 0)))
 	swamp_herbs = maxi(0, int(cfg.get_value("inventory", "swamp_herbs", 0)))
 	dark_essence = maxi(0, int(cfg.get_value("inventory", "dark_essence", 0)))
