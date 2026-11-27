@@ -68,15 +68,34 @@ for page in 1 2 3 4; do
   adb shell input tap 640 505
   sleep 1
 done
-sleep "$INTERACTION_WAIT"
+# Só considerar a demo aprovada quando a cena 3D terminar de montar.
+# O processo ficar aberto não basta: esperamos o marcador emitido pelo mundo.
+world_ready=false
+for attempt in $(seq 1 90); do
+  if adb logcat -d -t 12000 2>/dev/null | grep -Fq "TOBI_BREU_WORLD_READY"; then
+    world_ready=true
+    break
+  fi
+  APP_PID="$(adb shell pidof "$PACKAGE_ID" 2>/dev/null | tr -d '\r' || true)"
+  if [[ -z "$APP_PID" ]]; then
+    break
+  fi
+  sleep 1
+done
 APP_PID="$(adb shell pidof "$PACKAGE_ID" 2>/dev/null | tr -d '\r' || true)"
 if [[ -z "$APP_PID" ]]; then
-  adb logcat -d -t 3000 > "$FAILURE_LOG_PATH" || true
+  adb logcat -d -t 5000 > "$FAILURE_LOG_PATH" || true
   cat "$FAILURE_LOG_PATH"
   echo "ERRO: o jogo fechou depois da interação inicial"
   exit 1
 fi
-adb logcat -d -v threadtime -t 8000 > "$LOG_PATH" || true
+if [[ "$world_ready" != "true" ]]; then
+  adb logcat -d -t 12000 > "$FAILURE_LOG_PATH" || true
+  cat "$FAILURE_LOG_PATH"
+  echo "ERRO: o mundo 3D não terminou de carregar em 90 segundos"
+  exit 1
+fi
+adb logcat -d -v threadtime -t 12000 > "$LOG_PATH" || true
 adb logcat -b crash -d -v threadtime > "$CRASH_LOG_PATH" 2>/dev/null || true
 RESUMED_ACTIVITY="$(adb shell dumpsys activity activities 2>/dev/null | tr -d '\r' || true)"
 if [[ -n "$RESUMED_ACTIVITY" ]] && ! grep -E "mResumedActivity.*$PACKAGE_ID|topResumedActivity.*$PACKAGE_ID" <<< "$RESUMED_ACTIVITY"; then
