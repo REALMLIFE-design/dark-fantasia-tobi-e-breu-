@@ -11,6 +11,7 @@ var room_status_label: Label
 var invite_button: Button
 var create_room_button: Button
 var join_room_button: Button
+var account_button: Button
 
 func _ready() -> void:
 	_build_lobby()
@@ -65,11 +66,11 @@ func _build_lobby() -> void:
 	heading.add_theme_color_override("font_color", Color("f1eee5"))
 	heading.add_theme_font_size_override("font_size", 22)
 	header.add_child(heading)
-	var logout := Button.new()
-	logout.text = "SAIR"
-	logout.custom_minimum_size = Vector2(76, 46)
-	logout.pressed.connect(_on_sign_out_pressed)
-	header.add_child(logout)
+	account_button = Button.new()
+	account_button.text = "ENTRAR"
+	account_button.custom_minimum_size = Vector2(90, 46)
+	account_button.pressed.connect(_on_account_button_pressed)
+	header.add_child(account_button)
 
 	var subtitle := Label.new()
 	subtitle.text = "Convide seus amigos para explorar Azulan • até 4 jogadores por sala"
@@ -185,6 +186,7 @@ func _make_panel(title_text: String, empty_text: String) -> PanelContainer:
 
 func _refresh_auth_state() -> void:
 	var authenticated := SupabaseAuth.is_authenticated()
+	account_button.text = "SAIR" if authenticated else "ENTRAR"
 	friend_username_input.editable = authenticated
 	room_code_input.editable = authenticated
 	invite_button.disabled = not authenticated
@@ -258,8 +260,9 @@ func _on_rpc_failed(tag: String, message: String) -> void:
 	else:
 		status_label.text = message
 
-func _on_sign_out_pressed() -> void:
-	SupabaseAuth.sign_out()
+func _on_account_button_pressed() -> void:
+	if SupabaseAuth.is_authenticated():
+		SupabaseAuth.sign_out()
 	get_tree().change_scene_to_file("res://scenes/login.tscn")
 
 func _go_back() -> void:
