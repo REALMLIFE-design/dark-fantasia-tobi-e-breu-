@@ -211,3 +211,10 @@ Esta seção descreve o estado da branch `feature/google-login-loading-friends-l
 - A validação de importação/boot do Godot e a exportação Android dependem do workflow GitHub Actions; aguardar a execução mais recente antes de considerar o APK aprovado.
 - Ainda faltam testes em aparelho Android físico, áudio/VFX finais, acessibilidade/opções gráficas completas, pathfinding avançado, modelos GLB externos integrados e sincronização multiplayer em tempo real.
 - O saldo do projeto Thrixel está sem créditos de geração; os modelos já existentes continuam disponíveis no projeto Thrixel, mas não foram transferidos para a pasta Godot nesta atualização.
+
+
+## Campanha narrativa — atualização interna 26/11/2026
+
+A campanha de cinco capítulos está consolidada em [STORY-CAMPAIGN-PTBR.md](STORY-CAMPAIGN-PTBR.md). O roteiro reúne a premissa, objetivos principais, cenas-chave, revelações e os dois epílogos da escolha final. No código da branch de desenvolvimento, o Capítulo II recebeu cenas de abertura e encerramento, e o final agora oferece a escolha entre guardar as memórias ou libertar a luz, com a decisão salva para continuar depois.
+
+**Atenção:** estas alterações foram feitas sem executar testes, conforme solicitado. Não considerar as novas cenas validadas no Godot ou em Android até uma rodada posterior de execução.
