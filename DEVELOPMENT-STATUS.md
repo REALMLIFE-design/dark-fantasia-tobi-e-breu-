@@ -228,3 +228,7 @@
 - Limitação mantida explícita: o app ainda não processa o link de recuperação/confirmacão por deep link Android; a solicitação por e-mail está conectada, mas a conclusão desses fluxos dentro do jogo ainda precisa da integração nativa.
 
 - Cadastro: nome de aventureiro validado no cliente para respeitar o limite de 1 a 24 caracteres definido pela tabela `profiles`, evitando que o trigger rejeite um cadastro por nome longo demais.
+
+- Lobby: protegidas as atualizações periódicas para impedir chamadas simultâneas de listagem de membros e de amigos; uma resposta atrasada de uma sala anterior não sobrescreve a sala atual. Mensagens de falha na lista de amigos agora orientam o jogador a tentar atualizar novamente.
+- Cliente Supabase: falhas de transporte HTTP agora retornam uma mensagem de conexão em vez de serem confundidas com erro de autenticação. Erros de limite de e-mail e de destinatário não autorizado recebem orientação específica, pois o SMTP integrado do projeto hospedado tem restrições de teste.
+- Não foram executados testes, builds, APK ou chamadas de cadastro reais.
