@@ -56,7 +56,7 @@ func _build_lobby() -> void:
 	layout.add_child(subtitle)
 
 	var status := Label.new()
-	status.text = "MODO CONVIDADO  •  Entre com Google para sincronizar sua conta e acessar a lista de amigos."
+	status.text = "MODO CONVIDADO  •  Entre com sua conta Dark World usando e-mail e senha para acessar a lista de amigos."
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.add_theme_color_override("font_color", Color("d8b77c"))
 	status.add_theme_font_size_override("font_size", 12)
@@ -107,7 +107,7 @@ func _build_lobby() -> void:
 	room_row.add_child(join_room)
 
 	var footer := Label.new()
-	footer.text = "A conexão multiplayer ainda não está ativa nesta versão. As salas e amizades já têm regras seguras no Supabase; as ações serão liberadas após autenticação Google."
+	footer.text = "A conexão multiplayer ainda não está ativa nesta versão. As salas e amizades já têm regras seguras no Supabase; as ações serão liberadas após o login por e-mail e senha."
 	footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	footer.add_theme_color_override("font_color", Color("9aadaa"))
 	footer.add_theme_font_size_override("font_size", 10)
