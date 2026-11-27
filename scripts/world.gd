@@ -76,6 +76,7 @@ var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
 var story_intro_seen := false
+var final_choice := ""
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
 func _ready() -> void:
@@ -230,6 +231,94 @@ func _play_chapter_cutscene(chapter_title: String, heading_text: String, narrati
 	fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
 	await fade_in.finished
 	await continue_button.pressed
+	var fade_out := layer.create_tween()
+	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
+	await fade_out.finished
+	layer.queue_free()
+	get_tree().paused = was_paused
+
+
+
+func _play_final_choice_cutscene() -> void:
+	var was_paused := get_tree().paused
+	get_tree().paused = true
+	var layer := CanvasLayer.new()
+	layer.name = "DarkWorldFinalChoice"
+	layer.layer = 121
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var backdrop := TextureRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.texture = load("res://assets/ui/dark_world_key_art.svg")
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.add_child(backdrop)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.012, 0.022, 0.028, 0.84)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	layer.add_child(shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 340)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.045, 0.043, 0.98), Color("b18a52"), 18))
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	panel.add_child(margin)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 14)
+	margin.add_child(stack)
+	var chapter := Label.new()
+	chapter.text = "CAPÍTULO V • O ÚLTIMO AMANHECER"
+	chapter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chapter.add_theme_font_size_override("font_size", 12)
+	chapter.add_theme_color_override("font_color", Color("c6a66e"))
+	stack.add_child(chapter)
+	var heading := Label.new()
+	heading.text = "O coração e a escolha"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 25)
+	heading.add_theme_color_override("font_color", Color("f1dfbd"))
+	stack.add_child(heading)
+	var narration := Label.new()
+	narration.text = "O Coração Rubro voltou a pulsar. Tobi percebe que sua luz pode restaurar o mundo, mas as lembranças guardadas nele pertencem a todos. O que ele deve fazer?"
+	narration.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	narration.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	narration.custom_minimum_size = Vector2(0, 92)
+	narration.add_theme_font_size_override("font_size", 16)
+	narration.add_theme_color_override("font_color", Color("d0d8ce"))
+	stack.add_child(narration)
+	var choices := HBoxContainer.new()
+	choices.add_theme_constant_override("separation", 12)
+	stack.add_child(choices)
+	var result := {"value": ""}
+	var preserve_button := Button.new()
+	preserve_button.text = "GUARDAR AS MEMÓRIAS"
+	preserve_button.custom_minimum_size = Vector2(0, 58)
+	preserve_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preserve_button.pressed.connect(func(): result["value"] = "memorias")
+	choices.add_child(preserve_button)
+	var release_button := Button.new()
+	release_button.text = "LIBERTAR A LUZ"
+	release_button.custom_minimum_size = Vector2(0, 58)
+	release_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	release_button.pressed.connect(func(): result["value"] = "luz")
+	choices.add_child(release_button)
+	panel.modulate.a = 0.0
+	var fade_in := layer.create_tween()
+	fade_in.tween_property(panel, "modulate:a", 1.0, 0.35)
+	await fade_in.finished
+	while str(result["value"]).is_empty():
+		await get_tree().process_frame
+	final_choice = str(result["value"])
+	_save_game()
 	var fade_out := layer.create_tween()
 	fade_out.tween_property(panel, "modulate:a", 0.0, 0.25)
 	await fade_out.finished
@@ -3153,7 +3242,11 @@ func _interact() -> void:
 			potions += 5
 			_update_inventory()
 			_save_game()
-			await _play_chapter_cutscene("CAPÍTULO V • O ÚLTIMO AMANHECER", "O coração e a escolha", "Tobi escolhe proteger a luz sem apagar as lembranças. Breu permanece ao seu lado enquanto as cores retornam às florestas, aos rios e a cada lar. O mundo tem um novo amanhecer.")
+			await _play_final_choice_cutscene()
+			if final_choice == "memorias":
+				await _play_chapter_cutscene("EPÍLOGO • AS MEMÓRIAS VIVEM", "A luz que não esquece", "Tobi guarda as lembranças no Coração Rubro. Cada voz, cada amizade e cada perda passa a iluminar o mundo. Breu se aconchega ao lado dele, e juntos prometem proteger todas as histórias.")
+			else:
+				await _play_chapter_cutscene("EPÍLOGO • A LUZ LIBERTADA", "Um novo começo", "Tobi liberta a luz do Coração Rubro para que ela alcance cada canto do mundo. As memórias deixam de pertencer a um único coração e passam a viver nas árvores, nas águas e nas pessoas. Breu acompanha Tobi rumo a um futuro novo.")
 			await _play_chapter_cutscene("CRÉDITOS", "A Lenda de Tobi e Breu", "Uma história sobre coragem, amizade e esperança.\n\nTobi • Breu • Mestre Azulan • Guardiões • Todos os aventureiros.\n\nFIM")
 		_update_quest()
 		return
@@ -3536,6 +3629,7 @@ func _save_game() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("meta", "save_version", 16)
 	cfg.set_value("story", "prologue_seen", story_intro_seen)
+	cfg.set_value("story", "final_choice", final_choice)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
@@ -3577,6 +3671,7 @@ func _load_save() -> void:
 	if cfg.load(save_path) != OK: return
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	story_intro_seen = bool(cfg.get_value("story", "prologue_seen", false))
+	final_choice = str(cfg.get_value("story", "final_choice", ""))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
 	if save_version > 16:
 		return
