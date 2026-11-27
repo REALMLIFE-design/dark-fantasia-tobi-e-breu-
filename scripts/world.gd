@@ -76,6 +76,8 @@ var menu_feedback: Label
 var menu_page := "main"
 var game_started := false
 var day_clock := 0.0
+var weather_clock := 0.0
+var weather_state := -1
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
@@ -712,6 +714,35 @@ func _add_box_collision(parent: Node3D, collision_name: String, local_pos: Vecto
 	body.add_child(collision)
 	parent.add_child(body)
 
+
+func _update_weather() -> void:
+	if not is_instance_valid(world_environment) or world_environment.environment == null:
+		return
+	var next_state := 0
+	if weather_clock >= 150.0 and weather_clock < 205.0:
+		next_state = 1
+	elif weather_clock >= 205.0:
+		next_state = 2
+	if next_state == weather_state:
+		return
+	weather_state = next_state
+	var env := world_environment.environment
+	match weather_state:
+		0:
+			env.fog_density = 0.009
+			env.fog_light_color = Color("8c9b9b")
+			env.ambient_light_color = Color("9a9bb0")
+		1:
+			env.fog_density = 0.018
+			env.fog_light_color = Color("9aabb0")
+			env.ambient_light_color = Color("849b9d")
+		2:
+			env.fog_density = 0.014
+			env.fog_light_color = Color("887d9f")
+			env.ambient_light_color = Color("9a83ad")
+	if is_instance_valid(toast_label) and game_started:
+		var weather_names := ["O céu se abre sobre as terras.", "Uma névoa fria cobre as trilhas.", "A névoa arcana colore o horizonte."]
+		toast_label.text = weather_names[weather_state]
 
 func _build_environment() -> void:
 	# Dreamlike fantasy grade: warm sunlight, cool magical shadows and a soft
@@ -3715,6 +3746,8 @@ func _toggle_inventory() -> void:
 
 func _process(delta: float) -> void:
 	day_clock = fposmod(day_clock + delta * 0.0022, TAU)
+	weather_clock = fposmod(weather_clock + delta, 240.0)
+	_update_weather()
 	if is_instance_valid(sun_light):
 		var daylight := 0.52 + 0.48 * maxf(0.0, sin(day_clock))
 		sun_light.light_energy = 0.28 + daylight * 0.95
@@ -4776,9 +4809,10 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 20)
+	cfg.set_value("meta", "save_version", 21)
 	cfg.set_value("progress", "quest_stage", quest_stage)
 	cfg.set_value("progress", "day_clock", day_clock)
+	cfg.set_value("progress", "weather_clock", weather_clock)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
 	cfg.set_value("progress", "xp", xp)
@@ -4862,9 +4896,10 @@ func _load_save() -> void:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 20:
+	if save_version > 21:
 		return
 	day_clock = fposmod(float(cfg.get_value("progress", "day_clock", 0.0)), TAU)
+	weather_clock = fposmod(float(cfg.get_value("progress", "weather_clock", 0.0)), 240.0)
 	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
