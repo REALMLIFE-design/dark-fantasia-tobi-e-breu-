@@ -189,3 +189,5 @@
 - O Guardião Cervo e as três lanternas do Bosque dos Sussurros receberam falas que explicam o despertar e o sentido da bênção.
 - Roteiro paralelo documentado em STORY-CAMPAIGN-PTBR.md. O conteúdo continua opcional e não bloqueia os cinco capítulos.
 - Não foram executados testes, compilação ou validação visual nesta rodada, conforme solicitado.
+
+- Ajustado o balão de diálogo/toast do HUD para acomodar falas maiores: largura responsiva à tela, altura ampliada, quebra automática e alinhamento vertical. A alteração busca evitar que os novos diálogos longos fiquem cortados em celulares; a aparência final permanece sem validação visual até a rodada de testes.
