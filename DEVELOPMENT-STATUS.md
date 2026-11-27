@@ -226,3 +226,5 @@
 
 - Tela de login: adicionados pedidos de recuperação de senha e reenvio da confirmação de cadastro por e-mail, usando os endpoints oficiais do Supabase Auth. As respostas são genéricas para não revelar se um endereço possui conta.
 - Limitação mantida explícita: o app ainda não processa o link de recuperação/confirmacão por deep link Android; a solicitação por e-mail está conectada, mas a conclusão desses fluxos dentro do jogo ainda precisa da integração nativa.
+
+- Cadastro: nome de aventureiro validado no cliente para respeitar o limite de 1 a 24 caracteres definido pela tabela `profiles`, evitando que o trigger rejeite um cadastro por nome longo demais.
