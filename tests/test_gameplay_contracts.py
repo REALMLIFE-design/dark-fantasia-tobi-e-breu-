@@ -101,15 +101,22 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('if quest_stage == 1 and kind == 0:', self.world)
         self.assertIn('defeated_count += 1', self.world)
 
+    def test_weather_cycle_is_persisted_and_updates_atmosphere(self):
+        self.assertIn("func _update_weather() -> void:", self.world)
+        self.assertIn("weather_clock = fposmod(weather_clock + delta, 240.0)", self.world)
+        self.assertIn('cfg.set_value("progress", "weather_clock", weather_clock)', self.world)
+        self.assertIn('weather_clock = fposmod(float(cfg.get_value("progress", "weather_clock", 0.0)), 240.0)', self.world)
+        self.assertIn('"save_version", 21', self.world)
+
     def test_day_night_clock_is_persisted_and_migrates_old_saves(self):
         self.assertIn('cfg.set_value("progress", "day_clock", day_clock)', self.world)
         self.assertIn('day_clock = fposmod(float(cfg.get_value("progress", "day_clock", 0.0)), TAU)', self.world)
-        self.assertIn('"save_version", 20', self.world)
-        self.assertIn('save_version > 20', self.world)
+        self.assertIn('"save_version", 21', self.world)
+        self.assertIn('save_version > 21', self.world)
 
     def test_save_is_versioned_and_old_saves_supported(self):
-        self.assertIn('"save_version", 20', self.world)
-        self.assertIn('save_version > 20', self.world)
+        self.assertIn('"save_version", 21', self.world)
+        self.assertIn('save_version > 21', self.world)
         self.assertIn('get_value("meta", "save_version", 1)', self.world)
 
     def test_swamp_quest_has_three_persistent_totems(self):
@@ -365,8 +372,8 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('enemy_kind == 5 and int(get_parent().get("quest_stage")) != 10', self.enemy)
 
     def test_chapter_two_progress_and_counter_are_persisted(self):
-        self.assertIn('"save_version", 20', self.world)
-        self.assertIn('save_version > 20', self.world)
+        self.assertIn('"save_version", 21', self.world)
+        self.assertIn('save_version > 21', self.world)
         self.assertIn('"river_knights_defeated", river_knights_defeated', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)', self.world)
 
@@ -482,7 +489,7 @@ class GameplayContracts(unittest.TestCase):
         self.assertIn('river_relic_ids.append(i)', self.world)
         self.assertIn('cfg.set_value(\"progress\", \"river_relic_ids\", river_relic_ids)', self.world)
         self.assertIn('cfg.get_value(\"progress\", \"river_relic_ids\", [])', self.world)
-        self.assertIn('save_version > 20', self.world)
+        self.assertIn('save_version > 21', self.world)
 
     def test_silver_river_has_a_landmark_gate_and_navigation_props(self):
         river = self.world[self.world.index('func _build_river_region'):self.world.index('func _make_person')]
@@ -830,7 +837,7 @@ class AncientWaystoneContracts(unittest.TestCase):
         self.assertIn("AS TRÊS PEDRAS-ÂNCORA DESPERTARAM!", world)
         self.assertIn('cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)', world)
         self.assertIn('cfg.get_value("progress", "ancient_waystone_ids", [])', world)
-        self.assertIn('cfg.set_value("meta", "save_version", 20)', world)
+        self.assertIn('cfg.set_value("meta", "save_version", 21)', world)
 
 
     def test_android_auto_update_bootstrap_is_registered(self):
@@ -1580,6 +1587,6 @@ class FinalChapterContracts(unittest.TestCase):
         self.assertIn('quest_stage = 22', self.world)
 
     def test_existing_saves_migrate_to_the_extended_quest_range(self):
-        self.assertIn('cfg.set_value("meta", "save_version", 20)', self.world)
-        self.assertIn('if save_version > 20:', self.world)
+        self.assertIn('cfg.set_value("meta", "save_version", 21)', self.world)
+        self.assertIn('if save_version > 21:', self.world)
         self.assertIn('quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)', self.world)
