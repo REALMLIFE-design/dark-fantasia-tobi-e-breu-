@@ -32,10 +32,15 @@ func _build_screen() -> void:
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.custom_minimum_size.y = maxf(get_viewport_rect().size.y, 620.0)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
+	scroll.add_child(center)
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(minf(520.0, get_viewport_rect().size.x * 0.88), 0)
 	var style := StyleBoxFlat.new()
