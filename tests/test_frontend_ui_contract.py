@@ -12,6 +12,8 @@ class FrontendUIContractTests(unittest.TestCase):
     def test_frontend_scene_uses_the_ui_script(self):
         scene = (ROOT / "scenes/frontend.tscn").read_text(encoding="utf-8")
         self.assertIn('res://scripts/frontend_ui.gd', scene)
+        project = (ROOT / "project.godot").read_text(encoding="utf-8")
+        self.assertIn('OnlineService="*res://scripts/online_service.gd"', project)
 
     def test_login_and_menu_routes_exist(self):
         script = (ROOT / "scripts/frontend_ui.gd").read_text(encoding="utf-8")
@@ -31,6 +33,13 @@ class FrontendUIContractTests(unittest.TestCase):
         self.assertIn("func _show_settings()", script)
         self.assertIn("func _join_room_placeholder()", script)
         self.assertIn("func _online_not_ready()", script)
+        self.assertIn("func _create_room_online()", script)
+        self.assertIn("func _join_room_online()", script)
+        self.assertIn("func _send_friend_request_online()", script)
+        online = (ROOT / "scripts/online_service.gd").read_text(encoding="utf-8")
+        self.assertIn("/auth/v1/signup", online)
+        self.assertIn("/rest/v1/rpc/dark_world_create_room", online)
+        self.assertIn("/rest/v1/rpc/dark_world_join_room", online)
 
     def test_game_scene_remains_the_gameplay_target(self):
         script = (ROOT / "scripts/frontend_ui.gd").read_text(encoding="utf-8")
