@@ -114,6 +114,55 @@ jobs:
           echo "THRIXEL_MODELS_READY: $ready/7"
           test "$ready" -eq 7
 
+      - name: Baixar assets adicionais compartilhados no Google Drive
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          WEAPON_DIR="$PROJECT_PATH/assets/external_packs/google_drive_weapons"
+          UI_DIR="$PROJECT_PATH/assets/art/ui/google_drive"
+          mkdir -p "$WEAPON_DIR" "$UI_DIR"
+          download_drive_file() {
+            local file_id="$1" output="$2" minimum_bytes="$3"
+            local temporary="$output.part"
+            curl --fail --location --retry 3 --connect-timeout 20 --max-time 300 \
+              "https://drive.usercontent.google.com/download?id=${file_id}&export=download&confirm=t" \
+              -o "$temporary"
+            test -s "$temporary"
+            local bytes
+            bytes="$(stat -c%s "$temporary")"
+            if [ "$bytes" -lt "$minimum_bytes" ]; then
+              echo "ERRO: download do Google Drive incompleto: $output ($bytes bytes)"
+              rm -f "$temporary"
+              return 1
+            fi
+            mv "$temporary" "$output"
+            echo "GOOGLE_DRIVE_ASSET_READY: $(basename "$output") ($bytes bytes)"
+          }
+          download_drive_file "19W15CvJhIq8x8xoqzhVWYcwSCnrar9B2" "$WEAPON_DIR/PP_FreeFantasyRPGWeapons_v2.0_ListScene.fbx" 1000000
+          download_drive_file "14b1g1DkYmtGtkaoKK8gnWz1C9s2A02Ru" "$UI_DIR/Fantasy_RPG_UI_HUD_Kit.zip" 1000000
+          download_drive_file "1jeGA4JZfoqrt-nMq1UqPjQFS9TTSPUwv" "$UI_DIR/FreeUIdemo.zip" 500000
+          python3 - "$UI_DIR" <<'PY'
+          import pathlib, sys, zipfile
+          root = pathlib.Path(sys.argv[1])
+          for archive_name, folder_name in [
+              ("Fantasy_RPG_UI_HUD_Kit.zip", "Fantasy_RPG_UI_HUD_Kit"),
+              ("FreeUIdemo.zip", "FreeUIdemo"),
+          ]:
+              archive = root / archive_name
+              destination = root / folder_name
+              destination.mkdir(parents=True, exist_ok=True)
+              with zipfile.ZipFile(archive) as bundle:
+                  for item in bundle.infolist():
+                      target = (destination / item.filename).resolve()
+                      if destination.resolve() not in target.parents and target != destination.resolve():
+                          raise RuntimeError("Unsafe archive path: " + item.filename)
+                  bundle.extractall(destination)
+              print("GOOGLE_DRIVE_UI_FILES:", archive_name, sum(1 for p in destination.rglob("*") if p.is_file()))
+              for path in sorted(destination.rglob("*")):
+                  if path.is_file() and path.suffix.lower() in {".png", ".webp", ".jpg", ".svg", ".ttf", ".otf"}:
+                      print("GOOGLE_DRIVE_UI_ASSET:", path.relative_to(root))
+          PY
+
       - name: Normalizar GLBs para compatibilidade com Godot 4.3
         timeout-minutes: 8
         run: |
