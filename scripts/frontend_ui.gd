@@ -87,6 +87,7 @@ func _build_shell() -> void:
 	brand_column.add_theme_constant_override("separation", 14)
 	content.add_child(brand_column)
 	brand_column.add_child(_label("UMA JORNADA\nNAS SOMBRAS", 31, C_TEXT, true))
+	_add_illustration(brand_column, 170)
 	brand_column.add_child(_gold_rule(82))
 	brand_column.add_child(_label("Explore terras esquecidas.\nEnfrente criaturas antigas.\nDescubra o segredo de Breu.", 15, C_MUTED))
 	var brand_spacer := Control.new()
@@ -136,6 +137,14 @@ func _label(value: String, size: int = 14, color: Color = C_MUTED, bold: bool = 
 		label.add_theme_constant_override("shadow_offset_y", 1)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
+
+
+func _add_illustration(target: VBoxContainer, height: float = 140.0) -> void:
+	var illustration := Control.new()
+	illustration.set_script(load("res://scripts/ui_illustration.gd"))
+	illustration.custom_minimum_size = Vector2(0, height)
+	illustration.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	target.add_child(illustration)
 
 
 func _gold_rule(width: float = 72.0) -> Control:
@@ -201,6 +210,7 @@ func _page_heading(kicker: String, title: String, description: String) -> void:
 func _show_login() -> void:
 	page = "login"
 	_clear_page()
+	_add_illustration(panel_body, 125)
 	_page_heading("BEM-VINDO A DARK WORLD", "Entre na sua jornada", "Entre para salvar seu progresso. Você também pode jogar localmente como visitante.")
 	panel_body.add_child(_button("CONTINUAR COM GOOGLE", _on_google_login, true))
 	panel_body.add_child(_button("ENTRAR COMO CONVIDADO", _start_guest_game))
@@ -228,6 +238,7 @@ func _start_guest_game() -> void:
 func _start_game(new_game: bool) -> void:
 	page = "loading"
 	_clear_page()
+	_add_illustration(panel_body, 150)
 	_page_heading("PREPARANDO A AVENTURA", "Carregando Dark World", "Preparando o mundo, os personagens e seu ponto de retorno.")
 	var progress := ProgressBar.new()
 	progress.custom_minimum_size = Vector2(0, 14)
@@ -255,11 +266,13 @@ func _show_main_menu() -> void:
 	panel_body.add_child(_button("CONFIGURAÇÕES", _show_settings))
 	panel_body.add_child(_button("CRÉDITOS", _show_credits))
 	panel_body.add_child(_button("VOLTAR AO LOGIN", _show_login))
+	panel_body.add_child(_button("SAIR DO JOGO", _quit_game))
 
 
 func _show_lobby() -> void:
 	page = "lobby"
 	_clear_page()
+	_add_illustration(panel_body, 90)
 	_page_heading("AVENTURA COOPERATIVA", "Jogar com amigos", "Monte seu grupo de até quatro jogadores e compartilhe o código da sala.")
 	panel_body.add_child(_label("SEU GRUPO  •  ATÉ 4 JOGADORES", 11, C_GOLD, true))
 	for slot in ["Você — Líder", "Vaga disponível", "Vaga disponível", "Vaga disponível"]:
@@ -459,6 +472,10 @@ func _on_volume_changed(value: float) -> void:
 	var config := ConfigFile.new()
 	config.set_value("audio", "master_volume", value)
 	config.save(SETTINGS_PATH)
+
+
+func _quit_game() -> void:
+	get_tree().quit()
 
 
 func _show_credits() -> void:
