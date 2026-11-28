@@ -21,6 +21,11 @@ var panel_body: VBoxContainer
 var page_title: Label
 var status_label: Label
 var room_code_input: LineEdit
+var friend_username_input: LineEdit
+var friend_list_label: Label
+var friend_requests_box: VBoxContainer
+var current_room_id := ""
+var current_room_code := ""
 var volume_slider: HSlider
 
 
@@ -207,7 +212,14 @@ func _on_google_login() -> void:
 
 
 func _start_guest_game() -> void:
+	var auth_result: Dictionary = await OnlineService.sign_in_guest()
 	_show_main_menu()
+	status_label = _label("", 10, C_BLUE)
+	if auth_result.ok:
+		status_label.text = "SESSÃO ONLINE ATIVA  •  " + str(auth_result.get("username", "AVENTUREIRO"))
+	else:
+		status_label.text = "MODO LOCAL ATIVO  •  " + str(auth_result.get("error", "Servidor online indisponível"))
+	panel_body.add_child(status_label)
 
 
 func _start_game(new_game: bool) -> void:
@@ -245,8 +257,8 @@ func _show_main_menu() -> void:
 func _show_lobby() -> void:
 	page = "lobby"
 	_clear_page()
-	_page_heading("AVENTURA COOPERATIVA", "Jogar com amigos", "O lobby visual está preparado para grupos de até quatro jogadores.")
-	panel_body.add_child(_label("SEU GRUPO  •  1 / 4", 11, C_GOLD, true))
+	_page_heading("AVENTURA COOPERATIVA", "Jogar com amigos", "Monte seu grupo de até quatro jogadores e compartilhe o código da sala.")
+	panel_body.add_child(_label("SEU GRUPO  •  ATÉ 4 JOGADORES", 11, C_GOLD, true))
 	for slot in ["Você — Líder", "Vaga disponível", "Vaga disponível", "Vaga disponível"]:
 		var row := PanelContainer.new()
 		row.add_theme_stylebox_override("panel", _panel_style(C_PANEL_ALT, Color("#303d4b"), 7))
@@ -254,28 +266,67 @@ func _show_lobby() -> void:
 		var row_label := _label("  ◈  " + slot, 12, C_TEXT if slot.begins_with("Você") else C_MUTED)
 		row.add_child(row_label)
 		panel_body.add_child(row)
-	panel_body.add_child(_button("CONVIDAR AMIGOS", _online_not_ready))
-	panel_body.add_child(_button("CRIAR SALA", _online_not_ready, true))
-	panel_body.add_child(_label("ENTRAR COM CÓDIGO", 11, C_GOLD, true))
+	panel_body.add_child(_button("CRIAR SALA ONLINE", _create_room_online, true))
+	panel_body.add_child(_label("CÓDIGO DA SALA", 11, C_GOLD, true))
 	room_code_input = LineEdit.new()
-	room_code_input.placeholder_text = "Código da sala"
+	room_code_input.placeholder_text = "Digite o código de 6 a 12 caracteres"
 	room_code_input.max_length = 12
 	room_code_input.custom_minimum_size = Vector2(0, 48)
 	room_code_input.add_theme_stylebox_override("normal", _panel_style(Color("#0c121a"), Color("#46515e"), 7))
 	room_code_input.add_theme_color_override("font_color", C_TEXT)
 	panel_body.add_child(room_code_input)
-	panel_body.add_child(_button("ENTRAR NA SALA", _join_room_placeholder))
-	status_label = _label("ONLINE AINDA NÃO CONECTADO — O SUPABASE JÁ TEM AS TABELAS INICIAIS, MAS A AUTENTICAÇÃO E AS REGRAS DE ENTRADA PRECISAM SER FINALIZADAS.", 10, C_BLUE)
+	panel_body.add_child(_button("ENTRAR NA SALA", _join_room_online))
+	panel_body.add_child(_button("COPIAR CÓDIGO DA MINHA SALA", _copy_room_code))
+	panel_body.add_child(_gold_rule(64))
+	panel_body.add_child(_label("AMIGOS", 11, C_GOLD, true))
+	friend_username_input = LineEdit.new()
+	friend_username_input.placeholder_text = "Nome de usuário do amigo"
+	friend_username_input.max_length = 24
+	friend_username_input.custom_minimum_size = Vector2(0, 46)
+	friend_username_input.add_theme_stylebox_override("normal", _panel_style(Color("#0c121a"), Color("#46515e"), 7))
+	friend_username_input.add_theme_color_override("font_color", C_TEXT)
+	panel_body.add_child(friend_username_input)
+	panel_body.add_child(_button("ENVIAR SOLICITAÇÃO DE AMIZADE", _send_friend_request_online))
+	panel_body.add_child(_button("ATUALIZAR AMIGOS E SOLICITAÇÕES", _refresh_online_lobby))
+	friend_list_label = _label("Amigos aparecerão aqui quando sua sessão online estiver ativa.", 12, C_MUTED)
+	panel_body.add_child(friend_list_label)
+	friend_requests_box = VBoxContainer.new()
+	friend_requests_box.add_theme_constant_override("separation", 6)
+	panel_body.add_child(friend_requests_box)
+	status_label = _label("", 10, C_BLUE)
+	if OnlineService.is_authenticated():
+		status_label.text = "CONECTADO  •  " + OnlineService.username
+	else:
+		status_label.text = "SEM SESSÃO ONLINE. Entre como visitante com conexão disponível para ativar amigos e salas."
 	panel_body.add_child(status_label)
 	panel_body.add_child(_button("VOLTAR AO MENU", _show_main_menu))
+	if OnlineService.is_authenticated():
+		_refresh_online_lobby()
 
 
-func _online_not_ready() -> void:
+func _create_room_online() -> void:
+	if not OnlineService.is_authenticated():
+		_online_not_ready()
+		return
 	if status_label:
-		status_label.text = "AÇÃO ONLINE BLOQUEADA: A SESSÃO DE JOGADOR E A CONEXÃO MULTIPLAYER AINDA NÃO FORAM INTEGRADAS AO JOGO."
+		status_label.text = "CRIANDO SALA..."
+	var result: Dictionary = await OnlineService.create_room("Floresta Corrompida")
+	if not result.ok:
+		if status_label:
+			status_label.text = "NÃO FOI POSSÍVEL CRIAR A SALA: " + str(result.get("error", "erro desconhecido"))
+		return
+	var rows: Variant = result.get("data", [])
+	var room: Dictionary = rows[0] if rows is Array and not rows.is_empty() and rows[0] is Dictionary else {}
+	current_room_id = str(room.get("room_id", ""))
+	current_room_code = str(room.get("room_code", ""))
+	if status_label:
+		status_label.text = "SALA CRIADA  •  CÓDIGO: " + current_room_code + "  •  COMPARTILHE COM SEUS AMIGOS."
 
 
-func _join_room_placeholder() -> void:
+func _join_room_online() -> void:
+	if not OnlineService.is_authenticated():
+		_online_not_ready()
+		return
 	if not room_code_input:
 		return
 	var code := room_code_input.text.strip_edges().to_upper()
@@ -284,7 +335,94 @@ func _join_room_placeholder() -> void:
 			status_label.text = "O CÓDIGO PRECISA TER ENTRE 6 E 12 CARACTERES."
 		return
 	if status_label:
-		status_label.text = "CÓDIGO VALIDADO LOCALMENTE. A ENTRADA NA SALA DEPENDE DA CONEXÃO ONLINE."
+		status_label.text = "PROCURANDO SALA..."
+	var result: Dictionary = await OnlineService.join_room(code)
+	if not result.ok:
+		if status_label:
+			status_label.text = "NÃO FOI POSSÍVEL ENTRAR: " + str(result.get("error", "erro desconhecido"))
+		return
+	var rows: Variant = result.get("data", [])
+	var room: Dictionary = rows[0] if rows is Array and not rows.is_empty() and rows[0] is Dictionary else {}
+	current_room_id = str(room.get("room_id", ""))
+	current_room_code = str(room.get("room_code", code))
+	if status_label:
+		status_label.text = "VOCÊ ENTROU NA SALA " + current_room_code + "  •  JOGADORES: %s/%s" % [str(room.get("player_count", "?")), str(room.get("max_players", "4"))]
+
+
+func _copy_room_code() -> void:
+	if current_room_code.is_empty():
+		if status_label:
+			status_label.text = "CRIE OU ENTRE EM UMA SALA PRIMEIRO."
+		return
+	DisplayServer.clipboard_set(current_room_code)
+	if status_label:
+		status_label.text = "CÓDIGO COPIADO: " + current_room_code
+
+
+func _send_friend_request_online() -> void:
+	if not OnlineService.is_authenticated():
+		_online_not_ready()
+		return
+	if not friend_username_input or friend_username_input.text.strip_edges().is_empty():
+		if status_label:
+			status_label.text = "DIGITE O NOME DE USUÁRIO DO SEU AMIGO."
+		return
+	var result: Dictionary = await OnlineService.send_friend_request(friend_username_input.text)
+	if status_label:
+		status_label.text = "SOLICITAÇÃO ENVIADA." if result.ok else "NÃO FOI POSSÍVEL ENVIAR: " + str(result.get("error", "erro desconhecido"))
+	if result.ok:
+		friend_username_input.clear()
+		_refresh_online_lobby()
+
+
+func _refresh_online_lobby() -> void:
+	if not OnlineService.is_authenticated():
+		_online_not_ready()
+		return
+	var friends_result: Dictionary = await OnlineService.list_friends()
+	if friend_list_label:
+		if friends_result.ok and friends_result.get("data") is Array:
+			var names: Array[String] = []
+			for friend in friends_result.data:
+				if friend is Dictionary:
+					names.append(str(friend.get("username", "Aventureiro")))
+			friend_list_label.text = "SEUS AMIGOS\n" + ("\n".join(names) if not names.is_empty() else "Nenhum amigo adicionado ainda.")
+		else:
+			friend_list_label.text = "Não foi possível carregar a lista de amigos."
+	if friend_requests_box:
+		for child in friend_requests_box.get_children():
+			friend_requests_box.remove_child(child)
+			child.queue_free()
+	var requests_result: Dictionary = await OnlineService.list_friend_requests()
+	if requests_result.ok and requests_result.get("data") is Array:
+		for request in requests_result.data:
+			if not request is Dictionary or str(request.get("direction", "")) != "received":
+				continue
+			var request_row := HBoxContainer.new()
+			request_row.add_child(_label(str(request.get("username", "Aventureiro")), 11, C_TEXT))
+			var accept := Button.new()
+			accept.text = "ACEITAR"
+			accept.custom_minimum_size = Vector2(80, 38)
+			accept.pressed.connect(_respond_friend_request.bind(str(request.get("request_id", "")), true))
+			request_row.add_child(accept)
+			var decline := Button.new()
+			decline.text = "RECUSAR"
+			decline.custom_minimum_size = Vector2(80, 38)
+			decline.pressed.connect(_respond_friend_request.bind(str(request.get("request_id", "")), false))
+			request_row.add_child(decline)
+			friend_requests_box.add_child(request_row)
+
+
+func _respond_friend_request(request_id: String, accept: bool) -> void:
+	var result: Dictionary = await OnlineService.respond_friend_request(request_id, accept)
+	if status_label:
+		status_label.text = "SOLICITAÇÃO ATUALIZADA." if result.ok else "FALHA AO RESPONDER: " + str(result.get("error", "erro desconhecido"))
+	_refresh_online_lobby()
+
+
+func _online_not_ready() -> void:
+	if status_label:
+		status_label.text = "SESSÃO ONLINE NÃO ATIVA. Tente entrar como visitante com conexão à internet."
 
 
 func _show_settings() -> void:
