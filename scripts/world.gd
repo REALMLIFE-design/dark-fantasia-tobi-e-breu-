@@ -221,6 +221,8 @@ func _ready() -> void:
 		await _build_imported_medieval_hamlet()
 	else:
 		print("TOBI_BREU_ANDROID_IMPORTED_HAMLET_DEFERRED")
+	await _build_drive_weapon_gallery()
+	await get_tree().process_frame
 	ASHEN_VILLAGE.build(self, ashen_relic_ids)
 	await get_tree().process_frame
 	_build_npcs()
@@ -1105,6 +1107,60 @@ func _build_imported_medieval_hamlet() -> void:
 	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
 	print("IMPORTED_STATIC_COLLIDERS: ", collision_shapes_added)
 	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")
+
+
+
+func _build_drive_weapon_gallery() -> void:
+	# Cena de armas fornecida pelo usuário: uma galeria estática e leve perto da vila inicial.
+	var model_path := "res://assets/external_packs/google_drive_weapons/PP_FreeFantasyRPGWeapons_v2.0_ListScene.fbx"
+	if not ResourceLoader.exists(model_path):
+		print("GOOGLE_DRIVE_WEAPON_GALLERY_DEFERRED: source asset unavailable")
+		return
+	var gallery := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3.ZERO, Vector3.ONE)
+	if gallery == null:
+		push_warning("O FBX de armas do Google Drive não pôde ser importado pelo Godot 4.3.")
+		return
+	gallery.name = "GaleriaDeArmasDoGoogleDrive"
+	var mesh_nodes := gallery.find_children("*", "MeshInstance3D", true, false)
+	if gallery is MeshInstance3D:
+		mesh_nodes.push_front(gallery)
+	var combined_bounds := AABB()
+	var has_bounds := false
+	var root_inverse := gallery.global_transform.affine_inverse()
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var relative_transform := root_inverse * mesh_instance.global_transform
+		var mesh_bounds := _transform_aabb(mesh_instance.mesh.get_aabb(), relative_transform)
+		if mesh_bounds.size.length_squared() <= 0.0001:
+			continue
+		combined_bounds = mesh_bounds if not has_bounds else combined_bounds.merge(mesh_bounds)
+		has_bounds = true
+	if not has_bounds:
+		gallery.queue_free()
+		push_warning("O FBX de armas não contém malhas renderizáveis.")
+		return
+	var horizontal_extent := maxf(combined_bounds.size.x, combined_bounds.size.z)
+	var scale_factor := minf(8.0 / maxf(horizontal_extent, 0.1), 3.2 / maxf(combined_bounds.size.y, 0.1))
+	gallery.scale = Vector3.ONE * scale_factor
+	gallery.position = Vector3(-12.0, 0.0, 6.0) - Vector3(
+		combined_bounds.position.x + combined_bounds.size.x * 0.5,
+		combined_bounds.position.y,
+		combined_bounds.position.z + combined_bounds.size.z * 0.5
+	) * scale_factor
+	var plinth := _box(self, "GaleriaArmasBase", Vector3(-12.0, 0.12, 6.0), Vector3(9.0, 0.24, 7.0), Color("4d4941"))
+	plinth.material_override = _material_for_surface("dark carved stone", Color("4d4941"))
+	var title := Label3D.new()
+	title.name = "GaleriaArmasTitulo"
+	title.text = "ARSENAL DOS VIAJANTES"
+	title.position = Vector3(-12.0, 3.8, 6.0)
+	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	title.font_size = 42
+	title.modulate = Color("dfc18f")
+	add_child(title)
+	print("GOOGLE_DRIVE_WEAPON_GALLERY_LOADED: meshes=", mesh_nodes.size(), " scale=", scale_factor)
+
 
 
 func _add_imported_model_collisions(root: Node) -> int:
