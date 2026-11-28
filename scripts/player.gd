@@ -1,4 +1,6 @@
 extends CharacterBody3D
+
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
 var world: Node3D
 var speed := 6.2
 var jump_velocity := 7.0
@@ -10,6 +12,7 @@ var camera: Camera3D
 var hp := 100
 var max_hp := 100
 var attack_damage := 35
+var armor_level := 0
 var attack_flash := 0.0
 var hit_targets: Array[Node] = []
 var attack_visual: Node3D
@@ -23,6 +26,11 @@ var dodge_direction := Vector3.ZERO
 var camera_yaw_offset := 0.0
 var camera_sensitivity := 0.006
 var hit_reaction := 0.0
+var damage_flash := 0.0
+var perfect_dodge_flash := 0.0
+var dodge_perfect_used := false
+var damage_flash_materials: Array[StandardMaterial3D] = []
+var damage_flash_base_colors: Array[Color] = []
 var death_pose := false
 var landing_time := 0.0
 var combo_step := 0
@@ -31,6 +39,8 @@ var shadow_pulse_cooldown := 0.0
 var pulse_ring: MeshInstance3D
 var pulse_material: StandardMaterial3D
 var pulse_visual_timer := 0.0
+var parry_window := 0.0
+var parry_cooldown := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -49,6 +59,8 @@ func _ready() -> void:
 	visual.add_child(attack_visual)
 	_create_shadow_pulse_visual()
 	_make_character()
+	_try_attach_meshy_hero()
+	_cache_damage_flash_materials(visual)
 	camera_pivot = Node3D.new()
 	camera_pivot.position.y = 1.45
 	add_child(camera_pivot)
@@ -58,6 +70,62 @@ func _ready() -> void:
 	camera.current = true
 	camera.fov = 72
 	camera_pivot.add_child(camera)
+
+
+func _try_attach_meshy_hero() -> void:
+	# Primeiro usa o Tobi montado com os modelos Quaternius já importados no projeto.
+	# O Tobi procedural continua como fallback caso a cena externa não carregue.
+	var quaternius_scene := load("res://scenes/characters/tobi_quaternius_candidate.tscn") as PackedScene
+	if quaternius_scene != null:
+		var quaternius_hero := quaternius_scene.instantiate() as Node3D
+		if quaternius_hero != null:
+			quaternius_hero.name = "TobiQuaterniusHero"
+			quaternius_hero.position = Vector3.ZERO
+			quaternius_hero.rotation.y = PI
+			quaternius_hero.scale = Vector3.ONE
+			visual.add_child(quaternius_hero)
+			if quaternius_hero.has_meta("tobi_quaternius_ready"):
+				visual.set_meta("external_tobi_model", quaternius_hero)
+				_hide_procedural_hero_parts(visual)
+				print("TOBI_QUATERNIUS_ACTIVE")
+				return
+			quaternius_hero.queue_free()
+			push_warning("Cena Quaternius sem confirmação de montagem; mantendo o Tobi original.")
+
+	# Compatibilidade com o GLB Meshy opcional já suportado pelo projeto.
+	var hero_scene := PLUGIN_ASSET_LOADER.load_optional_scene("meshy_tobi_hero")
+	if hero_scene == null:
+		push_warning("Modelo externo do Tobi indisponível; mantendo o Tobi autoral animado.")
+		return
+	var hero := hero_scene.instantiate() as Node3D
+	if hero == null:
+		push_warning("O modelo 3D de Tobi não tem raiz Node3D; mantendo o Tobi autoral.")
+		return
+	hero.name = "TobiMeshyHero"
+	hero.position = Vector3.ZERO
+	hero.rotation.y = PI
+	hero.scale = Vector3.ONE * 1.8
+	visual.add_child(hero)
+	visual.set_meta("external_tobi_model", hero)
+	_hide_procedural_hero_parts(visual)
+
+
+func _hide_procedural_hero_parts(parent_node: Node) -> void:
+	for child in parent_node.get_children():
+		if child.name == "Breu" or child.name == "AttackMotion" or child.name == "TobiQuaterniusHero" or child.name == "TobiMeshyHero":
+			continue
+		if child is MeshInstance3D and not _is_inside_sword_pivot(child):
+			child.visible = false
+		_hide_procedural_hero_parts(child)
+
+
+func _is_inside_sword_pivot(node: Node) -> bool:
+	var current := node.get_parent()
+	while current != null and current != visual:
+		if current.name == "SwordPivot":
+			return true
+		current = current.get_parent()
+	return false
 
 func _mat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -131,6 +199,22 @@ func _make_character() -> void:
 		_add_visual_part(visual, pouch, Vector3(side * 0.31, 0.61, 0.12), Color("674a37"))
 	var cape_clasp := SphereMesh.new(); cape_clasp.radius = 0.075
 	_add_visual_part(visual, cape_clasp, Vector3(0, 1.37, 0.20), Color("d0ad68"))
+	# A readable hero crest and layered travel gear give Tobi a stronger silhouette.
+	var chest_crest := CylinderMesh.new(); chest_crest.top_radius = 0.105; chest_crest.bottom_radius = 0.105; chest_crest.height = 0.045; chest_crest.radial_segments = 8
+	var crest_instance := _add_visual_part(visual, chest_crest, Vector3(0, 1.12, 0.235), Color("c6a05e"))
+	crest_instance.rotation.x = PI * 0.5
+	var crest_glow := _mat(Color("d5b66f")); crest_glow.emission_enabled = true; crest_glow.emission = Color("8c5d2f"); crest_glow.emission_energy_multiplier = 0.22; crest_instance.material_override = crest_glow
+	var hood_point := CylinderMesh.new(); hood_point.top_radius = 0.015; hood_point.bottom_radius = 0.19; hood_point.height = 0.34; hood_point.radial_segments = 8
+	_add_visual_part(head_pivot, hood_point, Vector3(0, 0.48, -0.10), Color("2d4542"), Vector3(0.88, 1.0, 0.8))
+	for side in [-1.0, 1.0]:
+		var bracer := BoxMesh.new(); bracer.size = Vector3(0.22, 0.16, 0.24)
+		_add_visual_part(visual, bracer, Vector3(side * 0.40, 0.98, 0.035), Color("785b43"))
+		var bracer_trim := BoxMesh.new(); bracer_trim.size = Vector3(0.225, 0.035, 0.245)
+		_add_visual_part(visual, bracer_trim, Vector3(side * 0.40, 0.91, 0.035), Color("b28b58"))
+		var boot_strap := BoxMesh.new(); boot_strap.size = Vector3(0.235, 0.07, 0.245)
+		_add_visual_part(visual, boot_strap, Vector3(side * 0.19, 0.30, 0.015), Color("896746"))
+	var cape_hem := BoxMesh.new(); cape_hem.size = Vector3(0.70, 0.07, 0.105)
+	_add_visual_part(cape_pivot, cape_hem, Vector3(0, -0.89, -0.03), Color("9b6049"))
 	# Breu, the shadow cat companion, has four articulated paws and a segmented tail.
 	cat = Node3D.new(); cat.name = "Breu"; cat.position = Vector3(-0.9, 0, 0.65); visual.add_child(cat)
 	var cat_body := SphereMesh.new(); cat_body.radius = 0.31; cat_body.height = 0.58
@@ -182,14 +266,23 @@ func _physics_process(delta: float) -> void:
 		combo_step = 0
 		if world and world.has_method("combat_combo_changed"): world.combat_combo_changed(0)
 	shadow_pulse_cooldown = maxf(0.0, shadow_pulse_cooldown - delta)
+	parry_window = maxf(0.0, parry_window - delta)
+	parry_cooldown = maxf(0.0, parry_cooldown - delta)
+	if Input.is_action_just_pressed("guard"):
+		do_guard()
 	_update_shadow_pulse_visual(delta)
 	if Input.is_action_just_pressed("dodge"):
 		do_dodge()
+	if Input.is_action_just_pressed("shadow"):
+		do_shadow_pulse()
 	dodge_cooldown = maxf(0.0, dodge_cooldown-delta)
 	dodge_time = maxf(0.0, dodge_time-delta)
 	stamina = minf(100.0, stamina + 16.0 * delta)
 	attack_flash = maxf(0.0,attack_flash-delta)
 	hit_reaction = maxf(0.0, hit_reaction - delta)
+	damage_flash = maxf(0.0, damage_flash - delta)
+	perfect_dodge_flash = maxf(0.0, perfect_dodge_flash - delta)
+	_update_damage_flash()
 	landing_time = maxf(0.0, landing_time - delta)
 	invulnerable = maxf(0.0,invulnerable-delta)
 	anim_time += delta
@@ -279,14 +372,22 @@ func _physics_process(delta: float) -> void:
 	camera_pivot.rotation.y = lerp_angle(camera_pivot.rotation.y,-rotation.y + camera_yaw_offset,delta*4.0)
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		camera_yaw_offset -= Input.get_last_mouse_velocity().x*0.0015
+	# Right analog stick: orbit and tilt the camera on Bluetooth/USB controllers.
+	var connected_pads := Input.get_connected_joypads()
+	if not connected_pads.is_empty():
+		var pad_id: int = connected_pads[0]
+		var look_x := Input.get_joy_axis(pad_id, JOY_AXIS_RIGHT_X)
+		var look_y := Input.get_joy_axis(pad_id, JOY_AXIS_RIGHT_Y)
+		if absf(look_x) > 0.12:
+			camera_yaw_offset -= look_x * delta * 2.4
+		if absf(look_y) > 0.12:
+			camera.rotation.x = clampf(camera.rotation.x + look_y * delta * 1.8, -0.75, -0.08)
 	if attack_flash > 0.0:
 		attack_visual.rotation.y = sin((1.0 - attack_flash / 0.28) * PI) * 1.35
 	else:
 		attack_visual.rotation.y = 0.0
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_K:
-		do_shadow_pulse()
 	if event is InputEventScreenDrag:
 		# Drag on the right half of the screen to orbit the camera.
 		if event.position.x > get_viewport().get_visible_rect().size.x * 0.42:
@@ -379,19 +480,63 @@ func do_dodge() -> void:
 	dodge_direction.y = 0
 	if dodge_direction.length() < 0.1: dodge_direction = -global_basis.z
 	dodge_direction = dodge_direction.normalized()
+	dodge_perfect_used = false
 	dodge_time = 0.24
 	dodge_cooldown = 0.85
 	stamina -= 28.0
 	invulnerable = maxf(invulnerable, 0.28)
 	velocity.y = 1.2
 
+func do_guard() -> void:
+	if hp <= 0 or parry_cooldown > 0.0 or stamina < 12.0:
+		return
+	stamina -= 12.0
+	parry_window = 0.38
+	parry_cooldown = 1.05
+	attack_flash = maxf(attack_flash, 0.12)
+
+
 func get_stamina() -> float:
 	return stamina
 
+
+func apply_boss_slam_knockback(direction: Vector3, strength: float) -> void:
+	if hp <= 0:
+		return
+	var push := Vector3(direction.x, 0.0, direction.z).normalized()
+	if push.length() < 0.01:
+		push = -global_basis.z
+	velocity.x = push.x * strength
+	velocity.z = push.z * strength
+	velocity.y = maxf(velocity.y, 3.6 if strength >= 11.0 else 2.8)
+
 func take_damage(amount: int) -> void:
-	if invulnerable > 0.0 or hp <= 0: return
-	hp = maxi(0, hp - amount)
+	if hp <= 0: return
+	if parry_window > 0.0:
+		parry_window = 0.0
+		invulnerable = maxf(invulnerable, 0.42)
+		stamina = minf(100.0, stamina + 22.0)
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(enemy) or enemy.get("dead") == true:
+				continue
+			var offset: Vector3 = enemy.global_position - global_position
+			if Vector2(offset.x, offset.z).length() <= 3.4:
+				enemy.take_damage(22)
+		if world and world.has_method("player_parry_success"):
+			world.player_parry_success()
+		return
+	if invulnerable > 0.0:
+		if dodge_time > 0.0 and not dodge_perfect_used:
+			dodge_perfect_used = true
+			perfect_dodge_flash = 0.22
+			stamina = minf(100.0, stamina + 10.0)
+			if world and world.has_method("player_perfect_dodge"):
+				world.player_perfect_dodge()
+		return
+	var reduced_damage := maxi(1, amount - armor_level * 2)
+	hp = maxi(0, hp - reduced_damage)
 	hit_reaction = 0.22
+	damage_flash = 0.16
 	invulnerable = 0.65
 	if world and world.has_method("player_health_changed"):
 		world.player_health_changed(hp, max_hp)
@@ -400,3 +545,31 @@ func take_damage(amount: int) -> void:
 		hit_reaction = 0.0
 		if world and world.has_method("player_defeated"):
 			world.player_defeated()
+
+func _cache_damage_flash_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var source_material := mesh_instance.material_override as StandardMaterial3D
+		if source_material:
+			var flash_material := source_material.duplicate() as StandardMaterial3D
+			mesh_instance.material_override = flash_material
+			damage_flash_materials.append(flash_material)
+			damage_flash_base_colors.append(flash_material.albedo_color)
+	for child in node.get_children():
+		_cache_damage_flash_materials(child)
+
+func _update_damage_flash() -> void:
+	var damage_strength := clampf(damage_flash / 0.16, 0.0, 1.0)
+	var perfect_strength := clampf(perfect_dodge_flash / 0.22, 0.0, 1.0)
+	for i in range(damage_flash_materials.size()):
+		var material := damage_flash_materials[i]
+		if is_instance_valid(material):
+			if perfect_strength > 0.0:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("62d8c8"), perfect_strength * 0.78)
+				material.emission_enabled = true
+				material.emission = Color("35cdbb")
+				material.emission_energy_multiplier = perfect_strength * 1.35
+			else:
+				material.albedo_color = damage_flash_base_colors[i].lerp(Color("ff5555"), damage_strength * 0.72)
+				material.emission_enabled = false
+				material.emission_energy_multiplier = 0.0

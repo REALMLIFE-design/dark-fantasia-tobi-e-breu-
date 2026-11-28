@@ -1,0 +1,125 @@
+name: Importar assets 3D gratuitos do itch.io — Dark Dungeon
+
+on:
+  push:
+    branches:
+      - integration/definitive-all-versions
+    paths:
+      - '.github/workflows/import-itch-dark-dungeon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: itch-dark-dungeon-import
+  cancel-in-progress: false
+
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Baixar projeto sem alterar arquivos existentes
+        uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+
+      - name: Baixar pacote oficial gratuito e extrair somente GLBs selecionados
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://sotudios.com/Assets/Ultimate-DungeonPack/downloads/dark-dungeon-props-v1.2.0.zip"
+          mkdir -p /tmp/itch-dark-dungeon assets/external_packs/itch_dark_dungeon
+          curl -fL --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 3000 "$URL" -o /tmp/itch-dark-dungeon/pack.zip
+          python - <<'PY'
+          import json, pathlib, zipfile
+          archive = pathlib.Path('/tmp/itch-dark-dungeon/pack.zip')
+          output = pathlib.Path('assets/external_packs/itch_dark_dungeon')
+          selected = {
+              'nethergate-ruins': 'Ruínas da Nethergate',
+              'spiral-stone-dragon': 'Dragão de Pedra Espiral',
+              'tendrils-of-the-crack': 'Tentáculos da Fenda',
+              'cracked-gold-chalice': 'Cálice Dourado Rachado',
+              'embervault-reliquary': 'Relicário Embervault',
+              'cursed-codex': 'Códice Amaldiçoado',
+              'emberbound-cauldron': 'Caldeirão Emberbound',
+              'embercrystal-citadel': 'Cidadela de Cristal Ígneo',
+              'shattered-knight': 'Cavaleiro Estilhaçado',
+              'cracked-runic-circle': 'Círculo Rúnico Rachado',
+              'crimson-obsidian-sentinel': 'Sentinela de Obsidiana Carmesim',
+              'emberstone-throne': 'Trono Emberstone',
+              'skullbound-obelisk': 'Obelisco Caveira',
+              'verdant-spiral-obelisk': 'Obelisco Espiral Esmeralda'
+          }
+          with zipfile.ZipFile(archive) as zf:
+              entries = zf.namelist()
+              for slug, title in selected.items():
+                  matches = [name for name in entries if name.lower().endswith('/' + slug + '.glb') or name.lower() == slug + '.glb']
+                  if not matches:
+                      raise SystemExit(f'GLB não encontrado no pacote oficial: {slug}')
+                  member = min(matches, key=len)
+                  target = output / (slug + '.glb')
+                  if target.exists():
+                      print(f'Preservado arquivo existente: {target}')
+                      continue
+                  info = zf.getinfo(member)
+                  if info.file_size > 90 * 1024 * 1024:
+                      raise SystemExit(f'Arquivo excede limite seguro do GitHub: {member}')
+                  data = zf.read(member)
+                  if not data.startswith(b'glTF'):
+                      raise SystemExit(f'GLB inválido: {member}')
+                  target.write_bytes(data)
+                  print(f'Importado {title}: {len(data)} bytes')
+          catalog = {
+              'source': 'https://sotudios.itch.io/dark-dungeon-props',
+              'official_download': 'https://sotudios.com/Assets/Ultimate-DungeonPack/',
+              'version': '1.2.0',
+              'license': 'CC BY 4.0',
+              'attribution': 'Sotudios — Ultimate Dungeon Pack / Dark Dungeon Props',
+              'format': 'GLB self-contained',
+              'models': [
+                  {'id': slug, 'name': title, 'file': slug + '.glb'}
+                  for slug, title in selected.items()
+              ]
+          }
+          (output / 'ASSET-CATALOG.json').write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          (output / 'LICENSE-ATTRIBUTION.md').write_text(
+              '# Dark Dungeon Props — créditos e licença\n\n'
+              'Assets obtidos da página oficial do pacote no itch.io: https://sotudios.itch.io/dark-dungeon-props\n\n'
+              'Autor: Sotudios. Pacote: Ultimate Dungeon Pack / Dark Dungeon Props, versão 1.2.0.\n'
+              'Licença declarada pelo autor: Creative Commons Attribution 4.0 International (CC BY 4.0).\n'
+              'Uso comercial e modificações permitidos com atribuição. Não redistribuir o pacote-fonte como asset pack independente.\n\n'
+              'Atribuição: “Dark Dungeon Props / Ultimate Dungeon Pack — Sotudios (CC BY 4.0)”.\n'
+              'Fonte da licença e dos arquivos: https://sotudios.com/Assets/Ultimate-DungeonPack/\n',
+              encoding='utf-8'
+          )
+          print(f'Catálogo preparado com {len(selected)} modelos selecionados.')
+          PY
+
+      - name: Validar tamanho e formato dos arquivos
+        shell: bash
+        run: |
+          set -euo pipefail
+          COUNT=$(find assets/external_packs/itch_dark_dungeon -maxdepth 1 -type f -name '*.glb' | wc -l)
+          test "$COUNT" -ge 8
+          find assets/external_packs/itch_dark_dungeon -maxdepth 1 -type f -name '*.glb' -size +90M -print -quit | grep -q . && { echo 'GLB acima de 90 MB'; exit 1; } || true
+          echo "GLBs disponíveis: $COUNT"
+          du -sh assets/external_packs/itch_dark_dungeon
+
+      - name: Publicar somente os novos assets no mesmo branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/itch_dark_dungeon
+          if git diff --cached --quiet; then
+            echo 'Nenhum asset novo; arquivos existentes preservados.'
+            exit 0
+          fi
+          git commit -m 'Importa modelos 3D gratuitos do itch.io para masmorras'
+          git fetch origin integration/definitive-all-versions
+          git rebase origin/integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

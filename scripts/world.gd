@@ -1,11 +1,50 @@
 extends Node3D
 
+class LoadingAtmosphere extends Control:
+	var elapsed := 0.0
+
+	func _process(delta: float) -> void:
+		elapsed += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := Vector2(size.x * 0.5, size.y * 0.48)
+		var base_radius := minf(size.x, size.y) * 0.22
+		for i in range(5):
+			var radius := base_radius + float(i) * 34.0 + sin(elapsed * 0.48 + float(i)) * 6.0
+			var start := elapsed * 0.065 + float(i) * 0.7
+			draw_arc(center, radius, start, start + PI * 1.62, 96, Color(0.29, 0.58, 0.62, 0.10 + float(i) * 0.018), 1.5, true)
+		for i in range(28):
+			var angle := float(i) * TAU / 28.0 + elapsed * 0.09
+			var radius := base_radius + 48.0 + sin(elapsed * 0.58 + float(i)) * 26.0
+			var point := center + Vector2(cos(angle), sin(angle)) * radius
+			draw_circle(point, 1.2 if i % 4 else 1.8, Color(0.77, 0.67, 0.48, 0.28))
+
+class LoadingSpinner extends Control:
+	var phase := 0.0
+
+	func _process(delta: float) -> void:
+		phase = fposmod(phase + delta * 4.2, TAU)
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := size * 0.5
+		draw_arc(center, 14.0, 0.0, TAU, 48, Color(0.34, 0.55, 0.58, 0.42), 2.4, true)
+		draw_arc(center, 14.0, phase, phase + TAU * 0.68, 48, Color("d8b77c"), 3.2, true)
+
 const PLAYER_SCRIPT = preload("res://scripts/player.gd")
 const ENEMY_SCRIPT = preload("res://scripts/enemy.gd")
 const PAINTER_SHADER = preload("res://scripts/painter_material.gdshader")
 const SURFACE_ALBEDO_ATLAS = preload("res://assets/textures/surface_albedo_atlas.png")
 const SURFACE_ROUGHNESS_ATLAS = preload("res://assets/textures/surface_roughness_atlas.png")
+const PLUGIN_ASSET_LOADER = preload("res://scripts/plugin_asset_loader.gd")
+const DARK_FANTASY_PROP_PACK = preload("res://scripts/dark_fantasy_prop_pack.gd")
+const EXTERNAL_ASSET_LOADER = preload("res://scripts/external_asset_pack_loader.gd")
+const HUD_STYLE = preload("res://scripts/hud_style.gd")
+const ASHEN_VILLAGE = preload("res://scripts/ashen_village.gd")
+const STORY_CUTSCENES = preload("res://scripts/story_cutscenes.gd")
 var player: CharacterBody3D
+var low_memory_android := false
 var quest_stage := 0
 var quest_text := "Fale com Mestre Azulan"
 var hud: CanvasLayer
@@ -19,11 +58,15 @@ var combo_label: Label
 var objective_label: Label
 var defeated_count := 0
 var enemies: Array[Node3D] = []
+var _dream_tint_material_cache: Dictionary = {}
 var xp := 0
 var shards := 0
 var potions := 3
 var weapon_level := 0
+var armor_level := 0
 const WEAPON_UPGRADE_COSTS := [3, 6, 10]
+const ARMOR_SHARD_COSTS := [2, 4, 7]
+const ARMOR_ESSENCE_COSTS := [1, 2, 4]
 var save_path := "user://tobi_breu_save.cfg"
 var settings_path := "user://tobi_breu_settings.cfg"
 var camera_sensitivity_setting := 0.006
@@ -37,6 +80,8 @@ var menu_feedback: Label
 var menu_page := "main"
 var game_started := false
 var day_clock := 0.0
+var weather_clock := 0.0
+var weather_state := -1
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var stamina_bar: ProgressBar
@@ -66,41 +111,124 @@ var river_chest_ids: Array[int] = []
 var whisper_lantern_ids: Array[int] = []
 var whisper_guardian_reward_claimed := false
 var river_boss_hp := 680
+var final_boss_hp := 1200
+var final_boss_saved_band := -1
 var river_boss_saved_band := -1
 var river_shrine_solved := false
 var river_puzzle_ring_steps: Array[int] = [0, 0, 0]
 var guild_relic_ids: Array[int] = []
 var guild_contract_started := false
 var guild_contract_claimed := false
+var bell_tower_ring_count := 0
+var ancient_waystone_ids: Array[int] = []
+var ashen_relic_ids: Array[int] = []
+var ashen_reward_claimed := false
+var itch_dungeon_stream_requested := false
+var itch_dungeon_assets_loaded := false
+var nature_models_stream_requested := false
+const ITCH_DUNGEON_MODEL_PATHS := [
+	"res://assets/external_packs/itch_dark_dungeon/cracked-runic-circle.glb",
+	"res://assets/external_packs/itch_dark_dungeon/crimson-obsidian-sentinel.glb",
+	"res://assets/external_packs/itch_dark_dungeon/cursed-codex.glb",
+	"res://assets/external_packs/itch_dark_dungeon/cracked-gold-chalice.glb",
+	"res://assets/external_packs/itch_dark_dungeon/emberbound-cauldron.glb",
+	"res://assets/external_packs/itch_dark_dungeon/embercrystal-citadel.glb",
+	"res://assets/external_packs/itch_dark_dungeon/emberstone-throne.glb",
+	"res://assets/external_packs/itch_dark_dungeon/embervault-reliquary.glb",
+	"res://assets/external_packs/itch_dark_dungeon/nethergate-ruins.glb",
+	"res://assets/external_packs/itch_dark_dungeon/shattered-knight.glb",
+	"res://assets/external_packs/itch_dark_dungeon/skullbound-obelisk.glb",
+	"res://assets/external_packs/itch_dark_dungeon/spiral-stone-dragon.glb",
+	"res://assets/external_packs/itch_dark_dungeon/tendrils-of-the-crack.glb",
+	"res://assets/external_packs/itch_dark_dungeon/verdant-spiral-obelisk.glb"
+]
 const RIVER_PUZZLE_TARGETS := [1, 3, 2]
 
+func _configure_adaptive_4k() -> void:
+	# Android de entrada recebe uma resolução interna menor e limite de FPS,
+	# sem alterar a resolução física da tela ou remover conteúdo do projeto.
+	low_memory_android = OS.get_name() == "Android"
+	if low_memory_android:
+		get_window().content_scale_size = Vector2i(960, 540)
+		Engine.max_fps = 30
+		print("TOBI_BREU_LOW_MEMORY_ANDROID_PROFILE: 960x540, 30 FPS, decorative GLBs deferred")
+	elif OS.has_feature("pc"):
+		var screen_size := DisplayServer.screen_get_size()
+		if screen_size.x >= 3840 and screen_size.y >= 2160:
+			get_window().content_scale_size = Vector2i(3840, 2160)
+			print("TOBI_BREU_4K_DESKTOP_ENABLED: 3840x2160")
+		else:
+			get_window().content_scale_size = Vector2i(1920, 1080)
+			print("TOBI_BREU_HIGH_RES_DESKTOP_ENABLED: 1920x1080")
+	else:
+		print("TOBI_BREU_ADAPTIVE_MOBILE_RESOLUTION: native device resolution")
+
+
 func _ready() -> void:
+	_configure_adaptive_4k()
 	_create_loading_screen()
 	_set_loading_progress(4.0, "Acendendo as runas...")
 	await get_tree().process_frame
 	_load_save()
 	_load_settings()
 	river_boss_saved_band = floori(float(river_boss_hp) / 68.0)
+	final_boss_saved_band = floori(float(final_boss_hp) / 120.0)
 	_set_loading_progress(10.0, "Moldando o mundo...")
 	await get_tree().process_frame
 	_build_environment()
+	await get_tree().process_frame
 	_build_landscape()
+	await get_tree().process_frame
+	_build_downloaded_pbr_surface_patches()
+	await get_tree().process_frame
 	_set_loading_progress(24.0, "Erguendo as terras esquecidas...")
-	await get_tree().process_frame
 	_build_open_world_expansion()
+	await get_tree().process_frame
 	_build_ruins_and_props()
+	await get_tree().process_frame
 	_build_region_landmarks()
+	await get_tree().process_frame
+	_build_plugin_world_expansion()
+	await get_tree().process_frame
+	if not low_memory_android:
+		await _build_imported_plugin_models()
+		await get_tree().process_frame
+	else:
+		print("TOBI_BREU_ANDROID_OPTIONAL_PLUGIN_MODELS_DEFERRED")
+	DARK_FANTASY_PROP_PACK.build_all(self)
+	await get_tree().process_frame
+	if not low_memory_android:
+		await _build_visible_3dassets_showcase()
+		await get_tree().process_frame
+	else:
+		print("TOBI_BREU_ANDROID_3DASSETS_SHOWCASE_DEFERRED")
 	_set_loading_progress(40.0, "Despertando as regiões...")
-	await get_tree().process_frame
 	_build_swamp_region()
-	_build_river_region()
-	_build_whisper_grove()
-	_build_outer_regions()
-	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	await get_tree().process_frame
+	_build_river_region()
+	await get_tree().process_frame
+	_build_whisper_grove()
+	await get_tree().process_frame
+	_build_outer_regions()
+	_build_wandering_lighthouse()
+	await get_tree().process_frame
+	_build_ancient_waystones()
+	_build_final_region()
+	await get_tree().process_frame
+	_set_loading_progress(62.0, "Reacendendo as cidades...")
 	_build_world_civilization()
+	if not low_memory_android:
+		await _build_imported_medieval_hamlet()
+	else:
+		print("TOBI_BREU_ANDROID_IMPORTED_HAMLET_DEFERRED")
+	await _build_drive_weapon_gallery()
+	await get_tree().process_frame
+	ASHEN_VILLAGE.build(self, ashen_relic_ids)
+	await get_tree().process_frame
 	_build_npcs()
+	await get_tree().process_frame
 	_build_enemies()
+	await get_tree().process_frame
 	_set_loading_progress(78.0, "Preparando Tobi e Breu...")
 	await get_tree().process_frame
 	_build_player()
@@ -111,6 +239,9 @@ func _ready() -> void:
 	if quest_stage == 12:
 		boss_hud_panel.visible = true
 		boss_health_changed(river_boss_hp, 680)
+	elif quest_stage == 21:
+		boss_hud_panel.visible = true
+		final_boss_health_changed(final_boss_hp, 1200)
 	_update_quest()
 	if quest_stage == 0: objective_label.text = "Objetivo: encontre Mestre Azulan"
 	elif quest_stage == 1: objective_label.text = "Objetivo: derrote 3 goblins corrompidos"
@@ -126,14 +257,252 @@ func _ready() -> void:
 	elif quest_stage == 11: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
 	elif quest_stage == 12: objective_label.text = "Objetivo: derrote o Leviatã do Lodo no coração do rio"
 	elif quest_stage == 13: objective_label.text = "Objetivo: retorne ao Guardião do Rio"
-	else: objective_label.text = "CAPÍTULO II CONCLUÍDO — O rio voltou a cantar"
+	elif quest_stage == 14: objective_label.text = "CAPÍTULO II CONCLUÍDO — fale com Azulan para seguir ao Bosque dos Sussurros"
+	elif quest_stage == 15: objective_label.text = "Objetivo: acenda as 3 lanternas do Bosque dos Sussurros (%d/3)" % whisper_lantern_ids.size()
+	elif quest_stage == 16: objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
+	elif quest_stage == 17: objective_label.text = "CAPÍTULO III CONCLUÍDO — fale com Azulan para iniciar a próxima jornada"
+	elif quest_stage == 18: objective_label.text = "Objetivo: desperte as 3 Pedras-Âncora antigas (%d/3)" % ancient_waystone_ids.size()
+	elif quest_stage == 19: objective_label.text = "Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count
+	elif quest_stage == 20: objective_label.text = "CAPÍTULO IV CONCLUÍDO — fale com Azulan para iniciar a última jornada"
+	elif quest_stage == 21: objective_label.text = "Objetivo: encontre o Trono Obsidiano e derrote o Silêncio Cinzento"
+	elif quest_stage == 22: objective_label.text = "Objetivo: retorne a Mestre Azulan para encerrar a lenda"
+	else: objective_label.text = "Lenda concluída — Tobi e Breu salvaram Azulan"
 	_update_inventory()
 	player_health_changed(player.hp, player.max_hp)
 	_build_menus()
 	_set_loading_progress(100.0, "A jornada aguarda...")
 	await get_tree().create_timer(0.2, true).timeout
 	await _hide_loading_screen()
+	print("TOBI_BREU_WORLD_READY low_memory_android=", low_memory_android, " quest_stage=", quest_stage)
+	if quest_stage == 0 and not STORY_CUTSCENES.intro_was_seen():
+		await STORY_CUTSCENES.play_intro(self)
 	print("TOBI_BREU_BOOT_READY")
+
+
+
+
+func _build_downloaded_pbr_surface_patches() -> void:
+	# Mapas PBR CC0 em pequenas áreas de transição: o terreno painterly original permanece intacto.
+	var patches := [
+		{"folder": "lama", "position": Vector3(-27.0, 0.012, -111.0), "size": Vector2(9.0, 12.0)},
+		{"folder": "lama", "position": Vector3(27.0, 0.012, -111.0), "size": Vector2(9.0, 12.0)},
+		{"folder": "pedra_musgo", "position": Vector3(40.0, 0.012, -148.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "pedra_musgo", "position": Vector3(70.0, 0.012, -148.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "terra_pedras", "position": Vector3(40.0, 0.012, -108.0), "size": Vector2(6.0, 8.0)},
+		{"folder": "terra_pedras", "position": Vector3(70.0, 0.012, -108.0), "size": Vector2(6.0, 8.0)}
+	]
+	for patch_data in patches:
+		var folder: String = patch_data["folder"]
+		var base_path := "res://assets/textures/polyhaven/" + folder + "/"
+		var albedo := load(base_path + "albedo.jpg") as Texture2D
+		if albedo == null:
+			continue
+		var material := StandardMaterial3D.new()
+		material.albedo_texture = albedo
+		material.roughness = 0.92
+		material.uv1_scale = Vector3(2.5, 2.5, 1.0)
+		var normal := load(base_path + "normal.jpg") as Texture2D
+		if normal != null:
+			material.normal_enabled = true
+			material.normal_texture = normal
+		var roughness_map := load(base_path + "roughness.jpg") as Texture2D
+		if roughness_map != null:
+			material.roughness_texture = roughness_map
+		var patch_mesh := PlaneMesh.new()
+		patch_mesh.size = patch_data["size"]
+		var patch := MeshInstance3D.new()
+		patch.name = "CC0_PBR_" + folder
+		patch.mesh = patch_mesh
+		patch.position = patch_data["position"]
+		patch.material_override = material
+		add_child(patch)
+
+
+func _build_downloaded_nature_models() -> void:
+	# Conteúdo opcional de regiões distantes é carregado em lotes, quando o jogador se aproxima.
+	# Nenhum modelo é removido; cada lote cede um frame para evitar congelar a gameplay.
+	var models := EXTERNAL_ASSET_LOADER.list_models("quaternius_stylized_nature")
+	if not models.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20261121
+		var placed := 0
+		for model_path in models:
+			var file_name := model_path.get_file().to_lower()
+			# Apenas árvores, arbustos, plantas, flores e rochas combinam com esta área.
+			if not ("tree" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "grass" in file_name):
+				continue
+			var row := placed / 6
+			var column := placed % 6
+			var x := -190.0 + float(column) * 18.0 + rng.randf_range(-5.0, 5.0)
+			var z := -205.0 + float(row) * 18.0 + rng.randf_range(-5.0, 5.0)
+			var scale_factor := rng.randf_range(0.85, 1.35)
+			var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3(x, 0.0, z), Vector3.ONE * scale_factor)
+			if instance != null:
+				instance.rotation.y = rng.randf_range(0.0, TAU)
+				placed += 1
+				await get_tree().process_frame
+			if placed >= 24:
+				break
+
+	# LazyTextures: selecionar apenas modelos de natureza/pedra e posicioná-los
+	# como detalhes adicionais, sem tocar nos marcos, NPCs ou construções existentes.
+	var community_models := EXTERNAL_ASSET_LOADER.list_models("lazytextures")
+	var community_rng := RandomNumberGenerator.new()
+	community_rng.seed = 20261122
+	var community_placed := 0
+	for model_path in community_models:
+		if not "/models/" in model_path:
+			continue
+		var file_name := model_path.get_file().to_lower()
+		if not ("tree" in file_name or "forest" in file_name or "bush" in file_name or "plant" in file_name or "flower" in file_name or "rock" in file_name or "mushroom" in file_name or "stone" in file_name or "ruin" in file_name):
+			continue
+		var x := -150.0 + float(community_placed % 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
+		var z := -155.0 - float(community_placed / 4) * 13.0 + community_rng.randf_range(-2.0, 2.0)
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3(x, 0.0, z), Vector3.ONE * community_rng.randf_range(0.8, 1.2))
+		if instance != null:
+			instance.rotation.y = community_rng.randf_range(0.0, TAU)
+			community_placed += 1
+			await get_tree().process_frame
+		if community_placed >= 12:
+			break
+
+	# 3DAssets.dev is placed as a complete pack by _build_visible_3dassets_showcase().
+
+
+func _build_visible_3dassets_showcase() -> void:
+	# Mantém os sete modelos já expostos perto do começo da aventura.
+	var showcase := [
+		{"file": "low-poly-character-figures-knight-sword-raised-5e8b7e11.glb", "position": Vector3(-6.5, 0.0, -8.0), "scale": 1.25},
+		{"file": "low-poly-character-figures-villager-man-bfcdf400.glb", "position": Vector3(7.0, 0.0, -8.5), "scale": 1.25},
+		{"file": "sunken-city-and-underwater-ruins-doorway-frame-1292bfb7.glb", "position": Vector3(-10.0, 0.0, -18.0), "scale": 1.35},
+		{"file": "sunken-city-and-underwater-ruins-standing-column-96caec95.glb", "position": Vector3(10.0, 0.0, -17.0), "scale": 1.8},
+		{"file": "sunken-city-and-underwater-ruins-cargo-crate-waterlogg-8761132f.glb", "position": Vector3(5.5, 0.0, -13.0), "scale": 1.5},
+		{"file": "sunken-city-and-underwater-ruins-glowing-crystal-clust-897febc9.glb", "position": Vector3(-5.5, 0.0, -14.0), "scale": 1.8},
+		{"file": "sunken-city-and-underwater-ruins-fountain-basin-0149d19f.glb", "position": Vector3(0.0, 0.0, -23.0), "scale": 1.2}
+	]
+	var already_showcased := PackedStringArray()
+	var initial_placed := 0
+	for item in showcase:
+		already_showcased.append(str(item.file))
+		var model_path: String = "res://assets/external_packs/3dassets_dev/" + str(item.file)
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, item.position, Vector3.ONE * float(item.scale))
+		if instance != null:
+			instance.rotation.y = 0.35 if initial_placed % 2 == 0 else -0.25
+			initial_placed += 1
+			await get_tree().process_frame
+
+	# Os demais treze GLBs formam uma área explorável de ruínas submersas.
+	# Assim todos os arquivos do pacote aparecem sem empilhar modelos na vila inicial.
+	var ruins := Node3D.new()
+	ruins.name = "RuinasSubmersasModelos3D"
+	ruins.position = Vector3(112.0, 0.0, -190.0)
+	add_child(ruins)
+	var model_paths := EXTERNAL_ASSET_LOADER.list_models("3dassets_dev")
+	var additional_placed := 0
+	for model_path in model_paths:
+		if already_showcased.has(model_path.get_file()):
+			continue
+		var column := additional_placed % 4
+		var row := floori(float(additional_placed) / 4.0)
+		var local_position := Vector3((float(column) - 1.5) * 9.0, 0.0, (float(row) - 1.5) * 9.0)
+		var filename := model_path.get_file().to_lower()
+		var scale_factor := 0.82
+		if filename.contains("starter-scene"):
+			scale_factor = 0.28
+		elif filename.contains("wreck-on-the-sand"):
+			scale_factor = 0.48
+		elif filename.contains("coral") or filename.contains("anemone") or filename.contains("kelp") or filename.contains("sea-grass") or filename.contains("sea-fan"):
+			scale_factor = 1.2
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_model(ruins, model_path, local_position, Vector3.ONE * scale_factor)
+		if instance != null:
+			instance.rotation.y = float(additional_placed % 4) * 0.27
+			additional_placed += 1
+			await get_tree().process_frame
+	_add_region_title("RUÍNAS SUBMERSAS", ruins.position + Vector3(0.0, 15.0, 0.0), Color("8fc4c5"))
+	var total_placed := initial_placed + additional_placed
+	print("3DASSETS_FULL_PACK_LOADED: ", total_placed, "/", model_paths.size())
+	if total_placed != model_paths.size():
+		push_warning("Nem todos os modelos 3DAssets.dev foram instanciados.")
+
+func _build_imported_plugin_models() -> void:
+	# Modelos Thrixel e materiais Aqueduct preservados, com fallbacks para os assets Meshy.
+	var imported_count := 0
+	var plugin_colliders := 0
+	var ancient_tree := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_ancient_tree", Vector3(-185.0, 0.0, -104.0), Vector3.ONE * 1.35)
+	if ancient_tree != null:
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(ancient_tree, 0.10)
+		if ancient_tree.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
+	await get_tree().process_frame
+
+	var rune_obelisk := PLUGIN_ASSET_LOADER.load_or_create_asset(self, "thrixel_rune_obelisk", Vector3(27.0, 0.0, -55.0), Vector3.ONE * 1.2)
+	if rune_obelisk != null:
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(rune_obelisk, 0.18)
+		if rune_obelisk.get_meta("plugin_asset_loaded", false):
+			imported_count += 1
+		_animate_plugin_obelisk(rune_obelisk)
+	await get_tree().process_frame
+
+	# Criaturas Thrixel ficam como marcos visuais junto dos encontros do Rio Prateado.
+	var extra_creatures_loaded := 0
+	var wraith_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_drowned_wraith")
+	if wraith_scene != null:
+		var wraith_root := Node3D.new()
+		wraith_root.name = "ThrixelDrownedWraithLandmark"
+		wraith_root.position = Vector3(82.0, 0.0, -157.0)
+		add_child(wraith_root)
+		var wraith_model := wraith_scene.instantiate() as Node3D
+		if wraith_model != null:
+			wraith_model.scale = Vector3.ONE * 0.72
+			wraith_root.add_child(wraith_model)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(wraith_model, 0.10)
+			extra_creatures_loaded += 1
+	await get_tree().process_frame
+
+	var crab_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_river_crab")
+	if crab_scene != null:
+		var crab_root := Node3D.new()
+		crab_root.name = "ThrixelSilverRiverCrabLandmark"
+		crab_root.position = Vector3(31.0, 0.0, -113.0)
+		add_child(crab_root)
+		var crab_model := crab_scene.instantiate() as Node3D
+		if crab_model != null:
+			crab_model.scale = Vector3.ONE * 0.52
+			crab_root.add_child(crab_model)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(crab_model, 0.12)
+			extra_creatures_loaded += 1
+	await get_tree().process_frame
+
+	# O altar Thrixel é montado dentro do puzzle do Rio Prateado; os baús usam o cofre original.
+	var meshy_gate := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
+	if meshy_gate == null:
+		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_gate", Vector3(-18.0, 0.0, -42.0), Vector3.ONE * 1.35)
+	var meshy_obelisk := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_rune_obelisk", Vector3(36.0, 0.0, -58.0), Vector3.ONE * 1.2)
+	if meshy_obelisk == null:
+		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_rune_obelisk", Vector3(36.0, 0.0, -58.0), Vector3.ONE * 1.2)
+	var meshy_shrine := PLUGIN_ASSET_LOADER.load_meshy_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
+	if meshy_shrine == null:
+		PLUGIN_ASSET_LOADER.load_or_create_asset(self, "meshy_way_shrine", Vector3(91.0, 0.0, -137.0), Vector3.ONE)
+
+	print("THRIXEL_WORLD_MODELS_LOADED: %d/2" % imported_count)
+	print("THRIXEL_ADDITIONAL_CREATURE_MODELS_LOADED: %d/2" % extra_creatures_loaded)
+	print("THRIXEL_STATIC_COLLIDERS: %d" % plugin_colliders)
+
+func _animate_plugin_obelisk(root: Node3D) -> int:
+	if root == null:
+		return 0
+	var ring_names := ["Lower_Ring", "Middle_Ring", "Upper_Ring"]
+	var animated := 0
+	for index in range(ring_names.size()):
+		var ring := root.find_child(ring_names[index], true, false) as Node3D
+		if ring == null:
+			continue
+		var duration := 18.0 + float(index) * 4.0
+		var tween := create_tween().set_loops()
+		tween.tween_property(ring, "rotation:y", ring.rotation.y + TAU, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		animated += 1
+	print("THRIXEL_OBELISK_RINGS_ANIMATED: %d/3" % animated)
+	return animated
 
 
 func _create_loading_screen() -> void:
@@ -150,36 +519,51 @@ func _create_loading_screen() -> void:
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.color = Color("080b0d")
 	loading_root.add_child(backdrop)
+
+	var atmosphere := LoadingAtmosphere.new()
+	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	atmosphere.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_root.add_child(atmosphere)
+
 	var frame := PanelContainer.new()
 	frame.set_anchors_preset(Control.PRESET_CENTER)
-	frame.position = Vector2(-190.0, -205.0)
-	frame.size = Vector2(380.0, 410.0)
+	frame.position = Vector2(-160.0, -112.0)
+	frame.size = Vector2(320.0, 224.0)
 	frame.add_theme_stylebox_override("panel", _hud_button_style(Color(0.025, 0.035, 0.035, 0.98), Color("9d7546"), 20))
 	loading_root.add_child(frame)
+
+	var corner := HBoxContainer.new()
+	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	corner.offset_left = -206.0
+	corner.offset_top = -62.0
+	corner.offset_right = -22.0
+	corner.offset_bottom = -20.0
+	corner.alignment = BoxContainer.ALIGNMENT_END
+	corner.add_theme_constant_override("separation", 10)
+	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	loading_root.add_child(corner)
+	var spinner := LoadingSpinner.new()
+	spinner.custom_minimum_size = Vector2(34, 34)
+	corner.add_child(spinner)
+	var corner_label := Label.new()
+	corner_label.text = "CARREGANDO"
+	corner_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	corner_label.add_theme_font_size_override("font_size", 10)
+	corner_label.add_theme_color_override("font_color", Color("c9c0aa"))
+	corner.add_child(corner_label)
+
 	var stack := VBoxContainer.new()
 	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 12)
 	frame.add_child(stack)
-	var emblem := TextureRect.new()
-	emblem.custom_minimum_size = Vector2(112.0, 112.0)
-	emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	emblem.texture = load("res://assets/icons/tobi_breu_icon.svg")
-	stack.add_child(emblem)
 	var heading := Label.new()
 	heading.text = "TOBI  &  BREU"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	heading.add_theme_font_size_override("font_size", 26)
 	heading.add_theme_color_override("font_color", Color("e5c58c"))
 	stack.add_child(heading)
-	var subtitle := Label.new()
-	subtitle.text = "Dark fantasy  •  uma jornada nas sombras"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 10)
-	subtitle.add_theme_color_override("font_color", Color("a8a18e"))
-	stack.add_child(subtitle)
 	loading_progress = ProgressBar.new()
-	loading_progress.custom_minimum_size = Vector2(290.0, 15.0)
+	loading_progress.custom_minimum_size = Vector2(250.0, 15.0)
 	loading_progress.min_value = 0.0
 	loading_progress.max_value = 100.0
 	loading_progress.value = 0.0
@@ -193,12 +577,7 @@ func _create_loading_screen() -> void:
 	loading_status.add_theme_font_size_override("font_size", 11)
 	loading_status.add_theme_color_override("font_color", Color("c9c0aa"))
 	stack.add_child(loading_status)
-	var footer := Label.new()
-	footer.text = "Que a luz encontre o seu caminho"
-	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	footer.add_theme_font_size_override("font_size", 9)
-	footer.add_theme_color_override("font_color", Color("777d75"))
-	stack.add_child(footer)
+
 
 
 func _set_loading_progress(value: float, message: String) -> void:
@@ -280,12 +659,27 @@ func _painter_mat(color: Color, brush_scale := 3.0, brush_strength := 0.08, patt
 		6: bump_strength = 0.075 # snow and ice
 		7: bump_strength = 0.18 # roof tiles
 		8: bump_strength = 0.22 # cut stone
+		9: bump_strength = 0.28 # obsidian
+		10: bump_strength = 0.19 # mossy stone
+		11: bump_strength = 0.16 # blood-stained stone
+		12: bump_strength = 0.12 # worn metal
+		13: bump_strength = 0.08 # magical crystal
 	material.set_shader_parameter("bump_strength", bump_strength)
 	return material
 
 
 func _material_for_surface(surface_name: String, color: Color) -> ShaderMaterial:
 	var key := surface_name.to_lower()
+	if "obsidian" in key or "blackglass" in key:
+		return _painter_mat(color, 3.8, 0.12, 9, Color("541f2a"))
+	if "moss" in key or "lichen" in key:
+		return _painter_mat(color, 3.2, 0.13, 10, Color("465d3b"))
+	if "blood" in key or "crimson" in key:
+		return _painter_mat(color, 3.6, 0.11, 11, Color("702b36"))
+	if "metal" in key or "iron" in key or "steel" in key or "chain" in key:
+		return _painter_mat(color, 4.2, 0.08, 12, Color("41494b"))
+	if "crystal" in key or "rune" in key or "arcane" in key:
+		return _painter_mat(color, 3.0, 0.08, 13, Color("397e82"))
 	if "grass" in key or "forest" in key or "meadow" in key or "brush" in key or "canopy" in key:
 		return _painter_mat(color, 2.8, 0.12, 1, color.darkened(0.28))
 	if "road" in key or "trail" in key or "dirt" in key or "path" in key:
@@ -342,32 +736,81 @@ func _add_box_collision(parent: Node3D, collision_name: String, local_pos: Vecto
 	parent.add_child(body)
 
 
+func _update_weather() -> void:
+	if not is_instance_valid(world_environment) or world_environment.environment == null:
+		return
+	var next_state := 0
+	if weather_clock >= 150.0 and weather_clock < 205.0:
+		next_state = 1
+	elif weather_clock >= 205.0:
+		next_state = 2
+	if next_state == weather_state:
+		return
+	weather_state = next_state
+	var env := world_environment.environment
+	match weather_state:
+		0:
+			env.fog_density = 0.009
+			env.fog_light_color = Color("8c9b9b")
+			env.ambient_light_color = Color("9a9bb0")
+		1:
+			env.fog_density = 0.018
+			env.fog_light_color = Color("9aabb0")
+			env.ambient_light_color = Color("849b9d")
+		2:
+			env.fog_density = 0.014
+			env.fog_light_color = Color("887d9f")
+			env.ambient_light_color = Color("9a83ad")
+	if is_instance_valid(toast_label) and game_started:
+		var weather_names := ["O céu se abre sobre as terras.", "Uma névoa fria cobre as trilhas.", "A névoa arcana colore o horizonte."]
+		toast_label.text = weather_names[weather_state]
+
 func _build_environment() -> void:
+	# Dreamlike fantasy grade: warm sunlight, cool magical shadows and a soft
+	# lavender-teal horizon. Keep the effect in Environment so every existing
+	# biome, imported model and quest area inherits the same visual identity.
 	world_environment = WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("17252c")
-	sky_mat.sky_horizon_color = Color("b17b63")
-	sky_mat.ground_bottom_color = Color("101b1b")
-	sky_mat.ground_horizon_color = Color("54483d")
+	sky_mat.sky_top_color = Color("263b50")
+	sky_mat.sky_horizon_color = Color("b99a9a")
+	sky_mat.ground_bottom_color = Color("172321")
+	sky_mat.ground_horizon_color = Color("64736b")
+	sky_mat.sun_angle_max = 18.0
+	sky_mat.sun_curve = 0.12
 	sky.sky_material = sky_mat
 	e.sky = sky
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color("84908a")
-	e.ambient_light_energy = 0.62
+	e.ambient_light_color = Color("9a9bb0")
+	e.ambient_light_energy = 0.72
+	e.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.tonemap_exposure = 1.04
+	e.tonemap_white = 1.12
+	e.adjustment_enabled = true
+	e.adjustment_brightness = 1.025
+	e.adjustment_contrast = 1.045
+	e.adjustment_saturation = 1.10
+	e.glow_enabled = not low_memory_android
+	e.glow_intensity = 0.28
+	e.glow_strength = 0.62
+	e.glow_bloom = 0.08
+	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	e.glow_hdr_threshold = 1.35
+	e.glow_hdr_scale = 1.35
 	e.fog_enabled = true
-	e.fog_light_color = Color("89918a")
-	e.fog_density = 0.012
+	e.fog_light_color = Color("8c9b9b")
+	e.fog_density = 0.009
+	e.fog_sun_scatter = 0.18
 	world_environment.environment = e
 	add_child(world_environment)
 	sun_light = DirectionalLight3D.new()
 	sun_light.rotation_degrees = Vector3(-42, -28, 0)
-	sun_light.light_color = Color("ffd0a1")
-	sun_light.light_energy = 1.15
-	sun_light.shadow_enabled = true
+	sun_light.light_color = Color("ffe0b5")
+	sun_light.light_energy = 1.12
+	sun_light.shadow_enabled = not low_memory_android
 	add_child(sun_light)
 
 func _build_landscape() -> void:
@@ -406,13 +849,51 @@ func _build_landscape() -> void:
 		var z := -34.0 + float(i) * 3.1
 		var rock := _sphere(self, "TrailStone", Vector3(side * randf_range(7.0, 13.0), 0.28, z), randf_range(0.35, 0.8), Color("625f55"), 0.75)
 		rock.scale = Vector3(1.35,0.7,0.9)
-	# grass clumps as merged visual rhythm, not thousands of instances
-	for i in range(36):
-		var x := randf_range(-34, 34)
-		var z := randf_range(-38, 38)
-		if abs(x) < 6.0: continue
-		var tuft := _sphere(self, "BrushGrass", Vector3(x, 0.18, z), randf_range(0.35, 0.8), Color("526b46"), 0.55)
-		tuft.scale = Vector3(1.8, 0.55, 1.0)
+	# Vegetação de primeiro plano em MultiMesh: muito mais cheia sem criar
+	# centenas de nós individuais nem sacrificar o desempenho no Android.
+	var grass_mesh := SphereMesh.new()
+	grass_mesh.radius = 0.34
+	grass_mesh.height = 0.62
+	grass_mesh.radial_segments = 7
+	grass_mesh.rings = 4
+	var grass_batch := MultiMesh.new()
+	grass_batch.transform_format = MultiMesh.TRANSFORM_3D
+	grass_batch.mesh = grass_mesh
+	grass_batch.instance_count = 132
+	for i in range(grass_batch.instance_count):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var x := side * randf_range(6.5, 34.0)
+		var z := randf_range(-54.0, 58.0)
+		var scale := Vector3(randf_range(0.75, 1.8), randf_range(0.7, 1.5), randf_range(0.75, 1.45))
+		var transform := Transform3D(Basis().scaled(scale), Vector3(x, 0.18, z))
+		grass_batch.set_instance_transform(i, transform)
+	var grass_field := MultiMeshInstance3D.new()
+	grass_field.name = "PainterlyGrassField"
+	grass_field.multimesh = grass_batch
+	grass_field.material_override = _painter_mat(Color("526b46"), 3.2, 0.12, 1, Color("304b37"))
+	add_child(grass_field)
+
+	# Pequenas flores pálidas pontuam a borda da trilha e guiam o olhar do jogador.
+	var flower_mesh := SphereMesh.new()
+	flower_mesh.radius = 0.12
+	flower_mesh.height = 0.16
+	flower_mesh.radial_segments = 6
+	flower_mesh.rings = 3
+	var flower_batch := MultiMesh.new()
+	flower_batch.transform_format = MultiMesh.TRANSFORM_3D
+	flower_batch.mesh = flower_mesh
+	flower_batch.instance_count = 38
+	for i in range(flower_batch.instance_count):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var x := side * randf_range(7.0, 25.0)
+		var z := randf_range(-48.0, 52.0)
+		var flower_scale := randf_range(0.7, 1.35)
+		flower_batch.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * flower_scale), Vector3(x, 0.24, z)))
+	var flowers := MultiMeshInstance3D.new()
+	flowers.name = "MoonlitWildflowers"
+	flowers.multimesh = flower_batch
+	flowers.material_override = _mat(Color("b5aa83"))
+	add_child(flowers)
 
 func _build_open_world_expansion() -> void:
 	# Expanded wilderness ring: gives the connected regions breathing room without
@@ -536,6 +1017,9 @@ func _build_world_civilization() -> void:
 	# Every structure uses low-cost meshes and keeps the established painterly palette.
 	_build_settlement("VilaDoCarvalho", Vector3(-112.0, 0.0, 92.0), "VILA DO CARVALHO", 7, Color("6b5948"), Color("8c765a"))
 	_build_settlement("CidadeDePedra", Vector3(174.0, 0.0, 88.0), "CIDADE DE PEDRA", 11, Color("62645f"), Color("827f72"))
+	# Nova vila independente: arquitetura de madeira, canal, roda d'água e mercado.
+	_build_mill_village()
+
 	# Dirt roads connect the new civil hubs to the original trail and outer regions.
 	for road_spec in [
 		[Vector3(-42.0, 0.025, 42.0), Vector3(7.0, 0.05, 74.0), -0.22],
@@ -550,6 +1034,376 @@ func _build_world_civilization() -> void:
 	_build_royal_castle()
 	_build_ancient_dungeon()
 	_build_guild_relics()
+
+
+func _build_imported_medieval_hamlet() -> void:
+	# Modelos convertidos do Drive: integração aditiva, preservando as vilas originais.
+	# O LOD0 ausente é fornecido como fallback seguro a partir do LOD1, preservando a silhueta da casa.
+	var hamlet := Node3D.new()
+	hamlet.name = "BairroDosArtesaosImportado"
+	hamlet.position = Vector3(-300.0, 0.0, 150.0)
+	add_child(hamlet)
+
+	var road := _box(self, "ArtisanQuarterRoad", Vector3(-270.0, 0.035, 132.0), Vector3(68.0, 0.07, 4.2), Color("6a5947"))
+	road.rotation.y = -0.55
+
+	var placements := [
+		{"fragment": "p3d_medieval_enterable_bld_13", "position": Vector3(-15.0, 0.0, -8.0), "scale": 0.82},
+		{"fragment": "house_1exportversion", "position": Vector3(12.0, 0.0, -10.0), "scale": 0.82},
+		{"fragment": "medhouse_", "position": Vector3(-3.0, 0.0, 10.0), "scale": 0.82},
+		{"fragment": "lod0_long_house", "position": Vector3(19.0, 0.0, 10.0), "scale": 0.72},
+		{"fragment": "lod1_long_house", "position": Vector3(31.0, 0.0, -8.0), "scale": 0.62},
+		{"fragment": "lod0_fantasy_house", "position": Vector3(-34.0, 0.0, -10.0), "scale": 0.66},
+		{"fragment": "house_3x2x1", "position": Vector3(35.0, 0.0, 3.0), "scale": 0.62},
+		{"fragment": "big_watchtower", "position": Vector3(-40.0, 0.0, 18.0), "scale": 0.72},
+		{"fragment": "log_watchtower_", "position": Vector3(41.0, 0.0, -19.0), "scale": 0.68},
+		{"fragment": "medieval_platform", "position": Vector3(0.0, 0.0, -28.0), "scale": 0.72},
+		# Modelos restantes: versões leves criam uma silhueta de vila ao fundo.
+		{"fragment": "003_obj", "position": Vector3(-53.0, 0.0, -12.0), "scale": 0.46},
+		{"fragment": "lod1_fantasy_house", "position": Vector3(-51.0, 0.0, -31.0), "scale": 0.54},
+		{"fragment": "lod2_fantasy_house", "position": Vector3(49.0, 0.0, -31.0), "scale": 0.58},
+		{"fragment": "big_watchtower_lod1", "position": Vector3(-48.0, 0.0, 31.0), "scale": 0.56},
+		{"fragment": "lowpoly_log_watchtower", "position": Vector3(48.0, 0.0, 29.0), "scale": 0.58},
+		{"fragment": "scari_rotund", "position": Vector3(0.0, 0.0, -40.0), "scale": 0.72}
+	]
+	var placed := 0
+	var collision_shapes_added := 0
+	for item in placements:
+		var instance := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+			hamlet, "user_submitted", str(item.fragment), item.position, Vector3.ONE * float(item.scale)
+		)
+		if instance != null:
+			instance.rotation.y = -0.18 if placed % 2 == 0 else 0.22
+			_apply_dream_biome_tint(instance)
+			collision_shapes_added += _add_imported_model_collisions(instance)
+			placed += 1
+			await get_tree().process_frame
+
+	# Água fria e ponte de madeira dão uma entrada visual ao bairro.
+	var stream_mesh := PlaneMesh.new()
+	stream_mesh.size = Vector2(13.0, 5.0)
+	var stream := MeshInstance3D.new()
+	stream.name = "ArtisanQuarterStream"
+	stream.mesh = stream_mesh
+	stream.position = Vector3(1.0, 0.035, 25.0)
+	var stream_material := _mat(Color("416e70"), 0.22)
+	stream_material.metallic = 0.12
+	stream_material.emission_enabled = true
+	stream_material.emission = Color("244b50")
+	stream_material.emission_energy_multiplier = 0.16
+	stream.material_override = stream_material
+	hamlet.add_child(stream)
+
+	var bridge := EXTERNAL_ASSET_LOADER.instantiate_by_name(
+		hamlet, "user_submitted", "medieval_wood_bridge", Vector3(1.0, 0.08, 25.0), Vector3.ONE * 0.82
+	)
+	if bridge != null:
+		bridge.rotation.y = PI * 0.5
+		_apply_dream_biome_tint(bridge)
+		collision_shapes_added += _add_imported_model_collisions(bridge)
+		placed += 1
+
+	_build_chestnut_grove(hamlet)
+	_add_region_title("BAIRRO DOS ARTESÃOS", hamlet.position + Vector3(0.0, 12.0, 0.0), Color("d9bd91"))
+	print("IMPORTED_STATIC_COLLIDERS: ", collision_shapes_added)
+	print("USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: ", placed, "/17")
+
+
+
+func _build_drive_weapon_gallery() -> void:
+	# Cena de armas fornecida pelo usuário: uma galeria estática e leve perto da vila inicial.
+	var model_path := "res://assets/external_packs/google_drive_weapons/PP_FreeFantasyRPGWeapons_v2.0_ListScene.fbx"
+	if not ResourceLoader.exists(model_path):
+		print("GOOGLE_DRIVE_WEAPON_GALLERY_DEFERRED: source asset unavailable")
+		return
+	var gallery := EXTERNAL_ASSET_LOADER.instantiate_model(self, model_path, Vector3.ZERO, Vector3.ONE)
+	if gallery == null:
+		push_warning("O FBX de armas do Google Drive não pôde ser importado pelo Godot 4.3.")
+		return
+	gallery.name = "GaleriaDeArmasDoGoogleDrive"
+	var mesh_nodes := gallery.find_children("*", "MeshInstance3D", true, false)
+	if gallery is MeshInstance3D:
+		mesh_nodes.push_front(gallery)
+	var combined_bounds := AABB()
+	var has_bounds := false
+	var root_inverse := gallery.global_transform.affine_inverse()
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var relative_transform := root_inverse * mesh_instance.global_transform
+		var mesh_bounds := _transform_aabb(mesh_instance.mesh.get_aabb(), relative_transform)
+		if mesh_bounds.size.length_squared() <= 0.0001:
+			continue
+		combined_bounds = mesh_bounds if not has_bounds else combined_bounds.merge(mesh_bounds)
+		has_bounds = true
+	if not has_bounds:
+		gallery.queue_free()
+		push_warning("O FBX de armas não contém malhas renderizáveis.")
+		return
+	var horizontal_extent := maxf(combined_bounds.size.x, combined_bounds.size.z)
+	var scale_factor := minf(8.0 / maxf(horizontal_extent, 0.1), 3.2 / maxf(combined_bounds.size.y, 0.1))
+	gallery.scale = Vector3.ONE * scale_factor
+	gallery.position = Vector3(-12.0, 0.0, 6.0) - Vector3(
+		combined_bounds.position.x + combined_bounds.size.x * 0.5,
+		combined_bounds.position.y,
+		combined_bounds.position.z + combined_bounds.size.z * 0.5
+	) * scale_factor
+	var plinth := _box(self, "GaleriaArmasBase", Vector3(-12.0, 0.12, 6.0), Vector3(9.0, 0.24, 7.0), Color("4d4941"))
+	plinth.material_override = _material_for_surface("dark carved stone", Color("4d4941"))
+	var title := Label3D.new()
+	title.name = "GaleriaArmasTitulo"
+	title.text = "ARSENAL DOS VIAJANTES"
+	title.position = Vector3(-12.0, 3.8, 6.0)
+	title.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	title.font_size = 42
+	title.modulate = Color("dfc18f")
+	add_child(title)
+	print("GOOGLE_DRIVE_WEAPON_GALLERY_LOADED: meshes=", mesh_nodes.size(), " scale=", scale_factor)
+
+
+
+func _add_imported_model_collisions(root: Node) -> int:
+	# Mantém todas as malhas visuais, mas usa uma colisão simples por construção.
+	# Trimesh por submalha multiplicava memória e custo físico no Android.
+	var model_root := root as Node3D
+	if model_root == null:
+		return 0
+	if not model_root.find_children("*", "CollisionShape3D", true, false).is_empty():
+		return 0
+	var mesh_nodes := model_root.find_children("*", "MeshInstance3D", true, false)
+	if model_root is MeshInstance3D:
+		mesh_nodes.push_front(model_root)
+	var combined_bounds := AABB()
+	var has_bounds := false
+	var root_inverse := model_root.global_transform.affine_inverse()
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var relative_transform := root_inverse * mesh_instance.global_transform
+		var mesh_bounds := _transform_aabb(mesh_instance.mesh.get_aabb(), relative_transform)
+		if mesh_bounds.size.length_squared() <= 0.0001:
+			continue
+		combined_bounds = mesh_bounds if not has_bounds else combined_bounds.merge(mesh_bounds)
+		has_bounds = true
+	if not has_bounds:
+		return 0
+	var box := BoxShape3D.new()
+	box.size = Vector3(
+		maxf(combined_bounds.size.x, 0.25),
+		maxf(combined_bounds.size.y, 0.25),
+		maxf(combined_bounds.size.z, 0.25)
+	)
+	var body := StaticBody3D.new()
+	body.name = "ImportedStaticCollision"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	body.position = combined_bounds.position + combined_bounds.size * 0.5
+	var collision := CollisionShape3D.new()
+	collision.name = "ImportedBoundsShape"
+	collision.shape = box
+	body.add_child(collision)
+	model_root.add_child(body)
+	return 1
+
+
+func _transform_aabb(bounds: AABB, transform: Transform3D) -> AABB:
+	# Godot 4.3 não oferece AABB.transformed(); transforma os oito cantos e
+	# reconstrói os limites no espaço local da raiz do modelo.
+	var first_corner := transform * bounds.position
+	var transformed_bounds := AABB(first_corner, Vector3.ZERO)
+	for x in range(2):
+		for y in range(2):
+			for z in range(2):
+				var corner := bounds.position + Vector3(
+					bounds.size.x * float(x),
+					bounds.size.y * float(y),
+					bounds.size.z * float(z)
+				)
+				transformed_bounds = transformed_bounds.expand(transform * corner)
+	return transformed_bounds
+
+
+func _build_chestnut_grove(parent: Node3D) -> void:
+	# As imagens recebidas são opacas (sem recorte alpha real). Em vez de exibir
+	# retângulos no cenário, criamos castanheiras low-poly com a paleta do bioma.
+	var spots := [
+		Vector3(-27.0, 0.0, 24.0), Vector3(-20.0, 0.0, 32.0),
+		Vector3(-8.0, 0.0, 35.0), Vector3(10.0, 0.0, 34.0),
+		Vector3(25.0, 0.0, 29.0), Vector3(34.0, 0.0, 17.0),
+		Vector3(-34.0, 0.0, 9.0), Vector3(-29.0, 0.0, -2.0),
+		Vector3(31.0, 0.0, -20.0)
+	]
+	var grove := Node3D.new()
+	grove.name = "BosqueDeCastanheiras"
+	parent.add_child(grove)
+	var leaf_palette := [
+		Color("496d58"), Color("5c785a"), Color("74815e")
+	]
+	for index in range(spots.size()):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 20261125 + index
+		var tree := Node3D.new()
+		tree.name = "CastanheiraLowPoly_%02d" % index
+		tree.position = spots[index]
+		tree.scale = Vector3.ONE * rng.randf_range(0.88, 1.12)
+		tree.rotation.y = rng.randf_range(0.0, TAU)
+		grove.add_child(tree)
+
+		var trunk := MeshInstance3D.new()
+		trunk.name = "Tronco"
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.top_radius = 0.16
+		trunk_mesh.bottom_radius = 0.27
+		trunk_mesh.height = 3.3
+		trunk_mesh.radial_segments = 7
+		trunk.mesh = trunk_mesh
+		trunk.position = Vector3(0.0, 1.65, 0.0)
+		trunk.material_override = _mat(Color("76513a"), 0.94)
+		tree.add_child(trunk)
+
+		for crown_index in range(3):
+			var crown := MeshInstance3D.new()
+			crown.name = "Copa_%02d" % crown_index
+			var crown_mesh := SphereMesh.new()
+			crown_mesh.radius = 1.55 if crown_index == 0 else 1.28
+			crown_mesh.height = 2.35 if crown_index == 0 else 1.95
+			crown_mesh.radial_segments = 8
+			crown_mesh.rings = 4
+			crown.mesh = crown_mesh
+			var side := -1.0 if crown_index == 1 else 1.0
+			crown.position = Vector3(0.0, 4.0, 0.0) if crown_index == 0 else Vector3(side * 0.82, 3.75, 0.0)
+			crown.material_override = _mat(leaf_palette[(index + crown_index) % leaf_palette.size()], 0.96)
+			tree.add_child(crown)
+	print("CHESTNUT_TREES_PLACED: ", spots.size())
+
+
+func _apply_dream_biome_tint(root: Node) -> void:
+	# Filtro leve de pigmento frio-esmeralda/lavanda: mantém mapas albedo e detalhes originais.
+	if root == null:
+		return
+	var mesh_nodes := root.find_children("*", "MeshInstance3D", true, false)
+	for mesh_node in mesh_nodes:
+		var mesh_instance := mesh_node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		for surface_index in range(mesh_instance.mesh.get_surface_count()):
+			var source_material := mesh_instance.get_active_material(surface_index)
+			if source_material == null:
+				continue
+			var material_key := source_material.get_instance_id()
+			var tuned_material := _dream_tint_material_cache.get(material_key) as StandardMaterial3D
+			if tuned_material == null:
+				tuned_material = source_material.duplicate(true) as StandardMaterial3D
+				if tuned_material == null:
+					continue
+				# Pigmento esmeralda frio e acabamento mais mate, sem apagar a textura original.
+				tuned_material.albedo_color = tuned_material.albedo_color * Color(0.93, 0.98, 0.96, 1.0)
+				tuned_material.roughness = clampf(tuned_material.roughness + 0.055, 0.0, 1.0)
+				_dream_tint_material_cache[material_key] = tuned_material
+			mesh_instance.set_surface_override_material(surface_index, tuned_material)
+
+
+func _build_mill_village() -> void:
+	var village_road := _box(self, "RoadToMillVillage", Vector3(-176.0, 0.035, 103.0), Vector3(132.0, 0.07, 5.0), Color("665844"))
+	village_road.rotation.y = -0.07
+	var center := Vector3(-238.0, 0.0, 112.0)
+	var village := Node3D.new()
+	village.name = "VilaDoMoinho"
+	village.position = center
+	add_child(village)
+
+	# Praça de madeira e pedra, com canal raso atravessando a vila.
+	var plaza := _box(village, "MillVillagePlaza", Vector3(0.0, 0.06, 0.0), Vector3(30.0, 0.16, 25.0), Color("786b55"))
+	plaza.material_override = _painter_mat(Color("786b55"), 3.0, 0.12, 0, Color("51483b"))
+	var canal := _box(village, "MillVillageCanal", Vector3(0.0, 0.12, -13.0), Vector3(34.0, 0.12, 3.2), Color("426b70"))
+	var water_material := _mat(Color("426b70"), 0.2)
+	water_material.metallic = 0.18
+	water_material.emission_enabled = true
+	water_material.emission = Color("244d55")
+	water_material.emission_energy_multiplier = 0.18
+	canal.material_override = water_material
+
+	# Casas assimétricas de madeira e pedra, diferentes das duas cidades existentes.
+	var house_positions := [
+		Vector3(-12.0, 0.0, 7.0), Vector3(-3.0, 0.0, 10.0),
+		Vector3(10.0, 0.0, 7.0), Vector3(14.0, 0.0, -5.0),
+		Vector3(-12.0, 0.0, -4.0), Vector3(3.0, 0.0, 2.0)
+	]
+	for i in range(house_positions.size()):
+		var house := Node3D.new()
+		house.name = "MillHouse_%02d" % i
+		house.position = house_positions[i]
+		village.add_child(house)
+		var width := 4.2 + float(i % 3) * 0.45
+		var depth := 4.0 + float(i % 2) * 0.55
+		var wall_color := Color("75624b") if i % 2 == 0 else Color("625b4c")
+		_box(house, "StoneFoundation", Vector3(0.0, 0.35, 0.0), Vector3(width + 0.35, 0.7, depth + 0.35), Color("575950"))
+		var walls := _box(house, "TimberAndPlasterWalls", Vector3(0.0, 1.95, 0.0), Vector3(width, 3.2, depth), wall_color)
+		_add_box_collision(house, "MillHouseCollision", Vector3(0.0, 1.95, 0.0), Vector3(width, 3.2, depth))
+		_box(house, "FrontDoor", Vector3(0.0, 1.0, depth * 0.51), Vector3(0.95, 2.0, 0.12), Color("3f3027"))
+		var roof := _box(house, "SteepRoof", Vector3(0.0, 3.75, 0.0), Vector3(width + 1.0, 0.55, depth + 1.0), Color("704b3e") if i % 2 == 0 else Color("665747"))
+		roof.rotation.z = 0.08 if i % 2 == 0 else -0.08
+		_box(house, "RoofRidge", Vector3(0.0, 4.08, 0.0), Vector3(width + 1.1, 0.25, 0.48), Color("493a32"))
+		for side in [-1.0, 1.0]:
+			_box(house, "TimberPost", Vector3(side * width * 0.43, 1.95, depth * 0.52), Vector3(0.18, 3.25, 0.18), Color("49372b"))
+		if i % 2 == 0:
+			_box(house, "Window", Vector3(width * 0.27, 2.25, depth * 0.515), Vector3(0.78, 0.82, 0.12), Color("d3ad70"))
+
+	# Moinho: roda vertical, pás e edifício de moagem junto ao canal.
+	var mill := Node3D.new()
+	mill.name = "WaterMill"
+	mill.position = Vector3(0.0, 0.0, -18.0)
+	village.add_child(mill)
+	_box(mill, "MillBuilding", Vector3(0.0, 2.1, -2.8), Vector3(8.0, 4.2, 6.0), Color("695844"))
+	_box(mill, "MillBuildingRoof", Vector3(0.0, 4.45, -2.8), Vector3(9.0, 0.5, 7.0), Color("594238"))
+	var wheel := MeshInstance3D.new()
+	wheel.name = "WaterWheel"
+	var wheel_mesh := TorusMesh.new()
+	wheel_mesh.inner_radius = 1.45
+	wheel_mesh.outer_radius = 1.72
+	wheel_mesh.rings = 12
+	wheel_mesh.ring_segments = 10
+	wheel.mesh = wheel_mesh
+	wheel.position = Vector3(0.0, 2.0, 0.35)
+	wheel.rotation.x = PI * 0.5
+	wheel.material_override = _mat(Color("79563a"))
+	mill.add_child(wheel)
+	for i in range(8):
+		var angle := TAU * float(i) / 8.0
+		var paddle := _box(mill, "WaterWheelPaddle_%02d" % i, Vector3(cos(angle) * 1.56, 2.0 + sin(angle) * 1.56, 0.35), Vector3(0.22, 0.82, 0.16), Color("8a6543"))
+		paddle.rotation.z = -angle
+	var axle := MeshInstance3D.new()
+	var axle_mesh := CylinderMesh.new()
+	axle_mesh.top_radius = 0.16
+	axle_mesh.bottom_radius = 0.16
+	axle_mesh.height = 1.2
+	axle.mesh = axle_mesh
+	axle.position = Vector3(0.0, 2.0, 0.35)
+	axle.rotation.x = PI * 0.5
+	axle.material_override = _mat(Color("49372b"))
+	mill.add_child(axle)
+
+	# Ponte, barracas e iluminação dão identidade própria ao povoado.
+	var bridge := _box(village, "CanalBridge", Vector3(0.0, 0.55, -13.0), Vector3(5.5, 0.28, 4.2), Color("806044"))
+	for side in [-1.0, 1.0]:
+		_box(village, "BridgeRail", Vector3(side * 2.45, 1.05, -13.0), Vector3(0.18, 0.9, 4.0), Color("4b392d"))
+	var market := Node3D.new()
+	market.name = "MillVillageMarket"
+	market.position = Vector3(8.0, 0.0, 14.0)
+	village.add_child(market)
+	_box(market, "MarketCounter", Vector3(0.0, 0.8, 0.0), Vector3(4.8, 1.6, 2.0), Color("654a35"))
+	_box(market, "MarketCanopy", Vector3(0.0, 2.0, 0.0), Vector3(5.5, 0.22, 3.0), Color("9a6248"))
+	for x in [-2.2, 2.2]:
+		_box(market, "MarketPost", Vector3(x, 1.5, 0.0), Vector3(0.16, 3.0, 0.16), Color("49372b"))
+	for i in range(4):
+		var lamp_position := Vector3(-12.0 + float(i) * 8.0, 2.2, 15.0)
+		_box(village, "LanternPost", lamp_position, Vector3(0.16, 3.2, 0.16), Color("44372d"))
+		var lantern := _sphere(village, "LanternGlow", lamp_position + Vector3(0.0, 1.25, 0.0), 0.24, Color("e4b16b"), 0.38)
+		lantern.material_override = _painter_mat(Color("e4b16b"), 7.0, 0.1)
+	_add_region_title("VILA DO MOINHO", center + Vector3(0.0, 10.0, 0.0), Color("e8c99a"))
+
 
 func _build_settlement(settlement_name: String, center: Vector3, title_text: String, house_count: int, wall_color: Color, roof_color: Color) -> void:
 	var root := Node3D.new()
@@ -631,6 +1485,70 @@ func _build_cave_complex() -> void:
 		crystal.material_override = _painter_mat(Color("6b9c9b"), 7.0, 0.22)
 	_add_region_title("CAVERNA DO ECO", Vector3(-220.0, 12.0, -255.0), Color("a9c9c1"))
 
+func _start_itch_dungeon_streaming() -> void:
+	if itch_dungeon_stream_requested:
+		return
+	itch_dungeon_stream_requested = true
+	for model_path in ITCH_DUNGEON_MODEL_PATHS:
+		if not ResourceLoader.exists(model_path):
+			push_warning("Asset do itch.io ausente no pacote exportado: " + model_path)
+			continue
+		var request_error := ResourceLoader.load_threaded_request(model_path, "PackedScene", true)
+		if request_error != OK and request_error != ERR_BUSY:
+			push_warning("Não foi possível iniciar carregamento do modelo: " + model_path)
+
+
+func _poll_itch_dungeon_streaming() -> void:
+	var all_finished := true
+	for model_path in ITCH_DUNGEON_MODEL_PATHS:
+		if not ResourceLoader.exists(model_path):
+			push_warning("Asset do itch.io ausente no pacote exportado: " + model_path)
+			continue
+		var status := ResourceLoader.load_threaded_get_status(model_path)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			all_finished = false
+		elif status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			push_warning("Falha ao importar modelo do itch.io: " + model_path)
+	if not all_finished:
+		return
+	itch_dungeon_assets_loaded = true
+	var dungeon := get_node_or_null("MasmorraDasCinzas") as Node3D
+	if not is_instance_valid(dungeon):
+		return
+	var placements := [
+		{"path": ITCH_DUNGEON_MODEL_PATHS[0], "name": "ItchRunicCircle", "position": Vector3(0.0, 0.18, -20.0), "scale": 0.72},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[1], "name": "ItchObsidianSentinel", "position": Vector3(0.0, 0.0, -39.0), "scale": 0.62},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[2], "name": "ItchCursedCodex", "position": Vector3(0.0, 1.8, -58.0), "scale": 0.58},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[3], "name": "ItchCrackedGoldChalice", "position": Vector3(-7.0, 0.0, -20.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[4], "name": "ItchEmberboundCauldron", "position": Vector3(7.0, 0.0, -20.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[5], "name": "ItchEmbercrystalCitadel", "position": Vector3(-7.0, 0.0, -39.0), "scale": 0.42},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[6], "name": "ItchEmberstoneThrone", "position": Vector3(7.0, 0.0, -39.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[7], "name": "ItchEmbervaultReliquary", "position": Vector3(-7.0, 0.0, -58.0), "scale": 0.46},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[8], "name": "ItchNethergateRuins", "position": Vector3(7.0, 0.0, -58.0), "scale": 0.42},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[9], "name": "ItchShatteredKnight", "position": Vector3(-4.0, 0.0, -27.0), "scale": 0.58},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[10], "name": "ItchSkullboundObelisk", "position": Vector3(4.0, 0.0, -27.0), "scale": 0.48},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[11], "name": "ItchSpiralStoneDragon", "position": Vector3(-4.0, 0.0, -46.0), "scale": 0.44},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[12], "name": "ItchTendrilsOfTheCrack", "position": Vector3(4.0, 0.0, -46.0), "scale": 0.50},
+		{"path": ITCH_DUNGEON_MODEL_PATHS[13], "name": "ItchVerdantSpiralObelisk", "position": Vector3(0.0, 0.0, -63.0), "scale": 0.44}
+	]
+	var placed := 0
+	for placement in placements:
+		var packed := ResourceLoader.load_threaded_get(placement.path) as PackedScene
+		if packed == null:
+			continue
+		var instance := packed.instantiate() as Node3D
+		if instance == null:
+			continue
+		instance.name = placement.name
+		instance.position = placement.position
+		instance.scale = Vector3.ONE * float(placement.scale)
+		dungeon.add_child(instance)
+		placed += 1
+		await get_tree().process_frame
+	print("ITCH_DUNGEON_GAMEPLAY_ASSETS_LOADED: ", placed, "/", ITCH_DUNGEON_MODEL_PATHS.size())
+	if placed != ITCH_DUNGEON_MODEL_PATHS.size():
+		push_warning("Nem todos os modelos da masmorra foram instanciados.")
+
 func _build_ancient_dungeon() -> void:
 	var dungeon := Node3D.new()
 	dungeon.name = "MasmorraDasCinzas"
@@ -652,6 +1570,7 @@ func _build_ancient_dungeon() -> void:
 	var altar := _box(dungeon, "AshenAltar", Vector3(0.0, 1.0, -60.0), Vector3(5.0, 2.0, 3.0), Color("71604f"))
 	altar.material_override = _painter_mat(Color("71604f"), 5.0, 0.14)
 	_add_region_title("MASMORRA DAS CINZAS", Vector3(226.0, 12.0, 94.0), Color("d1b99c"))
+	# O pacote do itch.io é carregado sob demanda quando o jogador chega à masmorra.
 
 func _build_royal_castle() -> void:
 	var castle := Node3D.new()
@@ -718,26 +1637,87 @@ func _add_region_title(text_value: String, world_pos: Vector3, tint: Color) -> v
 	add_child(title)
 
 func _build_tree(pos: Vector3, scale_factor := 1.0) -> void:
+	# Silhueta de árvore pintada: raízes expostas, tronco afunilado,
+	# galhos visíveis e copa em camadas. Mantém poucos nós por árvore no Android.
 	var tree := Node3D.new()
+	tree.name = "PainterlyAncientTree"
 	tree.position = pos
 	tree.scale = Vector3.ONE * scale_factor
 	add_child(tree)
+
+	var bark := _painter_mat(Color("49372d"), 4.6, 0.16, 4, Color("2d2925"))
 	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.24
+	trunk_mesh.top_radius = 0.20
 	trunk_mesh.bottom_radius = 0.48
-	trunk_mesh.height = 4.2
-	trunk_mesh.radial_segments = 7
+	trunk_mesh.height = 4.8
+	trunk_mesh.radial_segments = 9
 	var trunk := MeshInstance3D.new()
-	trunk.name = "PaintedBark"
+	trunk.name = "TaperedBark"
 	trunk.mesh = trunk_mesh
-	trunk.position = Vector3(0, 2.1, 0)
-	trunk.material_override = _painter_mat(Color("49372d"), 5.0, 0.12, 4, Color("30231e"))
+	trunk.position = Vector3(0.0, 2.4, 0.0)
+	trunk.material_override = bark
 	tree.add_child(trunk)
+
+	# Raízes largas quebram a aparência de cilindro plantado no chão.
+	for i in range(4):
+		var angle := TAU * float(i) / 4.0 + 0.35
+		var root_mesh := CylinderMesh.new()
+		root_mesh.top_radius = 0.08
+		root_mesh.bottom_radius = 0.25
+		root_mesh.height = 1.45
+		root_mesh.radial_segments = 7
+		var root := MeshInstance3D.new()
+		root.name = "ExposedRoot_%02d" % i
+		root.mesh = root_mesh
+		root.position = Vector3(cos(angle) * 0.48, 0.48, sin(angle) * 0.48)
+		root.rotation.z = cos(angle) * 0.52
+		root.rotation.x = sin(angle) * 0.52
+		root.material_override = bark
+		tree.add_child(root)
+
+	# Dois galhos principais aparecem por baixo da copa e dão leitura de árvore.
+	for i in range(2):
+		var side := -1.0 if i == 0 else 1.0
+		var branch_mesh := CylinderMesh.new()
+		branch_mesh.top_radius = 0.055
+		branch_mesh.bottom_radius = 0.16
+		branch_mesh.height = 2.0
+		branch_mesh.radial_segments = 7
+		var branch := MeshInstance3D.new()
+		branch.name = "MainBranch_%d" % i
+		branch.mesh = branch_mesh
+		branch.position = Vector3(side * 0.58, 3.65, 0.0)
+		branch.rotation.z = -side * 0.72
+		branch.rotation.x = side * 0.16
+		branch.material_override = bark
+		tree.add_child(branch)
+
+	# Copa irregular em camadas, com tons alternados para parecer pintada à mão.
+	var leaf_colors := [
+		Color("344d3d"), Color("405f48"), Color("526f50"),
+		Color("3b5843"), Color("61784f"), Color("496447")
+	]
+	var crown_specs := [
+		[Vector3(0.0, 5.35, 0.0), 2.05, Vector3(1.12, 0.88, 1.0)],
+		[Vector3(-1.15, 4.75, 0.05), 1.48, Vector3(1.15, 0.88, 0.92)],
+		[Vector3(1.12, 4.95, -0.12), 1.55, Vector3(1.08, 0.92, 1.0)],
+		[Vector3(-0.62, 6.05, -0.1), 1.42, Vector3(1.0, 0.94, 0.92)],
+		[Vector3(0.72, 6.25, 0.12), 1.38, Vector3(1.08, 0.9, 1.0)],
+		[Vector3(0.0, 6.85, 0.0), 1.12, Vector3(1.0, 0.95, 0.9)]
+	]
+	for i in range(crown_specs.size()):
+		var spec: Array = crown_specs[i]
+		var crown := _sphere(tree, "LayeredCanopy_%02d" % i, spec[0], float(spec[1]), leaf_colors[i], float(spec[1]) * 1.42)
+		crown.scale = spec[2]
+		crown.material_override = _painter_mat(leaf_colors[i], 3.8, 0.15, 1, leaf_colors[i].darkened(0.28))
+
+	# Pequenos planos de luz nas bordas da copa dão volume sem partículas.
 	for i in range(3):
-		var crown := _sphere(tree, "PaintedCanopy", Vector3(randf_range(-0.8,0.8), 4.0 + i*0.9, randf_range(-0.6,0.6)), 2.5 - i*0.25, [Color("405d49"),Color("526e50"),Color("344b42")][i], 3.5)
-		var canopy_color: Color = [Color("405d49"),Color("526e50"),Color("344b42")][i]
-		crown.material_override = _painter_mat(canopy_color, 4.0, 0.13, 1, canopy_color.darkened(0.32))
-		crown.scale = Vector3(1.2, 0.9, 1.0)
+		var accent_pos := Vector3(-1.05 + float(i) * 1.05, 5.9 + float(i % 2) * 0.42, 0.92)
+		var accent_color := Color("71875a") if i == 1 else Color("5d7952")
+		var accent := _sphere(tree, "CanopyLightPatch_%d" % i, accent_pos, 0.48, accent_color, 0.72)
+		accent.scale = Vector3(1.2, 0.58, 0.72)
+		accent.material_override = _painter_mat(accent_color, 5.0, 0.12, 1, Color("3f5b43"))
 
 func _build_ruins_and_props() -> void:
 	for p in [Vector3(-16,0,-12),Vector3(17,0,-19),Vector3(-22,0,22),Vector3(23,0,28),Vector3(-34,0,2),Vector3(34,0,-2),Vector3(10,0,40),Vector3(-12,0,-42)]:
@@ -747,6 +1727,7 @@ func _build_ruins_and_props() -> void:
 		_box(self,"GatePillar",Vector3(x,2.6,-27),Vector3(2.2,5.2,2.0),Color("77746a"))
 	_box(self,"GateLintel",Vector3(0,5.0,-27),Vector3(13,1.6,2.4),Color("817c70"))
 	_box(self,"BrokenLintel",Vector3(2.8,6.1,-27),Vector3(4.2,0.7,2.1),Color("6c6b63")).rotation.z = 0.22
+	_build_gothic_gate_accents()
 	# weathered trail lanterns help navigation in the dusk
 	for z in [-15.0, 1.0, 18.0, 34.0]:
 		var post := _box(self, "LanternPost", Vector3(5.6,1.25,z), Vector3(0.18,2.5,0.18), Color("49372d"))
@@ -765,6 +1746,36 @@ func _build_ruins_and_props() -> void:
 	fire.light_energy = 2.2
 	fire.omni_range = 10
 	add_child(fire)
+
+func _build_gothic_gate_accents() -> void:
+	# Carved caps, iron finials and crimson seals turn the entrance into a clear landmark.
+	for side in [-1.0, 1.0]:
+		var cap := _box(self, "GateCarvedCap", Vector3(side * 5.5, 5.35, -25.82), Vector3(2.55, 0.42, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(cap)
+		cap.rotation.z = side * -0.035
+		var footing := _box(self, "GateFooting", Vector3(side * 5.5, 0.32, -25.82), Vector3(2.55, 0.64, 2.28), Color("514d49"))
+		PLUGIN_ASSET_LOADER.apply_aqueduct_stone(footing)
+		footing.material_override = _material_for_surface("cut stone", Color("514d49"))
+		for spike_index in range(2):
+			var spike := _box(self, "GateIronFinial", Vector3(side * (4.65 + float(spike_index) * 1.25), 6.0, -26.0), Vector3(0.22, 1.25, 0.22), Color("343638"))
+			spike.rotation.z = side * 0.18
+	for i in range(3):
+		var seal := _sphere(self, "GateCrimsonSeal", Vector3(-2.4 + float(i) * 2.4, 4.85, -25.55), 0.19, Color("a83d4b"), 0.42)
+		seal.scale = Vector3(0.72, 1.0, 0.42)
+		var seal_material := StandardMaterial3D.new()
+		seal_material.albedo_color = Color("a83d4b")
+		seal_material.emission_enabled = true
+		seal_material.emission = Color("8f2638")
+		seal_material.emission_energy_multiplier = 0.7
+		seal.material_override = seal_material
+	var gate_glow := OmniLight3D.new()
+	gate_glow.name = "GateCrimsonGlow"
+	gate_glow.position = Vector3(0.0, 5.0, -24.8)
+	gate_glow.light_color = Color("a83d4b")
+	gate_glow.light_energy = 0.42
+	gate_glow.omni_range = 6.0
+	add_child(gate_glow)
+
 
 func _build_region_landmarks() -> void:
 	# Broken watchtower and a red corruption scar give the clearing a memorable skyline.
@@ -809,6 +1820,147 @@ func _build_region_landmarks() -> void:
 	shrine_light.light_energy = 0.8
 	shrine_light.omni_range = 5.0
 	shrine.add_child(shrine_light)
+
+func _build_plugin_world_expansion() -> void:
+	# Conteudo extra inspirado nos assets Meshy/Aqueduct: observatorio lunar,
+	# trilha de monolitos e ruinas de vigia. Tudo e procedural e leve para mobile.
+	var expansion := Node3D.new()
+	expansion.name = "PluginInspiredWorldExpansion"
+	add_child(expansion)
+
+	# Moonwell: um pequeno ponto de descanso e orientacao no caminho norte.
+	var moonwell := Node3D.new()
+	moonwell.name = "MoonwellSanctuary"
+	moonwell.position = Vector3(27.0, 0.0, -55.0)
+	expansion.add_child(moonwell)
+	var foundation := _box(moonwell, "MoonwellFoundation", Vector3.ZERO, Vector3(9.0, 0.42, 8.0), Color("555950"))
+	foundation.material_override = _material_for_surface("cut stone", Color("555950"))
+	var inner_ring := _box(moonwell, "MoonwellInnerStone", Vector3(0.0, 0.26, 0.0), Vector3(5.5, 0.22, 5.5), Color("74766a"))
+	inner_ring.material_override = _material_for_surface("cut stone", Color("74766a"))
+	var pool := _sphere(moonwell, "MoonwellWater", Vector3(0.0, 0.44, 0.0), 2.1, Color("527f83"), 0.18)
+	pool.scale = Vector3(1.0, 0.12, 1.0)
+	var water_material := _mat(Color("527f83"), 0.18)
+	water_material.metallic = 0.28
+	water_material.emission_enabled = true
+	water_material.emission = Color("2c6970")
+	water_material.emission_energy_multiplier = 0.45
+	pool.material_override = water_material
+	for i in range(4):
+		var angle := TAU * float(i) / 4.0
+		var offset := Vector3(cos(angle) * 3.05, 0.0, sin(angle) * 3.05)
+		var pillar := _box(moonwell, "MoonwellPillar_%d" % i, offset + Vector3(0.0, 1.45, 0.0), Vector3(0.62, 2.9, 0.62), Color("686b62"))
+		pillar.material_override = _material_for_surface("ruined stone", Color("686b62"))
+		_box(moonwell, "MoonwellPillarCap_%d" % i, offset + Vector3(0.0, 2.95, 0.0), Vector3(0.92, 0.24, 0.92), Color("8b8978"))
+	var moon_crystal := _sphere(moonwell, "MoonwellCrystal", Vector3(0.0, 1.05, 0.0), 0.52, Color("72b6b2"), 1.5)
+	moon_crystal.scale = Vector3(0.58, 1.65, 0.58)
+	moon_crystal.material_override = _painter_mat(Color("72b6b2"), 7.0, 0.12, 8, Color("326e70"))
+	var moon_light := OmniLight3D.new()
+	moon_light.name = "MoonwellGlow"
+	moon_light.position = Vector3(0.0, 2.4, 0.0)
+	moon_light.light_color = Color("75c6c1")
+	moon_light.light_energy = 0.8
+	moon_light.omni_range = 10.0
+	moonwell.add_child(moon_light)
+
+	# Ruinas da vigia: pedras tombadas, brasas e um marco de pedra com runas.
+	var outpost := Node3D.new()
+	outpost.name = "FallenWatchOutpost"
+	outpost.position = Vector3(-35.0, 0.0, -63.0)
+	expansion.add_child(outpost)
+	_box(outpost, "OutpostFoundation", Vector3(0.0, 0.12, 0.0), Vector3(11.0, 0.24, 8.0), Color("4e5049"))
+	for i in range(5):
+		var x := -4.0 + float(i) * 2.0
+		var wall := _box(outpost, "BrokenWallSegment_%d" % i, Vector3(x, 1.05 + float(i % 2) * 0.18, -3.1), Vector3(1.7, 2.1, 0.55), Color("65645a"))
+		wall.rotation.z = float(i % 2) * 0.08 - 0.04
+	var fallen_column := _box(outpost, "FallenColumn", Vector3(2.2, 0.48, 1.2), Vector3(4.6, 0.52, 0.62), Color("777469"))
+	fallen_column.rotation.z = -0.16
+	var rune_stone := _box(outpost, "OutpostRuneStone", Vector3(-3.8, 1.6, 2.0), Vector3(1.0, 3.2, 0.72), Color("77776c"))
+	var rune := _sphere(outpost, "OutpostRune", Vector3(-3.8, 1.85, 2.42), 0.24, Color("c18b5c"), 0.42)
+	rune.scale = Vector3(0.65, 1.0, 0.28)
+	rune.material_override = _painter_mat(Color("c18b5c"), 8.0, 0.12, 8, Color("704b3a"))
+	var campfire := _sphere(outpost, "OutpostEmberBed", Vector3(2.7, 0.32, 2.8), 0.9, Color("392f2a"), 0.3)
+	campfire.scale = Vector3(1.2, 0.28, 1.0)
+	for i in range(4):
+		var ember := _sphere(outpost, "OutpostEmber_%d" % i, Vector3(2.4 + randf_range(-0.38, 0.38), 0.55 + randf_range(0.0, 0.45), 2.8 + randf_range(-0.32, 0.32)), 0.12, Color("ff9b55"), 0.2)
+		ember.material_override = _painter_mat(Color("ff9b55"), 8.0, 0.05)
+	var firelight := OmniLight3D.new()
+	firelight.position = Vector3(2.7, 1.5, 2.8)
+	firelight.light_color = Color("ff9452")
+	firelight.light_energy = 1.1
+	firelight.omni_range = 7.0
+	outpost.add_child(firelight)
+
+	# Pedras de orientacao levam o jogador do caminho antigo ate o pântano.
+	for i in range(7):
+		var z := -61.0 - float(i) * 5.0
+		var x := 7.5 + sin(float(i) * 0.72) * 2.2
+		var marker := _box(expansion, "AncientTrailMarker_%d" % i, Vector3(x, 0.85, z), Vector3(0.72, 1.7, 0.62), Color("5f6259"))
+		marker.rotation.z = randf_range(-0.1, 0.1)
+		var marker_rune := _sphere(expansion, "AncientTrailRune_%d" % i, Vector3(x, 1.0, z + 0.34), 0.13, Color("9bb7a0"), 0.24)
+		marker_rune.material_override = _painter_mat(Color("9bb7a0"), 8.0, 0.08, 8, Color("47685b"))
+
+	# Pequenas luzes guiam sem poluir a tela nem criar muitos draw calls.
+	for i in range(3):
+		var torch_root := Node3D.new()
+		torch_root.name = "AncientTrailTorch_%d" % i
+		torch_root.position = Vector3(-8.0, 0.0, -49.0 - float(i) * 14.0)
+		expansion.add_child(torch_root)
+		_box(torch_root, "TorchPost", Vector3(0.0, 1.0, 0.0), Vector3(0.18, 2.0, 0.18), Color("49372d"))
+		var flame := _sphere(torch_root, "TorchFlame", Vector3(0.0, 2.15, 0.0), 0.22, Color("e8a45c"), 0.42)
+		flame.material_override = _painter_mat(Color("e8a45c"), 8.0, 0.05)
+		var torch_light := OmniLight3D.new()
+		torch_light.position = Vector3(0.0, 2.2, 0.0)
+		torch_light.light_color = Color("e6a15e")
+		torch_light.light_energy = 0.72
+		torch_light.omni_range = 6.0
+		torch_root.add_child(torch_light)
+
+	# Three additional landmarks extend exploration beyond the first expansion.
+	var cinder_root := Node3D.new()
+	cinder_root.name = "CinderHollow"
+	cinder_root.position = Vector3(48.0, 0.0, -101.0)
+	add_child(cinder_root)
+	_box(cinder_root, "CinderCaveLeftPillar", Vector3(-2.2, 1.7, 0.0), Vector3(0.9, 3.4, 1.1), Color("51463f"))
+	_box(cinder_root, "CinderCaveRightPillar", Vector3(2.2, 1.7, 0.0), Vector3(0.9, 3.4, 1.1), Color("51463f"))
+	_box(cinder_root, "CinderCaveLintel", Vector3(0.0, 3.35, 0.0), Vector3(5.3, 0.8, 1.2), Color("625044"))
+	for crystal_index in range(3):
+		var crystal := _sphere(cinder_root, "CinderCrystal_%02d" % crystal_index, Vector3(-1.0 + float(crystal_index) * 1.0, 0.55, -1.1), 0.42, Color("a75c54"), 1.25)
+		crystal.rotation.z = deg_to_rad(float(crystal_index - 1) * 18.0)
+		var crystal_light := OmniLight3D.new()
+		crystal_light.position = crystal.position + Vector3(0.0, 0.7, 0.0)
+		crystal_light.light_color = Color("c56b5b")
+		crystal_light.light_energy = 0.38
+		crystal_light.omni_range = 4.5
+		cinder_root.add_child(crystal_light)
+
+	var bridge_root := Node3D.new()
+	bridge_root.name = "WardenStoneBridge"
+	bridge_root.position = Vector3(-48.0, 0.0, -104.0)
+	add_child(bridge_root)
+	_box(bridge_root, "WardenBridgeDeck", Vector3(0.0, 0.22, 0.0), Vector3(10.0, 0.45, 3.4), Color("65645d"))
+	for side in [-1.0, 1.0]:
+		_box(bridge_root, "WardenBridgeParapet", Vector3(side * 4.35, 0.85, 0.0), Vector3(0.55, 1.25, 3.4), Color("77736a"))
+		for pillar_index in range(3):
+			_box(bridge_root, "WardenBridgePillar", Vector3(side * 4.35, 1.75, -1.15 + float(pillar_index) * 1.15), Vector3(0.8, 0.65, 0.65), Color("91806a"))
+	for rune_index in range(5):
+		var bridge_rune := _sphere(bridge_root, "WardenBridgeRune_%02d" % rune_index, Vector3(-3.2 + float(rune_index) * 1.6, 0.48, -1.42), 0.16, Color("8db5a0"), 0.12)
+		bridge_rune.material_override = _painter_mat(Color("8db5a0"), 7.0, 0.04)
+
+	var bell_root := Node3D.new()
+	bell_root.name = "EchoingBellTower"
+	bell_root.position = Vector3(0.0, 0.0, -121.0)
+	add_child(bell_root)
+	for corner in [Vector2(-1.5, -1.5), Vector2(1.5, -1.5), Vector2(-1.5, 1.5), Vector2(1.5, 1.5)]:
+		_box(bell_root, "BellTowerPillar", Vector3(corner.x, 2.2, corner.y), Vector3(0.42, 4.4, 0.42), Color("625b51"))
+	_box(bell_root, "BellTowerTopBeam", Vector3(0.0, 4.35, 0.0), Vector3(3.8, 0.45, 3.8), Color("76634e"))
+	var bell := _sphere(bell_root, "EchoingBell", Vector3(0.0, 3.1, 0.0), 0.62, Color("b08b52"), 1.0)
+	bell.scale = Vector3(0.85, 1.0, 0.85)
+	var bell_light := OmniLight3D.new()
+	bell_light.position = Vector3(0.0, 3.0, 0.0)
+	bell_light.light_color = Color("e4c27e")
+	bell_light.light_energy = 0.5
+	bell_light.omni_range = 7.0
+	bell_root.add_child(bell_light)
 
 func _build_swamp_region() -> void:
 	# A connected second biome: shallow poisonous pools, dead trees and three cleanseable totems.
@@ -1035,6 +2187,28 @@ func _spawn_whisper_stag_guardian() -> void:
 	var rune := _sphere(guardian, "StagPedestalRune", Vector3(0.0, 0.67, 1.02), 0.12, Color("72cfc0"))
 	rune.material_override = eye_material
 
+	# Peitoral ritual, placas de musgo e veios luminosos esculpidos na pedra.
+	var chest_medallion := _sphere(guardian, "StagChestMedallion", Vector3(0.0, 1.78, 0.79), 0.19, Color("b39a68"), 0.075)
+	chest_medallion.scale = Vector3(1.0, 1.0, 0.42)
+	chest_medallion.material_override = eye_material
+	for side in [-1.0, 1.0]:
+		var shoulder_plate := _sphere(guardian, "StagShoulderPlate", Vector3(side * 0.53, 1.91, 0.18), 0.25, Color("737b6b"), 0.32)
+		shoulder_plate.scale = Vector3(1.0, 0.72, 0.82)
+		var shoulder_moss := _sphere(guardian, "StagShoulderMoss", Vector3(side * 0.57, 2.08, 0.18), 0.16, Color("536f59"), 0.18)
+		shoulder_moss.scale = Vector3(1.25, 0.45, 0.9)
+		var antler_band := _sphere(guardian, "StagAntlerBand", Vector3(side * 0.31, 3.12, 0.72), 0.085, Color("7bcbbb"), 0.12)
+		antler_band.scale = Vector3(1.0, 1.0, 0.65)
+		antler_band.material_override = eye_material
+	# Thin inlays read as old cracks filled with spirit light, not extra armor.
+	for crack_index in range(3):
+		var crack := _box(guardian, "StagStoneInlay_%d" % crack_index, Vector3(-0.22 + float(crack_index) * 0.22, 1.55 + float(crack_index % 2) * 0.16, 0.56), Vector3(0.035, 0.28, 0.035), Color("72cfc0"))
+		crack.rotation.z = -0.35 if crack_index % 2 == 0 else 0.42
+		crack.material_override = eye_material
+	var neck_collar := _sphere(guardian, "StagAncientCollar", Vector3(0.0, 2.17, 0.58), 0.34, Color("887553"), 0.11)
+	neck_collar.scale = Vector3(1.08, 0.48, 0.88)
+	var collar_gem := _sphere(guardian, "StagCollarGem", Vector3(0.0, 2.18, 0.91), 0.09, Color("a1ead6"), 0.16)
+	collar_gem.material_override = eye_material
+
 	var eye_glow := OmniLight3D.new()
 	eye_glow.name = "StagSpiritGlow"
 	eye_glow.position = Vector3(0.0, 2.72, 1.12)
@@ -1046,6 +2220,77 @@ func _spawn_whisper_stag_guardian() -> void:
 	var idle := create_tween().set_loops()
 	idle.tween_property(guardian, "rotation:y", 0.045, 2.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	idle.tween_property(guardian, "rotation:y", -0.045, 5.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_request_whisper_stag_model(guardian)
+
+
+func _request_whisper_stag_model(guardian: Node3D) -> void:
+	# Prefere o GLB já versionado no jogo: funciona offline e não depende do serviço.
+	const LOCAL_STAG_PATH := "res://assets/plugin_imports/thrixel/ancient_stag_guardian.glb"
+	if ResourceLoader.exists(LOCAL_STAG_PATH):
+		var local_scene := load(LOCAL_STAG_PATH) as PackedScene
+		if local_scene != null:
+			var local_instance := local_scene.instantiate() as Node3D
+			if local_instance != null:
+				local_instance.name = "ThrixelWhisperStag"
+				local_instance.position = Vector3(0.0, 0.54, 0.0)
+				local_instance.scale = Vector3.ONE * 0.72
+				guardian.add_child(local_instance)
+				PLUGIN_ASSET_LOADER.apply_biome_moss_filter(local_instance, 0.08)
+				for child in guardian.get_children():
+					if child is MeshInstance3D and child.name not in ["StagPedestal", "StagPedestalTrim"]:
+						child.visible = false
+				print("THRIXEL_STAG_LOCAL_MODEL_LOADED")
+				return
+	# Fallback online para instalações antigas que ainda não possuem o GLB local.
+	const STAG_URL := "https://api.thrixel.com/api/v1/10f1f722-53d8-4ca0-b99b-e0e687bc8fec/download?format=glb&quality=full&texture_size=1024"
+	const CACHE_PATH := "user://cache/whisper_stag.glb"
+	if FileAccess.file_exists(CACHE_PATH):
+		var cached := FileAccess.open(CACHE_PATH, FileAccess.READ)
+		if cached and _apply_whisper_stag_model(cached.get_buffer(cached.get_length()), guardian):
+			return
+	var request := HTTPRequest.new()
+	request.name = "WhisperStagModelRequest"
+	request.timeout = 30.0
+	guardian.add_child(request)
+	request.request_completed.connect(_on_whisper_stag_model_downloaded.bind(guardian, request))
+	var request_error := request.request(STAG_URL)
+	if request_error != OK:
+		push_warning("Não foi possível iniciar o download do Guardião Cervo: %s" % request_error)
+		request.queue_free()
+
+func _on_whisper_stag_model_downloaded(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, guardian: Node3D, request: HTTPRequest) -> void:
+	if is_instance_valid(request):
+		request.queue_free()
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200 or body.is_empty():
+		push_warning("O Guardião Cervo 3D não pôde ser baixado; mantendo o modelo local.")
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://cache"))
+	var cache_file := FileAccess.open("user://cache/whisper_stag.glb", FileAccess.WRITE)
+	if cache_file:
+		cache_file.store_buffer(body)
+	_apply_whisper_stag_model(body, guardian)
+
+
+func _apply_whisper_stag_model(data: PackedByteArray, guardian: Node3D) -> bool:
+	if data.is_empty() or not is_instance_valid(guardian):
+		return false
+	var gltf := GLTFDocument.new()
+	var state := GLTFState.new()
+	var parse_error := gltf.append_from_buffer(data, "", state)
+	if parse_error != OK:
+		push_warning("O modelo GLB do Guardião Cervo não pôde ser interpretado.")
+		return false
+	var imported := gltf.generate_scene(state)
+	if imported == null:
+		return false
+	imported.name = "ThrixelWhisperStag"
+	imported.position = Vector3(0.0, 0.54, 0.0)
+	guardian.add_child(imported)
+	# Keep the stone pedestal and hide only the temporary procedural animal.
+	for child in guardian.get_children():
+		if child is MeshInstance3D and child.name not in ["StagPedestal", "StagPedestalTrim"]:
+			child.visible = false
+	return true
 
 
 func _add_stag_antler_segment(parent: Node3D, segment_name: String, start: Vector3, finish: Vector3, radius: float, color: Color) -> MeshInstance3D:
@@ -1067,22 +2312,49 @@ func _add_stag_antler_segment(parent: Node3D, segment_name: String, start: Vecto
 func _build_river_treasure_chests() -> void:
 	# Three optional caches reward exploration on both banks and near the old gate.
 	var positions := [Vector3(39.0, 0.0, -137.0), Vector3(91.0, 0.0, -115.0), Vector3(62.0, 0.0, -164.0)]
+	var plugin_coffers_loaded := 0
 	for i in range(positions.size()):
 		var chest := Node3D.new()
 		chest.name = "RiverTreasureChest_%d" % i
 		chest.position = positions[i]
 		chest.set_meta("opened", river_chest_ids.has(i))
 		add_child(chest)
-		_box(chest, "ChestBase", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.86, 0.92), Color("465b5b"))
-		_box(chest, "ChestFrontBand", Vector3(0.0, 0.5, 0.48), Vector3(1.52, 0.16, 0.12), Color("b49a63"))
-		_box(chest, "ChestLeftBand", Vector3(-0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
-		_box(chest, "ChestRightBand", Vector3(0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
-		var lid_pivot := Node3D.new()
-		lid_pivot.name = "ChestLidPivot"
-		lid_pivot.position = Vector3(0.0, 0.88, -0.42)
-		chest.add_child(lid_pivot)
-		var lid := _box(lid_pivot, "ChestLid", Vector3(0.0, 0.18, 0.42), Vector3(1.48, 0.42, 0.92), Color("536d69"))
-		var clasp := _box(chest, "ChestClasp", Vector3(0.0, 0.63, 0.54), Vector3(0.22, 0.3, 0.12), Color("d1b36f"))
+		# Prefer the real Thrixel Silver River coffer; retain the original handcrafted
+		# chest as a safe fallback if the optional plugin model is unavailable.
+		var coffer_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_river_coffer")
+		var coffer_instance: Node3D = null
+		if coffer_scene != null:
+			coffer_instance = coffer_scene.instantiate() as Node3D
+		if coffer_instance != null:
+			plugin_coffers_loaded += 1
+			coffer_instance.name = "ThrixelSilverRiverCoffer"
+			coffer_instance.scale = Vector3.ONE * 1.6
+			chest.add_child(coffer_instance)
+			PLUGIN_ASSET_LOADER.apply_biome_moss_filter(coffer_instance, 0.16)
+			if river_chest_ids.has(i):
+				var saved_lid := coffer_instance.find_child("hinged_lid", true, false) as Node3D
+				if saved_lid != null:
+					saved_lid.rotation.x = -1.05
+				for clasp_name in ["left_clasp", "right_clasp"]:
+					var saved_clasp := coffer_instance.find_child(clasp_name, true, false) as Node3D
+					if saved_clasp != null:
+						saved_clasp.visible = false
+		else:
+			_box(chest, "ChestBase", Vector3(0.0, 0.48, 0.0), Vector3(1.45, 0.86, 0.92), Color("465b5b"))
+			_box(chest, "ChestFrontBand", Vector3(0.0, 0.5, 0.48), Vector3(1.52, 0.16, 0.12), Color("b49a63"))
+			_box(chest, "ChestLeftBand", Vector3(-0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
+			_box(chest, "ChestRightBand", Vector3(0.54, 0.52, 0.0), Vector3(0.12, 0.95, 0.98), Color("a78d5e"))
+			var lid_pivot := Node3D.new()
+			lid_pivot.name = "ChestLidPivot"
+			lid_pivot.position = Vector3(0.0, 0.88, -0.42)
+			chest.add_child(lid_pivot)
+			_box(lid_pivot, "ChestLid", Vector3(0.0, 0.18, 0.42), Vector3(1.48, 0.42, 0.92), Color("536d69"))
+			_box(chest, "ChestClasp", Vector3(0.0, 0.63, 0.54), Vector3(0.22, 0.3, 0.12), Color("d1b36f"))
+			if river_chest_ids.has(i):
+				lid_pivot.rotation.x = -1.05
+				var fallback_clasp := chest.get_node_or_null("ChestClasp") as Node3D
+				if fallback_clasp != null:
+					fallback_clasp.visible = false
 		var glow := _sphere(chest, "ChestGlow", Vector3(0.0, 1.35, 0.0), 0.22, Color("8fd8ca"), 0.34)
 		glow.material_override = _painter_mat(Color("8fd8ca"), 8.0, 0.28)
 		glow.visible = not river_chest_ids.has(i)
@@ -1093,23 +2365,36 @@ func _build_river_treasure_chests() -> void:
 		light.light_energy = 0.65 if not river_chest_ids.has(i) else 0.0
 		light.omni_range = 4.0
 		chest.add_child(light)
-		if river_chest_ids.has(i):
-			lid_pivot.rotation.x = -1.05
-			clasp.visible = false
-
+	print("THRIXEL_SILVER_RIVER_COFFER_PLACED: ", plugin_coffers_loaded)
 func _build_river_shrine_puzzle() -> void:
-	# A three-ring mechanism gives the river region a tactile, repeatable puzzle.
+	# O modelo Thrixel vira a estrutura real do puzzle; os anéis e recompensas continuam ligados ao save antigo.
 	var shrine := Node3D.new()
 	shrine.name = "RiverShrinePuzzle"
 	shrine.position = Vector3(82.0, 0.0, -143.0)
 	shrine.set_meta("solved", river_shrine_solved)
 	add_child(shrine)
-	_box(shrine, "PuzzlePlinth", Vector3(0.0, 0.48, 0.0), Vector3(3.2, 0.96, 2.0), Color("56666a"))
-	_box(shrine, "PuzzleBackplate", Vector3(0.0, 2.25, -0.72), Vector3(2.65, 2.65, 0.32), Color("3d555b"))
+
+	var shrine_scene := PLUGIN_ASSET_LOADER.load_optional_scene("thrixel_way_shrine")
+	var shrine_model: Node3D = null
+	if shrine_scene != null:
+		shrine_model = shrine_scene.instantiate() as Node3D
+	if shrine_model != null:
+		shrine_model.name = "ThrixelRiverShrine"
+		shrine.add_child(shrine_model)
+		PLUGIN_ASSET_LOADER.apply_biome_moss_filter(shrine_model, 0.14)
+		var shrine_body := shrine_model.find_child("Shrine_Static_Body", true, false) as MeshInstance3D
+		if shrine_body != null:
+			_add_imported_model_collisions(shrine_body)
+		print("THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1")
+	else:
+		_box(shrine, "PuzzlePlinth", Vector3(0.0, 0.48, 0.0), Vector3(3.2, 0.96, 2.0), Color("56666a"))
+		_box(shrine, "PuzzleBackplate", Vector3(0.0, 2.25, -0.72), Vector3(2.65, 2.65, 0.32), Color("3d555b"))
+		print("THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 0")
+
 	for i in range(3):
 		var ring_node := Node3D.new()
 		ring_node.name = "PuzzleRing_%d" % i
-		ring_node.position = Vector3(0.0, 2.25, -0.48 + float(i) * 0.025)
+		ring_node.position = Vector3(0.0, 1.12 if shrine_model != null else 2.25, -0.72 if shrine_model != null else -0.48 + float(i) * 0.025)
 		ring_node.rotation_degrees.x = 90.0
 		ring_node.rotation.z = float(river_puzzle_ring_steps[i]) * PI * 0.5
 		var ring_mesh := TorusMesh.new()
@@ -1125,41 +2410,50 @@ func _build_river_shrine_puzzle() -> void:
 		var marker := _sphere(ring_node, "RingMarker", Vector3(0.0, 0.0, -ring_mesh.outer_radius - 0.12), 0.105, Color("b9e9dd"), 0.16)
 		marker.material_override = _painter_mat(Color("b9e9dd"), 8.0, 0.24)
 		shrine.add_child(ring_node)
-	var lever := Node3D.new()
-	lever.name = "PuzzleLever"
-	lever.position = Vector3(1.48, 1.05, 0.0)
-	shrine.add_child(lever)
-	_box(lever, "LeverBase", Vector3(0.0, 0.0, 0.0), Vector3(0.42, 0.3, 0.42), Color("756b51"))
-	var lever_arm := _box(lever, "LeverArm", Vector3(0.0, 0.48, 0.0), Vector3(0.16, 1.0, 0.18), Color("9a8058"))
-	lever_arm.rotation.z = -0.35
-	var drawer := Node3D.new()
-	drawer.name = "PuzzleOfferingDrawer"
-	drawer.position = Vector3(0.0, 1.0, 0.95)
-	shrine.add_child(drawer)
-	_box(drawer, "DrawerBody", Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.45, 0.55), Color("35464a"))
-	var lid := _box(drawer, "DrawerLid", Vector3(0.0, 0.28, -0.2), Vector3(1.08, 0.12, 0.62), Color("788a83"))
-	lid.rotation.x = -0.08
-	var crystal := _sphere(shrine, "PuzzleRewardCrystal", Vector3(0.0, 1.55, 1.05), 0.28, Color("9b4e62"), 0.5)
+
+	if shrine_model == null:
+		var lever := Node3D.new()
+		lever.name = "PuzzleLever"
+		lever.position = Vector3(1.48, 1.05, 0.0)
+		shrine.add_child(lever)
+		_box(lever, "LeverBase", Vector3(0.0, 0.0, 0.0), Vector3(0.42, 0.3, 0.42), Color("756b51"))
+		var fallback_lever_arm := _box(lever, "lever_arm", Vector3(0.0, 0.48, 0.0), Vector3(0.16, 1.0, 0.18), Color("9a8058"))
+		fallback_lever_arm.rotation.z = -0.35
+		var drawer := Node3D.new()
+		drawer.name = "PuzzleOfferingDrawer"
+		drawer.position = Vector3(0.0, 1.0, 0.95)
+		shrine.add_child(drawer)
+		_box(drawer, "DrawerBody", Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.45, 0.55), Color("35464a"))
+		var fallback_drawer_lid := _box(drawer, "drawer_lid", Vector3(0.0, 0.28, -0.2), Vector3(1.08, 0.12, 0.62), Color("788a83"))
+		fallback_drawer_lid.rotation.x = -0.08
+
+	var crystal_position := Vector3(0.0, 0.92, 0.82) if shrine_model != null else Vector3(0.0, 1.55, 1.05)
+	var crystal := _sphere(shrine, "PuzzleRewardCrystal", crystal_position, 0.28, Color("9b4e62"), 0.5)
 	crystal.material_override = _painter_mat(Color("9b4e62"), 8.0, 0.22)
 	crystal.visible = river_shrine_solved
 	var clue := Label3D.new()
 	clue.name = "PuzzleSequenceClue"
 	clue.text = "MARÉ: I  •  III  •  II"
-	clue.position = Vector3(0.0, 3.95, 0.05)
+	clue.position = Vector3(0.0, 2.5 if shrine_model != null else 3.95, 0.05)
 	clue.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	clue.font_size = 30
 	clue.modulate = Color("b8dcd5")
 	shrine.add_child(clue)
 	var glow := OmniLight3D.new()
 	glow.name = "PuzzleGlow"
-	glow.position = Vector3(0.0, 2.3, 0.2)
+	glow.position = Vector3(0.0, 1.2 if shrine_model != null else 2.3, 0.2)
 	glow.light_color = Color("70c7c0")
 	glow.light_energy = 0.85 if not river_shrine_solved else 1.35
 	glow.omni_range = 8.0
 	shrine.add_child(glow)
 	if river_shrine_solved:
-		lever.rotation.z = -0.85
-		lid.rotation.x = -1.1
+		var solved_lever_arm := shrine.find_child("lever_arm", true, false) as Node3D
+		var solved_drawer_lid := shrine.find_child("drawer_lid", true, false) as Node3D
+		if solved_lever_arm != null:
+			solved_lever_arm.rotation.z = -0.85
+		if solved_drawer_lid != null:
+			solved_drawer_lid.rotation.x = -1.1
+
 
 func _build_river_relics() -> void:
 	# Optional discoveries reward exploration and persist independently of the main quest.
@@ -1223,6 +2517,40 @@ func _build_npcs() -> void:
 	river_sign.font_size = 42
 	river_sign.modulate = Color("b7e0d9")
 	river_guardian.add_child(river_sign)
+	# A herbalist gives the first settlement a useful, repeatable supply stop.
+	var herbalist := _make_person("Nara Herbalista", Vector3(-112.0, 0.0, 78.0), false)
+	var herbalist_body := herbalist.get_node_or_null("Body") as MeshInstance3D
+	if herbalist_body:
+		herbalist_body.material_override = _painter_mat(Color("718b65"), 0.0, 0.82)
+	herbalist.set_meta("interact_name", "Nara Herbalista")
+	_box(herbalist, "HerbSatchel", Vector3(0.42, 0.9, -0.12), Vector3(0.42, 0.58, 0.34), Color("8c7048"))
+	var herbalist_sign := Label3D.new()
+	herbalist_sign.text = "NARA • ERVAS E POÇÕES"
+	herbalist_sign.position = Vector3(0.0, 3.5, 0.0)
+	herbalist_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	herbalist_sign.font_size = 38
+	herbalist_sign.modulate = Color("c7e0ad")
+	herbalist.add_child(herbalist_sign)
+	# A compact alchemy bench turns gathered swamp herbs into a useful field potion.
+	var alchemy_bench := Node3D.new()
+	alchemy_bench.name = "BancadaDeAlquimia"
+	alchemy_bench.position = Vector3(-104.0, 0.0, 84.0)
+	alchemy_bench.set_meta("interact_name", "Bancada de Alquimia")
+	add_child(alchemy_bench)
+	_box(alchemy_bench, "AlchemyBenchTop", Vector3(0.0, 1.0, 0.0), Vector3(2.8, 0.22, 1.5), Color("594b3e"))
+	for leg_x in [-1.1, 1.1]:
+		for leg_z in [-0.5, 0.5]:
+			_box(alchemy_bench, "AlchemyBenchLeg", Vector3(leg_x, 0.48, leg_z), Vector3(0.18, 0.95, 0.18), Color("40372f"))
+	var alchemy_flask := _sphere(alchemy_bench, "AlchemyFlask", Vector3(0.0, 1.48, 0.0), 0.38, Color("78b68c"), 1.8)
+	alchemy_flask.scale = Vector3(0.72, 1.0, 0.72)
+	alchemy_flask.material_override = _painter_mat(Color("78b68c"), 3.0, 0.18)
+	var alchemy_sign := Label3D.new()
+	alchemy_sign.text = "ALQUIMIA"
+	alchemy_sign.position = Vector3(0.0, 2.35, 0.0)
+	alchemy_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	alchemy_sign.font_size = 34
+	alchemy_sign.modulate = Color("b8dfc0")
+	alchemy_bench.add_child(alchemy_sign)
 
 func _build_enemies() -> void:
 	for i in range(6):
@@ -1280,6 +2608,35 @@ func _build_enemies() -> void:
 		if quest_stage >= 11:
 			river_knight.visible = false
 			river_knight.set_physics_process(false)
+	# Vigia opcional da Floresta Ancestral: criatura original, sem alterar as missões principais.
+	var root_warden := CharacterBody3D.new()
+	root_warden.set_script(ENEMY_SCRIPT)
+	root_warden.name = "Vigia_das_Raizes"
+	root_warden.position = Vector3(-169.0, 0.0, -137.0)
+	root_warden.set("enemy_kind", 9)
+	add_child(root_warden)
+	enemies.append(root_warden)
+	# Corvos Glaciais rondam os cristais da Montanha Gelada; encontro opcional.
+	for i in range(2):
+		var ice_raven := CharacterBody3D.new()
+		ice_raven.set_script(ENEMY_SCRIPT)
+		ice_raven.name = "Corvo_Glacial_%d" % i
+		ice_raven.position = Vector3(-179.0 + float(i) * 26.0, 0.0, -267.0 - float(i) * 12.0)
+		ice_raven.set("enemy_kind", 10)
+		add_child(ice_raven)
+		enemies.append(ice_raven)
+	var final_boss := CharacterBody3D.new()
+	final_boss.set_script(ENEMY_SCRIPT)
+	final_boss.name = "Silencio_Cinzento"
+	final_boss.position = Vector3(112.0, 0.0, -382.0)
+	final_boss.set("enemy_kind", 11)
+	add_child(final_boss)
+	final_boss.set("hp", final_boss_hp)
+	final_boss.call("sync_boss_phase")
+	enemies.append(final_boss)
+	if quest_stage != 21:
+		final_boss.visible = false
+		final_boss.set_physics_process(false)
 	# Espectros opcionais guardam as margens do Rio Prateado; não contam para a missão dos cavaleiros.
 	for i in range(2):
 		var wraith := CharacterBody3D.new()
@@ -1314,7 +2671,8 @@ func _xp_needed_for_next_level() -> int:
 func _refresh_player_stats(levels_gained: int = 0) -> void:
 	if not is_instance_valid(player): return
 	var level := _get_player_level()
-	player.max_hp = 100 + (level - 1) * 12
+	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
+	player.armor_level = armor_level
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	if levels_gained > 0:
 		player.hp = mini(player.max_hp, player.hp + 25 * levels_gained)
@@ -1338,7 +2696,8 @@ func _build_player() -> void:
 	player.position = Vector3(0,0,15)
 	player.set("world", self)
 	var level := _get_player_level()
-	player.max_hp = 100 + (level - 1) * 12
+	player.max_hp = 100 + (level - 1) * 12 + armor_level * 20
+	player.armor_level = armor_level
 	player.attack_damage = 35 + weapon_level * 10 + (level - 1) * 3
 	add_child(player)
 
@@ -1349,7 +2708,8 @@ func _build_hud() -> void:
 	var xp_needed: int = _xp_needed_for_next_level()
 	hud = CanvasLayer.new()
 	hud.name = "GameHUD"
-	hud.layer = 10
+	hud.layer = 90
+	hud.visible = true
 	add_child(hud)
 
 	# A consistent dark-fantasy UI skin: warm parchment text, muted stone panels
@@ -1367,6 +2727,8 @@ func _build_hud() -> void:
 	ui_root.name = "HUDRoot"
 	ui_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_root.theme = ui_theme
+	ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.z_index = 1
 	hud.add_child(ui_root)
 
 	var panel_style := StyleBoxFlat.new()
@@ -1381,8 +2743,8 @@ func _build_hud() -> void:
 	panel_style.content_margin_top = 11.0
 	panel_style.content_margin_bottom = 11.0
 	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.58)
-	panel_style.shadow_size = 10
-	panel_style.shadow_offset = Vector2(0, 4)
+	panel_style.shadow_size = 3
+	panel_style.shadow_offset = Vector2(0, 1)
 	var quest_panel_style := panel_style.duplicate() as StyleBoxFlat
 	quest_panel_style.bg_color = Color(0.055, 0.047, 0.034, 0.97)
 	quest_panel_style.border_color = Color("b18a52")
@@ -1553,12 +2915,14 @@ func _build_hud() -> void:
 	boss_box.add_child(boss_health_bar)
 
 	combo_label = Label.new()
+	combo_label.name = "ComboLabel"
 	combo_label.position = Vector2(18, 292)
 	combo_label.text = "COMBO  •  pronto"
 	combo_label.add_theme_font_size_override("font_size", 10)
 	combo_label.add_theme_color_override("font_color", Color("d8b77c"))
 	ui_root.add_child(combo_label)
 	whisper_grove_label = Label.new()
+	whisper_grove_label.name = "WhisperGroveLabel"
 	whisper_grove_label.position = Vector2(18, 310)
 	whisper_grove_label.text = "BOSQUE DOS SUSSURROS  •  0/3"
 	whisper_grove_label.add_theme_font_size_override("font_size", 10)
@@ -1566,8 +2930,9 @@ func _build_hud() -> void:
 	whisper_grove_label.visible = false
 	ui_root.add_child(whisper_grove_label)
 	shadow_skill_label = Label.new()
+	shadow_skill_label.name = "ShadowSkillLabel"
 	shadow_skill_label.position = Vector2(18, 328)
-	shadow_skill_label.text = "BREU  •  Pulso Sombrio [K]"
+	shadow_skill_label.text = "BREU  •  Pulso [K]  •  Aparar [F]"
 	shadow_skill_label.add_theme_font_size_override("font_size", 10)
 	shadow_skill_label.add_theme_color_override("font_color", Color("b6a1d6"))
 	ui_root.add_child(shadow_skill_label)
@@ -1618,28 +2983,21 @@ func _build_hud() -> void:
 	toast_label.add_theme_color_override("font_color", Color("f1d5a5"))
 	ui_root.add_child(toast_label)
 
-	# Mobile movement pad — same input actions, but with unified circular-feel styling.
-	for data in [{"t":"▲","a":"move_forward","p":Vector2(0.12,0.77)},{"t":"▼","a":"move_back","p":Vector2(0.12,0.93)},{"t":"◀","a":"move_left","p":Vector2(0.055,0.85)},{"t":"▶","a":"move_right","p":Vector2(0.185,0.85)}]:
-		var move_btn := Button.new()
-		move_btn.text = data.t
-		move_btn.anchor_left = data.p.x
-		move_btn.anchor_right = data.p.x
-		move_btn.anchor_top = data.p.y
-		move_btn.anchor_bottom = data.p.y
-		move_btn.position = Vector2(-27, -27)
-		move_btn.size = Vector2(54, 54)
-		move_btn.add_theme_font_size_override("font_size", 19)
-		move_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.075, 0.067, 0.92), Color("6e9b89"), 27))
-		move_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.09, 0.15, 0.12, 0.98), Color("a0c4a9"), 27))
-		move_btn.add_theme_stylebox_override("pressed", _hud_button_style(Color(0.18, 0.23, 0.15, 1.0), Color("d5bd7e"), 27))
-		move_btn.modulate = Color(1, 1, 1, 0.96)
-		move_btn.button_down.connect(Input.action_press.bind(data.a))
-		move_btn.button_up.connect(Input.action_release.bind(data.a))
-		ui_root.add_child(move_btn)
+	# Joystick analógico do HUD criado por Claude; usa as mesmas ações de movimento.
+	# O D-pad anterior é substituído pelo analógico, sem alterar os controles de teclado/controle.
+	var joystick := Control.new()
+	joystick.name = "VirtualJoystick"
+	joystick.set_script(load("res://scripts/virtual_joystick.gd"))
+	joystick.process_mode = Node.PROCESS_MODE_ALWAYS
+	HUD_STYLE.place_corner(joystick, Vector2(0, 1), Vector2(150, -120), Vector2(156, 156))
+	joystick.z_index = 20
+	joystick.visible = OS.has_feature("mobile") or hud_viewport_size.x < 900.0
+	ui_root.add_child(joystick)
 
 	# Combat and utility controls: compact labels, consistent size and clear hierarchy.
-	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)}]:
+	for data in [{"t":"⚔","a":"attack","p":Vector2(0.86,0.84)},{"t":"↟","a":"jump","p":Vector2(0.95,0.69)},{"t":"E","a":"interact","p":Vector2(0.72,0.87)},{"t":"◇","a":"dodge","p":Vector2(0.76,0.96)},{"t":"✚","a":"potion","p":Vector2(0.94,0.94)},{"t":"⚒","a":"upgrade","p":Vector2(0.64,0.73)},{"t":"▣","a":"inventory","p":Vector2(0.64,0.62)},{"t":"✦","a":"shadow","p":Vector2(0.86,0.70)},{"t":"◉","a":"guard","p":Vector2(0.76,0.86)}]:
 		var action_btn := Button.new()
+		action_btn.name = "TouchAction_" + data.a
 		action_btn.text = data.t
 		action_btn.anchor_left = data.p.x
 		action_btn.anchor_right = data.p.x
@@ -1648,7 +3006,7 @@ func _build_hud() -> void:
 		action_btn.position = Vector2(-25, -25)
 		action_btn.size = Vector2(50, 50)
 		action_btn.add_theme_font_size_override("font_size", 19)
-		action_btn.tooltip_text = {"attack":"Ataque","jump":"Pular","interact":"Interagir","dodge":"Esquivar","potion":"Poção","upgrade":"Forjar","inventory":"Mochila","shadow":"Pulso sombrio"}[data.a]
+		action_btn.tooltip_text = {"attack":"Ataque","jump":"Pular","interact":"Interagir","dodge":"Esquivar","potion":"Poção","upgrade":"Forjar","inventory":"Mochila","shadow":"Pulso sombrio","guard":"Aparar (janela de 0,38 s)"}[data.a]
 		var action_fill := Color(0.055, 0.071, 0.064, 0.97)
 		var action_accent := Color("9a8058")
 		if data.a == "attack":
@@ -1666,9 +3024,11 @@ func _build_hud() -> void:
 		elif data.a == "upgrade":
 			action_fill = Color(0.15, 0.11, 0.045, 0.98)
 			action_accent = Color("d0ad6e")
-		action_btn.add_theme_stylebox_override("normal", _hud_button_style(action_fill, action_accent, 16))
-		action_btn.add_theme_stylebox_override("hover", _hud_button_style(action_fill.lightened(0.16), action_accent.lightened(0.18), 16))
-		action_btn.add_theme_stylebox_override("pressed", _hud_button_style(action_fill.lightened(0.28), Color("f0d49b"), 16))
+		action_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(action_accent))
+		action_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(action_accent.lightened(1.22)))
+		action_btn.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
+		action_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		action_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 		action_btn.pressed.connect(_touch_action.bind(data.a))
 		ui_root.add_child(action_btn)
 
@@ -1683,18 +3043,136 @@ func _build_hud() -> void:
 	pause_btn.position = Vector2(-34, -4)
 	pause_btn.size = Vector2(48, 48)
 	pause_btn.add_theme_font_size_override("font_size", 19)
-	pause_btn.add_theme_stylebox_override("normal", _hud_button_style(Color(0.035, 0.045, 0.04, 0.96), Color("b18a52"), 16))
-	pause_btn.add_theme_stylebox_override("hover", _hud_button_style(Color(0.13, 0.11, 0.075, 0.98), Color("dfbd7b"), 16))
+	pause_btn.add_theme_stylebox_override("normal", _ui_button_texture_style(Color("c6a46b")))
+	pause_btn.add_theme_stylebox_override("hover", _ui_button_texture_style(Color("f0d49b")))
+	pause_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	pause_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	pause_btn.pressed.connect(_open_menu.bind("pause"))
 	ui_root.add_child(pause_btn)
 
 	_update_inventory()
+	_apply_mobile_hud_layout(ui_root)
+	# Recalcula as zonas de toque sempre que o Android muda entre retrato e paisagem.
+	var hud_viewport := get_viewport()
+	if not hud_viewport.size_changed.is_connected(_on_hud_viewport_resized):
+		hud_viewport.size_changed.connect(_on_hud_viewport_resized)
+	call_deferred("_on_hud_viewport_resized")
+
+
+func _on_hud_viewport_resized() -> void:
+	if not is_instance_valid(hud):
+		return
+	var ui_root := hud.get_node_or_null("HUDRoot") as Control
+	if is_instance_valid(ui_root):
+		_apply_mobile_hud_layout(ui_root)
+
+
+func _apply_mobile_hud_layout(ui_root: Control) -> void:
+	# Posicionamento por offsets ancorados aos cantos: evita os controles saltarem
+	# para (0,0) quando o Android muda resolução/orientação.
+	var viewport_size := get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var mobile := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var joystick := ui_root.get_node_or_null("VirtualJoystick") as Control
+	var touch_actions := ["attack", "jump", "interact", "dodge", "potion", "upgrade", "inventory", "shadow", "guard"]
+	if not mobile:
+		if joystick:
+			joystick.visible = false
+		for action in touch_actions:
+			var desktop_hidden_button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+			if desktop_hidden_button:
+				desktop_hidden_button.visible = false
+		var desktop_pause := ui_root.get_node_or_null("PauseMenuButton") as Button
+		if desktop_pause:
+			desktop_pause.visible = false
+		return
+	if joystick:
+		joystick.visible = true
+	for action in touch_actions:
+		var touch_button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+		if touch_button:
+			touch_button.visible = true
+	var portrait := viewport_size.y > viewport_size.x
+	var compact_scale := 0.90 if portrait else 1.0
+	if joystick:
+		var center_x := minf(132.0, viewport_size.x * 0.28) if portrait else 150.0
+		var joystick_size := Vector2.ONE * (140.0 if portrait else 156.0)
+		HUD_STYLE.place_corner(joystick, Vector2(0, 1), Vector2(center_x, -120.0), joystick_size)
+		joystick.visible = true
+	var action_layout: Dictionary
+	if portrait:
+		action_layout = {
+			"attack": [Vector2(0.88, 0.72), 76.0],
+			"jump": [Vector2(0.68, 0.59), 56.0],
+			"interact": [Vector2(0.68, 0.72), 56.0],
+			"dodge": [Vector2(0.68, 0.85), 56.0],
+			"potion": [Vector2(0.88, 0.85), 54.0],
+			"shadow": [Vector2(0.88, 0.59), 54.0],
+			"upgrade": [Vector2(0.68, 0.96), 50.0],
+			"inventory": [Vector2(0.88, 0.96), 50.0],
+			"guard": [Vector2(0.78, 0.48), 52.0]
+		}
+	else:
+		action_layout = {
+			"attack": [Vector2(0.91, 0.855), 78.0],
+			"jump": [Vector2(0.96, 0.69), 60.0],
+			"interact": [Vector2(0.755, 0.79), 58.0],
+			"dodge": [Vector2(0.79, 0.94), 58.0],
+			"potion": [Vector2(0.96, 0.94), 58.0],
+			"shadow": [Vector2(0.82, 0.675), 56.0],
+			"upgrade": [Vector2(0.66, 0.68), 52.0],
+			"inventory": [Vector2(0.66, 0.82), 52.0],
+			"guard": [Vector2(0.75, 0.60), 54.0]
+		}
+	for action in action_layout:
+		var button := ui_root.get_node_or_null("TouchAction_" + action) as Button
+		if not is_instance_valid(button):
+			continue
+		var data: Array = action_layout[action]
+		var action_size := Vector2.ONE * maxf(48.0, float(data[1]) * compact_scale)
+		var anchor: Vector2 = data[0]
+		var center_offset := Vector2((anchor.x - 1.0) * viewport_size.x, (anchor.y - 1.0) * viewport_size.y)
+		HUD_STYLE.place_corner(button, Vector2(1.0, 1.0), center_offset, action_size)
+		button.add_theme_font_size_override("font_size", 12 if action != "attack" else 14)
+		var touch_labels := {
+			"attack":"⚔\nATACAR", "jump":"↟\nPULAR", "interact":"E\nUSAR",
+			"dodge":"◇\nROLAR", "potion":"✚\nCURA", "shadow":"✦\nBREU",
+			"upgrade":"⚒\nFORJAR", "inventory":"▣\nMOCHILA", "guard":"◉\nDEF"
+		}
+		button.text = touch_labels[action]
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var pause := ui_root.get_node_or_null("PauseMenuButton") as Button
+	if pause:
+		HUD_STYLE.place_corner(pause, Vector2(1.0, 0.0), Vector2(-42.0, 42.0), Vector2(48.0, 48.0))
+		pause.add_theme_font_size_override("font_size", 21)
+	var quest := ui_root.get_node_or_null("QuestCard") as PanelContainer
+	if quest:
+		quest.position = Vector2(12, 12)
+		quest.custom_minimum_size.x = minf(300.0, viewport_size.x * (0.43 if not portrait else 0.78))
+	var status := ui_root.get_node_or_null("PlayerStatusCard") as PanelContainer
+	if status:
+		status.position = Vector2(12, 132)
+		status.custom_minimum_size.x = minf(250.0, viewport_size.x * (0.36 if not portrait else 0.74))
+	var progress := ui_root.get_node_or_null("ProgressCard") as PanelContainer
+	if progress:
+		progress.position = Vector2(12, 216)
+		progress.custom_minimum_size.x = minf(250.0, viewport_size.x * (0.36 if not portrait else 0.74))
+	var combo := ui_root.get_node_or_null("ComboLabel") as Label
+	if combo:
+		combo.position = Vector2(14, 282)
+	var grove := ui_root.get_node_or_null("WhisperGroveLabel") as Label
+	if grove:
+		grove.position = Vector2(14, 302)
+	var shadow := ui_root.get_node_or_null("ShadowSkillLabel") as Label
+	if shadow:
+		shadow.position = Vector2(14, 322)
 
 
 func _build_menus() -> void:
 	menu_layer = CanvasLayer.new()
 	menu_layer.name = "GameMenus"
-	menu_layer.layer = 30
+	menu_layer.layer = 100
 	menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(menu_layer)
 	var dimmer := ColorRect.new()
@@ -1707,23 +3185,27 @@ func _build_menus() -> void:
 	menu_panel.name = "MenuFrame"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var panel_size := Vector2(minf(680.0, viewport_size.x * 0.92), minf(600.0, viewport_size.y * 0.90))
+	var is_mobile_ui := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var panel_size := Vector2(minf(680.0, viewport_size.x * (0.96 if is_mobile_ui else 0.92)), minf(600.0, viewport_size.y * (0.94 if is_mobile_ui else 0.86)))
 	menu_panel.position = -panel_size * 0.5
 	menu_panel.size = panel_size
-	menu_panel.custom_minimum_size = Vector2(0, 0)
+	menu_panel.custom_minimum_size = panel_size
+	menu_panel.clip_contents = true
 	var menu_frame_style := _hud_button_style(Color("111916"), Color("a98752"), 18)
 	menu_frame_style.set_border_width_all(2)
 	menu_frame_style.shadow_color = Color(0.0, 0.0, 0.0, 0.82)
-	menu_frame_style.shadow_size = 28
-	menu_frame_style.shadow_offset = Vector2(0, 10)
-	menu_frame_style.content_margin_left = 22.0
-	menu_frame_style.content_margin_right = 22.0
-	menu_frame_style.content_margin_top = 18.0
-	menu_frame_style.content_margin_bottom = 18.0
+	menu_frame_style.shadow_size = 8
+	menu_frame_style.shadow_offset = Vector2(0, 3)
+	menu_frame_style.content_margin_left = 14.0 if is_mobile_ui else 22.0
+	menu_frame_style.content_margin_right = 14.0 if is_mobile_ui else 22.0
+	menu_frame_style.content_margin_top = 12.0 if is_mobile_ui else 18.0
+	menu_frame_style.content_margin_bottom = 12.0 if is_mobile_ui else 18.0
 	menu_panel.add_theme_stylebox_override("panel", menu_frame_style)
 	menu_layer.add_child(menu_panel)
 	var shell := VBoxContainer.new()
 	shell.name = "MenuShell"
+	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	shell.add_theme_constant_override("separation", 10)
 	menu_panel.add_child(shell)
 	var top_rule := HBoxContainer.new()
@@ -1748,6 +3230,8 @@ func _build_menus() -> void:
 	close_btn.text = "×"
 	close_btn.custom_minimum_size = Vector2(44, 44)
 	close_btn.add_theme_font_size_override("font_size", 24)
+	close_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(_menu_back)
 	top_rule.add_child(close_btn)
 	var rule := ColorRect.new()
@@ -1756,6 +3240,7 @@ func _build_menus() -> void:
 	shell.add_child(rule)
 	menu_body = VBoxContainer.new()
 	menu_body.name = "MenuPageContent"
+	menu_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	menu_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	menu_body.add_theme_constant_override("separation", 14)
 	shell.add_child(menu_body)
@@ -1767,7 +3252,21 @@ func _build_menus() -> void:
 	shell.add_child(menu_feedback)
 	menu_layer.visible = true
 	_show_menu_page("main")
+	var menu_viewport := get_viewport()
+	if not menu_viewport.size_changed.is_connected(_on_game_menu_viewport_resized):
+		menu_viewport.size_changed.connect(_on_game_menu_viewport_resized)
 	get_tree().paused = true
+
+
+func _on_game_menu_viewport_resized() -> void:
+	if not is_instance_valid(menu_panel):
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var mobile_ui := OS.has_feature("mobile") or viewport_size.x < 900.0
+	var panel_size := Vector2(minf(680.0, viewport_size.x * (0.96 if mobile_ui else 0.92)), minf(600.0, viewport_size.y * (0.94 if mobile_ui else 0.86)))
+	menu_panel.position = -panel_size * 0.5
+	menu_panel.size = panel_size
+	menu_panel.custom_minimum_size = panel_size
 
 
 func _show_menu_page(page: String) -> void:
@@ -1817,23 +3316,20 @@ func _show_menu_page(page: String) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	menu_body.add_child(scroll)
 	var content := VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 12)
 	scroll.add_child(content)
-	if page == "main":
-		_menu_add_hero(content)
-	if page in ["main", "hub", "character"]:
+	if page in ["hub", "character"]:
 		_menu_add_stat_strip(content)
 	match page:
 		"main":
 			title.text = "A lenda desperta"
-			subtitle.text = "Explore um mundo esquecido. Proteja o vínculo entre Tobi e Breu."
-			_menu_add_card(content, "JORNADA ATUAL", quest_text + "\n" + (objective_label.text if is_instance_valid(objective_label) else "Encontre Mestre Azulan"))
-			_menu_add_button(content, "Jogar", _start_game, true)
+			subtitle.text = "Sua aventura começa agora."
+			_menu_add_button(content, "JOGAR", _start_game, true)
 			_menu_add_button(content, "CONFIGURAÇÕES", _show_menu_page.bind("settings"))
-			_menu_add_button(content, "SALVAR PROGRESSO", _save_from_menu)
 		"pause":
 			title.text = "JORNADA PAUSADA"
 			subtitle.text = "O mundo espera. Retome quando estiver pronto."
@@ -1895,7 +3391,21 @@ func _show_menu_page(page: String) -> void:
 					_menu_add_card(content, "FALTAM FRAGMENTOS", "Você precisa de mais %d Fragmentos Rubros." % (cost - shards))
 			else:
 				_menu_add_card(content, "FORJA", "Sua espada já alcançou o nível máximo disponível nesta versão.")
-			_menu_add_card(content, "PROTEÇÃO", "Vida máxima atual: %d. Poções disponíveis: %d." % [player.max_hp, potions])
+			_menu_add_section_label(content, "ARMADURA DO GUARDIÃO", "Proteção permanente para Tobi")
+			_menu_add_card(content, "ARMADURA  •  NÍVEL %d/3" % armor_level, "Vida máxima: %d  •  Bônus da armadura: +%d\nEssência Sombria: %d  •  Fragmentos Rubros: %d" % [player.max_hp, armor_level * 20, dark_essence, shards])
+			if armor_level < ARMOR_SHARD_COSTS.size():
+				var armor_shards: int = ARMOR_SHARD_COSTS[armor_level]
+				var armor_essence: int = ARMOR_ESSENCE_COSTS[armor_level]
+				var master_for_armor := get_node_or_null("Mestre Azulan")
+				var near_armor_forge := is_instance_valid(master_for_armor) and player.global_position.distance_to(master_for_armor.global_position) <= 5.0
+				var armor_caption := "FORJAR ARMADURA  •  %d FRAGMENTOS + %d ESSÊNCIA" % [armor_shards, armor_essence] if near_armor_forge else "ARMADURA  •  VISITE MESTRE AZULAN"
+				var armor_button := _menu_add_button(content, armor_caption, _upgrade_armor_from_menu, true)
+				armor_button.disabled = not near_armor_forge or shards < armor_shards or dark_essence < armor_essence
+				if near_armor_forge and (shards < armor_shards or dark_essence < armor_essence):
+					_menu_add_card(content, "MATERIAIS INSUFICIENTES", "Faltam %d Fragmentos Rubros e %d Essências Sombrias." % [maxi(0, armor_shards - shards), maxi(0, armor_essence - dark_essence)])
+			else:
+				_menu_add_card(content, "ARMADURA MÁXIMA", "A armadura do Guardião alcançou o nível máximo.")
+			_menu_add_card(content, "PROTEÇÃO", "Poções disponíveis: %d." % potions)
 		"skills":
 			title.text = "TÉCNICAS & VÍNCULO"
 			subtitle.text = "As habilidades reais disponíveis para Tobi e Breu."
@@ -1926,6 +3436,7 @@ func _show_menu_page(page: String) -> void:
 		"settings":
 			title.text = "CONFIGURAÇÕES"
 			subtitle.text = "Ajuste a câmera e consulte os controles."
+			_menu_add_card(content, "GRÁFICOS • 4K ADAPTATIVO", "PC com tela 4K: renderização 3840×2160 automática. Outras telas de PC: 1920×1080. Android: resolução nativa do aparelho para preservar desempenho.")
 			_menu_add_card(content, "SENSIBILIDADE DA CÂMERA", "Arraste na metade direita da tela para girar a câmera. Ajuste a velocidade abaixo.")
 			var sensitivity := HSlider.new()
 			sensitivity.min_value = 0.003
@@ -2142,20 +3653,21 @@ func _menu_add_button(parent: Control, caption: String, callback: Callable, prim
 	var button := Button.new()
 	button.text = ("✦  " if primary else "◇  ") + caption + "     ›"
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.custom_minimum_size = Vector2(0, 62 if primary else 56)
+	button.custom_minimum_size = Vector2(0, 78 if primary else 72)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 14 if primary else 12)
+	button.add_theme_font_size_override("font_size", 16 if primary else 14)
 	button.add_theme_color_override("font_color", Color("f0dfbf") if primary else Color("c5cfc2"))
 	button.add_theme_color_override("font_hover_color", Color("fff0cf"))
 	var fill := Color(0.13, 0.085, 0.045, 0.99) if primary else Color(0.055, 0.075, 0.067, 0.98)
 	var edge := Color("d8b77c") if primary else Color("8c7956")
-	var normal_style := _hud_button_style(fill, edge, 13)
-	normal_style.shadow_color = Color(0.0, 0.0, 0.0, 0.52)
-	normal_style.shadow_size = 7
-	normal_style.shadow_offset = Vector2(0, 3)
+	var normal_style := _ui_button_texture_style(edge)
 	button.add_theme_stylebox_override("normal", normal_style)
-	button.add_theme_stylebox_override("hover", _hud_button_style(fill.lightened(0.18), edge.lightened(0.2), 13))
-	button.add_theme_stylebox_override("pressed", _hud_button_style(fill.lightened(0.3), Color("f0d49b"), 13))
+	button.add_theme_stylebox_override("hover", _ui_button_texture_style(edge.lightened(1.22)))
+	button.add_theme_stylebox_override("pressed", _ui_button_texture_style(Color("f0d49b")))
+	button.add_theme_stylebox_override("focus", _ui_button_texture_style(Color("e8c987")))
+	button.add_theme_stylebox_override("disabled", _ui_button_texture_style(Color("59645b")))
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.process_mode = Node.PROCESS_MODE_ALWAYS
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -2166,8 +3678,8 @@ func _menu_add_card(parent: Control, heading: String, body: String) -> void:
 	var card_style := _hud_button_style(Color("1a241f"), Color("786443"), 12)
 	card_style.set_border_width_all(1)
 	card_style.shadow_color = Color(0.0, 0.0, 0.0, 0.38)
-	card_style.shadow_size = 6
-	card_style.shadow_offset = Vector2(0, 3)
+	card_style.shadow_size = 2
+	card_style.shadow_offset = Vector2(0, 1)
 	card_style.content_margin_left = 15.0
 	card_style.content_margin_right = 15.0
 	card_style.content_margin_top = 12.0
@@ -2211,25 +3723,18 @@ func _open_menu(page: String = "pause") -> void:
 
 
 func _start_game() -> void:
+	if is_instance_valid(hud):
+		hud.visible = true
 	if game_started:
 		_close_menu()
 		return
 	if is_instance_valid(menu_layer):
 		menu_layer.visible = false
-	_create_loading_screen()
-	_set_loading_progress(28.0, "Abrindo os caminhos...")
-	get_tree().paused = false
-	await get_tree().process_frame
-	var transition := loading_layer.create_tween()
-	transition.tween_property(loading_progress, "value", 100.0, 0.72)
-	_set_loading_progress(28.0, "As sombras se afastam...")
-	await transition.finished
-	_set_loading_progress(100.0, "Bem-vindo de volta, aventureiro.")
-	await get_tree().create_timer(0.18, true).timeout
+	# O mundo já foi preparado na inicialização; não exibir uma segunda tela
+	# de carregamento artificial nem manter a árvore pausada após tocar em Jogar.
 	game_started = true
-	print("TOBI_BREU_GAME_STARTED")
-	await _hide_loading_screen()
 	get_tree().paused = false
+	print("TOBI_BREU_GAME_STARTED")
 
 
 func _close_menu() -> void:
@@ -2271,6 +3776,16 @@ func _upgrade_from_menu() -> void:
 		menu_feedback.text = toast_label.text
 
 
+func _upgrade_armor_from_menu() -> void:
+	var previous_level := armor_level
+	_upgrade_armor()
+	_show_menu_page("equipment")
+	if armor_level > previous_level:
+		menu_feedback.text = "ARMADURA APRIMORADA • NÍVEL %d/3" % armor_level
+	elif is_instance_valid(toast_label):
+		menu_feedback.text = toast_label.text
+
+
 func _set_camera_sensitivity(value: float) -> void:
 	camera_sensitivity_setting = value
 	if is_instance_valid(player): player.camera_sensitivity = value
@@ -2300,17 +3815,30 @@ func _hud_bar_style(color: Color) -> StyleBoxFlat:
 	return style
 
 
+func _ui_button_texture_style(tint: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = load("res://assets/ui/button_frame.svg")
+	style.texture_margin_left = 24.0
+	style.texture_margin_right = 24.0
+	style.texture_margin_top = 18.0
+	style.texture_margin_bottom = 18.0
+	style.modulate_color = tint
+	style.draw_center = true
+	return style
+
+
 func _hud_button_style(fill: Color, accent: Color, radius: int = 16) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill
 	style.border_color = accent
 	style.set_border_width_all(2)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.42)
-	style.shadow_size = 5
-	style.shadow_offset = Vector2(0, 2)
+	# Sombras menores reduzem o custo de renderização em telas móveis.
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.24)
+	style.shadow_size = 2
+	style.shadow_offset = Vector2(0, 1)
 	style.set_corner_radius_all(radius)
-	style.corner_detail = 6
-	style.anti_aliasing = true
+	style.corner_detail = 4
+	style.anti_aliasing = false
 	style.content_margin_left = 8.0
 	style.content_margin_right = 8.0
 	style.content_margin_top = 6.0
@@ -2327,6 +3855,7 @@ func _touch_action(action: String) -> void:
 	elif action == "upgrade": _upgrade_weapon()
 	elif action == "inventory": _toggle_inventory()
 	elif action == "shadow": player.do_shadow_pulse()
+	elif action == "guard": player.do_guard()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -2352,6 +3881,8 @@ func _toggle_inventory() -> void:
 
 func _process(delta: float) -> void:
 	day_clock = fposmod(day_clock + delta * 0.0022, TAU)
+	weather_clock = fposmod(weather_clock + delta, 240.0)
+	_update_weather()
 	if is_instance_valid(sun_light):
 		var daylight := 0.52 + 0.48 * maxf(0.0, sin(day_clock))
 		sun_light.light_energy = 0.28 + daylight * 0.95
@@ -2362,12 +3893,25 @@ func _process(delta: float) -> void:
 		save_toast_timer = maxf(0.0, save_toast_timer - delta)
 		if save_toast_timer == 0.0 and toast_label and toast_label.text == "Progresso salvo": toast_label.text = ""
 	if boss_hud_panel:
-		boss_hud_panel.visible = quest_stage == 12
+		boss_hud_panel.visible = quest_stage == 12 or quest_stage == 21
 		if quest_stage == 12:
 			var river_boss := get_node_or_null("Leviata_do_Lodo")
 			if river_boss and boss_health_bar:
 				boss_health_bar.value = maxf(0.0, float(river_boss.get("hp")))
+		elif quest_stage == 21:
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss and boss_health_bar:
+				boss_health_bar.value = maxf(0.0, float(final_boss.get("hp")))
 	if not is_instance_valid(player): return
+	# Modelos opcionais entram somente quando o jogador alcança a área correspondente.
+	# A carga em thread mantém a exploração jogável enquanto GLBs e texturas são preparados.
+	if not low_memory_android and not nature_models_stream_requested and player.global_position.distance_to(Vector3(-145.0, 0.0, -145.0)) < 90.0:
+		nature_models_stream_requested = true
+		_build_downloaded_nature_models()
+	if not low_memory_android and not itch_dungeon_stream_requested and player.global_position.distance_to(Vector3(226.0, 0.0, 89.0)) < 82.0:
+		_start_itch_dungeon_streaming()
+	if not low_memory_android and itch_dungeon_stream_requested and not itch_dungeon_assets_loaded:
+		_poll_itch_dungeon_streaming()
 	var nearest := 999.0
 	var npc := get_node_or_null("Mestre Azulan")
 	if npc:
@@ -2376,6 +3920,10 @@ func _process(delta: float) -> void:
 	var shrine_distance := player.global_position.distance_to(shrine.global_position) if shrine else 999.0
 	var river_npc := get_node_or_null("Guardião do Rio")
 	var river_distance := player.global_position.distance_to(river_npc.global_position) if river_npc else 999.0
+	var herbalist_npc := get_node_or_null("Nara Herbalista")
+	var herbalist_distance := player.global_position.distance_to(herbalist_npc.global_position) if herbalist_npc else 999.0
+	var alchemy_bench := get_node_or_null("BancadaDeAlquimia")
+	var alchemy_distance := player.global_position.distance_to(alchemy_bench.global_position) if alchemy_bench else 999.0
 	var river_puzzle := get_node_or_null("RiverShrinePuzzle")
 	var river_puzzle_distance := player.global_position.distance_to(river_puzzle.global_position) if river_puzzle else 999.0
 	var nearest_chest_id := _nearest_river_chest()
@@ -2390,6 +3938,20 @@ func _process(delta: float) -> void:
 	var chest_distance := player.global_position.distance_to(get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id).global_position) if nearest_chest_id >= 0 and get_node_or_null("RiverTreasureChest_%d" % nearest_chest_id) else 999.0
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
 	var guild_distance := player.global_position.distance_to(guild_board.global_position) if guild_board else 999.0
+	var bell_tower := get_node_or_null("EchoingBellTower")
+	var bell_tower_distance := player.global_position.distance_to(bell_tower.global_position) if bell_tower else 999.0
+	var final_altar := get_node_or_null("TronoObsidiano/FinalCheckpointAltar")
+	var final_altar_distance := player.global_position.distance_to(final_altar.global_position) if final_altar else 999.0
+	var nearest_waystone_id := _nearest_ancient_waystone()
+	var waystone_node := get_node_or_null("AncientWaystone_%d" % nearest_waystone_id) if nearest_waystone_id >= 0 else null
+	var waystone_distance := player.global_position.distance_to(waystone_node.global_position) if waystone_node else 999.0
+	var nearest_ashen_relic_id := _nearest_ashen_relic()
+	var ashen_relic_distance := 999.0
+	if nearest_ashen_relic_id >= 0:
+		var ashen_relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % nearest_ashen_relic_id)
+		if ashen_relic: ashen_relic_distance = player.global_position.distance_to(ashen_relic.global_position)
+	var ashen_altar := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar")
+	var ashen_altar_distance := player.global_position.distance_to(ashen_altar.global_position) if ashen_altar else 999.0
 	var nearest_guild_relic_distance := 999.0
 	for relic_id in range(3):
 		var relic := get_node_or_null("GuildRelic_%d" % relic_id)
@@ -2398,12 +3960,21 @@ func _process(delta: float) -> void:
 	if guild_distance < 4.5: prompt_label.text = "E: QUADRO DA GUILDA DOS VIGIAS"
 	elif nearest_guild_relic_distance < 3.8: prompt_label.text = "E: RECUPERAR SELO ANTIGO"
 	elif nearest < 4.0: prompt_label.text = "E: FALAR COM AZULAN  •  U: FORJAR ESPADA"
+	elif alchemy_distance < 4.0: prompt_label.text = "E: PREPARAR POÇÃO  •  2 ERVAS + 1 ESSÊNCIA"
+	elif herbalist_distance < 4.5: prompt_label.text = "E: FALAR COM NARA  •  POÇÃO: 2 FRAGMENTOS"
 	elif river_distance < 4.5: prompt_label.text = "E: FALAR COM O GUARDIÃO DO RIO"
 	elif chest_distance < 3.2: prompt_label.text = "E: ABRIR BAÚ DO RIO PRATEADO"
 	elif lantern_distance < 3.5: prompt_label.text = "E: ACENDER LANTERNA DO BOSQUE (%d/3)" % whisper_lantern_ids.size()
 	elif stag_guardian_distance < 4.5 and whisper_lantern_ids.size() < 3: prompt_label.text = "O GUARDIÃO AGUARDA AS 3 LANTERNAS"
 	elif stag_guardian_distance < 4.5 and whisper_guardian_reward_claimed: prompt_label.text = "O GUARDIÃO JÁ CONCEDEU SUA BÊNÇÃO"
 	elif stag_guardian_distance < 4.5: prompt_label.text = "E: RECEBER A BÊNÇÃO DO GUARDIÃO"
+	elif ashen_relic_distance < 3.6: prompt_label.text = "E: RECUPERAR RELÍQUIA DAS CINZAS  •  (%d/3)" % ashen_relic_ids.size()
+	elif ashen_altar_distance < 4.0 and ashen_relic_ids.size() >= 3 and not ashen_reward_claimed: prompt_label.text = "E: REIVINDICAR TESOURO DA CRIPTA"
+	elif ashen_altar_distance < 4.0 and ashen_reward_claimed: prompt_label.text = "ALTAR DAS CINZAS — DESPERTO"
+	elif waystone_distance < 4.0: prompt_label.text = "E: ATIVAR PEDRA-ÂNCORA ANTIGA  •  (%d/3)" % ancient_waystone_ids.size()
+	elif bell_tower_distance < 5.0 and bell_tower_ring_count < 3: prompt_label.text = "E: TOCAR O SINO ANTIGO  •  (%d/3)" % bell_tower_ring_count
+	elif bell_tower_distance < 5.0: prompt_label.text = "SINO DO ÚLTIMO VIGIA — CONCLUÍDO"
+	elif final_altar_distance < 5.0 and quest_stage >= 21: prompt_label.text = "E: ATIVAR ALTAR DA ÚLTIMA VIGÍLIA"
 	elif river_puzzle_distance < 4.8 and not river_shrine_solved: prompt_label.text = "E: GIRAR O ANEL DO ASTROLÁBIO  •  (%d/3)" % (mini(_river_puzzle_current_ring() + 1, 3))
 	elif river_puzzle_distance < 4.8 and river_shrine_solved: prompt_label.text = "ASTROLÁBIO RESTAURADO — RECOMPENSA COLETADA"
 	elif shrine_distance < 3.8: prompt_label.text = "INTERAGIR — Santuário Esquecido"
@@ -2468,7 +4039,14 @@ func _activate_whisper_lantern(lantern_id: int) -> void:
 	dark_essence += 1
 	if whisper_lantern_ids.size() == 3:
 		shards += 1
-		toast_label.text = "BOSQUE DESPERTOU! +22 XP • Essência +1 • Fragmento Rubro +1"
+		if quest_stage == 15:
+			quest_stage = 16
+			quest_text = "Acorde o Cervo Guardião"
+			objective_label.text = "Objetivo: receba a bênção do Cervo Guardião no bosque"
+			toast_label.text = "AS TRÊS LUZES RETORNARAM! O Cervo Guardião despertou. Vá até o altar central."
+			_update_quest()
+		else:
+			toast_label.text = "BOSQUE DESPERTOU! +22 XP • Essência +1 • Fragmento Rubro +1"
 	else:
 		toast_label.text = "LANTERNA ACESA (%d/3) • +22 XP • Essência Sombria +1" % whisper_lantern_ids.size()
 	_update_inventory()
@@ -2488,6 +4066,135 @@ func _nearest_river_chest() -> int:
 				best_id = i
 	return best_id
 
+func _nearest_ashen_relic() -> int:
+	if not is_instance_valid(player): return -1
+	var best_id := -1
+	var best_distance := 3.6
+	for i in range(3):
+		if ashen_relic_ids.has(i): continue
+		var relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % i)
+		if relic:
+			var distance := player.global_position.distance_to(relic.global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best_id = i
+	return best_id
+
+func _nearest_ancient_waystone() -> int:
+	if not is_instance_valid(player): return -1
+	var best_id := -1
+	var best_distance := 4.0
+	for i in range(3):
+		if ancient_waystone_ids.has(i): continue
+		var stone := get_node_or_null("AncientWaystone_%d" % i)
+		if stone:
+			var distance := player.global_position.distance_to(stone.global_position)
+			if distance < best_distance:
+				best_distance = distance
+				best_id = i
+	return best_id
+
+func _build_final_region() -> void:
+	var region := Node3D.new()
+	region.name = "TronoObsidiano"
+	region.position = Vector3(112.0, 0.0, -382.0)
+	add_child(region)
+	_build_biome_patch("AshenThroneGround", region.position, Vector2(112.0, 94.0), Color("373c40"))
+	var approach := _box(self, "AshenThroneRoad", Vector3(112.0, 0.025, -320.0), Vector3(8.0, 0.05, 118.0), Color("4e4948"))
+	approach.material_override = _painter_mat(Color("4e4948"), 4.0, 0.18, 2, Color("292d32"))
+	# A broken gate frames the last ascent from the Red Gorge.
+	for side in [-1.0, 1.0]:
+		var gate_pillar := _box(region, "ThroneGatePillar", Vector3(side * 16.0, 5.0, 37.0), Vector3(3.0, 10.0, 3.0), Color("55565a"))
+		gate_pillar.rotation.z = side * -0.06
+		_box(region, "ThroneGateRune", Vector3(side * 16.0, 6.0, 35.35), Vector3(0.55, 3.4, 0.16), Color("9b777f"))
+	_box(region, "ThroneGateLintel", Vector3(0.0, 10.2, 37.0), Vector3(36.0, 2.0, 3.0), Color("66636a"))
+	# Wide arena dais, fractured black pillars and restrained ash-violet light.
+	var dais := _sphere(region, "ThroneArenaDais", Vector3(0.0, 0.12, 0.0), 1.0, Color("292d33"), 0.25)
+	dais.scale = Vector3(31.0, 0.22, 25.0)
+	for i in range(10):
+		var angle := TAU * float(i) / 10.0
+		var pillar_pos := Vector3(cos(angle) * 25.0, 0.0, sin(angle) * 20.0)
+		var pillar := _box(region, "AshenPillar_%02d" % i, pillar_pos + Vector3(0.0, 3.0, 0.0), Vector3(2.1, 6.0 + float(i % 3), 2.1), Color("4c5054"))
+		pillar.rotation.z = randf_range(-0.08, 0.08)
+		var rune := _box(region, "AshenPillarRune_%02d" % i, pillar_pos + Vector3(0.0, 3.0, 1.08), Vector3(0.18, 1.9, 0.08), Color("8e657a"))
+		rune.material_override = _painter_mat(Color("8e657a"), 7.0, 0.16, 8, Color("56384f"))
+	var throne := _box(region, "ObsidianThroneBack", Vector3(0.0, 4.0, -17.0), Vector3(8.0, 8.0, 2.2), Color("33383f"))
+	_box(region, "ObsidianThroneSeat", Vector3(0.0, 1.3, -14.5), Vector3(9.0, 1.2, 6.0), Color("45414a"))
+	for side in [-1.0, 1.0]:
+		var spire := _box(region, "ThroneSpire", Vector3(side * 5.0, 7.0, -17.0), Vector3(1.0, 14.0, 1.0), Color("57505b"))
+		spire.rotation.z = side * 0.13
+	var heart := _sphere(region, "AshenHeart", Vector3(0.0, 5.0, -18.0), 1.1, Color("8b526f"), 1.5)
+	heart.material_override = _painter_mat(Color("8b526f"), 8.0, 0.22, 8, Color("4b314d"))
+	var heart_light := OmniLight3D.new()
+	heart_light.name = "AshenHeartGlow"
+	heart_light.position = Vector3(0.0, 5.0, -18.0)
+	heart_light.light_color = Color("9a6c91")
+	heart_light.light_energy = 1.25
+	heart_light.omni_range = 18.0
+	region.add_child(heart_light)
+	# A rest altar before the arena becomes a persistent checkpoint.
+	var altar := Node3D.new()
+	altar.name = "FinalCheckpointAltar"
+	altar.position = Vector3(0.0, 0.0, 29.0)
+	altar.set_meta("interact_name", "Altar da Última Vigília")
+	region.add_child(altar)
+	_box(altar, "AltarBase", Vector3(0.0, 0.45, 0.0), Vector3(4.2, 0.9, 3.2), Color("55504a"))
+	var altar_rune := _sphere(altar, "AltarRune", Vector3(0.0, 1.25, 0.25), 0.42, Color("c5a77a"), 1.2)
+	altar_rune.material_override = _painter_mat(Color("c5a77a"), 8.0, 0.15)
+	var altar_light := OmniLight3D.new()
+	altar_light.position = Vector3(0.0, 2.0, 0.0)
+	altar_light.light_color = Color("d4b17b")
+	altar_light.light_energy = 0.75
+	altar_light.omni_range = 9.0
+	altar.add_child(altar_light)
+	_add_region_title("TRONO OBSIDIANO", region.position + Vector3(0.0, 17.0, 0.0), Color("c5a4b6"))
+
+func _build_ancient_waystones() -> void:
+	var positions := [Vector3(-158.0, 0.0, -91.0), Vector3(-166.0, 0.0, -247.0), Vector3(158.0, 0.0, -91.0)]
+	var labels := ["Raiz", "Geada", "Brasa"]
+	for i in range(positions.size()):
+		var stone := Node3D.new()
+		stone.name = "AncientWaystone_%d" % i
+		stone.position = positions[i]
+		add_child(stone)
+		var pillar := _box(stone, "WaystonePillar", Vector3(0.0, 1.7, 0.0), Vector3(1.35, 3.4, 0.8), Color("59665d"))
+		pillar.rotation.z = -0.08 if i % 2 == 0 else 0.08
+		_box(stone, "WaystoneBase", Vector3(0.0, 0.25, 0.0), Vector3(2.2, 0.5, 1.5), Color("454e49"))
+		var rune := _sphere(stone, "WaystoneRune", Vector3(0.0, 1.8, 0.46), 0.28, Color("779b8a"), 1.6)
+		rune.scale = Vector3(0.7, 1.4, 0.35)
+
+		# Escultura modular: pedestal, molduras talhadas e fragmentos flutuantes.
+		var theme_colors := [Color("739b78"), Color("8fc4d1"), Color("c66b53")]
+		var accent_color: Color = theme_colors[i]
+		var dais := _sphere(stone, "WaystoneDais", Vector3(0.0, 0.12, 0.0), 1.0, Color("343d38"), 0.28)
+		dais.scale = Vector3(1.55, 0.42, 1.18)
+		var crown := _box(stone, "WaystoneCrown", Vector3(0.0, 3.42, 0.0), Vector3(1.72, 0.34, 1.08), Color("777b70"))
+		crown.rotation.y = 0.12 if i == 1 else -0.08
+		_box(stone, "WaystoneLowerCarving", Vector3(0.0, 0.72, 0.43), Vector3(1.52, 0.16, 0.12), Color("303b36"))
+		_box(stone, "WaystoneUpperCarving", Vector3(0.0, 2.92, 0.43), Vector3(1.42, 0.13, 0.12), Color("303b36"))
+		for glyph_index in range(3):
+			var glyph := _box(stone, "WaystoneGlyph_%d" % glyph_index, Vector3(-0.34 + float(glyph_index) * 0.34, 1.25 + float(glyph_index) * 0.34, 0.49), Vector3(0.10, 0.24, 0.07), accent_color)
+			glyph.rotation.z = -0.42 if glyph_index == 1 else 0.38
+			glyph.material_override = _painter_mat(accent_color, 8.0, 0.22)
+		for shard_index in range(2):
+			var shard := _sphere(stone, "WaystoneShard_%d" % shard_index, Vector3(-0.92 + float(shard_index) * 1.84, 1.0 + float(shard_index % 2) * 0.38, 0.0), 0.22, accent_color, 0.72)
+			shard.scale = Vector3(0.48, 1.55, 0.48)
+			shard.rotation.z = -0.24 if shard_index == 0 else 0.24
+			shard.material_override = _painter_mat(accent_color, 7.0, 0.18)
+		for corner in [-1.0, 1.0]:
+			var brace := _box(stone, "WaystoneBrace", Vector3(corner * 0.78, 0.52, 0.0), Vector3(0.34, 0.9, 0.92), Color("4a514b"))
+			brace.rotation.z = corner * -0.12
+		var rune_light := OmniLight3D.new()
+		rune_light.name = "WaystoneAccentLight"
+		rune_light.position = Vector3(0.0, 2.0, 1.1)
+		rune_light.light_color = accent_color
+		rune_light.light_energy = 0.32 if not ancient_waystone_ids.has(i) else 0.85
+		rune_light.omni_range = 4.0
+		stone.add_child(rune_light)
+		_add_region_title("PEDRA-ÂNCORA: " + labels[i].to_upper(), stone.position + Vector3(0.0, 4.2, 0.0), Color("b9d8c1"))
+		if ancient_waystone_ids.has(i):
+			rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
+
 func _open_river_chest(chest_id: int) -> void:
 	if chest_id < 0 or chest_id >= 3 or river_chest_ids.has(chest_id): return
 	var chest := get_node_or_null("RiverTreasureChest_%d" % chest_id)
@@ -2495,8 +4202,16 @@ func _open_river_chest(chest_id: int) -> void:
 	river_chest_ids.append(chest_id)
 	river_chest_ids.sort()
 	chest.set_meta("opened", true)
-	var lid_pivot := chest.get_node_or_null("ChestLidPivot")
-	if lid_pivot: lid_pivot.rotation.x = -1.05
+	var plugin_lid := chest.find_child("hinged_lid", true, false) as Node3D
+	if plugin_lid != null:
+		plugin_lid.rotation.x = -1.05
+	else:
+		var lid_pivot := chest.get_node_or_null("ChestLidPivot")
+		if lid_pivot: lid_pivot.rotation.x = -1.05
+	for clasp_name in ["left_clasp", "right_clasp"]:
+		var plugin_clasp := chest.find_child(clasp_name, true, false) as Node3D
+		if plugin_clasp != null:
+			plugin_clasp.visible = false
 	var clasp := chest.get_node_or_null("ChestClasp")
 	if clasp: clasp.visible = false
 	var glow := chest.get_node_or_null("ChestGlow")
@@ -2514,6 +4229,116 @@ func _open_river_chest(chest_id: int) -> void:
 	_save_game()
 
 func _interact() -> void:
+	var final_altar := get_node_or_null("TronoObsidiano/FinalCheckpointAltar")
+	if final_altar and player.global_position.distance_to(final_altar.global_position) < 5.0:
+		if quest_stage < 21:
+			toast_label.text = "O altar ainda está adormecido. Fale com Azulan para abrir a última jornada."
+			return
+		checkpoint_position = final_altar.global_position + Vector3(0.0, 0.0, 5.0)
+		player.hp = player.max_hp
+		player_health_changed(player.hp, player.max_hp)
+		toast_label.text = "ALTAR DA ÚLTIMA VIGÍLIA ATIVADO • Vida restaurada • Ponto de retorno salvo"
+		_save_game()
+		return
+	var ashen_relic_id := _nearest_ashen_relic()
+	if ashen_relic_id >= 0:
+		var ashen_relic := get_node_or_null("AldeiaDasCinzas/AshenRelic_%d" % ashen_relic_id)
+		if ashen_relic and ashen_relic.visible:
+			ashen_relic_ids.append(ashen_relic_id)
+			ashen_relic_ids.sort()
+			ashen_relic.visible = false
+			_grant_xp(35)
+			dark_essence += 1
+			if ashen_relic_ids.size() >= 3:
+				toast_label.text = "AS TRÊS RELÍQUIAS DAS CINZAS RECUPERADAS! O altar da cripta despertou."
+				var reward_crystal := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar/AshenRewardCrystal")
+				if reward_crystal:
+					reward_crystal.material_override = _painter_mat(Color("d7a5df"), 7.0, 0.18, 13, Color("734d83"))
+				var altar_light := OmniLight3D.new()
+				altar_light.name = "AshenRewardLight"
+				altar_light.position = Vector3(-15.0, 2.0, 17.0)
+				altar_light.light_color = Color("c78bd9")
+				altar_light.light_energy = 0.65
+				altar_light.omni_range = 7.0
+				get_node("AldeiaDasCinzas").add_child(altar_light)
+			else:
+				toast_label.text = "RELÍQUIA DAS CINZAS RECUPERADA (%d/3) • +35 XP • Essência +1" % ashen_relic_ids.size()
+			_update_inventory()
+			_save_game()
+		return
+	var ashen_altar := get_node_or_null("AldeiaDasCinzas/AshenRewardAltar")
+	if ashen_altar and player.global_position.distance_to(ashen_altar.global_position) < 4.0:
+		if ashen_relic_ids.size() < 3:
+			toast_label.text = "O altar está selado. Recupere as três relíquias espalhadas pela aldeia (%d/3)." % ashen_relic_ids.size()
+		elif not ashen_reward_claimed:
+			ashen_reward_claimed = true
+			_grant_xp(150)
+			shards += 5
+			dark_essence += 4
+			potions += 2
+			toast_label.text = "TESOURO DA CRIPTA REIVINDICADO! +150 XP • 5 Fragmentos • 4 Essências • 2 Poções"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "O altar já entregou seu tesouro."
+		return
+	var waystone_id := _nearest_ancient_waystone()
+	if waystone_id >= 0:
+		var waystone := get_node_or_null("AncientWaystone_%d" % waystone_id)
+		if waystone and player.global_position.distance_to(waystone.global_position) < 4.0:
+			if not ancient_waystone_ids.has(waystone_id):
+				ancient_waystone_ids.append(waystone_id)
+				ancient_waystone_ids.sort()
+				var waystone_rune := waystone.get_node_or_null("WaystoneRune")
+				if waystone_rune: waystone_rune.material_override = _painter_mat(Color("b9e6c9"), 8.0, 0.45)
+				_grant_xp(30)
+				dark_essence += 1
+				if ancient_waystone_ids.size() >= 3:
+					_grant_xp(120)
+					shards += 4
+					potions += 2
+					if quest_stage == 18:
+						quest_stage = 19 if bell_tower_ring_count < 3 else 20
+						quest_text = "O Sino do Último Vigia" if quest_stage == 19 else "Capítulo IV concluído"
+						objective_label.text = "Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
+						toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! O Sino do Último Vigia respondeu ao chamado. Siga para a torre." if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO! As antigas pedras e o sino já estão despertos."
+						_update_quest()
+					else:
+						toast_label.text = "AS TRÊS PEDRAS-ÂNCORA DESPERTARAM! +120 XP • 4 Fragmentos • 2 Poções"
+				else:
+					toast_label.text = "PEDRA-ÂNCORA DESPERTADA • +30 XP • Essência +1 (%d/3)" % ancient_waystone_ids.size()
+				_update_inventory()
+				_save_game()
+			else:
+				toast_label.text = "Esta Pedra-Âncora já foi despertada."
+			return
+	var bell_tower := get_node_or_null("EchoingBellTower")
+	if bell_tower and player.global_position.distance_to(bell_tower.global_position) < 5.0:
+		if bell_tower_ring_count < 3:
+			bell_tower_ring_count += 1
+			var bell_mesh := bell_tower.get_node_or_null("EchoingBell")
+			if bell_mesh:
+				bell_mesh.rotation.z = -0.22 if bell_tower_ring_count % 2 == 1 else 0.22
+			if bell_tower_ring_count >= 3:
+				_grant_xp(75)
+				shards += 4
+				dark_essence += 2
+				potions += 1
+				if quest_stage == 19:
+					quest_stage = 20
+					quest_text = "Capítulo IV concluído"
+					objective_label.text = "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido"
+					toast_label.text = "CAPÍTULO IV CONCLUÍDO! O Sino do Último Vigia rompeu o silêncio entre as regiões. +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
+					_update_quest()
+				else:
+					toast_label.text = "SINO DO ÚLTIMO VIGIA! +75 XP • 4 Fragmentos • 2 Essências • 1 Poção"
+				_update_inventory()
+			else:
+				toast_label.text = "O sino antigo ecoa pela névoa... (%d/3)" % bell_tower_ring_count
+			_save_game()
+		else:
+			toast_label.text = "O sino repousa. A última vigília foi concluída."
+		return
 	var guild_board := get_node_or_null("GuildaDosVigias/GuildContractBoard")
 	if guild_board and player.global_position.distance_to(guild_board.global_position) < 4.5:
 		if not guild_contract_started:
@@ -2557,14 +4382,29 @@ func _interact() -> void:
 		if whisper_lantern_ids.size() < 3:
 			toast_label.text = "O Guardião Cervo permanece adormecido. Acenda as três lanternas do bosque."
 		elif whisper_guardian_reward_claimed:
-			toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
+			if quest_stage == 16:
+				quest_stage = 17
+				quest_text = "Capítulo III concluído"
+				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
+				toast_label.text = "O Cervo reconhece sua coragem. A memória da floresta está restaurada!"
+				_update_quest()
+				_save_game()
+			else:
+				toast_label.text = "O Guardião inclina a cabeça. A bênção antiga já vive em você."
 		else:
 			whisper_guardian_reward_claimed = true
 			_grant_xp(90)
 			shards += 3
 			dark_essence += 2
 			potions += 1
-			toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+			if quest_stage == 16:
+				quest_stage = 17
+				quest_text = "Capítulo III concluído"
+				objective_label.text = "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada"
+				toast_label.text = "CAPÍTULO III CONCLUÍDO! O Cervo devolveu as lembranças à floresta. +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
+				_update_quest()
+			else:
+				toast_label.text = "Bênção do Cervo Ancião • +90 XP • 3 Fragmentos • 2 Essências • 1 Poção"
 			_update_inventory()
 			_save_game()
 		return
@@ -2599,11 +4439,11 @@ func _interact() -> void:
 				else:
 					river_shrine_solved = true
 					river_puzzle.set_meta("solved", true)
-					var lever := river_puzzle.get_node_or_null("PuzzleLever")
-					var drawer := river_puzzle.get_node_or_null("PuzzleOfferingDrawer/DrawerLid")
+					var lever_arm := river_puzzle.find_child("lever_arm", true, false) as Node3D
+					var drawer_lid := river_puzzle.find_child("drawer_lid", true, false) as Node3D
 					var reward_crystal := river_puzzle.get_node_or_null("PuzzleRewardCrystal")
-					if lever: lever.rotation.z = -0.85
-					if drawer: drawer.rotation.x = -1.1
+					if lever_arm != null: lever_arm.rotation.z = -0.85
+					if drawer_lid != null: drawer_lid.rotation.x = -1.1
 					if reward_crystal: reward_crystal.visible = true
 					_grant_xp(60)
 					dark_essence += 3
@@ -2648,6 +4488,30 @@ func _interact() -> void:
 			_save_game()
 		else:
 			toast_label.text = "O santuário está em silêncio."
+		return
+	var alchemy_bench := get_node_or_null("BancadaDeAlquimia")
+	if alchemy_bench and player.global_position.distance_to(alchemy_bench.global_position) < 4.0:
+		if swamp_herbs >= 2 and dark_essence >= 1:
+			swamp_herbs -= 2
+			dark_essence -= 1
+			potions += 1
+			_grant_xp(15)
+			toast_label.text = "ALQUIMIA CONCLUÍDA • Poção +1 • 2 Ervas e 1 Essência usados • +15 XP"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "A receita exige 2 Ervas do Pântano e 1 Essência Sombria. Você tem %d ervas e %d essências." % [swamp_herbs, dark_essence]
+		return
+	var herbalist_npc := get_node_or_null("Nara Herbalista")
+	if herbalist_npc and player.global_position.distance_to(herbalist_npc.global_position) < 4.5:
+		if shards >= 2:
+			shards -= 2
+			potions += 1
+			toast_label.text = "Nara: ervas frescas para sua jornada. Poção +1 • Fragmentos -2"
+			_update_inventory()
+			_save_game()
+		else:
+			toast_label.text = "Nara: preciso de 2 Fragmentos Rubros por uma poção. Você tem %d." % shards
 		return
 	var river_npc := get_node_or_null("Guardião do Rio")
 	if river_npc and player.global_position.distance_to(river_npc.global_position) < 4.5:
@@ -2714,6 +4578,53 @@ func _interact() -> void:
 			toast_label.text = "Azulan: A Bruxa caiu. A trilha do Coração Rubro segue pelo Rio Prateado. +150 XP, 5 fragmentos e 2 poções."
 			_update_inventory()
 			_save_game()
+		elif quest_stage == 20:
+			quest_stage = 21
+			quest_text = "O Trono Obsidiano"
+			final_boss_hp = 1200
+			final_boss_saved_band = 10
+			var final_boss := get_node_or_null("Silencio_Cinzento")
+			if final_boss:
+				final_boss.set("hp", final_boss_hp)
+				final_boss.visible = true
+				final_boss.set_physics_process(true)
+			boss_hud_panel.visible = true
+			final_boss_health_changed(final_boss_hp, 1200)
+			objective_label.text = "Objetivo: siga ao norte do Desfiladeiro Rubro, ative o altar e derrote o Silêncio Cinzento"
+			toast_label.text = "Azulan: as pedras e o sino abriram a última passagem. O Silêncio Cinzento espera no Trono Obsidiano. Esta batalha decidirá o destino de todas as lembranças."
+			_save_game()
+		elif quest_stage == 22:
+			quest_stage = 23
+			quest_text = "A Lenda de Tobi e Breu"
+			_grant_xp(500)
+			shards += 15
+			dark_essence += 10
+			potions += 5
+			boss_hud_panel.visible = false
+			objective_label.text = "Lenda concluída — Azulan foi salvo"
+			toast_label.text = "A Lenda de Tobi e Breu chegou ao fim. O Coração Rubro voltou a brilhar, e Azulan jamais esquecerá os dois heróis."
+			_update_inventory()
+			_update_quest()
+			_save_game()
+			_play_final_ending()
+			return
+		elif quest_stage == 17:
+			quest_stage = 18
+			if ancient_waystone_ids.size() >= 3:
+				quest_stage = 19 if bell_tower_ring_count < 3 else 20
+			quest_text = "As três Pedras-Âncora" if quest_stage == 18 else ("O Sino do Último Vigia" if quest_stage == 19 else "Capítulo IV concluído")
+			objective_label.text = "Objetivo: desperte as 3 Pedras-Âncora antigas (%d/3)" % ancient_waystone_ids.size() if quest_stage == 18 else ("Objetivo: toque o Sino do Último Vigia 3 vezes (%d/3)" % bell_tower_ring_count if quest_stage == 19 else "CAPÍTULO IV CONCLUÍDO — o chamado dos antigos vigias foi atendido")
+			toast_label.text = "Azulan: as lembranças da floresta retornaram, mas as antigas pedras ainda dormem. Desperte as três Pedras-Âncora — Raiz, Geada e Brasa — e faça o Sino do Último Vigia ecoar."
+			_update_quest()
+			_save_game()
+		elif quest_stage == 14:
+			quest_stage = 15
+			quest_text = "As três luzes esquecidas"
+			if whisper_lantern_ids.size() >= 3:
+				quest_stage = 16 if not whisper_guardian_reward_claimed else 17
+			objective_label.text = "Objetivo: acenda as 3 lanternas do Bosque dos Sussurros (%d/3)" % whisper_lantern_ids.size() if quest_stage == 15 else ("Objetivo: receba a bênção do Cervo Guardião no bosque" if quest_stage == 16 else "CAPÍTULO III CONCLUÍDO — a memória da floresta foi restaurada")
+			toast_label.text = "Azulan: o rio voltou a cantar, mas a floresta ainda esquece os próprios nomes. Siga para o Bosque dos Sussurros, acenda suas três lanternas e peça ao Cervo Ancião que devolva as memórias perdidas."
+			_save_game()
 		elif quest_stage == 8:
 			quest_stage = 9
 			_reveal_river_wraiths()
@@ -2752,7 +4663,46 @@ func _upgrade_weapon() -> void:
 	_update_inventory()
 	_save_game()
 
+func _upgrade_armor() -> void:
+	var master := get_node_or_null("Mestre Azulan")
+	if not is_instance_valid(player) or not is_instance_valid(master) or player.global_position.distance_to(master.global_position) > 5.0:
+		toast_label.text = "A armadura só pode ser forjada perto de Mestre Azulan."
+		return
+	if armor_level >= ARMOR_SHARD_COSTS.size():
+		toast_label.text = "A armadura já alcançou o nível máximo."
+		return
+	var shard_cost: int = ARMOR_SHARD_COSTS[armor_level]
+	var essence_cost: int = ARMOR_ESSENCE_COSTS[armor_level]
+	if shards < shard_cost or dark_essence < essence_cost:
+		toast_label.text = "Faltam %d Fragmentos e %d Essências Sombrias." % [maxi(0, shard_cost - shards), maxi(0, essence_cost - dark_essence)]
+		return
+	shards -= shard_cost
+	dark_essence -= essence_cost
+	armor_level += 1
+	_refresh_player_stats(0)
+	player.hp = mini(player.max_hp, player.hp + 20)
+	player_health_changed(player.hp, player.max_hp)
+	toast_label.text = "ARMADURA APRIMORADA • Nível %d • +%d vida máxima" % [armor_level, armor_level * 20]
+	_update_inventory()
+	_save_game()
+
+
 func enemy_defeated(kind: int = 0) -> void:
+	if quest_stage == 21 and kind == 11:
+		quest_stage = 22
+		final_boss_hp = 0
+		boss_hud_panel.visible = false
+		quest_text = "O Silêncio Cinzento foi vencido — volte a Azulan"
+		_grant_xp(350)
+		shards += 10
+		dark_essence += 8
+		potions += 3
+		objective_label.text = "Objetivo: retorne a Mestre Azulan para encerrar a lenda"
+		toast_label.text = "SILÊNCIO CINZENTO DERROTADO! O Coração Rubro voltou a pulsar. +350 XP • 10 Fragmentos • 8 Essências • 3 Poções"
+		_update_inventory()
+		_update_quest()
+		_save_game()
+		return
 	if quest_stage == 12 and kind == 6:
 		quest_stage = 13
 		quest_text = "O Leviatã caiu — volte ao Guardião do Rio"
@@ -2799,6 +4749,23 @@ func enemy_defeated(kind: int = 0) -> void:
 		dark_essence += 1
 		shards += 1
 		toast_label.text = "CARANGUEJO DE PRATA DERROTADO • +22 XP • Fragmento Rubro +1"
+		_update_inventory()
+		_save_game()
+		return
+	if kind == 9:
+		_grant_xp(35)
+		dark_essence += 2
+		swamp_herbs += 1
+		if randf() < 0.35: shards += 1
+		toast_label.text = "VIGIA DAS RAÍZES DERROTADO • +35 XP • 2 Essências Sombrias"
+		_update_inventory()
+		_save_game()
+		return
+	if kind == 10:
+		_grant_xp(25)
+		shards += 1
+		dark_essence += 1
+		toast_label.text = "CORVO GLACIAL DERROTADO • +25 XP • Fragmento Rubro +1"
 		_update_inventory()
 		_save_game()
 		return
@@ -2874,6 +4841,15 @@ func combat_combo_changed(step: int) -> void:
 	else:
 		combo_label.text = "COMBO %d/3  •  %s" % [step, ["Corte", "Corte duplo", "Golpe final"][step - 1]]
 
+func player_parry_success() -> void:
+	if is_instance_valid(toast_label):
+		toast_label.text = "APARO PERFEITO! Contra-ataque • +22 de vigor"
+
+
+func player_perfect_dodge() -> void:
+	if is_instance_valid(toast_label):
+		toast_label.text = "ESQUIVA PERFEITA! +10 FÔLEGO"
+
 func shadow_pulse_used(cooldown: float) -> void:
 	if is_instance_valid(shadow_skill_label):
 		shadow_skill_label.text = "BREU  •  Pulso Sombrio: recarregando"
@@ -2929,6 +4905,65 @@ func player_defeated() -> void:
 		player_health_changed(player.hp, player.max_hp)
 		toast_label.text = "Breu protegeu Tobi. Continue a missão!"
 
+func final_boss_phase_changed() -> void:
+	if is_instance_valid(boss_health_label):
+		boss_health_label.text = "SILÊNCIO CINZENTO • FÚRIA"
+
+func final_boss_health_changed(current: int, maximum: int) -> void:
+	final_boss_hp = clampi(current, 0, maximum)
+	if boss_health_bar:
+		boss_health_bar.max_value = maximum
+		boss_health_bar.value = current
+	if boss_health_label:
+		boss_health_label.text = ("SILÊNCIO CINZENTO • FÚRIA • %d/%d" % [current, maximum]) if final_boss_hp <= 600 else ("SILÊNCIO CINZENTO • %d/%d" % [current, maximum])
+	var health_band := floori(float(final_boss_hp) / 120.0)
+	if health_band != final_boss_saved_band or final_boss_hp <= 0:
+		final_boss_saved_band = health_band
+		_save_game()
+
+func _play_final_ending() -> void:
+	var ending := CanvasLayer.new()
+	ending.name = "FinalEndingSequence"
+	ending.layer = 125
+	add_child(ending)
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0.012, 0.018, 0.026, 0.0)
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ending.add_child(backdrop)
+	var panel := CenterContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ending.add_child(panel)
+	var copy := VBoxContainer.new()
+	copy.custom_minimum_size = Vector2(0.0, 250.0)
+	copy.add_theme_constant_override("separation", 18)
+	panel.add_child(copy)
+	var title := Label.new()
+	title.text = "A LENDA DE TOBI E BREU"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_color_override("font_color", Color("e7c99a"))
+	copy.add_child(title)
+	var story := Label.new()
+	story.text = "O Coração Rubro voltou a brilhar.\nAs cores regressaram às terras de Azulan.\n\nTobi e Breu caminharam juntos para casa.\nA coragem deles tornou-se uma lenda."
+	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.add_theme_font_size_override("font_size", 17)
+	story.add_theme_color_override("font_color", Color("e5e4dc"))
+	copy.add_child(story)
+	var continue_button := Button.new()
+	continue_button.text = "CONTINUAR EXPLORANDO"
+	continue_button.custom_minimum_size = Vector2(240.0, 52.0)
+	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	continue_button.pressed.connect(func() -> void:
+		ending.queue_free()
+		if is_instance_valid(player):
+			player.set_physics_process(true)
+	)
+	copy.add_child(continue_button)
+	if is_instance_valid(player):
+		player.set_physics_process(false)
+	var fade := create_tween()
+	fade.tween_property(backdrop, "color", Color(0.012, 0.018, 0.026, 0.88), 1.6)
 func _update_quest() -> void:
 	if quest_label: quest_label.text = "MISSÃO: " + quest_text
 
@@ -2945,7 +4980,7 @@ func _update_inventory() -> void:
 	if inventory_label:
 		inventory_label.text = "POÇÕES %d  •  FRAGMENTOS %d  •  ESPADA +%d" % [potions, shards, weapon_level]
 	if inventory_details:
-		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, 100 + (level - 1) * 12, level, current_level_xp, xp_needed - ((level - 1) * 100)]
+		inventory_details.text = "CONSUMÍVEIS\nPoções de vida: %d\n\nMATERIAIS\nFragmentos Rubros: %d\nOrelhas de Goblin: %d\nErvas do Pântano: %d\nEssência Sombria: %d\n\nEQUIPAMENTO\nEspada de Tobi: nível %d — dano %d\nArmadura do Guardião: nível %d — bônus +%d vida\nVida máxima: %d\n\nNÍVEL %d  •  %d/%d XP" % [potions, shards, goblin_ears, swamp_herbs, dark_essence, weapon_level, 35 + weapon_level * 10 + (level - 1) * 3, armor_level, armor_level * 20, 100 + (level - 1) * 12 + armor_level * 20, level, current_level_xp, xp_needed - ((level - 1) * 100)]
 
 func _use_potion() -> void:
 	if not is_instance_valid(player) or potions <= 0:
@@ -2963,14 +4998,17 @@ func _use_potion() -> void:
 
 func _save_game() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("meta", "save_version", 13)
+	cfg.set_value("meta", "save_version", 22)
 	cfg.set_value("progress", "quest_stage", quest_stage)
+	cfg.set_value("progress", "day_clock", day_clock)
+	cfg.set_value("progress", "weather_clock", weather_clock)
 	cfg.set_value("progress", "quest_text", quest_text)
 	cfg.set_value("progress", "defeated_count", defeated_count)
 	cfg.set_value("progress", "xp", xp)
 	cfg.set_value("progress", "shards", shards)
 	cfg.set_value("progress", "potions", potions)
 	cfg.set_value("progress", "weapon_level", weapon_level)
+	cfg.set_value("progress", "armor_level", armor_level)
 	cfg.set_value("inventory", "goblin_ears", goblin_ears)
 	cfg.set_value("inventory", "swamp_herbs", swamp_herbs)
 	cfg.set_value("inventory", "dark_essence", dark_essence)
@@ -2988,28 +5026,77 @@ func _save_game() -> void:
 	cfg.set_value("progress", "river_shrine_solved", river_shrine_solved)
 	cfg.set_value("progress", "river_puzzle_ring_steps", river_puzzle_ring_steps)
 	cfg.set_value("progress", "river_boss_hp", river_boss_hp)
+	cfg.set_value("progress", "final_boss_hp", final_boss_hp)
 	cfg.set_value("progress", "guild_relic_ids", guild_relic_ids)
 	cfg.set_value("progress", "guild_contract_started", guild_contract_started)
 	cfg.set_value("progress", "guild_contract_claimed", guild_contract_claimed)
+	cfg.set_value("progress", "bell_tower_ring_count", bell_tower_ring_count)
+	cfg.set_value("progress", "ancient_waystone_ids", ancient_waystone_ids)
+	cfg.set_value("progress", "ashen_relic_ids", ashen_relic_ids)
+	cfg.set_value("progress", "ashen_reward_claimed", ashen_reward_claimed)
 	cfg.set_value("progress", "shrine_used", get_node_or_null("OldShrine").get_meta("used", false) if get_node_or_null("OldShrine") else false)
-	cfg.save(save_path)
+	# Grava em arquivo temporário e valida antes de substituir o progresso atual.
+	var temp_path := save_path + ".tmp"
+	var backup_path := save_path + ".bak"
+	var temp_error := cfg.save(temp_path)
+	if temp_error != OK:
+		push_error("Falha ao gravar save temporário: %s" % error_string(temp_error))
+		return
+	var verification := ConfigFile.new()
+	if verification.load(temp_path) != OK:
+		push_error("Save temporário inválido; o progresso anterior foi preservado.")
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+		return
+	var current_save := ConfigFile.new()
+	if FileAccess.file_exists(save_path) and current_save.load(save_path) == OK:
+		var backup_error := DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(backup_path))
+		if backup_error != OK:
+			push_warning("Não foi possível atualizar o backup do save: %s" % error_string(backup_error))
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+			return
+	if FileAccess.file_exists(save_path):
+		var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
+		if remove_error != OK:
+			push_error("Não foi possível substituir o save atual: %s" % error_string(remove_error))
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(temp_path))
+			return
+	var rename_error := DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(save_path))
+	if rename_error != OK:
+		push_error("Falha ao finalizar save: %s" % error_string(rename_error))
+		if not FileAccess.file_exists(save_path) and FileAccess.file_exists(backup_path):
+			DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
+		return
 	if toast_label and toast_label.text.is_empty():
 		toast_label.text = "Progresso salvo"
 		save_toast_timer = 1.6
 
 func _load_save() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(save_path) != OK: return
+	var load_error := cfg.load(save_path)
+	if load_error != OK:
+		var backup_path := save_path + ".bak"
+		if not FileAccess.file_exists(backup_path):
+			return
+		var backup_cfg := ConfigFile.new()
+		if backup_cfg.load(backup_path) != OK:
+			push_warning("Save principal e backup estão inválidos; nenhum progresso foi sobrescrito.")
+			return
+		cfg = backup_cfg
+		push_warning("Save principal inválido; progresso recuperado do backup.")
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(backup_path), ProjectSettings.globalize_path(save_path))
 	var save_version := int(cfg.get_value("meta", "save_version", 1))
 	# Version 1 saves remain compatible; unknown future versions are not loaded.
-	if save_version > 13:
+	if save_version > 22:
 		return
-	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 14)
+	day_clock = fposmod(float(cfg.get_value("progress", "day_clock", 0.0)), TAU)
+	weather_clock = fposmod(float(cfg.get_value("progress", "weather_clock", 0.0)), 240.0)
+	quest_stage = clampi(int(cfg.get_value("progress", "quest_stage", 0)), 0, 23)
 	defeated_count = int(cfg.get_value("progress", "defeated_count", 0))
 	xp = int(cfg.get_value("progress", "xp", 0))
 	shards = int(cfg.get_value("progress", "shards", 0))
 	potions = int(cfg.get_value("progress", "potions", 3))
 	weapon_level = clampi(int(cfg.get_value("progress", "weapon_level", 0)), 0, 3)
+	armor_level = clampi(int(cfg.get_value("progress", "armor_level", 0)), 0, 3)
 	goblin_ears = maxi(0, int(cfg.get_value("inventory", "goblin_ears", 0)))
 	swamp_herbs = maxi(0, int(cfg.get_value("inventory", "swamp_herbs", 0)))
 	dark_essence = maxi(0, int(cfg.get_value("inventory", "dark_essence", 0)))
@@ -3057,6 +5144,7 @@ func _load_save() -> void:
 	for ring_id in range(mini(3, saved_ring_steps.size())):
 		river_puzzle_ring_steps[ring_id] = posmod(int(saved_ring_steps[ring_id]), 4)
 	river_boss_hp = clampi(int(cfg.get_value("progress", "river_boss_hp", 680)), 0, 680)
+	final_boss_hp = clampi(int(cfg.get_value("progress", "final_boss_hp", 1200)), 0, 1200)
 	guild_relic_ids.clear()
 	var saved_guild_relic_ids: Array = cfg.get_value("progress", "guild_relic_ids", [])
 	for saved_guild_id in saved_guild_relic_ids:
@@ -3066,6 +5154,22 @@ func _load_save() -> void:
 	guild_relic_ids.sort()
 	guild_contract_started = bool(cfg.get_value("progress", "guild_contract_started", false))
 	guild_contract_claimed = bool(cfg.get_value("progress", "guild_contract_claimed", false))
+	bell_tower_ring_count = clampi(int(cfg.get_value("progress", "bell_tower_ring_count", 0)), 0, 3)
+	ancient_waystone_ids.clear()
+	var saved_waystone_ids: Array = cfg.get_value("progress", "ancient_waystone_ids", [])
+	for saved_waystone_id in saved_waystone_ids:
+		var waystone_id := int(saved_waystone_id)
+		if waystone_id >= 0 and waystone_id < 3 and not ancient_waystone_ids.has(waystone_id):
+			ancient_waystone_ids.append(waystone_id)
+	ancient_waystone_ids.sort()
+	ashen_relic_ids.clear()
+	var saved_ashen_relic_ids: Array = cfg.get_value("progress", "ashen_relic_ids", [])
+	for saved_ashen_id in saved_ashen_relic_ids:
+		var ashen_id := int(saved_ashen_id)
+		if ashen_id >= 0 and ashen_id < 3 and not ashen_relic_ids.has(ashen_id):
+			ashen_relic_ids.append(ashen_id)
+	ashen_relic_ids.sort()
+	ashen_reward_claimed = bool(cfg.get_value("progress", "ashen_reward_claimed", false))
 	saved_player_hp = int(cfg.get_value("progress", "player_hp", 100))
 	var checkpoint_x := float(cfg.get_value("progress", "checkpoint_x", 0.0))
 	var checkpoint_z := float(cfg.get_value("progress", "checkpoint_z", 15.0))
@@ -3074,9 +5178,66 @@ func _load_save() -> void:
 		checkpoint_x = 15.0
 		checkpoint_z = 29.0
 	# Reject corrupted or out-of-world checkpoint coordinates before using them.
-	if absf(checkpoint_x) <= 140.0 and absf(checkpoint_z) <= 140.0:
+	if absf(checkpoint_x) <= 520.0 and absf(checkpoint_z) <= 520.0:
 		checkpoint_position = Vector3(checkpoint_x, 0.0, checkpoint_z)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		_save_game()
+
+
+func _build_wandering_lighthouse() -> void:
+	# Novo ponto opcional no extremo sudoeste, construído com geometria leve.
+	var root := Node3D.new()
+	root.name = "FarolDosErrantes"
+	root.position = Vector3(-245.0, 0.0, 220.0)
+	add_child(root)
+	var ground := _box(root, "WanderingLighthouseGround", Vector3(0.0, -0.08, 0.0), Vector3(66.0, 0.16, 56.0), Color("4b514c"))
+	ground.material_override = _painter_mat(Color("4b514c"), 3.0, 0.16, 3, Color("313d39"))
+	var access_road := _box(self, "WanderingLighthouseRoad", Vector3(-210.0, 0.025, 187.0), Vector3(7.0, 0.05, 94.0), Color("655744"))
+	access_road.rotation.y = -0.72
+	_box(root, "LighthouseFoundation", Vector3(0.0, 0.35, -3.0), Vector3(10.0, 0.7, 10.0), Color("5e625c"))
+	_box(root, "LighthouseLowerShaft", Vector3(0.0, 4.0, -3.0), Vector3(6.2, 7.0, 6.2), Color("77786e"))
+	_box(root, "LighthouseUpperShaft", Vector3(0.0, 9.2, -3.0), Vector3(4.7, 3.4, 4.7), Color("898779"))
+	_box(root, "LighthouseLanternRoom", Vector3(0.0, 11.6, -3.0), Vector3(5.5, 1.3, 5.5), Color("39464a"))
+	_box(root, "LighthouseRoof", Vector3(0.0, 12.45, -3.0), Vector3(6.5, 0.45, 6.5), Color("4a3f3c"))
+	var beacon := _sphere(root, "WanderingBeacon", Vector3(0.0, 14.0, -3.0), 0.72, Color("e5bd78"), 1.1)
+	beacon.material_override = _painter_mat(Color("e5bd78"), 8.0, 0.22)
+	var beacon_light := OmniLight3D.new()
+	beacon_light.name = "WanderingBeaconLight"
+	beacon_light.position = Vector3(0.0, 14.0, -3.0)
+	beacon_light.light_color = Color("e7c58b")
+	beacon_light.light_energy = 1.15
+	beacon_light.omni_range = 24.0
+	root.add_child(beacon_light)
+	for side in [-1.0, 1.0]:
+		_box(root, "LanternArchPillar", Vector3(side * 8.0, 2.7, 15.0), Vector3(1.6, 5.4, 1.6), Color("696c64"))
+	_box(root, "LanternArchLintel", Vector3(0.0, 5.5, 15.0), Vector3(18.0, 1.4, 1.8), Color("77776d"))
+	var grave_positions := [
+		Vector3(-22.0, 0.0, -16.0), Vector3(-14.0, 0.0, -22.0),
+		Vector3(14.0, 0.0, -21.0), Vector3(23.0, 0.0, -12.0),
+		Vector3(-24.0, 0.0, 8.0), Vector3(-15.0, 0.0, 21.0),
+		Vector3(16.0, 0.0, 20.0), Vector3(25.0, 0.0, 7.0)
+	]
+	for i in range(grave_positions.size()):
+		var marker := Node3D.new()
+		marker.name = "WanderingGrave_%02d" % i
+		marker.position = grave_positions[i]
+		root.add_child(marker)
+		_box(marker, "GraveStone", Vector3(0.0, 0.85, 0.0), Vector3(1.2, 1.7, 0.38), Color("77786f"))
+		_box(marker, "GraveCap", Vector3(0.0, 1.72, 0.0), Vector3(1.45, 0.22, 0.48), Color("89897c"))
+		if i % 2 == 0:
+			_box(marker, "CarvedCross", Vector3(0.0, 1.05, 0.22), Vector3(0.16, 0.72, 0.08), Color("b6a98d"))
+	for i in range(5):
+		var lamp := Node3D.new()
+		lamp.name = "WanderingPathLamp_%d" % i
+		lamp.position = Vector3(-16.0 + float(i) * 8.0, 0.0, 11.0)
+		root.add_child(lamp)
+		_box(lamp, "LampPost", Vector3(0.0, 1.5, 0.0), Vector3(0.18, 3.0, 0.18), Color("493c32"))
+		var flame := _sphere(lamp, "LampFlame", Vector3(0.0, 3.15, 0.0), 0.2, Color("e6b36e"), 0.4)
+		flame.material_override = _painter_mat(Color("e6b36e"), 8.0, 0.12)
+	for i in range(9):
+		var angle := TAU * float(i) / 9.0
+		var rock := _sphere(root, "WeatheredBoundaryRock", Vector3(cos(angle) * 29.0, 0.8, sin(angle) * 24.0), 1.0, Color("5d625d"), 1.8 + float(i % 3) * 0.35)
+		rock.scale = Vector3(1.4, 0.8, 1.1)
+	_add_region_title("FAROL DOS ERRANTES", root.position + Vector3(0.0, 17.0, 0.0), Color("e3c99b"))

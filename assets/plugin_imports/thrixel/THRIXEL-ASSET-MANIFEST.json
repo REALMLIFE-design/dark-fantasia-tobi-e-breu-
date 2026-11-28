@@ -1,0 +1,56 @@
+[
+  {
+    "asset_key": "thrixel_ancient_tree",
+    "file": "ancient_tree.glb",
+    "submission_id": "584d17cf-92ff-4fde-ba50-19037a88d832",
+    "texture_size": 1024,
+    "triangles": 14132,
+    "role": "world_landmark",
+    "bytes": 2952792
+  },
+  {
+    "asset_key": "thrixel_stag_guardian",
+    "file": "ancient_stag_guardian.glb",
+    "submission_id": "10f1f722-53d8-4ca0-b99b-e0e687bc8fec",
+    "texture_size": 1024,
+    "triangles": 14064,
+    "role": "optional_enemy",
+    "bytes": 2581268
+  },
+  {
+    "asset_key": "thrixel_river_crab",
+    "file": "silver_river_crab.glb",
+    "submission_id": "4592675e-0e7e-491d-9d1e-a4a15eee7304",
+    "texture_size": 1024,
+    "triangles": 9442,
+    "role": "optional_enemy",
+    "bytes": 3600404
+  },
+  {
+    "asset_key": "thrixel_drowned_wraith",
+    "file": "drowned_wraith.glb",
+    "submission_id": "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1",
+    "texture_size": 1024,
+    "triangles": 8996,
+    "role": "optional_enemy",
+    "bytes": 2385864
+  },
+  {
+    "asset_key": "thrixel_rune_obelisk",
+    "file": "rune_obelisk.glb",
+    "submission_id": "354f8a8c-3812-43a4-b187-3df95354eb48",
+    "texture_size": 512,
+    "triangles": 45000,
+    "role": "animated_landmark",
+    "bytes": 2406320
+  },
+  {
+    "asset_key": "thrixel_river_coffer",
+    "file": "silver_river_coffer.glb",
+    "submission_id": "c90ac6cc-200e-4892-a7a5-0cc263e64d1c",
+    "texture_size": 512,
+    "triangles": 11180,
+    "role": "treasure_prop",
+    "bytes": 1365036
+  }
+]

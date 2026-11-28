@@ -1,0 +1,125 @@
+name: Importar modelos 3D e texturas gratuitos
+
+on:
+  push:
+    branches:
+      - integration/definitive-all-versions
+    paths:
+      - '.github/workflows/import-free-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: free-assets-import-curated-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  download-and-integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+      - name: Preparar ferramentas
+        run: python -m pip install --disable-pip-version-check gdown requests
+      - name: Baixar modelos e texturas CC0 selecionados do Quaternius
+        run: |
+          set -euo pipefail
+          OUT="assets/external_packs/quaternius_stylized_nature"
+          mkdir -p "$OUT"
+          download() {
+            local file_id="$1"
+            local filename="$2"
+            echo "Baixando $filename"
+            gdown "https://drive.google.com/uc?id=$file_id" -O "$OUT/$filename" || {
+              rm -f "$OUT/$filename"
+              echo "Arquivo temporariamente indisponível: $filename"
+            }
+          }
+          # Seleção de árvores, vegetação, flores e rochas; sem arquivos Blender pesados.
+          download "1TqCISB2H8Hh9F9I1ah17UeYWdTNIeyE4" "BirchTree_1.fbx"
+          download "1LJ8AhQ7zJ3A2J9RhQHP-FLJI3zyN2-wp" "Bush.fbx"
+          download "1A3IYObknvxiulsNuqMJX1sNUtqfTB38L" "DeadTree_1.fbx"
+          download "1-xXLa0Bs1DSJl36h5fQ3AQm89uFYOBkd" "Flower_1.fbx"
+          download "154gcReb8YsL1uKUbSNLDiUvvpac-Hh1x" "Grass_Large.fbx"
+          download "12TkCbB2QeHF1tNvBpCx7ou8r1BYBXmRY" "MapleTree_1.fbx"
+          download "18r7_XajM0jDcL2vwgaD646UCS_7-4SQY" "NormalTree_1.fbx"
+          download "1I4pmXoWVtRc9AKfP0Jpj7H-oUqndyHDN" "PineTree_1.fbx"
+          download "149JOuv22JuLEcl2Jt3edC7lVRfVep0Jr" "Plant_1.fbx"
+          download "1vZ86JxEpULzDBJgUvaD5CgdtvMhjN3rP" "Rock_1.fbx"
+          download "1HP_BK27apC0jVNOyCuNE0Zv_YCbVcmqU" "Rock_2.fbx"
+          download "1gdFLuY9SwiuB9taSwTDETIh2exPO6ism" "Flower_1_Clump.fbx"
+          download "1ui-5i631qNrbJSI8tfFoscIJxNZcq-U7" "Plant_2.fbx"
+          download "1lL6Rp9TdqNB6Jxx5wuiqN5AsOvaPHQbb" "Plant_Flowers.fbx"
+          download "1xnVou1bJLpZ70ir7ITylQz20xxOJvt3L" "Bush_Flowers.fbx"
+          # Texturas compartilhadas usadas pelos materiais dos modelos.
+          download "1puC8NuyemENIPB40TOsKdqzp0EmUJe1g" "BirchTree_Bark.jpg"
+          download "1qg4n9gasJ-c_jQED-IBqx28Qu53CURcR" "BirchTree_Bark_Normal.png"
+          download "1RPfkjEuuEwFno9gh3U0zQndzcB8DOr_S" "BirchTree_Leaves.png"
+          download "19xOyTuSATvkHhQd8zC6PW-y6RX761yGA" "Bush_Leaves.png"
+          download "1__uvRQhRXZcOQ_lsvkrZfDr9Alr8ru6U" "Flowers.png"
+          download "1NjDwDFwQDQ9W4rOl9Wo-eaP12W-tO_Ve" "Grass.png"
+          download "1ooEfm7ZxVwm1bal3qnY7E9ydqZ28k18P" "MapleTree_Bark.jpg"
+          download "19eBAksn5OX78sgvBfN7k41BHwyPDYtJS" "MapleTree_Bark_Normal.png"
+          download "1GX7-YPXDd9S3-VQre1S4kASWQoHmasA1" "MapleTree_Leaves.png"
+          download "190KWIyJT7qkxtZ3LHlkoqluz6b1HWyAa" "NormalTree_Bark.jpg"
+          download "1oj3DAnAo6zExOUSk5ZtTImpbREhpDkbx" "NormalTree_Bark_Normal.png"
+          download "1V4IePGK9IFayrRXTZo2SqiEMEB10c1MG" "NormalTree_Leaves.png"
+          download "1D-Z4lyMQZSHoLpQYANNNiq4C8c_m4HPl" "PineTree_Bark.jpg"
+          download "1IlWVDHJ1FYYZ5RqYT2udz4V2HYaOR4wm" "PineTree_Bark_Normal.png"
+          download "10iiCzOtzshoLo-0LNQ6XrRfHaiIIKWIn" "PineTree_Leaves.png"
+          download "1HTHi0x3Ii16e1S3zXO2aDM_hMrSnnCYO" "Rocks.jpg"
+          MODEL_COUNT=$(find "$OUT" -type f -iname '*.fbx' | wc -l)
+          TEXTURE_COUNT=$(find "$OUT" -type f \( -iname '*.png' -o -iname '*.jpg' \) | wc -l)
+          echo "Modelos FBX: $MODEL_COUNT; texturas: $TEXTURE_COUNT"
+          if [ "$MODEL_COUNT" -lt 5 ]; then echo '::error::Menos de 5 modelos FBX foram baixados.'; exit 1; fi
+      - name: Baixar materiais PBR CC0 do Poly Haven
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import pathlib, requests
+          headers = {"User-Agent": "TobiEBreuDarkWorld3D/1.0 (free game asset import)"}
+          materials = {"aerial_grass_rock":"pedra_musgo", "aerial_ground_rock":"terra_pedras", "aerial_mud_1":"lama"}
+          for asset_id, folder in materials.items():
+              response = requests.get(f"https://api.polyhaven.com/files/{asset_id}", headers=headers, timeout=60)
+              response.raise_for_status()
+              files = response.json()
+              target = pathlib.Path("assets/textures/polyhaven") / folder
+              target.mkdir(parents=True, exist_ok=True)
+              for channel, filename in (("Diffuse","albedo"),("nor_gl","normal"),("Rough","roughness")):
+                  try: url = files[channel]["1k"]["jpg"]["url"]
+                  except (KeyError, TypeError): print(f"Canal {channel} indisponível: {asset_id}"); continue
+                  data = requests.get(url, headers=headers, timeout=120)
+                  data.raise_for_status()
+                  (target / f"{filename}.jpg").write_bytes(data.content)
+                  print(f"Baixado {asset_id}: {channel} ({len(data.content)} bytes)")
+          PY
+      - name: Registrar licenças e fontes
+        run: |
+          cat > assets/external_packs/QUATERNIUS-POLYHAVEN-LICENSES.md <<'EOF'
+          # Fontes dos assets importados automaticamente
+          ## Quaternius — Ultimate Stylized Nature
+          - Origem: https://quaternius.com/packs/ultimatestylizednature.html
+          - Licença declarada pelo autor: CC0; uso pessoal e comercial permitido.
+          - Modelos FBX e texturas selecionados em assets/external_packs/quaternius_stylized_nature/.
+          ## Poly Haven
+          - API: https://api.polyhaven.com
+          - Materiais: Aerial Grass Rock, Aerial Ground Rock e Aerial Mud 1.
+          - Licença dos assets: CC0. API gratuita, sem chave.
+          - Fonte: https://polyhaven.com/our-api
+          EOF
+      - name: Commitir assets baixados
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/quaternius_stylized_nature assets/textures/polyhaven assets/external_packs/QUATERNIUS-POLYHAVEN-LICENSES.md
+          if git diff --cached --quiet; then echo 'Nenhum asset novo.'; exit 0; fi
+          git commit -m 'Importa modelos FBX Quaternius e materiais PBR Poly Haven'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

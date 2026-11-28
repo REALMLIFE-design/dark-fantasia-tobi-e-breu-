@@ -41,3 +41,71 @@ O contrato e os selos são persistentes no save v12.
 ## Limites desta versão
 
 As vilas e a cidade têm arquitetura exterior procedural; as casas ainda não têm interiores exploráveis, lojas ou NPCs com rotinas. A caverna, a masmorra e o castelo têm composição visual e pontos de exploração, mas ainda precisam de encontros dedicados, portas/chaves, navegação interna e chefes próprios. Os locais são protótipos de conteúdo jogável em expansão, não uma alegação de mundo AAA concluído.
+
+
+## Encontro opcional — Montanha Gelada
+- Dois Corvos Glaciais patrulham a região dos cristais, aproximadamente em (-179, -267) e (-153, -279).
+- São inimigos opcionais e não alteram os objetivos das missões principais.
+
+
+## Novos marcos regionais
+- Pântano dos Ratos: Caldeirão da Bruxa do Pântano, próximo à região central (9, -94).
+- Rio Prateado: Marco do Sino Afogado, próximo ao curso do rio (61, -132).
+- Ambos são elementos ambientais de exploração; não substituem nem alteram os objetivos das missões existentes.
+
+
+## Modelos ambientais desta expansão
+- Planície Dourada: moinho de pedra e madeira, aproximadamente (18, 238).
+- Bosque dos Sussurros: pequeno bosque de cogumelos luminosos, aproximadamente (105, -151).
+- Caverna do Eco: agrupamento de cristais azulados emissivos, aproximadamente (-228, -248).
+- Os modelos são cenografia procedural otimizada para mobile; não alteram missões, recompensas ou colisões de combate.
+
+
+## Companheiro — Gato de Tobi
+- Um gato procedural detalhado cinza-escuro em pose sentada foi colocado perto da clareira inicial, aproximadamente em (4, 3.5).
+- O modelo tem olhos âmbar, focinho claro, orelhas rosadas, cauda segmentada e coleira vinho com medalhão dourado.
+- É um modelo procedural leve integrado ao carregamento do pacote de cenografia; nesta etapa é visual, sem IA, animação ou interação.
+
+
+## Direção de qualidade dos modelos 3D
+- A expansão visual mantém todos os conjuntos procedurais registrados no construtor central do mundo.
+- A geometria esférica procedural foi refinada para 24 segmentos radiais e 16 anéis; cilindros e cones também receberam maior resolução.
+- O gato de Tobi recebeu detalhes adicionais de pelagem, focinho, sobrancelhas, dedos, rebites e medalhão em camadas.
+- Os modelos GLB externos já gerados continuam no catálogo de importação e são carregados pelo mundo quando os binários estão disponíveis; os fallbacks procedurais permanecem ativos quando a transferência falha.
+
+
+## Novos pontos de interesse regionais — 22/11/2026
+- **Santuário do Marco Antigo**: portal de pedra, pedestal e cristal de orientação próximo à Vila do Carvalho.
+- **Acampamento dos Caçadores**: tenda, fogueira, baú de suprimentos e tochas na trilha da floresta.
+- **Ponte de Pedra do Rio Prateado**: tabuleiro de lajes, balaústres e corrimãos para marcar a travessia do rio.
+- **Torre de Vigia Caída**: torre de madeira e pedra com plataforma, parapeitos, telhado e estandarte junto à Cidade de Pedra.
+- Os quatro modelos entram automaticamente no pacote de cenário; são marcos visuais, ainda sem interação, loot ou colisão dedicada.
+
+
+## Oficinas de profissão — 22/11/2026
+- **Forja do Ferreiro**, na Vila do Carvalho: lareira de pedra, bigorna, martelo, lâminas expostas, carvão e chaminé.
+- **Oficina do Alquimista**, na Cidade de Pedra: bancada, frascos com líquidos coloridos, caldeirão, ingredientes, grimório e cristal de foco.
+- São cenários visuais registrados no carregamento central. Não adicionam NPCs, lojas, receitas, inventário ou economia nesta etapa.
+
+
+## Modelos 3D de inimigos — integração (22/11/2026)
+- As famílias procedurais dos tipos 0 a 10 continuam disponíveis: goblins, Guardião do Silêncio, Bruxa do Pântano, Cavaleiros Afogados, Leviatã do Lodo, Espectros Afogados, Caranguejos de Prata, Vigia das Raízes e Corvos Glaciais.
+- Os GLBs externos já gerados do Espectro Afogado, Caranguejo de Prata e Guardião Cervo têm pontos de encaixe nas instâncias reais dos inimigos (tipos 7, 8 e 9). Quando o GLB existe no projeto, substitui a malha visual procedural; se estiver ausente, o fallback permanece.
+- Os GLBs ainda dependem de transferência/importação binária para `assets/plugin_imports/thrixel/`; o código de encaixe não significa que esses arquivos já estejam presentes.
+
+
+## Novos pontos de exploração — expansão complementar
+- **Lago das Lanternas** — aproximadamente (-38, -184): lagoas rasas azul-esverdeadas, passarela de madeira, salgueiros e cinco lanternas antigas.
+- **Observatório da Queda das Estrelas** — aproximadamente (-62, -292): ruína circular com colunas, mapa celeste, orbe luminoso e telescópio antigo.
+- **Caravana Abandonada** — aproximadamente (92, 218): carro de carga, mantimentos, lona rasgada e tochas de estrada na Planície Dourada.
+- Os três marcos são cenografia procedural leve, carregada pelo pacote central. Nesta etapa são pontos visuais de exploração, sem loot, colisões dedicadas ou novas missões.
+
+
+## FAROL DOS ERRANTES — expansão 24/11/2026
+- Novo marco no extremo sudoeste do mundo, aproximadamente em (-245, 220), conectado à trilha ocidental por uma estrada de terra.
+- Torre-farol com sala de luz, arco de entrada em ruínas, oito lápides, cinco lampiões e rochas de limite.
+- Cenografia procedural leve, sem substituir áreas, missões, personagens ou dados de save existentes; não adiciona missão nem recompensa nesta etapa.
+
+## Modelos Thrixel no pacote Android — 24/11/2026
+- A compilação do commit `329e040` confirmou o download e a inclusão no APK dos seis GLBs existentes: Guardião Cervo, Caranguejo do Rio Prateado, Espectro Afogado, Árvore Ancestral, Obelisco Rúnico e Santuário de Pedra.
+- Os modelos são baixados durante o workflow de Android; o fallback procedural permanece quando algum download falhar.

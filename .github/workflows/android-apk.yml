@@ -1,7 +1,10 @@
 name: Build Tobi e Breu APK
 
+permissions:
+  contents: write
+
 concurrency:
-  group: tobi-breu-android-apk
+  group: tobi-breu-android-apk-v2-${{ github.ref }}
   cancel-in-progress: false
 
 on:
@@ -11,10 +14,17 @@ on:
       - main
       - master
       - 'fix/**'
+      - 'integration/**'
+    paths-ignore:
+      - 'tools/android_update_base_sha.txt'
+  pull_request:
+    branches:
+      - 'fix/android-ci-validation'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -22,6 +32,8 @@ jobs:
     steps:
       - name: Baixar projeto
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configurar Java 17
         uses: actions/setup-java@v5
@@ -42,22 +54,142 @@ jobs:
       - name: Locate Godot project (repository root or subfolder)
         run: |
           set -euo pipefail
-          if [ -f "$GITHUB_WORKSPACE/project.godot" ]; then
-            PROJECT_PATH="$GITHUB_WORKSPACE"
+          PROJECT_FILE="$(find "$GITHUB_WORKSPACE" -maxdepth 5 -type f -name project.godot -not -path '*/.git/*' -print -quit)"
+          if [ -n "$PROJECT_FILE" ]; then
+            PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           else
             mkdir -p extracted
             unzip -q "TobiEBreu-PBR-Ajustes-Biomas-v0.18(1).zip" -d extracted
-            PROJECT_FILE="$(find extracted -name project.godot -print -quit)"
+            PROJECT_FILE="$(find extracted -maxdepth 6 -type f -name project.godot -print -quit)"
             if [ -z "$PROJECT_FILE" ]; then
-              echo "ERRO: project.godot não encontrado"
+              echo "ERRO: project.godot não encontrado no código-fonte nem no pacote de fallback"
               exit 1
             fi
             PROJECT_PATH="$(dirname "$PROJECT_FILE")"
           fi
+          echo "Projeto Godot selecionado: $PROJECT_PATH"
+          test -f "$PROJECT_PATH/project.godot"
           echo "PROJECT_PATH=$PROJECT_PATH" >> "$GITHUB_ENV"
           python3 -m pip install --disable-pip-version-check Pillow
           python3 -m unittest discover -s "$PROJECT_PATH/tests" -v
           python3 "$PROJECT_PATH/tools/validate_project.py"
+
+      - name: Validar e baixar os sete modelos Thrixel do jogo
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          DEST="$PROJECT_PATH/assets/plugin_imports/thrixel"
+          mkdir -p "$DEST"
+          fetch_model() {
+            local name="$1" submission="$2" texture_size="$3"
+            local target="$DEST/$name.glb"
+            local temporary="$target.part"
+            if [ -s "$target" ] && [ "$(head -c 4 "$target")" = "glTF" ]; then
+              echo "THRIXEL_MODEL_READY: $name"
+              return 0
+            fi
+            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=$texture_size"
+            curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 "$url" -o "$temporary"
+            if [ "$(head -c 4 "$temporary")" != "glTF" ] || [ "$(stat -c%s "$temporary")" -le 1024 ]; then
+              rm -f "$temporary"
+              echo "ERRO: GLB Thrixel inválido: $name"
+              return 1
+            fi
+            mv "$temporary" "$target"
+            echo "THRIXEL_MODEL_READY: $name"
+          }
+          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 1024
+          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec 1024
+          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 1024
+          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 1024
+          fetch_model rune_obelisk 354f8a8c-3812-43a4-b187-3df95354eb48 512
+          fetch_model stone_way_shrine 2fbc201f-5a50-4516-9aa9-07736603d9ff 512
+          fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512
+          ready=0
+          for model in ancient_tree ancient_stag_guardian silver_river_crab drowned_wraith rune_obelisk stone_way_shrine silver_river_coffer; do
+            if [ -s "$DEST/$model.glb" ] && [ "$(head -c 4 "$DEST/$model.glb")" = "glTF" ]; then
+              ready=$((ready + 1))
+            fi
+          done
+          echo "THRIXEL_MODELS_READY: $ready/7"
+          test "$ready" -eq 7
+
+      - name: Baixar assets adicionais compartilhados no Google Drive
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          WEAPON_DIR="$PROJECT_PATH/assets/external_packs/google_drive_weapons"
+          UI_DIR="$PROJECT_PATH/assets/art/ui/google_drive"
+          mkdir -p "$WEAPON_DIR" "$UI_DIR"
+          download_drive_file() {
+            local file_id="$1" output="$2" minimum_bytes="$3"
+            local temporary="$output.part"
+            curl --fail --location --retry 3 --connect-timeout 20 --max-time 300 \
+              "https://drive.usercontent.google.com/download?id=${file_id}&export=download&confirm=t" \
+              -o "$temporary"
+            test -s "$temporary"
+            local bytes
+            bytes="$(stat -c%s "$temporary")"
+            if [ "$bytes" -lt "$minimum_bytes" ]; then
+              echo "ERRO: download do Google Drive incompleto: $output ($bytes bytes)"
+              rm -f "$temporary"
+              return 1
+            fi
+            mv "$temporary" "$output"
+            echo "GOOGLE_DRIVE_ASSET_READY: $(basename "$output") ($bytes bytes)"
+          }
+          download_drive_file "19W15CvJhIq8x8xoqzhVWYcwSCnrar9B2" "$WEAPON_DIR/PP_FreeFantasyRPGWeapons_v2.0_ListScene.fbx" 1000000
+          download_drive_file "14b1g1DkYmtGtkaoKK8gnWz1C9s2A02Ru" "$UI_DIR/Fantasy_RPG_UI_HUD_Kit.zip" 1000000
+          download_drive_file "1jeGA4JZfoqrt-nMq1UqPjQFS9TTSPUwv" "$UI_DIR/FreeUIdemo.zip" 500000
+          python3 - "$UI_DIR" <<'PY'
+          import pathlib, sys, zipfile
+          root = pathlib.Path(sys.argv[1])
+          for archive_name, folder_name in [
+              ("Fantasy_RPG_UI_HUD_Kit.zip", "Fantasy_RPG_UI_HUD_Kit"),
+              ("FreeUIdemo.zip", "FreeUIdemo"),
+          ]:
+              archive = root / archive_name
+              destination = root / folder_name
+              destination.mkdir(parents=True, exist_ok=True)
+              with zipfile.ZipFile(archive) as bundle:
+                  for item in bundle.infolist():
+                      target = (destination / item.filename).resolve()
+                      if destination.resolve() not in target.parents and target != destination.resolve():
+                          raise RuntimeError("Unsafe archive path: " + item.filename)
+                  bundle.extractall(destination)
+              print("GOOGLE_DRIVE_UI_FILES:", archive_name, sum(1 for p in destination.rglob("*") if p.is_file()))
+              for path in sorted(destination.rglob("*")):
+                  if path.is_file() and path.suffix.lower() in {".png", ".webp", ".jpg", ".svg", ".ttf", ".otf"}:
+                      print("GOOGLE_DRIVE_UI_ASSET:", path.relative_to(root))
+          PY
+
+      - name: Normalizar GLBs para compatibilidade com Godot 4.3
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          mapfile -d '' MODELS < <(find "$PROJECT_PATH/assets/external_packs/3dassets_dev" "$PROJECT_PATH/assets/external_packs/itch_dark_dungeon" "$PROJECT_PATH/assets/plugin_imports/thrixel" -type f -name '*.glb' -print0 2>/dev/null || true)
+          if [ "${#MODELS[@]}" -eq 0 ]; then
+            echo "Nenhum GLB externo para normalizar."
+            exit 0
+          fi
+          if ! command -v gltf-transform >/dev/null 2>&1; then
+            npm install --global @gltf-transform/cli
+          fi
+          for model in "${MODELS[@]}"; do
+            if ! grep -a -q "KHR_mesh_quantization" "$model"; then
+              continue
+            fi
+            temporary="${model%.glb}.godot43.tmp.glb"
+            if gltf-transform dequantize "$model" "$temporary"; then
+              if [ -s "$temporary" ]; then
+                mv "$temporary" "$model"
+                echo "GLB compatibilizado com Godot 4.3: $(basename "$model")"
+              fi
+            else
+              rm -f "$temporary"
+              echo "::warning::Não foi possível dequantizar $(basename "$model"); o fallback procedural será mantido."
+            fi
+          done
 
       - name: Baixar Godot e templates
         run: |
@@ -82,6 +214,11 @@ jobs:
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
 
       - name: Configurar exportação Android sem Gradle
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           PRESET="$PROJECT_PATH/export_presets.cfg"
@@ -92,17 +229,26 @@ jobs:
             echo "ERRO: SDK overrides incompatíveis com exportação sem Gradle"
             exit 1
           fi
-          # Godot 4.3 validates the debug keystore even for a debug APK export.
+          # Prefer a persistent signing key from GitHub Actions secrets. The fallback is only for CI smoke builds.
           mkdir -p "$HOME/.android" "$HOME/.config/godot"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          STORE_PASS="${ANDROID_KEYSTORE_PASSWORD:-android}"
+          KEY_ALIAS="${ANDROID_KEY_ALIAS:-androiddebugkey}"
+          KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+            keytool -list -keystore "$HOME/.android/debug.keystore" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 não configurado; este APK usa uma chave temporária e pode não atualizar uma instalação anterior."
+            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass "$STORE_PASS" -keypass "$KEY_PASS" -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
+          fi
           cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
           [resource]
           export/android/android_sdk_path = "$ANDROID_HOME"
           export/android/java_sdk_path = "$JAVA_HOME"
           export/android/debug_keystore = "$HOME/.android/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
+          export/android/debug_keystore_user = "$KEY_ALIAS"
+          export/android/debug_keystore_pass = "$STORE_PASS"
           EOF
           test -s "$HOME/.android/debug.keystore"
           test -x "$ANDROID_HOME/platform-tools/adb"
@@ -130,8 +276,52 @@ jobs:
             echo "ERRO: a cena principal apresentou falha durante a inicialização"
             exit 1
           fi
-          if ! grep -q "TOBI_BREU_BOOT_READY" "$RUNNER_TEMP/godot-startup.log"; then
-            echo "ERRO: a cena principal não concluiu a inicialização"
+          if ! grep -q "DARK_WORLD_LOGIN_GATE_READY" "$RUNNER_TEMP/godot-startup.log"; then
+            echo "ERRO: a tela de login não concluiu a inicialização"
+            exit 1
+          fi
+
+      - name: Testar mundo 3D e modelos importados no Godot
+        timeout-minutes: 3
+        run: |
+          set -o pipefail
+          timeout 90 "$GODOT_BIN" --headless --path "$PROJECT_PATH" --quit-after 2400 res://scenes/main.tscn 2>&1 | tee "$RUNNER_TEMP/godot-world-smoke.log"
+          if grep -E "SCRIPT ERROR:|Parse Error|Failed to load script|ERROR: Failed to load" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: o mundo 3D apresentou falha durante a montagem"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_WORLD_MODELS_LOADED: 2/2" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três marcos Thrixel do cenário não foram carregados"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_OBELISK_RINGS_ANIMATED: 3/3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três anéis do obelisco não foram animados"
+            exit 1
+          fi
+          for model_key in thrixel_stag_guardian thrixel_river_crab thrixel_drowned_wraith; do
+            if ! grep -q "THRIXEL_ENEMY_MODEL_ATTACHED: $model_key" "$RUNNER_TEMP/godot-world-smoke.log"; then
+              echo "ERRO: modelo de inimigo Thrixel não foi anexado: $model_key"
+              exit 1
+            fi
+          done
+          if ! grep -q "USER_SUBMITTED_MEDIEVAL_MODELS_LOADED: 17/17" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os 17 modelos previstos não foram carregados no mundo"
+            exit 1
+          fi
+          if ! grep -q "CHESTNUT_TREES_PLACED: 9" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: as nove castanheiras transparentes não foram colocadas"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_SHRINE_PUZZLE_MODEL_ATTACHED: 1" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: o altar Thrixel não foi ligado ao puzzle do Rio Prateado"
+            exit 1
+          fi
+          if ! grep -q "THRIXEL_SILVER_RIVER_COFFER_PLACED: 3" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: os três baús do Rio Prateado não carregaram o modelo Thrixel"
+            exit 1
+          fi
+          if ! grep -Eq "IMPORTED_STATIC_COLLIDERS: [1-9][0-9]*" "$RUNNER_TEMP/godot-world-smoke.log"; then
+            echo "ERRO: as construções importadas não receberam colisões estáticas"
             exit 1
           fi
 
@@ -144,20 +334,50 @@ jobs:
           test -s "$PROJECT_PATH/build/TobiEBreu.apk"
 
       - name: Assinar e validar APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
           APK="$PROJECT_PATH/build/TobiEBreu.apk"
           ALIGNED="$PROJECT_PATH/build/TobiEBreu-aligned.apk"
           SIGNED="$PROJECT_PATH/build/TobiEBreu-signed.apk"
+          KEYSTORE_PATH="$RUNNER_TEMP/tobi-breu-release.keystore"
           "$BUILD_TOOLS/zipalign" -f -p 4 "$APK" "$ALIGNED"
+          if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            if [ -z "${ANDROID_KEYSTORE_PASSWORD:-}" ] || [ -z "${ANDROID_KEY_ALIAS:-}" ]; then
+              echo "::error::ANDROID_KEYSTORE_PASSWORD e ANDROID_KEY_ALIAS são obrigatórios com ANDROID_KEYSTORE_BASE64."
+              exit 1
+            fi
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+            STORE_PASS="$ANDROID_KEYSTORE_PASSWORD"
+            KEY_ALIAS="$ANDROID_KEY_ALIAS"
+            KEY_PASS="${ANDROID_KEY_PASSWORD:-$STORE_PASS}"
+            SIGNING_MODE="stable"
+            echo "APK_SIGNING_MODE=stable" >> "$GITHUB_ENV"
+          else
+            KEYSTORE_PATH="$HOME/.android/debug.keystore"
+            STORE_PASS="android"
+            KEY_ALIAS="androiddebugkey"
+            KEY_PASS="android"
+            SIGNING_MODE="temporary"
+            echo "APK_SIGNING_MODE=temporary" >> "$GITHUB_ENV"
+            echo "::warning::Sem ANDROID_KEYSTORE_BASE64: APK usa chave debug temporária e pode exigir desinstalação para instalar outra versão."
+          fi
+          test -s "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null
           "$BUILD_TOOLS/apksigner" sign \
-            --ks "$HOME/.android/debug.keystore" \
-            --ks-key-alias androiddebugkey \
-            --ks-pass pass:android \
-            --key-pass pass:android \
+            --ks "$KEYSTORE_PATH" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass "pass:$STORE_PASS" \
+            --key-pass "pass:$KEY_PASS" \
             --out "$SIGNED" "$ALIGNED"
           "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED"
+          echo "APK signing mode: $SIGNING_MODE"
           mv "$SIGNED" "$APK"
           rm -f "$ALIGNED"
           test -s "$APK"
@@ -169,7 +389,108 @@ jobs:
           path: ${{ env.PROJECT_PATH }}/build/TobiEBreu.apk
           if-no-files-found: error
 
-      - name: Testar APK em emulador Android
+      - name: Publicar APK no GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK_TAG="android-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$APK_TAG" "$PROJECT_PATH/build/TobiEBreu.apk" \
+            --title "Tobi e Breu Android APK ${GITHUB_RUN_NUMBER}" \
+            --notes "APK Android assinado e validado pelo workflow. Modo de assinatura: ${APK_SIGNING_MODE:-temporary}. Pacote: com.tobiebreu.darkworld3d. Commit: ${GITHUB_SHA}."
+          echo "APK_RELEASE_URL=https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/tag/$APK_TAG" >> "$GITHUB_ENV"
+
+      - name: Preparar patch incremental Android
+        id: patch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/integration/definitive-all-versions'
+        run: |
+          set -euo pipefail
+          BASE_SHA="$(tr -d '[:space:]' < "$PROJECT_PATH/tools/android_update_base_sha.txt")"
+          git cat-file -e "$BASE_SHA^{commit}"
+          echo "Patch baseline: $BASE_SHA"
+          # This baseline is the APK containing the updater; each PCK remains cumulative from that APK.
+          if ! git diff --quiet "$BASE_SHA" "$GITHUB_SHA" -- project.godot export_presets.cfg scripts/update_manager.gd scripts/update_bootstrap.gd scenes/update_bootstrap.tscn; then
+            echo "Mudança estrutural detectada: esta versão precisa de um APK novo; patch PCK cancelado."
+            exit 0
+          fi
+          if git diff --name-status "$BASE_SHA" "$GITHUB_SHA" -- scripts scenes assets addons | grep -Eq '^D'; then
+            echo "Exclusão de recurso detectada: é necessário um APK novo para evitar arquivos antigos residuais."
+            exit 0
+          fi
+          git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-files.txt"
+          python3 - "$PROJECT_PATH/export_presets.cfg" "$RUNNER_TEMP/changed-files.txt" <<'PY'
+          import json, pathlib, re, sys
+          preset = pathlib.Path(sys.argv[1])
+          changed = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8").splitlines()
+          allowed_ext = {".gd", ".tscn", ".tres", ".res", ".gdshader", ".shader", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".wav", ".ogg", ".mp3", ".glb", ".gltf", ".json"}
+          allowed_roots = ("scripts/", "scenes/", "assets/", "addons/")
+          selected = sorted({p for p in changed if p.startswith(allowed_roots) and p not in {"scripts/update_manager.gd", "scripts/update_bootstrap.gd", "scenes/update_bootstrap.tscn"} and pathlib.Path(p).suffix.lower() in allowed_ext and pathlib.Path(p).is_file()})
+          if not selected:
+              print("Nenhum recurso compatível mudou; não há patch incremental para publicar.")
+              raise SystemExit(0)
+          packed = 'export_filter="resources"\nexport_files=PackedStringArray(' + ",".join(json.dumps("res://" + p) for p in selected) + ")"
+          content = preset.read_text(encoding="utf-8")
+          content, count = re.subn(r'^export_filter="all_resources"$', packed, content, count=1, flags=re.M)
+          if count != 1:
+              raise SystemExit("Não foi possível configurar exportação incremental de recursos.")
+          preset.write_text(content, encoding="utf-8")
+          pathlib.Path("/tmp/has-android-patch").write_text("yes")
+          print("Recursos incluídos no patch:", *selected, sep="\\n- ")
+          PY
+          if [ -f /tmp/has-android-patch ]; then echo "has_patch=true" >> "$GITHUB_OUTPUT"; else echo "has_patch=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Exportar PCK incremental para Android
+        if: steps.patch.outputs.has_patch == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$PROJECT_PATH/build"
+          "$GODOT_BIN" --headless --path "$PROJECT_PATH" --export-pack "Android" "$PROJECT_PATH/build/TobiEBreu-update.pck"
+          test -s "$PROJECT_PATH/build/TobiEBreu-update.pck"
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          pck = pathlib.Path(os.environ["PROJECT_PATH"]) / "build/TobiEBreu-update.pck"
+          tag = "android-update-" + os.environ["GITHUB_RUN_NUMBER"] + "-" + os.environ["GITHUB_RUN_ATTEMPT"]
+          manifest = {
+              "version": os.environ["GITHUB_SHA"],
+              "sha256": hashlib.sha256(pck.read_bytes()).hexdigest(),
+              "download_url": "https://github.com/REALMLIFE-design/dark-fantasia-tobi-e-breu-/releases/download/" + tag + "/TobiEBreu-update.pck",
+              "minimum_app_version": "0.12.2",
+              "format": 1
+          }
+          (pck.parent / "update-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write("UPDATE_RELEASE_TAG=" + tag + chr(10))
+          PY
+
+      - name: Publicar atualização incremental no GitHub Releases
+        if: steps.patch.outputs.has_patch == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$UPDATE_RELEASE_TAG" \
+            "$PROJECT_PATH/build/TobiEBreu-update.pck" \
+            "$PROJECT_PATH/build/update-manifest.json" \
+            --title "Tobi e Breu Android update $GITHUB_RUN_NUMBER" \
+            --notes "Patch incremental de recursos para Godot 4.3. Aplicação na próxima inicialização; saves locais preservados." \
+            --latest
+
+      # O runner Ubuntu pode iniciar sem acesso ao KVM; esta regra habilita aceleração quando o host expõe /dev/kvm.
+      - name: Habilitar KVM para acelerar o emulador Android
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+            echo "KVM disponível para o usuário do runner."
+          else
+            echo "::warning::Este runner não expõe KVM; o emulador usará aceleração por software."
+          fi
+
+      # Emulador opcional: desativado conforme solicitado para não bloquear a entrega do APK.
+      # A geração, assinatura e publicação continuam validadas pelas etapas anteriores.
+      - name: Testar APK em emulador Android (opcional/desativado)
+        if: ${{ false }}
+        timeout-minutes: 25
         uses: reactivecircus/android-emulator-runner@v2
         env:
           ANDROID_I_WANT_MY_TCG: "yes"
@@ -178,5 +499,18 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_2
+          cores: 4
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: bash "$PROJECT_PATH/tools/test_android_emulator.sh"
+
+      - name: Salvar captura do jogo no emulador
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dark-world-android-emulator-screenshot
+          path: ${{ runner.temp }}/android-world.png
+          if-no-files-found: warn

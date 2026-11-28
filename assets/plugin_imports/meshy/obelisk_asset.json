@@ -1,0 +1,18 @@
+{
+  "asset": "Cursed Rune Obelisk",
+  "provider": "Meshy",
+  "preview_task_id": "01a20014-96e3-743e-ae07-354d22b8557e",
+  "textured_task_id": "01a20014-fcbc-770c-b0e4-a7c027e9d5e6",
+  "geometry_model": "meshy-t2",
+  "texture_model": "meshy-6-lite",
+  "status": "texturing_succeeded; downloadable_model_requires_plan_upgrade",
+  "dimensions_m": [
+    0.358936,
+    1,
+    0.341666
+  ],
+  "target_use": "mobile dark-fantasy shrine prop",
+  "import_path": "res://assets/plugin_imports/meshy/cursed_rune_obelisk.glb",
+  "integration_status": "not_transferred_to_repository",
+  "texture_description": "Weathered charcoal stone, subtle cool-grey mineral variation, chipped edges, three crimson emissive rune grooves."
+}

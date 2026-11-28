@@ -1,0 +1,154 @@
+name: Importar assets CC0 da LazyTextures
+
+on:
+  push:
+    branches: [integration/definitive-all-versions]
+    paths: ['.github/workflows/import-lazytextures.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lazytextures-import-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  import-lazytextures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+      - name: Baixar modelos e materiais CC0 pela API pública
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import pathlib, requests, zipfile, io, re, json
+          base='https://lazytextures.net:3000'
+          session=requests.Session()
+          session.headers.update({'User-Agent':'TobiEBreuGameAssetImporter/1.2'})
+          root=pathlib.Path('assets/external_packs/lazytextures')
+          model_root=root/'models'
+          material_root=pathlib.Path('assets/textures/lazytextures')
+          def get_json(url):
+              response=session.get(url,timeout=90); response.raise_for_status()
+              payload=response.json()
+              if payload.get('success') is False:
+                  raise RuntimeError(payload.get('error','API LazyTextures retornou erro'))
+              return payload
+          def safe(value):
+              return re.sub(r'[^A-Za-z0-9_.-]+','_',value)[:90]
+          def unwrap_list(payload):
+              current=payload
+              for _ in range(4):
+                  if isinstance(current,list): return current
+                  if not isinstance(current,dict): return []
+                  for key in ('data','results','assets','items'):
+                      if key in current:
+                          current=current[key]; break
+                  else: return []
+              return current if isinstance(current,list) else []
+          def search(kind, query):
+              payload=get_json(f'{base}/{kind}/Search?q={requests.utils.quote(query)}&sortBy=downloads&limit=30')
+              items=unwrap_list(payload)
+              print(f'Busca {kind}/{query}: {len(items)} resultados; chaves={list(payload.keys())}')
+              return items
+          def unwrap_detail(payload):
+              current=payload
+              for _ in range(3):
+                  if not isinstance(current,dict): break
+                  if 'archiveFiles' in current: return current
+                  nested=current.get('data')
+                  if isinstance(nested,dict): current=nested
+                  else: break
+              return current if isinstance(current,dict) else {}
+          def archives(detail):
+              found=[]
+              def walk(value):
+                  if isinstance(value,dict):
+                      if value.get('path') and (value.get('name') or value.get('filename')):
+                          found.append(value)
+                      for nested in value.values(): walk(nested)
+                  elif isinstance(value,list):
+                      for nested in value: walk(nested)
+              for key in ('archiveFiles','archives','models','textures','otherFiles'):
+                  if key in detail: walk(detail[key])
+              unique={}
+              for item in found: unique[item['path']]=item
+              return list(unique.values())
+          def download_assets(kind, queries, target, maximum):
+              seen=set(); count=0
+              for query in queries:
+                  for item in search(kind,query):
+                      name=item.get('name')
+                      if not name or name in seen: continue
+                      tags=item.get('tags',[])
+                      metadata=' '.join([str(name),str(item.get('category','')),str(item.get('subCategory','')),' '.join(map(str,tags))]).lower()
+                      relevant = ('tree','forest','bush','plant','flower','rock','mushroom','stone','ruin','nature','vegetation','shrub','dead tree','root','crystal','fantasy','medieval','gate','tomb','shrine','grave') if kind=='models' else ('moss','stone','wood','mud','dirt','rock','grass','forest','metal','rust','snow','bark','soil','concrete','slate','marble','brick','lichen')
+                      if not any(term in metadata for term in relevant):
+                          continue
+                      seen.add(name)
+                      payload=get_json(f'{base}/Asset/{kind}/{requests.utils.quote(name,safe="")}')
+                      detail=unwrap_detail(payload)
+                      files=archives(detail)
+                      if not files:
+                          print(f'Sem archiveFiles para {kind}/{name}; chaves={list(detail.keys())}')
+                          continue
+                      files.sort(key=lambda item:(0 if str(item.get('name','')).lower().endswith('.zip') or str(item.get('path','')).lower().endswith('.zip') else 1,0 if '1k' in item.get('name','').lower() else 1,item.get('size',10**12)))
+                      chosen=files[0]
+                      url=chosen['path'] if chosen['path'].startswith('http') else base+chosen['path']
+                      response=session.get(url,timeout=120); response.raise_for_status()
+                      folder=target/safe(name); folder.mkdir(parents=True,exist_ok=True)
+                      allowed={'.fbx','.gltf','.glb','.obj','.mtl','.png','.jpg','.jpeg','.tif','.tiff','.exr','.txt'}
+                      extracted=0
+                      filename=chosen.get('name') or pathlib.Path(chosen['path']).name
+                      suffix=pathlib.Path(filename).suffix.lower()
+                      def save_direct():
+                          nonlocal extracted
+                          if suffix in allowed and 'text/html' not in response.headers.get('Content-Type','').lower():
+                              (folder/pathlib.Path(filename).name).write_bytes(response.content)
+                              extracted=1
+                          else:
+                              print(f'Arquivo remoto não compatível para {kind}/{name}: {filename} ({response.headers.get("Content-Type")})')
+                      if response.content.startswith(b'PK'):
+                          try:
+                              archive=zipfile.ZipFile(io.BytesIO(response.content))
+                          except zipfile.BadZipFile:
+                              save_direct()
+                          else:
+                              for member in archive.infolist():
+                                  if member.is_dir(): continue
+                                  suffix_member=pathlib.Path(member.filename).suffix.lower()
+                                  if suffix_member not in allowed: continue
+                                  destination=folder/pathlib.Path(member.filename).name
+                                  destination.write_bytes(archive.read(member)); extracted+=1
+                      else:
+                          save_direct()
+                      if extracted:
+                          count+=1
+                          print(f'IMPORTADO {kind}: {name} ({extracted} arquivos)')
+                      if count>=maximum: return count
+              return count
+          model_count=download_assets('models',['forest tree','rock nature','fantasy tree','mushroom','stone ruin','dead tree','twisted roots','ancient medieval ruins','crystal formation','graveyard stone','dark forest vegetation'],model_root,16)
+          material_count=download_assets('materials',['moss stone','dark wood','mud ground','old stone','rusty metal','snow ground','forest floor','weathered wood','dark stone','mossy bark','ancient brick','slate rock'],material_root,16)
+          print(f'Modelos importados: {model_count}; materiais PBR importados: {material_count}')
+          if model_count+material_count==0:
+              raise SystemExit('A API não retornou arquivos compatíveis. Verifique os diagnósticos acima.')
+          (root/'SOURCE-LICENSE.md').write_text(
+              '# LazyTextures\nAssets obtidos pela API pública https://www.lazytextures.com/PublicAPI. '
+              'A biblioteca declara licença CC0 1.0 Universal. Modelos FBX e mapas PBR foram preservados '
+              'nas pastas de origem para manter os vínculos entre arquivos.\n',encoding='utf-8')
+          PY
+      - name: Salvar assets no GitHub
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/lazytextures assets/textures/lazytextures
+          if git diff --cached --quiet; then echo 'Nenhum arquivo novo'; exit 0; fi
+          git commit -m 'Importa modelos e materiais CC0 da LazyTextures'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

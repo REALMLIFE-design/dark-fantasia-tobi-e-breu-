@@ -1,6 +1,12 @@
-# TOBI E BREU — DARK WORLD 3D (Protótipo 0.12.0)
+# Dark World: A Lenda de Tobi e Breu
 
-Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D original não foi alterada.
+Aventura 3D em Godot 4.3. Uma fantasia contada como um grande conto de amizade, coragem e magia, acompanhando Tobi e Breu em uma jornada planejada em cinco capítulos.
+
+> Era uma vez um mundo que começou a esquecer suas próprias histórias. Dois amigos decidiram lembrar por ele.
+
+**Identidade narrativa:** conto cinematográfico com narrador acolhedor, humor, mistério, emoção e objetivos de missão sempre claros.
+
+**Preservação:** esta mudança de nome e direção narrativa não substitui mapas, personagens, missões, controles, HUD, assets ou sistemas existentes. O prólogo e a estrutura dos cinco capítulos estão documentados; nem todos os capítulos e cutscenes estão implementados ainda.
 
 ## Revisão de conteúdo e Android — 21/11/2026
 
@@ -51,15 +57,6 @@ Projeto 3D independente da versão Android/WebView Beta Test 2. A versão 2D ori
 - Salvamento local de missão, progresso, inventário, vida e santuário; grava ao pausar/fechar.
 - Tobi com mais camadas de roupa e Breu com cauda e patas.
 - Orientação Android horizontal e escala por viewport.
-
-## Atualizações do protótipo 0.2
-
-- Combate direcional: o golpe só acerta inimigos próximos e à frente do personagem.
-- Goblins perseguem, aproximam-se e atacam Tobi; o jogador tem invulnerabilidade curta após receber dano.
-- HUD de vida, contador da missão, mensagem de objetivo e respawn no acampamento.
-- Câmera pode ser girada arrastando o lado direito da tela.
-- Movimento com aceleração/desaceleração e movimento procedural leve de Tobi/Breu.
-- Mais detalhes de cenário e lanternas para orientar a trilha.
 
 ## Estado real desta entrega
 

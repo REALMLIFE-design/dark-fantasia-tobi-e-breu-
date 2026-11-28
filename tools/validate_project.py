@@ -1,7 +1,7 @@
 from pathlib import Path
 import re, sys
 ROOT = Path(__file__).resolve().parents[1]
-required = ["project.godot", "scenes/main.tscn", "scripts/world.gd", "scripts/player.gd", "scripts/enemy.gd", "scripts/painter_material.gdshader"]
+required = ["project.godot", "scenes/main.tscn", "scenes/update_bootstrap.tscn", "scripts/update_bootstrap.gd", "scripts/world.gd", "scripts/player.gd", "scripts/enemy.gd", "scripts/update_manager.gd", "scripts/painter_material.gdshader"]
 missing = [x for x in required if not (ROOT / x).is_file()]
 if missing:
     print("MISSING:", missing); sys.exit(1)

@@ -1,0 +1,158 @@
+name: Importar personagem Tobi modular — Quaternius CC0
+
+on:
+  push:
+    branches: [integration/definitive-all-versions]
+    paths:
+      - '.github/workflows/import-tobi-quaternius.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tobi-quaternius-import
+  cancel-in-progress: false
+
+jobs:
+  import-character:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+
+      - name: Obter snapshot público das peças Quaternius
+        uses: actions/checkout@v4
+        with:
+          repository: slopwarefactory/terra
+          ref: 602906d2e4e3e93d0bb0ade63b23b68b37c57bd5
+          path: quaternius-source
+          lfs: false
+          fetch-depth: 1
+
+      - name: Baixar somente os objetos Git LFS necessários
+        run: |
+          set -euo pipefail
+          git -C quaternius-source lfs install --local
+          git -C quaternius-source lfs pull --include="art/characters/quaternius/universal-base-characters/Regular_Male_OnlyHead.bin,art/characters/quaternius/universal-base-characters/T_Hair_1_Normal.png,art/characters/quaternius/universal-base-characters/T_Hair_1_BaseColor.png,art/characters/quaternius/universal-base-characters/T_Eye_Normal.png,art/characters/quaternius/universal-base-characters/T_Eye_Brown.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Normal.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Dark_BaseColor.png,art/characters/quaternius/universal-base-characters/T_Regular_Male_Roughness.png,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Body.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Arms.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Legs.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Feet_Boots.bin,art/characters/quaternius/modular-outfits-fantasy/Male_Ranger_Head_Hood.bin,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_Normal.png,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_BaseColor.png,art/characters/quaternius/modular-outfits-fantasy/T_Ranger_ORM.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Normal.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Dark_BaseColor.png,art/characters/quaternius/modular-outfits-fantasy/T_Regular_Male_Roughness.png" --exclude=""
+
+      - name: Copiar e validar glTF, buffers e texturas reais
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, shutil
+
+          source = pathlib.Path("quaternius-source/art/characters/quaternius")
+          output = pathlib.Path("assets/models/tobi_quaternius")
+          groups = {
+              "base": (
+                  "universal-base-characters",
+                  [
+                      "Regular_Male_OnlyHead.gltf",
+                      "Regular_Male_OnlyHead.bin",
+                      "T_Hair_1_Normal.png",
+                      "T_Hair_1_BaseColor.png",
+                      "T_Eye_Normal.png",
+                      "T_Eye_Brown.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
+              ),
+              "ranger": (
+                  "modular-outfits-fantasy",
+                  [
+                      "Male_Ranger_Body.gltf",
+                      "Male_Ranger_Body.bin",
+                      "Male_Ranger_Arms.gltf",
+                      "Male_Ranger_Arms.bin",
+                      "Male_Ranger_Legs.gltf",
+                      "Male_Ranger_Legs.bin",
+                      "Male_Ranger_Feet_Boots.gltf",
+                      "Male_Ranger_Feet_Boots.bin",
+                      "Male_Ranger_Head_Hood.gltf",
+                      "Male_Ranger_Head_Hood.bin",
+                      "T_Ranger_Normal.png",
+                      "T_Ranger_BaseColor.png",
+                      "T_Ranger_ORM.png",
+                      "T_Regular_Male_Normal.png",
+                      "T_Regular_Male_Dark_BaseColor.png",
+                      "T_Regular_Male_Roughness.png",
+                  ],
+              ),
+          }
+          manifest = []
+          for group, (folder, filenames) in groups.items():
+              src_dir = source / folder
+              dst_dir = output / group
+              dst_dir.mkdir(parents=True, exist_ok=True)
+              for filename in filenames:
+                  src = src_dir / filename
+                  if not src.is_file():
+                      raise RuntimeError(f"Arquivo ausente no snapshot Quaternius: {src}")
+                  data = src.read_bytes()
+                  if not data or data.startswith(b"version https://git-lfs.github.com/spec/v1"):
+                      raise RuntimeError(f"Objeto Git LFS não foi baixado: {src}")
+                  if filename.endswith(".png") and not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                      raise RuntimeError(f"PNG inválido: {src}")
+                  dst = dst_dir / filename
+                  shutil.copyfile(src, dst)
+                  manifest.append({
+                      "group": group,
+                      "file": filename,
+                      "bytes": len(data),
+                      "sha256": hashlib.sha256(data).hexdigest(),
+                  })
+
+          # Verifica que todos os buffers têm o tamanho declarado no glTF e que
+          # todas as imagens existem no mesmo diretório de cada modelo.
+          for gltf in output.rglob("*.gltf"):
+              doc = json.loads(gltf.read_text(encoding="utf-8"))
+              for buffer in doc.get("buffers", []):
+                  uri = buffer.get("uri")
+                  if uri:
+                      path = gltf.parent / pathlib.PurePosixPath(uri).name
+                      if not path.is_file() or path.stat().st_size != buffer["byteLength"]:
+                          raise RuntimeError(f"Buffer incompleto: {path}")
+              for image in doc.get("images", []):
+                  uri = image.get("uri")
+                  if uri:
+                      path = gltf.parent / pathlib.PurePosixPath(uri).name
+                      if not path.is_file():
+                          raise RuntimeError(f"Textura ausente: {path}")
+              print(f"GLTF e dependências validados: {gltf}")
+
+          if len(list(output.rglob("*.gltf"))) != 6:
+              raise RuntimeError("A montagem deve conter exatamente 6 modelos glTF.")
+          (output / "ASSET-MANIFEST.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
+          (output / "SOURCES-LICENSE.md").write_text("""# Fontes e licenças do Tobi modular
+
+          - Universal Base Characters — Quaternius: https://quaternius.com/packs/universalbasecharacters.html
+          - Modular Character Outfits - Fantasy — Quaternius: https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+          - Ambos os pacotes declaram CC0 1.0 nas páginas oficiais; uso e modificação permitidos, inclusive em jogos comerciais.
+          - Os arquivos foram obtidos do snapshot público slopwarefactory/terra no commit 602906d2e4e3e93d0bb0ade63b23b68b37c57bd5, que mantém os arquivos originais Quaternius sob Git LFS.
+          - Peças usadas: cabeça base Regular Male OnlyHead + Ranger Body, Arms, Legs, Boots e Hood.
+          - Buffers e texturas foram validados por assinatura de arquivo e tamanho real declarado no glTF.
+          """, encoding="utf-8")
+          print(f"Importação validada: {len(manifest)} arquivos, {sum(x['bytes'] for x in manifest)} bytes.")
+          PY
+
+      - name: Commitar somente os arquivos reais do Tobi
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/models/tobi_quaternius
+          if git diff --cached --quiet; then
+            echo 'Nenhum arquivo novo para importar.'
+            exit 0
+          fi
+          git commit -m 'Importa malhas e texturas Quaternius reais para Tobi'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

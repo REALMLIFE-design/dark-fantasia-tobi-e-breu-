@@ -145,3 +145,159 @@
 - Suíte automatizada: 72 testes aprovados.
 - Validação estrutural do projeto: aprovada.
 - Ainda falta executar/importar no Godot e testar a cena e os controles no Android; portanto, esta correção não certifica por si só que o jogo inteiro já está jogável.
+
+
+## Integração de assets existentes dos plugins (21/11/2026)
+- Inventário confirmado no Thrixel: projeto **Tobi e Breu — Dark World 3D**, com 15 assets; os modelos já existentes foram reutilizados, sem iniciar novas gerações.
+- Thrixel: Guardião Cervo rigado, Caranguejo do Rio Prateado rigado, Espectro Afogado texturizado, Árvore Anciã texturizada, Obelisco Rúnico otimizado e Santuário de Pedra.
+- Meshy: personagem Tobi em 3D com textura PBR concluída (task `01a20058-ae2b-72a1-b2e6-52a6120cc2cf`); ainda precisa ser transferido para o pacote local e conectado ao rig/controle do jogador.
+- Aqueduct: grafo PBR **Tobi e Breu — Materiais PBR Dark Fantasy** localizado e lido; define base color, normal, roughness, AO e height. A exportação dos mapas ainda não foi empacotada no repositório.
+- Criado catálogo de seis assets Thrixel com IDs de origem e URLs GLB a 1024 px; adicionado download sob demanda, cache em `user://plugin_assets/thrixel` e carregamento por `GLTFDocument`.
+- Os seis modelos são instanciados em pontos do mundo 3D; o cache evita baixar novamente nas próximas sessões. O download inicial exige conexão com internet.
+- O dock Asset Bridge do editor agora lista os seis assets Thrixel.
+- Não foram consumidos novos créditos de geração; Thrixel está sem cubes no momento. Nenhum asset existente foi apagado.
+- A compilação/execução Godot ainda precisa validar o carregamento GLB no Android. A permissão `permissions/internet=true` já está habilitada no preset Android.
+
+
+## Integração dos modelos Meshy existentes — 21/11/2026
+
+Foram identificados quatro assets próprios do projeto no Meshy e ligados aos pontos de importação do Godot:
+
+- **Tobi (herói texturizado):** task `01a20058-ae2b-72a1-b2e6-52a6120cc2cf`, destino `res://assets/plugin_imports/meshy/tobi_hero.glb`. O player tenta instanciar esse GLB automaticamente e mantém o personagem procedural como fallback.
+- **Portal gótico:** task `01a1ff12-3dd2-707a-8c0e-016625d9d9d5`, destino `res://assets/plugin_imports/meshy/gothic_gate.glb`.
+- **Obelisco rúnico:** task `01a20014-fcbc-770c-b0e4-a7c027e9d5e6`, destino `res://assets/plugin_imports/meshy/rune_obelisk.glb`.
+- **Santuário de pedra:** task `01a1ffc1-4452-7384-9c4c-4a81ece4fc4a`, destino `res://assets/plugin_imports/meshy/stone_way_shrine.glb`.
+
+O carregador e o mundo agora chamam esses três props Meshy, e o player reconhece o GLB do Tobi quando ele existir. **Os arquivos GLB ainda não estão versionados no repositório:** a API Meshy bloqueou o download solicitando upgrade de plano. Nenhum modelo foi recriado e nenhum crédito de geração foi consumido nesta etapa. Até a importação dos arquivos, o jogo continua usando o herói procedural e os props existentes do cenário.
+
+
+## Forge 3D local sem créditos — 21/11/2026
+
+Como o download do Meshy exige upgrade e o usuário pediu para não gastar tokens, foi criado `scripts/procedural_asset_forge.gd`: um gerador local de malhas primitivas compostas, executado pelo próprio Godot. O carregador usa GLB importado quando existir e, na ausência dele, constrói versões locais do guardião cervo, caranguejo do rio, espectro afogado, árvore ancestral, obelisco rúnico, santuário e portão gótico. O mundo chama esses fallbacks sem requisições externas. O Tobi continua com o modelo procedural já presente como fallback. Nenhum crédito/token de geração foi consumido.
+
+A conta Creations3D consultada tinha 8 créditos restantes, mas a geração para jogo custa 4; não foi usada por respeitar o pedido de não gastar tokens. O Spline conectado está no plano Free e tem limite diário de chamadas; ele permite modelagem procedural, mas o caminho mais direto para colocar assets no projeto Godot sem depender de exportação manual é o forge local.
+
+
+## Expansão completa de arte e cenário — 22/11/2026
+
+- O mundo já existente foi preservado: terreno de 700 × 700, clareira inicial, Pântano dos Ratos, Rio Prateado, Bosque dos Sussurros, Floresta Ancestral, Montanha Gelada, Desfiladeiro Rubro, Ruínas Antigas, Planície Dourada, Cume das Nuvens, Templo do Coração, Vila do Carvalho, Cidade de Pedra, Guilda, Caverna do Eco, Masmorra das Cinzas e Castelo do Silêncio.
+- Os dois atlases de textura existentes (surface_albedo_atlas.png e surface_roughness_atlas.png) continuam sendo usados pelo shader painterly triplanar. O shader agora também tem cinco variações procedurais adicionais: obsidiana, pedra musgosa, pedra manchada de sangue, metal gasto e cristal arcano.
+- Criado scripts/dark_fantasy_prop_pack.gd, um pack local sem créditos com props 3D decorativos para vila, cidade, floresta, caverna, masmorra, castelo e ruínas: barracas, poço, barris, caixas, lampiões, placas, bancos, bigorna, troncos, cogumelos, lápides, cristais, braseiros, altar e estandartes.
+- O pack é carregado durante a construção do mundo principal; não cria um mapa paralelo nem substitui missões, checkpoints, saves, inimigos ou HUD.
+- Os modelos externos (GLB/FBX) ainda dependem de download e importação dos arquivos originais. O Ultimate Dungeon Pack tem 1,1 GiB; os demais links e licenças estão catalogados em assets/external_packs/README.md. Não afirmar que os binários externos estão dentro do APK.
+- Nenhum crédito de geração foi gasto. A nova decoração usa geometria local do Godot e os atlases PBR já versionados.
+- Testes de contrato foram adicionados. A execução Godot/Android ainda precisa terminar no GitHub Actions antes de declarar build validado.
+
+
+## Importação de modelos externos e PBR CC0 — 22/11/2026
+
+- Importados e versionados **20 modelos GLB** da 3DAssets.dev em `assets/external_packs/3dassets_dev/`, com catálogo de origem/licença. A biblioteca declara CC0 1.0 e os GLBs são autocontidos.
+- Importados **9 mapas PBR** da Poly Haven (albedo, normal e roughness para pedra musgosa, terra com pedras e lama) em `assets/textures/polyhaven/`.
+- Os modelos foram adicionados ao carregador do mundo com filtros por nome: apenas peças compatíveis com a natureza e as ruínas do Rio Prateado entram no cenário. Corais e outros elementos exclusivamente submersos ficam guardados no pack, mas não são espalhados em terra.
+- Os mapas PBR são aplicados em seis pequenas manchas de transição no Pântano dos Ratos e nas margens do Rio Prateado. O terreno painterly original, trilhas, construções, missões e colisões não são substituídos.
+- O carregador externo agora aceita OBJ, FBX, GLB e glTF. A integração Meshy prioriza os GLBs reais quando já existem e mantém o forge procedural como fallback; o Tobi Meshy continua opcional no player. Os assets Thrixel e demais plugins permanecem no catálogo e nas chamadas existentes.
+- A API da LazyTextures já baixou modelos e materiais CC0; o commit automático para o repositório ainda está em andamento nesta atualização. Não contar esses arquivos como versionados até confirmar o push.
+- A tentativa de baixar o pack Quaternius pelo Google Drive foi bloqueada pelo limite de downloads do próprio Drive. Nenhum arquivo parcial foi tratado como integrado; foi mantido o caminho alternativo de fontes com API/CDN pública.
+- O workflow Android foi acionado para validar os contratos e importar o projeto, mas a compilação Godot/APK ainda não está confirmada. Não declarar APK pronto nem runtime validado até o workflow concluir com sucesso.
+
+
+## Novos modelos 3D locais — 22/11/2026
+- Adicionados quatro modelos compostos low-poly ao pack procedural: Carroça do Coletor de Ossos, Círculo de Runas Sussurrantes, Poço Amaldiçoado e Estátua do Guardião Caído.
+- Os modelos são construídos com malhas nativas do Godot e reutilizam o shader painterly e os materiais/atlases existentes; não exigem Meshy, downloads ou créditos.
+- Os quatro objetos são instanciados automaticamente em pontos das regiões já existentes por `scripts/dark_fantasy_prop_pack.gd`; nenhum mapa, missão, save, HUD ou sistema de combate foi substituído.
+- Adicionado teste de contrato para os quatro construtores e seus nomes de cena.
+- Ainda falta o workflow executar os testes e validar a cena no Godot/Android. Até essa execução, não declarar compilação ou desempenho mobile confirmados.
+
+
+## Criatura original — Vigia das Raízes (22/11/2026)
+- Adicionado o inimigo opcional Vigia das Raízes à Floresta Ancestral, usando o arquétipo enemy_kind 9 e o sistema de movimento/combate existente.
+- Silhueta própria com placas de casca, espinhos de raiz, olhos e núcleo verde emissivo; indicador de ataque usa tom verde para comunicar o golpe.
+- Parâmetros: 230 HP, velocidade 2,3, dano 18 e alcance 2,2. Recompensa opcional: +35 XP, +2 Essências Sombrias, +1 Erva do Pântano e chance de Fragmento Rubro.
+- Não altera etapas, contadores ou recompensas das missões principais. O inimigo é recriado como encontro opcional ao iniciar uma nova sessão.
+- Adicionado teste de contrato para spawn, identidade visual e recompensa.
+- GDScript ainda precisa ser validado pelo Godot e testado no Android; testes de contrato não substituem execução no motor.
+
+
+## Criatura da Montanha Gelada — Corvo Glacial (22/11/2026)
+- Adicionados dois Corvos Glaciais como encontros opcionais perto dos cristais da Montanha Gelada.
+- Modelo procedural com corpo e cabeça aviários, bico, olhos emissivos, cauda, garras e asas articuladas com penas facetadas.
+- As asas batem e o corpo paira visualmente; o inimigo mantém o sistema de perseguição, telegráfico e ataque já existente.
+- Parâmetros: 125 HP, velocidade 2,75, dano 12 e alcance 1,75. Recompensa opcional: +25 XP, 1 Fragmento Rubro e 1 Essência Sombria.
+- Adicionado teste de contrato para spawn, modelo e animação das asas.
+- Ainda depende da validação Godot/Android no workflow.
+
+
+## Ferramentas externas de criação — Corvo Glacial (22/11/2026)
+- Spline: criada a cena editável "Tobi e Breu - Corvo Glacial" com o grupo 3D "Corvo Glacial", 19 objetos geométricos, piso shadow-catcher e duas luzes de preenchimento.
+- A cena do Spline é uma referência visual independente. Nenhum GLB foi exportado dela e ela ainda não é carregada pelo Godot.
+- A primeira verificação visual do Spline apontou exposição muito escura. Foram adicionadas luzes de preenchimento, mas o limite de capturas desta sessão foi atingido antes de uma nova verificação; a exposição final permanece não confirmada.
+- Krea: catálogo de geração 3D consultado e modelo Hunyuan3D 3.1 Rapid validado por schema. Nenhuma geração submetida nesta etapa.
+- Meshy: saldos e histórico consultados. O modelo da Árvore Ancestral continua sem formatos de download disponíveis nesta conexão; nenhuma geração adicional foi cobrada.
+- Luma: saldo de créditos da equipe conectada está zerado; nenhuma geração submetida.
+- A validação Godot identificou referências às pernas do Corvo Glacial antes da declaração local. A ordem foi corrigida no commit seguinte; aguardar novo workflow para confirmar o parser.
+
+
+## Marcos ambientais adicionais — Montanha Gelada e Desfiladeiro Rubro (22/11/2026)
+- Adicionado o Altar da Memória Glacial, com base de pedra fria, anel emissivo, cristal central e seis fragmentos de gelo.
+- Adicionado o Portal da Fenda Rubra, com pilares, lintel, pedra-chave emissiva e cinco runas.
+- Os dois modelos são malhas low-poly procedurais e entram no construtor central do pacote de props; não dependem de downloads nem créditos externos.
+- Testes de contrato adicionados. Aguardando validação pelo workflow Android/Godot.
+
+
+## Marcos ambientais — Pântano dos Ratos e Rio Prateado (22/11/2026)
+- Adicionado o Caldeirão da Bruxa do Pântano, com estrutura metálica, pernas, mistura tóxica e bolhas emissivas.
+- Adicionado o Marco do Sino Afogado no Rio Prateado, com base de pedra, pilares, viga, sino suspenso e runa.
+- Ambos são modelos procedurais leves integrados ao pacote de construção do mundo.
+- Testes de contrato adicionados; validação Godot/Android pendente no workflow mais recente.
+
+
+## Modelos ambientais adicionais — Planície, Bosque e Caverna (22/11/2026)
+- Integrado o Moinho da Planície Dourada com torre, porta, eixo e quatro pás.
+- Integrado o Bosque de Cogumelos Sussurrantes com cinco cogumelos e partículas luminosas estáticas leves.
+- Integrado o Agrupamento de Cristais da Caverna do Eco com sete cristais e núcleo emissivo.
+- Atualizado teste antigo de contrato do workflow Android para refletir a busca atual por project.godot na raiz ou subpastas. O teste anterior exigia um trecho de shell que já havia sido substituído por uma busca mais abrangente; a falha era do teste desatualizado, não da etapa de localização do projeto.
+- Testes de contrato adicionados para os três novos conjuntos; aguardando execução no CI.
+
+
+## Modelo 3D — Gato companheiro de Tobi (22/11/2026)
+- Criado um gato low-poly procedural com corpo, cabeça, orelhas, olhos âmbar, bigodes, patas, cauda segmentada, coleira vinho e medalhão dourado.
+- Integrado ao `DarkFantasyPropPack.build_all()` perto da clareira inicial, sem substituir personagens ou alterar missões.
+- Incluído teste de contrato para confirmar a presença e integração das partes principais.
+- Ainda precisa de validação no Godot 4.3 e em Android; o modelo é visual nesta etapa, sem comportamento de companheiro.
+
+
+## Expansão de modelos 3D — qualidade e integração (22/11/2026)
+- Confirmado que world.gd chama o construtor central DarkFantasyPropPack.build_all() durante a montagem do mundo e também solicita os modelos externos cadastrados.
+- Refinada a resolução das malhas esféricas para 24 segmentos radiais e 16 anéis; cilindros e cones passaram a usar mais segmentos.
+- O gato de Tobi recebeu detalhes adicionais de pelagem, sobrancelhas, dedos, tufos do peito, rebites da coleira e medalhão em camadas.
+- Todos os conjuntos ambientais e marcos procedurais existentes permanecem registrados no build_all; os modelos GLB do catálogo Thrixel/Meshy e os pacotes externos são carregados quando seus binários estão disponíveis.
+- Corrigido erro de GDScript na criação do anel emissivo do Altar Glacial: o material emissivo agora é aplicado após criar o cilindro, respeitando a assinatura do helper.
+- A validação do Godot anterior detectou esse erro de argumentos; nova execução do workflow está em andamento após a correção. Não marcar APK como concluído até o CI terminar.
+
+
+## Expansão regional de modelos 3D — 22/11/2026
+- Adicionados quatro novos marcos ao construtor central: Santuário do Marco Antigo, Acampamento dos Caçadores, Ponte de Pedra do Rio Prateado e Torre de Vigia Caída.
+- Os modelos incluem estruturas compostas de pedra e madeira, suportes, corrimãos, estandartes, fogueira, cristal emissivo e detalhes de acabamento.
+- Posições registradas: (-92, 0, 130), (-142, 0, 62), (61, 0, -156) e (200, 0, 68).
+- Adicionado teste de contrato para confirmar o registro dos quatro modelos.
+- São marcos de cenário; não foram adicionadas interações, recompensas ou colisões dedicadas nesta etapa.
+- Validação do Godot/Android permanece pendente do workflow.
+
+
+## Expansão de cenografia — oficinas de profissão (22/11/2026)
+- Adicionadas a Forja do Ferreiro na Vila do Carvalho e a Oficina do Alquimista na Cidade de Pedra.
+- A forja contém lareira, bigorna em peças, martelo, lâminas expostas, carvão e detalhes emissivos.
+- A oficina contém bancada, quatro frascos com líquidos, caldeirão, prateleira de ingredientes, grimório e cristal de foco.
+- Ambos os construtores foram registrados em `DarkFantasyPropPack.build_all`; não alteram missões, combate, inventário ou economia.
+- Incluído teste de contrato para o registro e os principais componentes dos dois modelos.
+- A execução do workflow Android/Godot ainda precisa confirmar a compilação e os testes; não declarar validação de runtime até o término.
+
+
+## Integração dos modelos 3D de inimigos — 22/11/2026
+- Ligados os assets Thrixel do Espectro Afogado, Caranguejo de Prata e Guardião Cervo diretamente aos inimigos reais dos tipos 7, 8 e 9 em `scripts/enemy.gd`.
+- Quando o GLB existe em `res://assets/plugin_imports/thrixel/`, a cena é instanciada dentro do nó visual do inimigo e a malha procedural é ocultada; quando o arquivo está ausente ou inválido, o modelo procedural continua como fallback.
+- Removida a criação desses três modelos como objetos estáticos de decoração em `_build_imported_plugin_models`, evitando duplicatas fora dos encontros.
+- O cache de materiais de hit-flash foi movido para depois da construção visual completa, incluindo o modelo importado.
+- Incluído teste de contrato para o mapeamento dos GLBs e para a preservação do fallback procedural.
+- Importante: os GLBs externos continuam pendentes de transferência binária para o repositório. A integração de carregamento está pronta, mas não afirmar que os modelos externos já aparecem até os arquivos serem importados.
+- Compilação Godot e CI devem ser confirmados após os commits.

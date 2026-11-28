@@ -6,7 +6,7 @@ uniform vec4 accent_tint : source_color = vec4(0.20, 0.28, 0.22, 1.0);
 uniform float brush_scale = 3.0;
 uniform float brush_strength = 0.08;
 // 0 painterly base, 1 grass, 2 dirt, 3 swamp/mud, 4 wood, 5 water, 6 snow, 7 roof/brick, 8 cut stone.
-uniform int pattern_mode : hint_range(0, 8) = 0;
+uniform int pattern_mode : hint_range(0, 13) = 0;
 uniform float detail_scale = 1.0;
 uniform float triplanar_sharpness : hint_range(1.0, 12.0) = 4.5;
 uniform float bump_strength : hint_range(0.0, 1.0) = 0.16;
@@ -134,6 +134,26 @@ void fragment() {
     } else if (pattern_mode == 8) { // Cut stone: cloudy mineral grain and subtle seams.
         float seams = smoothstep(0.02, 0.075, abs(noise_value(floor(p * 0.55) * 0.73) - 0.5));
         pattern = (broad - 0.5) * 0.20 - (1.0 - seams) * 0.07 + (fine - 0.5) * 0.06;
+    } else if (pattern_mode == 9) {
+        float fracture = smoothstep(0.965, 0.995, noise_value(floor(p * 2.1) + fine * 0.18));
+        tint = mix(base_tint.rgb, accent_tint.rgb, fracture * 0.42);
+        pattern = (broad - 0.5) * 0.13 + fracture * 0.22;
+    } else if (pattern_mode == 10) {
+        float moss = smoothstep(0.48, 0.76, fbm(p * 0.48 + fine));
+        tint = mix(base_tint.rgb, accent_tint.rgb, moss * 0.52);
+        pattern = (broad - 0.5) * 0.18 + moss * 0.08;
+    } else if (pattern_mode == 11) {
+        float stain = smoothstep(0.58, 0.88, fbm(p * 0.62 + vec2(3.7, 1.2)));
+        tint = mix(base_tint.rgb, accent_tint.rgb, stain * 0.48);
+        pattern = (fine - 0.5) * 0.12 - stain * 0.08;
+    } else if (pattern_mode == 12) {
+        float scratches = smoothstep(0.91, 0.99, noise_value(vec2(p.x * 0.55, p.y * 7.0)));
+        pattern = (broad - 0.5) * 0.12 - scratches * 0.08;
+    } else if (pattern_mode == 13) {
+        float facets = sin((world_pos.x + world_pos.y * 0.7 + world_pos.z * 0.35) * brush_scale * 2.4);
+        float sparkle = smoothstep(0.92, 0.99, fine);
+        tint = mix(base_tint.rgb, accent_tint.rgb, 0.24 + facets * 0.12);
+        pattern = facets * 0.08 + sparkle * 0.18 + (broad - 0.5) * 0.08;
     } else {
         pattern = grain * brush_strength + strokes + (broad - 0.5) * 0.08;
     }
@@ -148,10 +168,23 @@ void fragment() {
     else if (pattern_mode == 4) { atlas_influence = 0.70; }
     else if (pattern_mode == 5) { atlas_influence = 0.76; }
     else if (pattern_mode == 6) { atlas_influence = 0.70; }
-    ALBEDO = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern + pigment_variation);
+    else if (pattern_mode >= 9) { atlas_influence = 0.30; }
+    vec3 painted_surface = mix(tint, atlas_color, atlas_influence) * (1.0 + pattern + pigment_variation);
+    // A restrained dreamlike color drift: tiny cool/warm pigment shifts add
+    // visual magic without animated distortion or expensive extra textures.
+    float dream_shift = (broad - 0.5) * 0.035 + (fine - 0.5) * 0.018;
+    vec3 cool_lavender = vec3(0.78, 0.82, 1.04);
+    vec3 warm_amber = vec3(1.05, 0.91, 0.76);
+    vec3 dream_tint = mix(cool_lavender, warm_amber, clamp(broad * 0.72 + 0.18, 0.0, 1.0));
+    float luminance = dot(painted_surface, vec3(0.299, 0.587, 0.114));
+    vec3 gently_richer = mix(vec3(luminance), painted_surface, 1.055);
+    ALBEDO = max(gently_richer * (vec3(1.0) + dream_tint * dream_shift), vec3(0.0));
     float base_roughness = pattern_mode == 5 ? 0.20 : (pattern_mode == 3 ? 0.78 : 0.94);
+    if (pattern_mode == 9) { base_roughness = 0.28; }
+    else if (pattern_mode == 12) { base_roughness = 0.38; }
+    else if (pattern_mode == 13) { base_roughness = 0.24; }
     ROUGHNESS = clamp(mix(base_roughness, atlas_roughness, 0.72) + (micro_mottle - 0.5) * 0.08, 0.12, 1.0);
-    METALLIC = pattern_mode == 5 ? 0.16 : 0.0;
+    METALLIC = pattern_mode == 5 ? 0.16 : (pattern_mode == 12 ? 0.58 : (pattern_mode == 13 ? 0.22 : 0.0));
 
     // Derivative-based bump detail reuses the atlas without another texture
     // binding or a tangent-space normal texture, keeping Android memory low.

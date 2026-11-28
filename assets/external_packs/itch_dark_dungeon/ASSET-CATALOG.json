@@ -1,0 +1,80 @@
+{
+  "source": "https://sotudios.itch.io/dark-dungeon-props",
+  "official_download": "https://sotudios.com/Assets/Ultimate-DungeonPack/",
+  "version": "1.2.0",
+  "license": "CC BY 4.0",
+  "attribution": "Sotudios — Ultimate Dungeon Pack / Dark Dungeon Props",
+  "format": "GLB self-contained",
+  "models": [
+    {
+      "id": "nethergate-ruins",
+      "name": "Ruínas da Nethergate",
+      "file": "nethergate-ruins.glb"
+    },
+    {
+      "id": "spiral-stone-dragon",
+      "name": "Dragão de Pedra Espiral",
+      "file": "spiral-stone-dragon.glb"
+    },
+    {
+      "id": "tendrils-of-the-crack",
+      "name": "Tentáculos da Fenda",
+      "file": "tendrils-of-the-crack.glb"
+    },
+    {
+      "id": "cracked-gold-chalice",
+      "name": "Cálice Dourado Rachado",
+      "file": "cracked-gold-chalice.glb"
+    },
+    {
+      "id": "embervault-reliquary",
+      "name": "Relicário Embervault",
+      "file": "embervault-reliquary.glb"
+    },
+    {
+      "id": "cursed-codex",
+      "name": "Códice Amaldiçoado",
+      "file": "cursed-codex.glb"
+    },
+    {
+      "id": "emberbound-cauldron",
+      "name": "Caldeirão Emberbound",
+      "file": "emberbound-cauldron.glb"
+    },
+    {
+      "id": "embercrystal-citadel",
+      "name": "Cidadela de Cristal Ígneo",
+      "file": "embercrystal-citadel.glb"
+    },
+    {
+      "id": "shattered-knight",
+      "name": "Cavaleiro Estilhaçado",
+      "file": "shattered-knight.glb"
+    },
+    {
+      "id": "cracked-runic-circle",
+      "name": "Círculo Rúnico Rachado",
+      "file": "cracked-runic-circle.glb"
+    },
+    {
+      "id": "crimson-obsidian-sentinel",
+      "name": "Sentinela de Obsidiana Carmesim",
+      "file": "crimson-obsidian-sentinel.glb"
+    },
+    {
+      "id": "emberstone-throne",
+      "name": "Trono Emberstone",
+      "file": "emberstone-throne.glb"
+    },
+    {
+      "id": "skullbound-obelisk",
+      "name": "Obelisco Caveira",
+      "file": "skullbound-obelisk.glb"
+    },
+    {
+      "id": "verdant-spiral-obelisk",
+      "name": "Obelisco Espiral Esmeralda",
+      "file": "verdant-spiral-obelisk.glb"
+    }
+  ]
+}

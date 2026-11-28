@@ -1,0 +1,131 @@
+name: Importar modelos CC0 da 3DAssets.dev
+
+on:
+  push:
+    branches: [integration/definitive-all-versions]
+    paths: ['.github/workflows/import-3dassets-dev.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 3dassets-dev-import-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  import-3dassets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+      - name: Baixar modelos GLB CC0 compatíveis com fantasia
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, re, requests
+          base='https://3dassets.dev/api/v1'
+          session=requests.Session()
+          session.headers.update({'User-Agent':'TobiEBreuDarkWorld3D/1.0'})
+          out=pathlib.Path('assets/external_packs/3dassets_dev')
+          out.mkdir(parents=True,exist_ok=True)
+          queries=['fantasy tree','forest tree','fantasy rock','mushroom','ancient ruin','stone gate','crystal','medieval lantern','fantasy torch','shrine obelisk']
+          relevant=('tree','forest','bush','plant','flower','rock','mushroom','stone','ruin','crystal','gate','shrine','obelisk','lantern','torch','altar','tomb','grave','skull','barrel','crate','anvil','well','banner','wood','medieval','fantasy')
+          def get_json(url,params=None):
+              response=session.get(url,params=params,timeout=90)
+              response.raise_for_status()
+              return response.json()
+          def find_list(payload):
+              if isinstance(payload,list): return payload
+              if isinstance(payload,dict):
+                  for key in ('assets','results','items','data'):
+                      value=payload.get(key)
+                      if isinstance(value,list): return value
+                      if isinstance(value,dict):
+                          found=find_list(value)
+                          if found: return found
+              return []
+          def unwrap_asset(payload):
+              current=payload
+              for _ in range(4):
+                  if not isinstance(current,dict): break
+                  if current.get('cdnUrl') or current.get('downloadUrl'): return current
+                  nested=next((current.get(k) for k in ('asset','data','result') if isinstance(current.get(k),dict)),None)
+                  if nested is None: break
+                  current=nested
+              return current if isinstance(current,dict) else {}
+          seen=set(); imported=[]
+          for query in queries:
+              payload=get_json(base+'/assets',{'q':query,'theme':'fantasy','style':'low-poly','sort':'popular','limit':50})
+              items=find_list(payload)
+              print(f'Consulta {query}: {len(items)} resultados')
+              for item in items:
+                  if not isinstance(item,dict): continue
+                  slug=item.get('slug')
+                  if not slug or slug in seen: continue
+                  title=item.get('title') or item.get('name') or slug
+                  tags=item.get('tags') or []
+                  metadata=' '.join([str(title),str(item.get('category','')),str(item.get('theme','')),' '.join(map(str,tags))]).lower()
+                  if not any(word in metadata for word in relevant): continue
+                  seen.add(slug)
+                  detail=unwrap_asset(get_json(base+'/assets/'+requests.utils.quote(slug,safe='')))
+                  url=detail.get('cdnUrl') or detail.get('downloadUrl') or item.get('cdnUrl') or item.get('downloadUrl')
+                  if not url:
+                      print(f'Sem URL GLB para {slug}')
+                      continue
+                  response=session.get(url,timeout=120); response.raise_for_status()
+                  data=response.content
+                  if not data.startswith(b'glTF'):
+                      print(f'Arquivo não é GLB válido: {slug}')
+                      continue
+                  if len(data)>20*1024*1024:
+                      print(f'GLB acima de 20 MB ignorado: {slug}')
+                      continue
+                  filename=re.sub(r'[^A-Za-z0-9_.-]+','_',slug)[:90]+'.glb'
+                  (out/filename).write_bytes(data)
+                  imported.append({'slug':slug,'title':title,'file':filename,'bytes':len(data),'license':'CC0 1.0','source':'https://3dassets.dev/assets/'+slug})
+                  print(f'IMPORTADO {title}: {len(data)} bytes')
+                  if len(imported)>=20: break
+              if len(imported)>=20: break
+          (out/'ASSET-CATALOG.json').write_text(json.dumps(imported,ensure_ascii=False,indent=2),encoding='utf-8')
+          (out/'SOURCE-LICENSE.md').write_text(
+              '# 3DAssets.dev\nModelos GLB baixados pela API pública https://3dassets.dev/api/v1. '
+              'A biblioteca declara CC0 1.0 Universal para todos os modelos. '
+              'Os GLBs são autocontidos e mantêm suas texturas embutidas.\n',encoding='utf-8')
+          print(f'Total de modelos GLB importados: {len(imported)}')
+          if len(imported)==0: raise SystemExit('Nenhum GLB compatível foi baixado.')
+          PY
+      - name: Baixar materiais PBR CC0 do Poly Haven
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import pathlib, requests
+          headers={"User-Agent":"TobiEBreuDarkWorld3D/1.0"}
+          materials={"aerial_grass_rock":"pedra_musgo","aerial_ground_rock":"terra_pedras","aerial_mud_1":"lama"}
+          for asset_id,folder in materials.items():
+              response=requests.get(f"https://api.polyhaven.com/files/{asset_id}",headers=headers,timeout=60)
+              response.raise_for_status()
+              files=response.json()
+              target=pathlib.Path("assets/textures/polyhaven")/folder
+              target.mkdir(parents=True,exist_ok=True)
+              for channel,filename in (("Diffuse","albedo"),("nor_gl","normal"),("Rough","roughness")):
+                  try: url=files[channel]["1k"]["jpg"]["url"]
+                  except (KeyError,TypeError): continue
+                  data=requests.get(url,headers=headers,timeout=120)
+                  data.raise_for_status()
+                  (target/f"{filename}.jpg").write_bytes(data.content)
+                  print(f"Poly Haven {asset_id}/{channel}: {len(data.content)} bytes")
+          PY
+      - name: Salvar modelos e texturas no GitHub
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/3dassets_dev assets/textures/polyhaven
+          if git diff --cached --quiet; then echo 'Nenhum arquivo novo'; exit 0; fi
+          git commit -m 'Importa modelos CC0 da 3DAssets.dev e materiais Poly Haven'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Convert user-submitted 3D assets to mobile-conscious GLB for Godot 4.3."""
+import hashlib
+import json
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+import bpy
+
+SUPPORTED = {".blend", ".usdz", ".fbx", ".obj", ".3ds", ".dae", ".x3d"}
+ASSIMP_IMPORT_FORMATS = {".fbx", ".3ds", ".dae", ".x3d"}
+FORMAT_PRIORITY = {".blend": 0, ".usdz": 0, ".fbx": 1, ".dae": 2, ".3ds": 3, ".obj": 4}
+
+def parse_args():
+    args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    if len(args) != 2:
+        raise SystemExit("Expected INPUT_DIR OUTPUT_DIR after --")
+    return Path(args[0]).resolve(), Path(args[1]).resolve()
+
+def clear_scene():
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
+
+def import_with_assimp(source):
+    """Use Assimp for FBX/3DS/Collada formats that Blender's bundled importer may reject."""
+    temporary = tempfile.TemporaryDirectory(prefix="darkworld_assimp_")
+    converted = Path(temporary.name) / "assimp_intermediate.glb"
+    result = subprocess.run(
+        ["assimp", "export", str(source), str(converted), "-f", "glb2"],
+        capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0 or not converted.is_file() or converted.stat().st_size <= 1024:
+        detail = (result.stderr or result.stdout or "Assimp did not create a GLB")[-3000:]
+        temporary.cleanup()
+        raise RuntimeError(f"Assimp conversion failed for {source.name}: {detail}")
+    bpy.ops.import_scene.gltf(filepath=str(converted))
+    return temporary
+
+
+def source_group_key(source):
+    parent = source.parent
+    if parent.name.lower() in {"obj", "fbx", "3ds", "dae"}:
+        parent = parent.parent
+    return str(parent / source.stem.lower())
+
+
+def choose_sources(candidates):
+    """Prefer one best source format per asset instead of importing duplicate LOD/model copies."""
+    selected = {}
+    content_seen = set()
+    for source in sorted(candidates, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower())):
+        content_hash = file_digest(source)
+        if content_hash in content_seen:
+            print("SKIP exact duplicate content", source)
+            continue
+        key = source_group_key(source)
+        if key not in selected:
+            selected[key] = source
+            content_seen.add(content_hash)
+        else:
+            print("SKIP duplicate format", source, "using", selected[key])
+    return sorted(selected.values())
+
+
+def choose_source_groups(candidates):
+    """Keep ordered fallback formats per model so a broken FBX can fall back to OBJ/3DS."""
+    grouped = {}
+    content_seen = set()
+    for source in sorted(candidates, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower())):
+        digest = file_digest(source)
+        if digest in content_seen:
+            print("SKIP exact duplicate content", source)
+            continue
+        content_seen.add(digest)
+        grouped.setdefault(source_group_key(source), []).append(source)
+    return [
+        sorted(group, key=lambda p: (FORMAT_PRIORITY.get(p.suffix.lower(), 99), str(p).lower()))
+        for _, group in sorted(grouped.items())
+    ]
+
+
+def import_asset(source):
+    ext = source.suffix.lower()
+    if ext == ".blend":
+        bpy.ops.wm.open_mainfile(filepath=str(source))
+        for folder in (source.parent / "maps", source.parent / "textures", source.parent):
+            if folder.is_dir():
+                try:
+                    bpy.ops.file.find_missing_files(directory=str(folder))
+                except Exception as exc:
+                    print("WARN relink", folder, repr(exc))
+    elif ext == ".usdz":
+        bpy.ops.wm.usd_import(filepath=str(source))
+    elif ext == ".fbx":
+        bpy.ops.import_scene.fbx(filepath=str(source))
+    elif ext == ".obj":
+        if hasattr(bpy.ops.wm, "obj_import"):
+            bpy.ops.wm.obj_import(filepath=str(source))
+        else:
+            bpy.ops.import_scene.obj(filepath=str(source))
+    else:
+        return False
+    return True
+
+def optimise_meshes(max_faces=45000):
+    meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
+    total = sum(len(o.data.polygons) for o in meshes)
+    if total > max_faces:
+        ratio = max(0.06, min(1.0, max_faces / float(total)))
+        for obj in meshes:
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+            modifier = obj.modifiers.new(name="DarkWorld_Mobile_Decimate", type="DECIMATE")
+            modifier.ratio = ratio
+            try:
+                bpy.ops.object.modifier_apply(modifier=modifier.name)
+            except Exception as exc:
+                print("WARN decimate", obj.name, repr(exc))
+            obj.select_set(False)
+    return sum(len(o.data.polygons) for o in meshes)
+
+def file_digest(source, algorithm="sha256"):
+    digest = hashlib.new(algorithm)
+    with source.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def safe_stem(source):
+    base = "".join(c.lower() if c.isalnum() else "_" for c in source.stem).strip("_")[:48]
+    digest = file_digest(source, "sha1")[:8]
+    return f"{base or 'model'}_{digest}"
+
+def main():
+    input_dir, output_dir = parse_args()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    # Remove only files generated by this importer (stem + 8-char hex digest).
+    for stale in output_dir.glob("*.glb"):
+        if re.fullmatch(r".+_[0-9a-f]{8}\.glb", stale.name):
+            stale.unlink()
+    candidates = [p for p in input_dir.rglob("*") if p.is_file()
+                  and p.suffix.lower() in SUPPORTED
+                  and not p.name.lower().endswith(".blend1")]
+    source_groups = choose_source_groups(candidates)
+    manifest = []
+    for source_group in source_groups:
+        group_exported = False
+        for source in source_group:
+            temporary = None
+            destination = output_dir / (safe_stem(source) + ".glb")
+            try:
+                destination.unlink(missing_ok=True)
+                clear_scene()
+                if source.suffix.lower() in ASSIMP_IMPORT_FORMATS:
+                    temporary = import_with_assimp(source)
+                else:
+                    import_asset(source)
+                meshes = [o for o in bpy.context.scene.objects if o.type == "MESH" and o.visible_get()]
+                if not meshes:
+                    print("SKIP no mesh", source)
+                    continue
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in bpy.context.scene.objects:
+                    if obj.type in {"MESH", "EMPTY"} and obj.visible_get():
+                        obj.select_set(True)
+                faces = optimise_meshes()
+                bpy.ops.export_scene.gltf(filepath=str(destination), export_format="GLB",
+                    use_selection=True, export_apply=True, export_image_format="AUTO",
+                    export_materials="EXPORT", export_cameras=False, export_lights=False)
+                if destination.exists() and destination.stat().st_size > 1024:
+                    with destination.open("rb") as exported:
+                        valid_header = exported.read(4) == b"glTF"
+                    if not valid_header:
+                        raise RuntimeError("exported file is missing the GLB magic header")
+                    entry = {"source": source.name, "output": destination.name,
+                             "bytes": destination.stat().st_size, "faces_after_optimise": faces}
+                    manifest.append(entry)
+                    print("EXPORTED", json.dumps(entry))
+                    group_exported = True
+                    break
+                print("SKIP invalid export; trying fallback format", source)
+                destination.unlink(missing_ok=True)
+            except Exception as exc:
+                print("ERROR converting; trying fallback format", source, repr(exc))
+                destination.unlink(missing_ok=True)
+            finally:
+                if temporary is not None:
+                    temporary.cleanup()
+        if not group_exported:
+            print("ERROR all source formats failed for model group", source_group[0].stem)
+    (output_dir / "ASSET-MANIFEST.json").write_text(json.dumps(manifest, indent=2))
+    print("CONVERSION_SUMMARY", len(manifest), "of", len(source_groups))
+    if not manifest:
+        raise SystemExit("No 3D models converted successfully.")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,306 @@
+name: Importar todos os modelos enviados para Dark World
+
+on:
+  workflow_dispatch:
+    inputs:
+      drive_folder_url:
+        description: "Pasta pública do Google Drive com os modelos de hoje"
+        required: false
+        type: string
+        default: "https://drive.google.com/drive/folders/1gAXWDTS0gh4XA_GpPuQhbP6-pAj65NFX"
+      medieval_pack_url:
+        description: "Link HTTPS direto para MedievalPackSTY.rar (ontem, opcional)"
+        required: false
+        type: string
+      castle_pack_url:
+        description: "Link HTTPS direto para o ZIP do castelo (ontem, opcional)"
+        required: false
+        type: string
+      forest_pack_url:
+        description: "Link HTTPS direto para EU43_FORESTPACK.zip (ontem, opcional)"
+        required: false
+        type: string
+      gledista_pack_url:
+        description: "Link HTTPS direto para Gledista_Triacanthos_BLEND.zip (ontem, opcional)"
+        required: false
+        type: string
+  push:
+    branches:
+      - integration/definitive-all-versions
+    paths:
+      - ".github/workflows/import-submitted-assets.yml"
+      - "tools/convert_submitted_assets.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: submitted-dark-world-assets
+  cancel-in-progress: false
+
+jobs:
+  convert-and-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/definitive-all-versions
+          fetch-depth: 0
+
+      - name: Install extraction, Blender and texture tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender p7zip-full python3-pil python3-numpy assimp-utils
+          python3 -m pip install --user --break-system-packages gdown
+
+      - name: Download all models from the shared Drive folder and older packages
+        env:
+          DRIVE_FOLDER_URL: ${{ inputs.drive_folder_url || 'https://drive.google.com/drive/folders/1gAXWDTS0gh4XA_GpPuQhbP6-pAj65NFX' }}
+          MEDIEVAL_URL: ${{ inputs.medieval_pack_url }}
+          CASTLE_URL: ${{ inputs.castle_pack_url }}
+          FOREST_URL: ${{ inputs.forest_pack_url }}
+          GLEDISTA_URL: ${{ inputs.gledista_pack_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/darkworld-input /tmp/darkworld-extracted
+          if [ -n "$DRIVE_FOLDER_URL" ]; then
+            python3 -m gdown --folder "$DRIVE_FOLDER_URL" -O /tmp/darkworld-input/drive-folder
+          fi
+          fetch() {
+            local url="$1" name="$2"
+            [ -n "$url" ] || return 0
+            case "$url" in https://*) ;; *) echo "Only HTTPS links are accepted"; exit 1;; esac
+            curl --fail --location --retry 3 --connect-timeout 20 --max-time 1800 "$url" -o "/tmp/darkworld-input/$name"
+          }
+          fetch "$MEDIEVAL_URL" medieval.rar
+          fetch "$CASTLE_URL" castle.zip
+          fetch "$FOREST_URL" forest.zip
+          fetch "$GLEDISTA_URL" gledista.zip
+          mkdir -p /tmp/darkworld-extracted/direct-files
+          cp -a /tmp/darkworld-input/. /tmp/darkworld-extracted/direct-files/
+          # Extrai arquivos compactados, inclusive pacotes aninhados.
+          while true; do
+            mapfile -d '' archives < <(find /tmp/darkworld-extracted -type f \( -iname '*.zip' -o -iname '*.rar' -o -iname '*.7z' -o -iname '*.unitypackage' \) -print0)
+            pending=()
+            for archive in "${archives[@]}"; do
+              [ -f "${archive}.darkworld-extracted" ] || pending+=("$archive")
+            done
+            [ "${#pending[@]}" -gt 0 ] || break
+            for archive in "${pending[@]}"; do
+              target="${archive}.dir"
+              mkdir -p "$target"
+              if 7z x -y "-o$target" "$archive"; then
+                touch "${archive}.darkworld-extracted"
+              else
+                echo "WARN archive could not be extracted: $archive"
+                touch "${archive}.darkworld-extracted"
+              fi
+            done
+          done
+          echo "=== INVENTARIO COMPLETO DOS ARQUIVOS ENCONTRADOS NO DRIVE ==="
+          find /tmp/darkworld-extracted -type f -printf '%P | %s bytes\n' | sort > /tmp/darkworld-drive-inventory.txt
+          echo "TOTAL_FILES=$(wc -l < /tmp/darkworld-drive-inventory.txt)"
+          echo "=== CONTAGEM POR EXTENSAO ==="
+          find /tmp/darkworld-extracted -type f | awk -F. 'NF>1 {ext=tolower($NF); count[ext]++} END {for (ext in count) print ext, count[ext]}' | sort
+          echo "=== FORMATOS DE MODELO ENCONTRADOS ==="
+          find /tmp/darkworld-extracted -type f | grep -Ei '\.(fbx|obj|3ds|dae|blend|usdz|ma|mb|max|vob|xfr)$' | sed 's#^/tmp/darkworld-extracted/##' | head -120 || true
+          test "$(find /tmp/darkworld-extracted -type f | wc -l)" -gt 0
+
+      - name: Importar modelos prontos do Thrixel para o repositório
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          DEST="assets/plugin_imports/thrixel"
+          mkdir -p "$DEST"
+          fetch_model() {
+            local name="$1" submission="$2" texture_size="$3"
+            local target="$DEST/$name.glb"
+            local temporary="$target.part"
+            if [ -s "$target" ] && [ "$(head -c 4 "$target")" = "glTF" ]; then
+              echo "THRIXEL_MODEL_ALREADY_PRESENT: $name"
+              return 0
+            fi
+            local url="https://api.thrixel.com/api/v1/$submission/download?format=glb&quality=full&texture_size=$texture_size"
+            if curl --fail --location --retry 3 --connect-timeout 20 --max-time 240 "$url" -o "$temporary"; then
+              if [ "$(head -c 4 "$temporary")" = "glTF" ] && [ "$(stat -c%s "$temporary")" -gt 1024 ]; then
+                mv "$temporary" "$target"
+                echo "THRIXEL_MODEL_IMPORTED: $name"
+              else
+                rm -f "$temporary"
+                echo "::warning::GLB Thrixel inválido: $name"
+              fi
+            else
+              rm -f "$temporary"
+              echo "::warning::Não foi possível baixar o modelo Thrixel: $name"
+            fi
+          }
+          fetch_model ancient_tree 584d17cf-92ff-4fde-ba50-19037a88d832 1024
+          fetch_model ancient_stag_guardian 10f1f722-53d8-4ca0-b99b-e0e687bc8fec 1024
+          fetch_model silver_river_crab 4592675e-0e7e-491d-9d1e-a4a15eee7304 1024
+          fetch_model drowned_wraith c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1 1024
+          fetch_model rune_obelisk 354f8a8c-3812-43a4-b187-3df95354eb48 512
+          fetch_model stone_way_shrine 2fbc201f-5a50-4511-9aa9-07736603d9ff 512
+          fetch_model silver_river_coffer c90ac6cc-200e-4892-a7a5-0cc263e64d1c 512
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path("assets/plugin_imports/thrixel")
+          records = [
+              ("thrixel_ancient_tree", "ancient_tree.glb", "584d17cf-92ff-4fde-ba50-19037a88d832", 1024, 14132, "world_landmark"),
+              ("thrixel_stag_guardian", "ancient_stag_guardian.glb", "10f1f722-53d8-4ca0-b99b-e0e687bc8fec", 1024, 14064, "optional_enemy"),
+              ("thrixel_river_crab", "silver_river_crab.glb", "4592675e-0e7e-491d-9d1e-a4a15eee7304", 1024, 9442, "optional_enemy"),
+              ("thrixel_drowned_wraith", "drowned_wraith.glb", "c4c1cfa0-54af-4cb5-be3e-8dd8f094daa1", 1024, 8996, "optional_enemy"),
+              ("thrixel_rune_obelisk", "rune_obelisk.glb", "354f8a8c-3812-43a4-b187-3df95354eb48", 512, 45000, "animated_landmark"),
+              ("thrixel_way_shrine", "stone_way_shrine.glb", "2fbc201f-5a50-4511-9aa9-07736603d9ff", 512, 22276, "puzzle_landmark"),
+              ("thrixel_river_coffer", "silver_river_coffer.glb", "c90ac6cc-200e-4892-a7a5-0cc263e64d1c", 512, 11180, "treasure_prop"),
+          ]
+          manifest = []
+          for key, filename, submission, texture_size, triangles, role in records:
+              path = root / filename
+              if path.is_file() and path.stat().st_size > 1024 and path.read_bytes()[:4] == b"glTF":
+                  manifest.append({"asset_key": key, "file": filename, "submission_id": submission,
+                                   "texture_size": texture_size, "triangles": triangles, "role": role,
+                                   "bytes": path.stat().st_size})
+          (root / "THRIXEL-ASSET-MANIFEST.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+          print(f"THRIXEL_MODELS_PERSISTED: {len(manifest)}/7")
+          PY
+
+      - name: Convert supported 3D models to GLB
+        run: |
+          set -euo pipefail
+          mkdir -p assets/external_packs/user_submitted
+          export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH:-}"
+          blender --background --python-expr "import numpy; print('BLENDER_NUMPY_READY', numpy.__version__)"
+          blender --background --python tools/convert_submitted_assets.py -- /tmp/darkworld-extracted assets/external_packs/user_submitted 2>&1 | tee /tmp/darkworld-blender.log
+
+      - name: Optimise submitted textures for Android
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          import hashlib
+          import re
+          roots = Path('/tmp/darkworld-extracted')
+          out = Path('assets/textures/user_submitted')
+          source_out = Path('assets/textures/user_submitted_source')
+          for folder in (out, source_out):
+              folder.mkdir(parents=True, exist_ok=True)
+              # Remove only importer-generated PNGs (stem + 8-char content digest).
+              for stale in folder.glob('*.png'):
+                  if re.fullmatch(r'.+_[0-9a-f]{8}\.png', stale.name):
+                      stale.unlink()
+
+          # All submitted source textures stay in the repository, outside the Android APK.
+          # Runtime uses the in-engine low-poly foliage; opaque image cards are not rendered.
+          count = 0
+          source_count = 0
+          for src in sorted(roots.rglob('*')):
+              if not src.is_file() or src.suffix.lower() not in {'.tif', '.tiff', '.jpg', '.jpeg', '.png', '.tga'}:
+                  continue
+              try:
+                  image = Image.open(src)
+                  image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+                  has_alpha = 'A' in image.getbands() or 'transparency' in image.info
+                  image = image.convert('RGBA' if has_alpha else 'RGB')
+                  digest = hashlib.sha1(src.read_bytes()).hexdigest()[:8]
+                  target = source_out / f'{src.stem[:48]}_{digest}.png'
+                  image.save(target, optimize=True)
+                  count += 1
+                  source_count += 1
+              except Exception as exc:
+                  print('WARN texture', src.name, exc)
+          print('USER_TEXTURES_OPTIMISED', count)
+          print('USER_TEXTURES_RUNTIME_BILLBOARDS', 0)
+          print('USER_TEXTURES_SOURCE_ONLY', source_count)
+          PY
+
+      - name: Fill missing LOD0 from the nearest valid lower LOD
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import shutil
+          root = Path('assets/external_packs/user_submitted')
+          manifest_path = root / 'ASSET-MANIFEST.json'
+          manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+          fallback_pairs = [('lod0_fantasy_house', 'lod1_fantasy_house')]
+          for required_prefix, fallback_prefix in fallback_pairs:
+              if list(root.glob(required_prefix + '*.glb')):
+                  continue
+              candidates = sorted(root.glob(fallback_prefix + '*.glb'))
+              if not candidates:
+                  continue
+              target = root / (required_prefix + '_fallback_from_lod1.glb')
+              shutil.copy2(candidates[0], target)
+              manifest.append({
+                  'source': f'{fallback_prefix} (safe lower-LOD fallback)',
+                  'output': target.name,
+                  'bytes': target.stat().st_size,
+                  'faces_after_optimise': None
+              })
+              print('CREATED LOD FALLBACK:', target.name)
+          manifest_path.write_text(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Validate models and write full import report
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path('assets/external_packs/user_submitted')
+          files = sorted(root.glob('*.glb'))
+          invalid = []
+          for path in files:
+              valid = path.stat().st_size > 1024
+              if valid:
+                  with path.open('rb') as f:
+                      valid = f.read(4) == b'glTF'
+              if not valid:
+                  invalid.append(path.name)
+                  path.unlink()
+                  print('WARN removed invalid or empty GLB:', path.name)
+          files = sorted(root.glob('*.glb'))
+          if len(files) < 17:
+              raise SystemExit(f'Expected at least 17 valid imported models, found {len(files)}; invalid removed: {invalid}')
+          manifest = json.loads((root / 'ASSET-MANIFEST.json').read_text()) if (root / 'ASSET-MANIFEST.json').exists() else []
+          runtime_textures = list(Path("assets/textures/user_submitted").glob("*.png"))
+          source_textures = list(Path("assets/textures/user_submitted_source").glob("*.png"))
+          report = [
+            '# Relatório de importação — Dark World',
+            '',
+            f'Modelos GLB validados: {len(files)}',
+            f'Texturas otimizadas no repositório: {len(runtime_textures) + len(source_textures)}',
+            f'Texturas incluídas no APK (billboards): {len(runtime_textures)}',
+            f'Texturas de referência preservadas fora do APK: {len(source_textures)}',
+            '',
+            '## Modelos convertidos'
+          ]
+          report += [f'- {p.name} ({p.stat().st_size // 1024} KB)' for p in files]
+          report += ['', '## Fontes que exigem tratamento externo',
+                     '- Arquivos .max não são convertidos pelo Blender; exportar no Autodesk 3ds Max para FBX/GLB.',
+                     '- Arquivos que ultrapassarem 90 MB convertidos são mantidos fora do Git e listados no log do workflow.',
+                     '- Todos os modelos precisam de inspeção de escala, orientação, materiais, colisões e desempenho no Godot 4.3.',
+                     '- A importação é aditiva: nenhum mapa, personagem, missão, HUD, save ou cena existente é substituído.']
+          (root / 'IMPORT-REPORT.md').write_text('\n'.join(report) + '\n')
+          print('Validated GLBs:', len(files))
+          print('Removed invalid GLBs:', len(invalid))
+          PY
+
+      - name: Keep GitHub repository below per-file limit
+        run: |
+          find assets/external_packs/user_submitted -maxdepth 1 -type f -name '*.glb' -size +90M -print -delete
+
+      - name: Commit converted assets and report
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/external_packs/user_submitted assets/textures/user_submitted assets/textures/user_submitted_source assets/plugin_imports/thrixel
+          if git diff --cached --quiet; then
+            echo 'No converted assets to commit'
+            exit 0
+          fi
+          git commit -m 'Importa modelos 3D enviados para Dark World'
+          git pull --rebase origin integration/definitive-all-versions
+          git push origin HEAD:integration/definitive-all-versions

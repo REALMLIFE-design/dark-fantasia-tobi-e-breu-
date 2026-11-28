@@ -1,0 +1,104 @@
+[
+  {
+    "source": "003_obj.obj",
+    "output": "003_obj_60185448.glb",
+    "bytes": 4634088,
+    "faces_after_optimise": 44660
+  },
+  {
+    "source": "p3d_medieval_enterable_bld-13.fbx",
+    "output": "p3d_medieval_enterable_bld_13_bbbf4ccc.glb",
+    "bytes": 463552,
+    "faces_after_optimise": 8391
+  },
+  {
+    "source": "LOD1_fantasy_house.fbx",
+    "output": "lod1_fantasy_house_157e7f3b.glb",
+    "bytes": 1244984,
+    "faces_after_optimise": 27878
+  },
+  {
+    "source": "LOD2_fantasy_house.fbx",
+    "output": "lod2_fantasy_house_290b78c8.glb",
+    "bytes": 653284,
+    "faces_after_optimise": 10330
+  },
+  {
+    "source": "big_watchtower.fbx",
+    "output": "big_watchtower_077166ec.glb",
+    "bytes": 806756,
+    "faces_after_optimise": 23232
+  },
+  {
+    "source": "big_watchtower_LOD1.fbx",
+    "output": "big_watchtower_lod1_2f8535f3.glb",
+    "bytes": 295068,
+    "faces_after_optimise": 5880
+  },
+  {
+    "source": "House#1ExportVersion.obj",
+    "output": "house_1exportversion_c29088bb.glb",
+    "bytes": 2218664,
+    "faces_after_optimise": 19944
+  },
+  {
+    "source": "house_3x2x1.fbx",
+    "output": "house_3x2x1_a0eb9eb2.glb",
+    "bytes": 12826920,
+    "faces_after_optimise": 2720
+  },
+  {
+    "source": "log_watchtower.fbx",
+    "output": "log_watchtower_b8ab2c7b.glb",
+    "bytes": 300080,
+    "faces_after_optimise": 8552
+  },
+  {
+    "source": "LOWPOLY_log_watchtower.fbx",
+    "output": "lowpoly_log_watchtower_5ab86741.glb",
+    "bytes": 111060,
+    "faces_after_optimise": 2180
+  },
+  {
+    "source": "LOD0_long_house.3ds",
+    "output": "lod0_long_house_ae51b4df.glb",
+    "bytes": 321888,
+    "faces_after_optimise": 7172
+  },
+  {
+    "source": "LOD1_long_house.fbx",
+    "output": "lod1_long_house_34fda814.glb",
+    "bytes": 625888,
+    "faces_after_optimise": 14556
+  },
+  {
+    "source": "MedHouse.obj",
+    "output": "medhouse_c299fcc6.glb",
+    "bytes": 1717652,
+    "faces_after_optimise": 35841
+  },
+  {
+    "source": "Medieval-Platform.x3d",
+    "output": "medieval_platform_8323ef01.glb",
+    "bytes": 241800,
+    "faces_after_optimise": 3360
+  },
+  {
+    "source": "medieval_wood_bridge_cg_trader.obj",
+    "output": "medieval_wood_bridge_cg_trader_67901d0f.glb",
+    "bytes": 462784,
+    "faces_after_optimise": 7547
+  },
+  {
+    "source": "scari-rotund.fbx",
+    "output": "scari_rotund_91c68622.glb",
+    "bytes": 64012,
+    "faces_after_optimise": 762
+  },
+  {
+    "source": "generated fallback from LOD1_fantasy_house.fbx",
+    "output": "lod0_fantasy_house_fallback_from_lod1.glb",
+    "bytes": 1244984,
+    "faces_after_optimise": 27878
+  }
+]
