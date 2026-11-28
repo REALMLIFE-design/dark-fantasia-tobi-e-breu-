@@ -12,6 +12,7 @@ class FrontendUIContractTests(unittest.TestCase):
     def test_frontend_scene_uses_the_ui_script(self):
         scene = (ROOT / "scenes/frontend.tscn").read_text(encoding="utf-8")
         self.assertIn('res://scripts/frontend_ui.gd', scene)
+        self.assertTrue((ROOT / "scripts/ui_illustration.gd").is_file())
         project = (ROOT / "project.godot").read_text(encoding="utf-8")
         self.assertIn('OnlineService="*res://scripts/online_service.gd"', project)
 
@@ -31,6 +32,8 @@ class FrontendUIContractTests(unittest.TestCase):
         script = (ROOT / "scripts/frontend_ui.gd").read_text(encoding="utf-8")
         self.assertIn("func _show_lobby()", script)
         self.assertIn("func _show_settings()", script)
+        self.assertIn("func _add_illustration(", script)
+        self.assertIn("func _quit_game()", script)
         self.assertIn("func _join_room_placeholder()", script)
         self.assertIn("func _online_not_ready()", script)
         self.assertIn("func _create_room_online()", script)
