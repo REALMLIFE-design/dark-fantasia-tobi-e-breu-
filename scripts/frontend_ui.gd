@@ -185,6 +185,9 @@ func _clear_page() -> void:
 		child.queue_free()
 	status_label = null
 	room_code_input = null
+	friend_username_input = null
+	friend_list_label = null
+	friend_requests_box = null
 
 
 func _page_heading(kicker: String, title: String, description: String) -> void:
