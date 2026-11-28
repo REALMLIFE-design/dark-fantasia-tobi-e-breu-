@@ -163,3 +163,15 @@
 - Criado `HANDOFF-ARVORE-ANCIa.md` com IDs, prompts, caminho esperado, estado real e instruções para o próximo agente concluir a importação quando houver um GLB disponível.
 - Manifesto `assets/plugin_imports/plugin_asset_sources.json` atualizado com a recriação e a limitação de exportação.
 - **Pendente:** obter legalmente o GLB, colocá-lo em `assets/plugin_imports/meshy/ancient_tree.glb`, validar importação/escala no Godot e só então marcar a árvore como asset integrado.
+
+
+## Interface mobile e conexão online — 28/11/2026
+- Criada a cena independente `scenes/frontend.tscn` e o script `scripts/frontend_ui.gd`, com login visual, modo visitante, menu principal, lobby, configurações locais e créditos. O visual usa painéis e componentes vetoriais/cores sólidas, sem texturas geradas por IA.
+- A entrada do projeto passa pela interface; a cena 3D existente permanece em `scenes/main.tscn` e é aberta pelo menu.
+- Criado `scripts/online_service.gd` como Autoload, usando a publishable key do Supabase, renovação de sessão e RPCs existentes para criar/entrar em salas e gerenciar amigos.
+- O banco `dark-world-online` foi inspecionado: tabelas `profiles`, `friend_requests`, `game_rooms` e `room_members` já existem com RLS habilitado; RPCs de sala e amizade já estavam implantadas.
+- Modo visitante tenta autenticação anônima e mantém fallback local se a opção estiver desativada ou a rede falhar. O estado de Anonymous Sign-Ins não pôde ser lido pelo conector nesta sessão.
+- Google OAuth ainda depende de Client ID/Secret do Google Cloud, SHA-1 das assinaturas Android, redirect/deep link e teste no dispositivo. Não foi simulado como concluído.
+- Criados testes de contrato e o validador passou a incluir os scripts novos. A validação final do Godot/Android ainda está pendente; esta sessão não dispõe de execução do Godot local e nenhum APK novo foi certificado.
+- Alterações isoladas na branch `feature/mobile-ui-shell-2026-11-28`, PR draft #8. Não foram mescladas na branch principal.
+- Figma: arquivo criado, mas a inserção das telas ficou bloqueada pelo limite de chamadas do plano Starter. Canva: guia visual editável solicitado para a pasta Dark World.
